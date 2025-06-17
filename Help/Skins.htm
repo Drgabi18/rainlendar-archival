@@ -1,0 +1,777 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<HEAD>
+<meta name="GENERATOR" content="Microsoft&reg; HTML Help Workshop 4.1">
+<Title>Introduction</Title>
+</HEAD>
+<body bgcolor="#A25D56" text="#603D37" link="#3E6099" vlink="#3E6099" alink="#000000">
+
+<div align="center">
+	<table border="0" width="95%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="56">
+			<img border="0" src="images/topleft.gif" width="56" height="56"></td>
+			<td background="images/top.gif" align="left" valign="bottom"><font size="6"><b>EDITING SKINS</b></font></td>
+			<td width="56">
+			<img border="0" src="images/topright.gif" width="56" height="56"></td>
+		</tr>
+	</table>
+</div>
+
+<div align="center">
+	<table border="0" width="95%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="56" background="images/left.gif" align="right" valign="top">&nbsp;</td>
+			<td bgcolor="#DBCCB1" align="center" valign="top">
+			<div align="left">
+
+<!-- CLIP -->
+Most of the skinning can be done from the GUI, which is probably the easiest way to modify 
+the skins. However, sometimes it might be useful to do the changes directly 
+in the skin files. The skin files weren't originally meant to be edited by 
+hand, so some of the entries might be a bit unintuitive.<p>
+
+The items (numbers) in an image can be placed either horizontally or 
+vertically. The correct placement is determined from the dimensions of the 
+image (i.e. whichever is bigger: height or width). The images must be cropped
+so that they don't hold any extra space and their width (or height) must be 
+divisional with the number of items in the image. The current version of 
+Rainlendar supports BMP, JPG and PNG files. Them PNGs can include alpha mask.<p>
+
+The name of the skin file can be anything that ends with ".ini".
+The skins must be placed in a separate subfolders, which will give the name
+to the skin. The same folder can also contain several skin ini-files.<p>
+
+<b>New in 0.21:</b> The skin format has changed slightly. It is now possible to 
+put the different parts to separate sections. The benefit from this is that you
+can define the drawing order by placing the sections before each other. The sections
+are drawn the order they are defined (except that background is drawn always first).
+Note that dynamic items (Time and Button) are always drawn on top of the static items 
+(i.e. normal calendar graphics). The Image-sections can be drawn in any place.<p>
+
+The sections are: [Background], [Days], [Today], [Weekdays], [Month], [Year], [Event],
+[WeekNumbers], [Tooltip], [Todo], [MessageBox] and [EventList]. If you use these
+do not add the [Rainlendar]-section or the skin is read as old format.<p>
+
+<b>Important!</v> If you create a skin that uses the new format you should inform the
+users that it requires Rainlendar 0.21 or newer. The new skins behave quite badly in 0.20 and 
+older versions.<p>
+
+<b>BackgroundBitmapName</b><br>
+The filename of the background picture to use behind the calendar. 
+You can also select if you want the image to be tiled or stretched if it's too small for the
+calendar window. It's also possible to grab the desktop behind the calendar and 
+use it as background.<p>
+
+<b>BackgroundMode</b><br>
+0 = Tile background to fill the whole window<br>
+1 = Transparent background<br>
+2 = Stretch background to fill the whole window<br>
+3 = Solid color background<p>
+
+<b>BackgroundBevel</b><br>
+0 = No not draw bevel around solid color background<br>
+1 = Draw bevel around solid color background<p>
+
+<b>BackgroundSolidColor</b><br>
+Color of the solid background defined as BGR hex-value (e.g. BackgroundSolidColor=888888)<p>
+
+<b>ToolTipFont</b><br>
+The font to be used with the tooltips. Check below for more info about the fonts.<p>
+
+<b>ToolTipFontColor</b><br>
+Color of the tooltip font defined as BGR hex-value (e.g. ToolTipFontColor=000000)<p>
+
+<b>ToolTipBGColor</b><br>
+Color of the tooltip background defined as BGR hex-value (e.g. ToolTipBGColor=FFFFFF)<p>
+
+<b>DaysEnable</b><br>
+0 = Do not show days in calendar<br>
+1 = Show days in calendar<p>
+
+<b>DaysX</b><br>
+X-position of the days<p>
+
+<b>DaysY</b><br>
+Y-position of the days<p>
+
+<b>DaysW</b><br>
+Width of the days<p>
+
+<b>DaysH</b><br>
+Height of the days<p>
+
+<b>DaysAlign</b><br>
+0 = TopLeft<br>
+1 = TopRight<br>
+2 = TopCenter<br>
+16 = MiddleLeft<br>
+17 = MiddleRight<br>
+18 = Middle<br>
+32 = BottomLeft<br>
+33 = BottomRight<br>
+34 = BottomCenter<p>
+
+<b>DaysRasterizer</b><br>
+FONT = Use fonts to display the days<br>
+BITMAP = Use bitmap to display the days<p>
+
+<b>DaysFont</b><br>
+The font to be used with the days. Check below for more info about the fonts.<p>
+
+<b>DaysFontColor</b><br>
+Color of the font defined as BGR hex-value (e.g. DaysFontColor=44AAFF)<p>
+
+<b>DaysBitmapName</b><br>
+Filename of the days bitmap. The bitmap must contain either numbers from 0 to 9
+ or from 0 to 31. All the numbers must be same size.<p>
+
+<b>DaysNumOfComponents</b><br>
+Number of components in the bitmap. If the bitmap has numbers from 0 to 9, set
+this to 10. For numbers from 0 to 31 use value 32. Note that with 32 numbers
+the 0 is never used, so it may hold anything. <p>
+
+<b>DaysSeparation</b><br>
+The horizontal separation of the numbers (i.e. how close/far the numbers are
+placed from each other). This is only applied with bitmaps when the number of 
+components is 10. The value can be negative.<p>
+
+<b>DaysIgnoreToday</b><br>
+0 = Draw a day for today
+1 = Do not draw a day for today<p>
+
+<b>DaysIgnoreEvent</b><br>
+0 = Draw a day for event days
+1 = Do not draw a day for event days<p>
+
+<b>DaysWeekendBitmapName</b><br>
+Same as DaysBitmapName but for the weekends.<p>
+
+<b>DaysWeekendFontColor</b><br>
+Same as DaysFontColor but for the weekends.<p>
+
+<b>DaysLayout</b><br>
+0 = 7 x 6 grid (i.e. the normal layout)<br>
+1 = Horizontal<br>
+2 = Vertical<p>
+
+<b>TodayEnable</b><br>
+0 = Do not show today in calendar<br>
+1 = Show today in calendar<p>
+
+<b>TodayAlign</b><br>
+0 = TopLeft<br>
+1 = TopRight<br>
+2 = TopCenter<br>
+16 = MiddleLeft<br>
+17 = MiddleRight<br>
+18 = Middle<br>
+32 = BottomLeft<br>
+33 = BottomRight<br>
+34 = BottomCenter<p>
+
+<b>TodayRasterizer</b><br>
+FONT = Use fonts to display the today<br>
+BITMAP = Use bitmap to display the today<p>
+
+<b>TodayFont</b><br>
+The font to be used with the today. Check below for more info about the fonts.<p>
+
+<b>TodayFontColor</b><br>
+Color of the font defined as BGR hex-value (e.g. TodayFontColor=44AAFF)<p>
+
+<b>TodayBitmapName</b><br>
+Filename of the today bitmap. The bitmap must contain either numbers from 0 to 9
+ or from 0 to 31. It can also contain just one image.<p>
+
+<b>TodayNumOfComponents</b><br>
+Number of components in the bitmap. If the bitmap has numbers from 0 to 9, set
+this to 10. For numbers from 0 to 31 use value 32. If the bitmap contains only 
+one image use value 1.<p>
+
+<b>TodaySeparation</b><br>
+The horizontal separation of the numbers (i.e. how close/far the numbers are
+placed from each other). This is only applied with bitmaps when the number of 
+components is 10. The value can be negative.<p>
+
+<b>WeekdaysEnable</b><br>
+0 = Do not show weekdays in calendar<br>
+1 = Show weekdays in calendar<p>
+
+<b>WeekdaysAlign</b><br>
+0 = TopLeft<br>
+1 = TopRight<br>
+2 = TopCenter<br>
+16 = MiddleLeft<br>
+17 = MiddleRight<br>
+18 = Middle<br>
+32 = BottomLeft<br>
+33 = BottomRight<br>
+34 = BottomCenter<p>
+
+<b>WeekdaysRasterizer</b><br>
+FONT = Use fonts to display the weekdays<br>
+BITMAP = Use bitmap to display the weekdays<p>
+
+<b>WeekdaysFont</b><br>
+The font to be used with the today. Check below for more info about the fonts.<p>
+
+<b>WeekdaysFontColor</b><br>
+Color of the font defined as BGR hex-value (e.g. WeekdaysFontColor=44AAFF)<p>
+
+<b>WeekdayNames</b><br>
+Weekday strings separated with '/'-char 
+(E.g. WeekdayNames=Sun/Mon/Tue/Wed/Thu/Fri/Sat)<p>
+
+<b>WeekdaysBitmapName</b><br>
+Filename of the weekdays bitmap. The bitmap must contain 7 items (one for each
+ weekday).<p>
+
+<b>MonthEnable</b><br>
+0 = Do not show month in calendar<br>
+1 = Show month in calendar<p>
+
+<b>MonthX</b><br>
+X-position of the month<p>
+
+<b>MonthY</b><br>
+Y-position of the month<p>
+
+<b>MonthAlign</b><br>
+0 = TopLeft<br>
+1 = TopRight<br>
+2 = TopCenter<br>
+16 = MiddleLeft<br>
+17 = MiddleRight<br>
+18 = Middle<br>
+32 = BottomLeft<br>
+33 = BottomRight<br>
+34 = BottomCenter<p>
+
+<b>MonthRasterizer</b><br>
+FONT = Use fonts to display the months<br>
+BITMAP = Use bitmap to display the months<p>
+
+<b>MonthFont</b><br>
+The font to be used with the month. Check below for more info about the fonts.<p>
+
+<b>MonthFontColor</b><br>
+Color of the font defined as BGR hex-value (e.g. WeekdaysFontColor=44AAFF)<p>
+
+<b>MonthBitmapName</b><br>
+Filename of the months bitmap. The bitmap must contain 12 items (one for each 
+month).<p>
+
+<b>MonthNames</b><br>
+Names of the months separated with '/'-char 
+(E.g MonthNames=January / February / March / April / May / June / July / August / September / October / November / December)<p>
+
+<b>YearEnable</b><br>
+0 = Do not show year in calendar
+1 = Show year in calendar<p>
+
+<b>YearX</b><br>
+X-position of the year<p>
+
+<b>YearY</b><br>
+Y-position of the year<p>
+
+<b>YearAlign</b><br>
+0 = TopLeft<br>
+1 = TopRight<br>
+2 = TopCenter<br>
+16 = MiddleLeft<br>
+17 = MiddleRight<br>
+18 = Middle<br>
+32 = BottomLeft<br>
+33 = BottomRight<br>
+34 = BottomCenter<p>
+
+<b>YearRasterizer</b><br>
+FONT = Use fonts to display the years<br>
+BITMAP = Use bitmap to display the years<p>
+
+<b>YearFont</b><br>
+The font to be used with the year. Check below for more info about the fonts.<p>
+
+<b>YearFontColor</b><br>
+Color of the font defined as BGR hex-value (e.g. WeekdaysFontColor=44AAFF)<p>
+
+<b>YearBitmapName</b><br>
+Filename of the year bitmap. The bitmap must contain numbers from 0 to 9.<p>
+
+<b>DaysSeparation</b><br>
+The horizontal separation of the numbers (i.e. how close/far the numbers are
+placed from each other). The value can be negative.<p>
+
+<b>EventEnable</b><br>
+0 = Do not show events in calendar<br>
+1 = Show events in calendar<p>
+
+<b>EventAlign</b><br>
+0 = TopLeft<br>
+1 = TopRight<br>
+2 = TopCenter<br>
+16 = MiddleLeft<br>
+17 = MiddleRight<br>
+18 = Middle<br>
+32 = BottomLeft<br>
+33 = BottomRight<br>
+34 = BottomCenter<p>
+
+<b>EventRasterizer</b><br>
+FONT = Use fonts to display the events<br>
+BITMAP = Use bitmap to display the events<p>
+
+<b>EventFont</b><br>
+The font to be used with the events. Check below for more info about the fonts.<p>
+
+<b>EventFontColor</b><br>
+Color of the font defined as BGR hex-value (e.g. WeekdaysFontColor=44AAFF)<p>
+
+<b>EventBitmapName</b><br>
+Filename of the events bitmap. The bitmap must contain either numbers from 
+0 to 9 or from 0 to 31. It can also contain just one image.<p>
+
+<b>EventNumOfComponents</b><br>
+Number of components in the bitmap. If the bitmap has numbers from 0 to 9, set
+this to 10. For numbers from 0 to 31 use value 32. If the bitmap contains only
+one image use value 1.<p>
+
+<b>EventSeparation</b><br>
+The horizontal separation of the numbers (i.e. how close/far the numbers are
+placed from each other). This is only applied with bitmaps when the number of 
+components is 10. The value can be negative.<p>
+
+<b>EventInCalendar</b><br>
+0 = Do not show event texts inside the calendar<br>
+1 = Show event texts inside the calendar<p>
+
+<b>EventFont2</b><br>
+The font to be used with the events texts that are dran on the calendar. Check
+below for more info about the fonts.<p>
+
+<b>EventFontColor2</b><br>
+Color of the font defined as BGR hex-value (e.g. WeekdaysFontColor=44AAFF)<p>
+
+<b>WeekNumbersEnable</b><br>
+0 = Do not show week numbers in calendar<br>
+1 = Show week numbers in calendar<p>
+
+<b>WeekNumbersAlign</b><br>
+0 = TopLeft<br>
+1 = TopRight<br>
+2 = TopCenter<br>
+16 = MiddleLeft<br>
+17 = MiddleRight<br>
+18 = Middle<br>
+32 = BottomLeft<br>
+33 = BottomRight<br>
+34 = BottomCenter<p>
+
+<b>WeekNumbersRasterizer</b><br>
+FONT = Use fonts to display the week numbers<br>
+BITMAP = Use bitmap to display the week numbers<p>
+
+<b>WeekNumbersFont</b><br>
+The font to be used with the week numbers. Check below for more info about the
+fonts.<p>
+
+<b>WeekNumbersFontColor</b><br>
+Color of the font defined as BGR hex-value (e.g. WeekdaysFontColor=44AAFF)<p>
+
+<b>WeekNumbersBitmapName</b><br>
+Filename of the week numbers bitmap. The bitmap must contain either numbers 
+from 0 to 9 or from 0 to 53. It can also contain just one image.<p>
+
+<b>WeekNumbersNumOfComponents</b><br>
+Number of components in the bitmap. If the bitmap has numbers from 0 to 9, set
+this to 10. For numbers from 0 to 53 use value 54.<p>
+
+<b>WeekNumbersSeparation</b><br>
+The horizontal separation of the numbers (i.e. how close/far the numbers are
+placed from each other). This is only applied with bitmaps when the number of 
+components is 10. The value can be negative.<p>
+
+<b>TodoW</b><br>
+The width of the todo window.<p>
+
+<b>TodoFont</b><br>
+The font to be used with the todo items. Check below for more info about the
+fonts.<p>
+
+<b>TodoFontColor</b><br>
+Color of the font defined as BGR hex-value (e.g. TodoFontColor=44AAFF)<p>
+
+<b>TodoBitmapName</b><br>
+Name of the todo window's background image.<p>
+
+<b>TodoBitmapMargins</b><br>
+Margins for the bitmap scaling. The margins are four comma separated values 
+that define the non-scaled part of the images borders. e.g. TodoBitmapMargins=10,10,0,0 
+would leave 10 pixels from the left and top borders as is and scale the rest.<p>
+
+<b>TodoTextMargins</b><br>
+Margins for the text. The margins are four comma separated values 
+that define the borders for the text (i.e. text is not drawn on the border area).<p>
+
+<b>TodoSeparation</b><br>
+The vertical separation of the todo items (i.e. how close/far the texts are
+placed from each other).<p>
+
+<b>TodoItemBitmapName</b><br>
+Name of the image for the todo items.<p>
+
+<b>TodoItemAlign</b><br>
+0 = TopLeft<br>
+1 = TopRight<br>
+2 = TopCenter<br>
+16 = MiddleLeft<br>
+17 = MiddleRight<br>
+18 = Middle<br>
+32 = BottomLeft<br>
+33 = BottomRight<br>
+34 = BottomCenter<p>
+
+<b>TodoItemOffset</b><br>
+Offset to the todo item. This is two comma separated values (e.g. TodoItemOffset=10,-10)<p>
+
+<b>MessageBoxBitmapName</b><br>
+Name of the messagebox background image.<p>
+
+<b>MessageBoxFont</b><br>
+The font to be used with the messagebox texts. Check below for more info about the
+fonts.<p>
+
+<b>MessageBoxFontColor</b><br>
+Color of the font defined as BGR hex-value (e.g. TodoFontColor=44AAFF)<p>
+
+<b>MessageBoxBitmapMargins</b><br>
+Margins for the bitmap scaling. The margins are four comma separated values 
+that define the non-scaled part of the images borders. e.g. MessageBoxBitmapMargins=10,10,0,0 
+would leave 10 pixels from the left and top borders as is and scale the rest.<p>
+
+<b>MessageBoxTextMargins</b><br>
+Margins for the text. The margins are four comma separated values 
+that define the borders for the text (i.e. text is not drawn on the border area).<p>
+
+<b>MessageBoxTextMaxWidth</b><br>
+Maximum width in pixels that the message box can scale. The text is wrapped if longer than that.<p>
+
+<b>MessageBoxSeparation</b><br>
+The horizontal separation of the event texts (i.e. how close/far the texts are
+placed from each other).<p>
+
+<b>EventListW</b><br>
+The width of the event list window.<p>
+
+<b>EventListFont</b><br>
+The font to be used with the event list items. Check below for more info about the
+fonts.<p>
+
+<b>EventListFontColor</b><br>
+Color of the font defined as BGR hex-value (e.g. EventListFontColor=44AAFF)<p>
+
+<b>EventListBitmapName</b><br>
+Name of the EventList window's background image.<p>
+
+<b>EventListBitmapMargins</b><br>
+Margins for the bitmap scaling. The margins are four comma separated values 
+that define the non-scaled part of the images borders. e.g. EventListBitmapMargins=10,10,0,0 
+would leave 10 pixels from the left and top borders as is and scale the rest.<p>
+
+<b>EventListTextMargins</b><br>
+Margins for the text. The margins are four comma separated values 
+that define the borders for the text (i.e. text is not drawn on the border area).<p>
+
+<b>EventListSeparation</b><br>
+The vertical separation of the EventList items (i.e. how close/far the texts are
+placed from each other).<p>
+
+<b>EventListHeaderItemBitmapName</b><br>
+Name of the image for the EventList items.<p>
+
+<b>EventListHeaderItemAlign</b><br>
+0 = TopLeft<br>
+1 = TopRight<br>
+2 = TopCenter<br>
+16 = MiddleLeft<br>
+17 = MiddleRight<br>
+18 = Middle<br>
+32 = BottomLeft<br>
+33 = BottomRight<br>
+34 = BottomCenter<p>
+
+<b>EventListHeaderItemOffset</b><br>
+Offset to the EventList item. This is two comma separated values (e.g. EventListItemOffset=10,-10)<p>
+
+<b>EventListHeaderFont</b><br>
+The font to be used with the event list headers. Check below for more info about the
+fonts.<p>
+
+<b>EventListHeaderFontColor</b><br>
+Color of the font defined as BGR hex-value (e.g. EventListFontColor=44AAFF)<p>
+
+<b>EventListHeaderSeparation</b><br>
+The vertical separation between the header and the items (i.e. how close/far the texts are
+placed from each other).<p>
+
+<b>EventListHeaderFormat</b><br>
+The header format. Check <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vclib/html/_crt_strftime.2c_.wcsftime.asp">here</a> for the format codes.<p>
+
+<p><b><font size="4">Buttons</font></b></p>
+It's also possible to add buttons to the skins. This can be only done in the skin's ini-file as there is no GUI for the buttons.
+To add a button you need to create a new section called [ButtonN] where the N is a number (it can be any number as long as no other button is using it).
+The buttons can have these values:<p>
+
+<b>Window</b><br>
+Defines the window where the button is placed. 0 = Calendar, 1 = Todo, 2 = MessageBox, 3 = EventList.<p>
+
+<b>X</b><br>
+X-coordinate of the button. You can also give negative values in which case the button location is calculated from the 
+right edge of the skin. <p>
+
+<b>Y</b><br>
+Y-coordinate of the button.<p>
+
+<b>BitmapName</b><br>
+The button image. The image must have 3 frames (normal, pushed and hover).<p>
+
+<b>Command</b><br>
+The command that is executed when the button is pressed. It can be a normal application or a bang.<p>
+
+<b>Enable</b><br>
+Set to 0, to disable the item.
+
+<pre>
+[Button1]
+Window=0
+X=5
+Y=5
+BitmapName=button-left.png
+Command=!RainlendarShowPrev
+</pre>
+
+<p><b><font size="4">Time items</font></b></p>
+Time items show the current date or time in the calendar. They can be used to e.g. show a clock or current day.
+Note that the window is updated only once per minute so you cannot use seconds in the clock (or you can but it's rather pointless).
+To add a time item you need to create a new section called [TimeN] where the N is a number (it can be any number as long as no other time item is using it).
+The time items can have these values:<p>
+
+<b>Window</b><br>
+Defines the window where the button is placed. 0 = Calendar, 1 = Todo, 2 = MessageBox, 3 = EventList.<p>
+
+<b>X</b><br>
+X-coordinate of the button. You can also give negative values in which case the button location is calculated from the 
+right edge of the skin. <p>
+
+<b>Y</b><br>
+Y-coordinate of the button.<p>
+
+<b>Rasterizer</b><br>
+FONT = Use fonts to display the items<br>
+BITMAP = Use bitmap to display the items<p>
+
+<b>BitmapName</b><br>
+The bitmap must have numbers from 0 to 9.<p>
+
+<b>Align</b><br>
+0 = TopLeft<br>
+1 = TopRight<br>
+2 = TopCenter<br>
+16 = MiddleLeft<br>
+17 = MiddleRight<br>
+18 = Middle<br>
+32 = BottomLeft<br>
+33 = BottomRight<br>
+34 = BottomCenter<p>
+
+<b>Separation</b><br>
+The horizontal separation of the numbers (i.e. how close/far the numbers are
+placed from each other). This is only applied with bitmaps when the number of 
+components is 10. The value can be negative.<p>
+
+<b>Digits</b><br>
+Number of digits used in the values. This applies only to bitmaps.<p>
+
+<b>Font</b><br>
+The font to be used with the time items. Check below for more info about the fonts.<p>
+
+<b>FontColor</b><br>
+Color of the font defined as BGR hex-value (e.g. FontColor=44AAFF)<p>
+
+<b>Format</b><br>
+The time/date format.
+Check <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vclib/html/_crt_strftime.2c_.wcsftime.asp">here</a> for the format codes.<p>
+
+<b>Enable</b><br>
+Set to 0, to disable the item.
+
+<pre>
+[Time1]
+Window=0
+X=-50
+Y=10
+Rasterizer=FONT
+Font=-17/0/0/0/700/0/0/0/0/3/2/1/34/Arial
+FontColor=FFFFFF
+Format=%d
+</pre>
+
+<p><b><font size="4">Images</font></b></p>
+The images are similar as buttons and time items except that they do not do anything. An image is just drawn in the window.
+To add an image you need to create a new section called [ImageN] where the N is a number (it can be any number as long as no other image is using it).
+The imagess can have these values:<p>
+
+<b>Window</b><br>
+Defines the window where the button is placed. 0 = Calendar, 1 = Todo, 2 = MessageBox, 3 = EventList.<p>
+
+<b>X</b><br>
+X-coordinate of the image. You can also give negative values in which case the button location is calculated from the 
+right edge of the skin. <p>
+
+<b>Y</b><br>
+Y-coordinate of the image.<p>
+
+<b>BitmapName</b><br>
+The name of the image.<p>
+
+<b>Enable</b><br>
+Set to 0, to disable the item.
+
+<pre>
+[Image1]
+Window=0
+X=0
+Y=0
+BitmapName=shine.png
+</pre>
+
+<p><b><font size="4">Fonts</font></b></p>
+
+The fonts are defined with 13 values and the name of the font all separated 
+with '/'-char. The most important values are the first one which defines the 
+height of the font and the last, which is the typeface name of the font. The 
+height of the font is defined in logical size and not in the point size.<p>
+
+E.g. -17/0/0/0/700/0/0/0/0/3/2/1/34/Arial<p>
+
+The different values are in order:<p>
+
+<li>height of font</li>
+<li>average character width</li>
+<li>angle of escapement</li>
+<li>base-line orientation angle</li>
+<li>font weight</li>
+<li>italic attribute option</li>
+<li>underline attribute option</li>
+<li>strikeout attribute option</li>
+<li>character set identifier (this is always DEFAULT_CHARSET unless UseSkinCharSet is set to 1)</li>
+<li>output precision</li>
+<li>clipping precision</li>
+<li>output quality</li>
+<li>pitch and family</li>
+<li>typeface name</li>
+<p>
+Check <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/gdi/fontext_8fp0.asp">CreateFont()</a> in Win32 API documentation for more info.<p>
+
+<p><b><font size="4">Profiles</font></b></p>
+With profiles you can customize individual events. When you create an event 
+there is a combo box which can be used to select the profile for the event. The combo box
+lists the profiles that are defined in the current skin's ini-file, but 
+you can also give a custom profile name. If a certain profile is not 
+defined in a skin a default settings are used instead.<p>
+
+The profiles are defined in the skin file by making a new section. The name
+of the section must start with the word "Profile" (without the quotes). After
+that you can put pretty much anything to make the section unique (i.e. there
+cannot be two sections that have same name (i.e. the string between []-chars, 
+not the "Name=" string).<p>
+
+The profile section must have a key called Name, which will give the identity 
+to the profile. The name is the one that is displayed in the Edit Event dialog.<p>
+
+Other keys that can be in the profile section are:<p>
+
+<li>ToolTipFontColor</li>
+<li>EventBitmapName</li>
+<li>EventFontColor</li>
+<li>EventFontColor2</li>
+<li>EventIconName</li>
+<li>EventIconAlign</li>
+<li>EventDrawAlways</li>
+<li>EventListFontColor</li>
+<li>Priority</li><p>
+
+The values for the keys are exactly the same as defined above. The profile 
+settings override the default skin settings, so for example if the default
+ToolTipFontColor value is black and you create a profile that defines it
+white, all events that use that profile will draw the tooltip texts white.
+Note that it is not necessary to give all the keys always; you can define
+just the ones that are necessary (default values are used for the missing
+keys).<p>
+
+The EventIconName, EventIconAlign and EventDrawAlways can only be used with 
+the profiles. The event icon is a small image that is displayed on top of the 
+event with the given profile. The align uses the same alignment system as other 
+aligns (check e.g. DaysAlign for the codes). If the EventDrawAlways is set to 1 
+it means that the event is drawn always on the calendar.<p>
+
+The priority defines what is drawn on the calendar when there are several
+event on the same day. The repeating events also have predefined priorities so 
+that less frequently happening events have higher priority. Like this:<p>
+
+<pre>
+Daily Priority    = 10
+Weekly Priority   = 20
+Monthly Priority  = 30
+Yearly Priority   = 40
+Single Priority   = 50
+</pre>
+
+The profile's priority value is added to this to determine the actual priority
+for the event. If you don't want that the recurrence pattern affects the priorities
+of the events you can define them so that they are >50 apart from each other. E.g.
+100, 200, 300, etc.<p>
+
+Currently it is not possible to create/edit the profiles from the GUI. 
+You need to create by hand with a text editor.<p>
+
+E.g.<p>
+<pre>
+[Profile 1]
+Name=Sunday
+ToolTipFontColor=00DDFF
+EventFontColor=DD8888
+
+[Profile 2]
+Name=Important
+ToolTipFontColor=FFFFFF
+EventFontColor=FFFFFF
+EventFontColor2=FFFFFF
+EventIconName=Icons/Lightning.png
+EventIconAlign=18
+</pre>
+
+<!-- CLIP -->
+			</div>
+			</td>
+			<td width="56" background="images/right.gif">&nbsp;</td>
+		</tr>
+	</table>
+</div>
+<div align="center">
+	<table border="0" width="95%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="56"><img border="0" src="images/bottomleft.gif" width="56" height="62"></td>
+			<td background="images/bottom.gif" align="right" valign="top">&nbsp;</td>
+			<td width="56"><img border="0" src="images/bottomright.gif" width="56" height="62"></td>
+		</tr>
+	</table>
+</div>
+
+</body>
+
+</html>
+
+

@@ -1,0 +1,198 @@
+Introduction
+------------
+
+This is the server part of the Rainlendar calendar. You only need this 
+if you are going to use the network distribution of the events. Note 
+that the server is meant only for single user usage. The main purpose 
+of it is to synchronize the events between two computers. 
+There is some additional information in the Rainlendar's documentation 
+(see the ServerPlugin), which I suggest that you read before trying to 
+run this server.
+
+The Windows version needs pthreadVCE.dll. Get it from here: 
+ftp://sources.redhat.com/pub/pthreads-win32/pthreads-dll-2004-06-22/lib/
+
+IMPORTANT: The protocol is not secure. All the information is send as a 
+plain text and since there is no authentication anyone can read and 
+modify your events if they can guess the user ID. So, it is adviced that 
+you set up your firewall so that it accepts connections from your IP.
+
+
+Setup
+-----
+Just run RainlendarServer.exe (or rainlendarserver on Linux) from command 
+prompt. You need to give the server permission to use the network in your 
+firewall.
+
+You should try the server synchronization on the local machine first to 
+see that everything works ok. Start the RainlendarServer.exe from command 
+prompt and make it to listen the default port 9999. Verify that the server 
+actually is listening to the port by running netstat -a from another 
+command prompt (you should see that port 9999 is marked as listening).
+
+After you have the server running start the Rainlendar client (i.e. the 
+calendar) and enable the ServerPlugin in the Config->Plugins. Go to the 
+plugin's settings and put localhost in the Address field of the server 
+settings and number 9999 in the Port field. You can write anything to 
+the ID field. Then just click Ok to exit from dialogs and the client 
+should connect to the server. Check the log on both server and client 
+to verify this.
+
+If you get the connection established on the local machine you can move 
+the RainlendarServer to a remote machine and start it there. Change the 
+address field to match the ip of the remote machine and try the 
+synchronizing again. If the connection cannot be made, you probably have 
+a firewall on the remote machine that prevents connections to the used 
+port. In this case you can try to use other ports or open a hole in your 
+firewall for Rainlendar.
+
+It is also possible that the server locks up sometimes. The server will 
+in that state just inform that it's busy and cannot serve you at the 
+moment. If that happens you should just wait a while as the server should 
+reset itself in couple of minutes automatically (if it doesn't, restart 
+it manually and write a comprehensive bug-report :-).
+
+
+Usage
+-----
+The server takes few optional command line arguments.
+
+ -h,--help                = this message
+ -p,--port <port>         = run server on port <port>
+ -d,--daemonize           = daemonize server (not available in win32)
+ -l,--log <folder>        = write log to a file instead to console
+ -f,--filter <filterfile> = use the given file as the ip-filter
+ -m,--multi               = allow multiple instances (only in win32)
+ -t,--target <folder>     = The place where the database files are stored
+ --install                = install as service (only in win32)
+ --remove                 = remove service (only in win32)
+ --start                  = start service (only in win32)
+ --stop                   = stop service (only in win32)
+
+
+
+Filtering 
+---------
+It is possible to filter events according to their profiles and the 
+IP-number of the clients. You can have separate allow and deny lists 
+for both incoming and outgoing packages. When an event comes to the 
+server it checks the AcceptIncoming-list. If there is a match the 
+packet is handled in the server. If there is no match the DenyIncoming 
+is checked to see if the packet should be denied. If there is no match
+in both of the lists the packet is allowed to the server. 
+
+The outgoing-lists work the same way.
+
+The IP-numbers are two parted consisting of the number and the mask. The 
+mask defines how many bits are valid from the start of the number. 
+
+Few examples:
+
+0.0.0.0/0 = all IP numbers
+192.168.0.1/32 = Just the 192.168.0.1
+192.168.0.1/24 = IPs from 192.168.0.0 to 192.168.0.255
+
+Todo, done and notes also have a profile that can be used for filtering. 
+
+The profiles are "Todo", "Done" and "Note";
+
+See the filter.txt for an example.
+
+
+Running as service
+------------------
+Run from command line:
+
+RainlendarServer --install
+RainlendarServer --start
+
+That's it. If you need to define command line arguments you can give them 
+at the same time as the --install. Also, make sure that the server works 
+by running it from the command line before installing it as a service. 
+
+To uninstall run from command line:
+
+RainlendarServer --stop
+RainlendarServer --remove
+
+You need to manually remove the database files from ~/.rainlendarserver/ 
+
+(in Linux) or %APPDATA%\RainlendarServer\ (in Windows).
+
+Protocol
+--------
+
+- Client sends one or more events to the server
+
+----------                 ----------
+| Client |                 | Server |
+----------                 ----------
+    |      pcUpdateEvents       |
+    |-------------------------->|
+    |                           |
+    |    pcWaitingForEvents     |
+    |<--------------------------|
+    |                           |
+    |          pcEvent          |
+    |-------------------------->|
+    |          pcEvent          |
+    |-------------------------->|
+    |            ...            |
+    |                           |
+    |                           |
+    |          pcResult         |
+    |<--------------------------|
+    |                           |
+
+
+- Client requests one or more events from the server
+
+----------                 ----------
+| Client |                 | Server |
+----------                 ----------
+    |                           |
+    |      pcRequestEvents      |
+    |-------------------------->|
+    |                           |
+    |      pcSendingEvents      |
+    |<--------------------------|
+    |                           |
+    |     pcWaitingForEvents    |
+    |-------------------------->|
+    |                           |
+    |          pcEvent          |
+    |<--------------------------|
+    |          pcEvent          |
+    |<--------------------------|
+    |            ...            |
+    |                           |
+    |          pcResult         |
+    |-------------------------->|
+    |                           |
+
+
+- Server can also send pcServerBusy, pcIncorrectVersion and pcError 
+in some situations.
+
+
+Compiling in Linux
+------------------
+
+The server (and ServerPlugin) needs Simple Server Objects by Lee Patterson
+(http://ssobjects.sourceforge.net/). The server also need PThreads 
+(http://sources.redhat.com/pthreads-win32/) in Windows. Get those and 
+compile them. 
+
+Then just run configure and make. Note that you need to point $CPPFLAGS and
+
+$LDFLAGS to the place where the ssobjects is. E.g. like this:
+
+
+export CPPFLAGS="$CPPFLAGS -I/home/rainy/sources/ssobjects"
+export LDFLAGS="$LDFLAGS -L/home/rainy/sources/ssobjects"
+./configure
+make
+
+You can then install the server:
+
+make install

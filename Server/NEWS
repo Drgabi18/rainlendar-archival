@@ -1,0 +1,22 @@
+Upgrading from 0.6 to 0.7
+-------------------------
+The place where the database files are created has been changed. They
+are now placed in your home folder ($HOME/.rainlendarserver on Linux and
+%APPDATA%\RainlendarServer on Windows). It's possible to override this
+with the -t setting.
+
+
+Upgrading from 0.5 to 0.6
+-------------------------
+If you're upgrading from 0.5 or earlier version you should note that the
+event identification system has been changed in 0.6. This means that all 
+events are considered unique also if they are on different clients. So, 
+if you sync two clients that both have events both clients get the events 
+from each other (i.e. your events get doubled). To prevent this you need 
+to sync the events from one client to the others (i.e. the other clients 
+must not have any events).
+
+The fileformat that the server uses has also changed so the old ini-files 
+are not used anymore.
+
+

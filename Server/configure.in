@@ -1,0 +1,38 @@
+AC_INIT(RainlendarServer.h)
+AM_INIT_AUTOMAKE(rainlendarserver, 0.7)
+AC_PROG_INSTALL
+AC_PROG_CXX
+
+AC_CHECK_LIB(pthread, main)
+AC_CHECK_LIB(ssobjects, main)
+AC_HEADER_STDC
+AC_CHECK_HEADER(simpleserver.h)
+AC_OUTPUT(Makefile)
+
+#if test "$HAVE_LIBPTHREAD" != 1; then
+#  echo
+#  echo "** WARNING **"
+#  echo "** libpthread not found."
+#  echo "** You need to add the path to the library to \$LDFLAGS:"
+#  echo "** export LDFLAGS=\"\$LDFLAGS -L/path/to/pthread\""
+#fi
+#
+#if test "$HAVE_LIBSSOBJECTS" != 1; then
+#  echo
+#  echo "** WARNING **"
+#  echo "** libssobjects not found. If you don't have it"
+#  echo "** go to http://ssobjects.sourceforge.net and install it."
+#  echo "** You also need to add the path to the library to \$LDFLAGS:"
+#  echo "** export LDFLAGS=\"\$LDFLAGS -L/path/to/pthread\""
+#fi
+#
+#if test "$HAVE_SIMPLESERVER" != 1; then
+#  echo
+#  echo "** WARNING **"
+#  echo "** simpleserver.h not found."
+#  echo "** Define the path to the ssobjects to \$CPPFLAGS:"
+#  echo "** export CPPFLAGS=\"\$CPPFLAGS -I/path/to/ssobjects\""
+#fi
+#
+#echo
+#echo "Finished. You can run make now."

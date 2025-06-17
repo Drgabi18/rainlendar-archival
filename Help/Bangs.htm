@@ -40,8 +40,8 @@ The bangs can also be used in other places (e.g. buttons) to control the calenda
       <p><b>!RainlendarHide<br>
       </b>Hides all Rainlendar windows.</p>
 
-      <p><b>!RainlendarToggle<br>
-      </b>Toggles all Rainlendar windows.</p>
+      <p><b>!RainlendarToggle [Visible]<br>
+      </b>Toggles all Rainlendar windows. If visible-argument is given only the visible windows are toggled.</p>
 
       <p><b>!RainlendarConfig<br>
       </b>Opens the config-dialog.</p>
@@ -112,7 +112,22 @@ The bangs can also be used in other places (e.g. buttons) to control the calenda
       
       <p><b>!RainlendarAddEvent [Day] [Month] [Year]<br>
       </b>Opens the new event dialog for the given date.</p>
+
+      <p><b>!RainlendarShowItem [Section]</b><br>
+      Shows the given item. The argument is the name of the item's section in the skin's ini-file.</p>
       
+      <p><b>!RainlendarHideItem [Section]</b><br>
+      Hides the given item. The argument is the name of the item's section in the skin's ini-file.</p>
+      
+      <p><b>!RainlendarToggleItem [Section]</b><br>
+      Toggles the given item. The argument is the name of the item's section in the skin's ini-file.</p>
+
+      <p><b>!RainlendarRedraw</b><br>
+      Redraws the window. You need to use this if you hide/show items.</p>
+      
+      <p><b>!RainlendarChangeSkin [Skin\IniFile]</b><br>
+      Changes the skin. The argument is the name of the skin and name of the ini-file separated with '\'-char. E.g. !RainlendarChangeSkin Shadow3.1\English.ini</p>
+    
       <p><b>!Execute<br>
       </b>It's possible to combine multiple bangs together with the !Execute bang. The bags are
       separated with []. E.g. !Execute [!RainlendarToggleCalendar][!RainlendarToggleTodo]</p>

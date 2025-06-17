@@ -1,0 +1,113 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Finnish resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FIN)
+#ifdef _WIN32
+LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_OUTLOOK_DIALOG DIALOG DISCARDABLE  0, 0, 277, 209
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "#Outlook settings#"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "#OK#",IDOK,84,188,50,14
+    PUSHBUTTON      "#Cancel#",IDCANCEL,142,188,50,14
+    EDITTEXT        IDC_PROFILE_EDIT,83,15,181,14,ES_AUTOHSCROLL
+    CONTROL         "#Use Outlook label as event profile#",IDC_LABELS_CHECK,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,83,33,181,10
+    CONTROL         "#Keep MAPI connection alive#",IDC_KEEPALIVE_CHECK,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,83,46,181,10
+    RTEXT           "#Outlook profile:#",IDC_OUTLOOK_PROFILE_STATIC,13,17,68,
+                    8
+    CONTROL         "#Don't show message body#",IDC_NO_MESSAGE_CHECK,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,83,58,181,10
+    CONTROL         "#Don't show done tasks#",IDC_NO_DONE_TASKS_CHECK,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,83,71,181,10
+    GROUPBOX        "#Imported message stores#",IDC_MESSAGE_STORES_GROUP,7,
+                    86,263,96
+    GROUPBOX        "#General settings#",IDC_GENERAL_GROUP,7,7,263,78
+    CONTROL         "List1",IDC_STORE_LIST,"SysListView32",LVS_REPORT | 
+                    LVS_NOCOLUMNHEADER | WS_BORDER | WS_TABSTOP,14,98,250,77
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO MOVEABLE PURE 
+BEGIN
+    IDD_OUTLOOK_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 270
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 202
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE MOVEABLE PURE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE MOVEABLE PURE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE MOVEABLE PURE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Finnish resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

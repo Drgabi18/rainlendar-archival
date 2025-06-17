@@ -1,0 +1,282 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<HEAD>
+<meta name="GENERATOR" content="Microsoft&reg; HTML Help Workshop 4.1">
+<Title>Introduction</Title>
+</HEAD>
+<body bgcolor="#A25D56" text="#603D37" link="#3E6099" vlink="#3E6099" alink="#000000">
+
+<div align="center">
+	<table border="0" width="95%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="56">
+			<img border="0" src="images/topleft.gif" width="56" height="56"></td>
+			<td background="images/top.gif" align="left" valign="bottom"><font size="6"><b>SETTINGS</b></font></td>
+			<td width="56">
+			<img border="0" src="images/topright.gif" width="56" height="56"></td>
+		</tr>
+	</table>
+</div>
+
+<div align="center">
+	<table border="0" width="95%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="56" background="images/left.gif" align="right" valign="top">&nbsp;</td>
+			<td bgcolor="#DBCCB1" align="center" valign="top">
+			<div align="left">
+
+<!-- CLIP -->
+
+<p>The basic configuration of the calendar is done from a
+GUI which you open from the popup-menu. The settings are saved in
+a <i>Rainlendar.ini</i>-file when you press the OK-button.</p>
+
+<p><b><font size="4">General</font></b></p>
+
+<p><b>Show event message in tooltip<br></b>
+If enabled a tooltip will open when you move the mouse over a day that has an event. The tooltip will display all the day's events.
+
+<p><b>Show message alarms<br></b>
+If enabled a message box will be opened when an event is due. The message box will always be opened in the middle of your desktop.
+
+<p><b>Show all today's messages at startup<br></b>
+If enabled a message box will be opened when Rainlendar is started. The message box will display all the today's events.
+
+<p><b>Disable keyboard shortcuts<br>
+</b>If enabled the keyboard shortcuts are disabled. Note that this setting doesn't apply to the global hotkeys defined in the Hotkeys-tab.</p>
+
+<p><b>Poll wallpaper changes<br>
+</b>If Rainlendar doesn't automatically notice wallpaper changes (as it should) you can enable this feature. When enabled Rainlendar checks once per second if the name of the wallpaper has been changed and if it has, the calendar is automatically refreshed. If you're using native transparency you should  keep this disabled.</p>
+
+      <p><b>Snap to screen edges<br>
+      </b>If selected the window will snap to the edges of the screen and other windows. You can deactivate the snapping by holding 
+      Shift-key down while dragging the window.</p>
+
+      <p><b>Refresh when screen resolution changes<br>
+      </b>If selected the calendar is automatically refreshed when the screen 
+      resolution is changed. Note that this may cause problems with some  
+      games and full screen applications.</p>
+
+      <p><b>Use separator in tooltips<br>
+      </b>If selected a horizontal line is drawn between the events in the 
+      tooltip.</p>
+
+      <p><b>Show tray icon<br>
+      </b>This displays the current date in your system tray. Doubleclicking the 
+      icon toggles the window visibility.</p>
+
+      <p><b>Use native Windows transparency<br>
+      </b>If selected the calendar will use the native Windows
+transparency for its alphablended window. Otherwise the alphablending is
+done manually with the desktop wallpaper. Native transparency works only with Windows 2000 and XP.
+You can also adjust the overall transparency value from the slider.</p>
+
+<p><b>Enable/Disable Log</b><br>
+Creates (or deletes) the Rainlendar's log-file. The log is written into the same folder where Rainlendar.dll is (usually C:\Program Files\Rainlendar). 
+
+<p><b>Show Log</b><br>
+Opens the log-file with notepad.
+
+<p><b>Advanced</b><br>
+Opens the Rainlendar.ini with notepad. See the advanced section below.   
+
+<p><b><font size="4">Layout</font></b></p>
+
+      <p><b>Position</b><br>
+The OnBottom makes the window to stay behind other windows
+when it's activated with mouse. Normal makes the window behave like normal windows and OnTop makes the calendar to stay on top of other
+windows. The OnDesktop setting is similar to OnBottom except that it
+makes a child window of the desktop. The benefit from this is that
+the calendar will be visible event if Explorer's "Show Desktop"
+command is issued. The OnDesktop only works with Explorer shell.</p>
+
+<p><b>Event list window<br></b>
+You can define here how many days the event list will show. The "Substitute today and tomorrow" 
+means that instead of using the name of the day (e.g. Monday) in the event list "Today" and "Tomorrow"
+will be used.
+</p>
+
+<p><b>Other settings<br>
+      </b>If "Movable window" is selected, the calendar can be moved
+with the       mouse. Please note that if the background has an alpha
+mask and the desktop       is copied behind the calendar, the moving is
+really slow and can cause       problems with some graphics cards. So,
+I'd suggest to use this feature       only with non-alpha backgrounds or with 
+      native transparency. </p>
+
+      <p>The "Hide on mouse over" hides the calendar when the mouse is
+over the       window. The calendar will reappear once the mouse is
+moved off the window.       You can disable this feature temporarily by
+holding Shift-key down while moving the mouse.</p>
+
+      <p>&quot;Remember dialog positions&quot; will save the place (and size) where a 
+      dialog was closed last time and open it in the same location in the next 
+      time.</p>
+      
+      <p>The "Click through" passes all the mouse events through the calendar. This means
+that you cannot click the calendar (or the other windows except the message box). 
+     You can disable this feature temporarily by
+holding Shift-key down while moving the mouse (It's not registered immediately so keep the key down for one sec before click through is disabled).</p>
+
+      <p><b>Multiple calendars<br>
+      </b>This defines how many months are shown in the calendar at the same 
+      time. You can set the horizontal and vertical count for the months as well 
+      as the the number of previous months are displayed. The &quot;Start from 
+      January&quot; option shows January always as the first month. This is useful if 
+      you want to show all year at the same time on the desktop.</p>
+
+<p>Opaque on mouse over<b></b><br>
+Changes the window to completely opaque when the mouse is moved over the calendar. The window should
+have some transparency assigned with the slider in the General-tab or otherwise this feature doesn't
+do much.</p>
+
+<p><b>Transparent on mouse over</b><br>
+Changes the window transparent when the mouse is moved over the calendar. The transparency level is
+set with the slider in the General-tab. Note that the window is always completely opaque when this
+setting is set and the mouse is not over the window.</p>
+
+<p><b><font size="4">Hotkeys</font></b></p>
+      <p>This page enables to add hotkeys to various actions. The hotkeys are 
+      global so it's not necessary to have Rainlendar activated when pressing 
+      the keys. It's adviced not to use too simple hotkeys (like Shift + A) 
+      since that would execute the hotkey every time you write capital A letter.</p>
+
+<p><b><font size="4">Plugins</font></b></p>
+Here is a list of installed plugins. See the Plugins page in this document for more information about them. The plugins can ge activated and deactivated from here. If the plugin has settings they can be edited by selecting the plugin from the list and pressing the Settings-button. The "Set as Default" button makes the plugin a default which basically means that it's editor (if it has one) will be used when creating new events.
+
+<p><b><font size="4">Advanced</font></b></p>
+There are also some other settings in the Rainlendar.ini that cannot be changed from the GUI. It's possible to change them directly from the Rainlendar.ini. Do not keep the config dialog open when editing the Rainlendar.ini or the settings will be overwritten when you press the OK-button. After you have edited the settings, refresh the calendar and the new sttings will be taken into use.<p>
+
+Here's a list of the settings in Rainlendar.ini (only the ones that cannot be changed from the GUI):<p>
+
+<b>X, 
+Y, 
+TodoX, 
+TodoY, 
+EventListX, 
+EventListY</b><br>
+Defines the location of the calendar, todo and event list windows.<p>
+
+<b>MessageBoxX and MessageBoxY</b><br>
+Defines the location of the Message Box. Note that the position is not pixels like in the other windows but percent of the desktop area.</p>
+
+<b>MessageBoxY</b><br>
+</p>
+
+<b>ToolTipMaxWidth</b><br>
+Defines the maximum width (in pixels) of the tooltip. If set to 0 there is no limit.<p>
+
+<b>MessageBoxMaxWidth</b><br>
+Defines the maximum width (in pixels) of the message box. If set to 0 there is no limit.<p>
+
+<b>StartFromMonday</b><br>
+If set to 1 the week will start from Monday (otherwise it's started from Sunday). This is automatically set according to your locale when Rainlendar is started the first time.<p>
+
+<b>Week1HasJanuary1st</b><br>
+If set to 1 the week 1 is the one that has January 1st. Otherwise its the one that has the year's first Thursday. This is automatically set according to your locale when Rainlendar is started the first time.<p>
+
+<b>WeekNumberDelta</b><br>
+This is an offset value for the week numbers. You can adjust the week 1 with this. Also negative numbers can be used.<p>
+
+<b>StartHidden</b><br>
+If set to 1 Rainlendar will start as hidden.<p>
+
+<b>UseWindowName</b><br>
+If set to 1 the window will have a name "Rainlendar". Useful feature e.g. with some virtual windows managers.<p>
+
+<b>EventExecute</b><br>
+Executes the given program or bang when the event is due and the message box is displayed. You can also use the
+special PLAY command to play a wav-file (E.g. PLAY c:\windows\media\chimes.wav).<p>
+
+<b>SnoozeTime</b><br>
+If the message box is snoozed with right mouse button this value defines how long time it will be hidden.
+The value is in seconds.<p>
+
+<b>TrayExecuteL, 
+TrayExecuteM, 
+TrayExecuteR, 
+TrayExecuteDL, 
+TrayExecuteDM, 
+TrayExecuteDR</b><br>
+These define the action that is done when the tray icon is clicked with the mouse. The L, M and R mean left, middle and right mouse button and the D in front of them means double click. <p>
+
+<b>DisableDoneList</b><br>
+If set to 1, the done list is removed from the Todo-dialog and the done items will be deleted immediately instead of sending them to the done-list.<p>
+
+<b>WheelScrollMonths</b><br>
+Defines how many months are scrolled whit the mouse wheel. Set to 0 to disable the feature. You can also use negative values to swap the direction.<p>
+
+<b>NegativeCoords</b><br>
+This setting makes the position to be interpret so that the negative coordinates are relative to the bottom right corner of the desktop. It's useful for example to keep the calendar there even if you change the screen resolutions. Note that if you have enabled &quot;Movable window&quot; the negative coordinates are converted to positive when the window is moved. If you have trouble keeping the calendar on a secondary monitor try setting this to 0.</p>
+
+<b>FadeDuration</b><br>
+The time in ms that defines how long the fading effects take. Set to 0 to disable the fading.</p>
+
+<b>GrowUpwards</b><br>
+Normally when new items are added the event list and todo window grow downwards. That behaviour can be changed with this setting. You can set this to 2 if you want that the todo-window grows upwards, 8 if you want that the event list grows upwards or 10 if you want both windows to grow upwards. DO NOT USE ANY OTHER VALUES!!!</p>
+
+<b>ShowContextMenu</b><br>
+If set to 1 a context menu instead of full menu is shown when right mouse button is pressed over one of the windows.</p>
+
+<b>CalendarAction</b><br>
+Defines what happens when you double click the calendar:<br>
+0=Default behaviour. If an event is selected opens the context menu otherwise creates a new event.
+1=Edits the first event or creates a new event.<br>
+2=Always creates a new event.<br>
+3=Deletes the selected event(s).</p>
+
+<b>TodoAction</b><br>
+Defines what happens when you double click the todo window:<br>
+0=Default behaviour. If an todo item is selected opens the context menu otherwise opens the todo dialog.
+1=Marks the todo item checked.<br>
+2=Opens the todo dialog and selects the item.<br>
+3=Opens the todo dialog.<br>
+4=Deletes the todo item.<br>
+5=Marks the todo item as done.</p>
+
+<b>EventListAction</b><br>
+Defines what happens when you double click the event list window:<br>
+0=Default behaviour. If an event is selected opens it for editing.
+1=Creates a new event.<br>
+2=Deletes the selected event.</p>
+
+<b>HideFromCalendar</b><br>
+List of profiles that you don't want to be visible in the calendar. Separate the list with ';'-char. E.g. HideFromCalendar=Birthday;Personal;Outlook
+</p>
+
+<b>HideFromEventList</b><br>
+List of profiles that you don't want to be visible in the event list. Separate the list with ';'-char. E.g. HideFromEventList=Birthday;Personal;Outlook
+</p>
+
+<b>DisableKeyboardOverride</b><br>
+Disables the Shift-key override with click through and hide on mouse over. Be careful with this one: it's quite hard
+to change the settings if you cannot click the windows anymore. Especially if you have hidden the tray icon too.</p>
+
+<b>ConfigEditor</b><br>
+Define the editor that you want to use when advanced-button is clicked in the config or skin dialog. Do not use spaces in the path or filename.</p>
+
+<b>UseSkinCharSet</b><br>
+Set to 1 if you want to use the charset defined in the skin's fonts. Otherwise the fonts use the default charset defined in Windows locale.
+</p>
+
+<!-- CLIP -->
+			</div>
+			</td>
+			<td width="56" background="images/right.gif">&nbsp;</td>
+		</tr>
+	</table>
+</div>
+<div align="center">
+	<table border="0" width="95%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="56"><img border="0" src="images/bottomleft.gif" width="56" height="62"></td>
+			<td background="images/bottom.gif" align="right" valign="top">&nbsp;</td>
+			<td width="56"><img border="0" src="images/bottomright.gif" width="56" height="62"></td>
+		</tr>
+	</table>
+</div>
+
+</body>
+
+</html>
+

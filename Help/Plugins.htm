@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<HEAD>
+<meta name="GENERATOR" content="Microsoft&reg; HTML Help Workshop 4.1">
+<Title>Introduction</Title>
+</HEAD>
+<body bgcolor="#A25D56" text="#603D37" link="#3E6099" vlink="#3E6099" alink="#000000">
+
+<div align="center">
+	<table border="0" width="95%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="56">
+			<img border="0" src="images/topleft.gif" width="56" height="56"></td>
+			<td background="images/top.gif" align="left" valign="bottom"><font size="6"><b>PLUGINS</b></font></td>
+			<td width="56">
+			<img border="0" src="images/topright.gif" width="56" height="56"></td>
+		</tr>
+	</table>
+</div>
+
+<div align="center">
+	<table border="0" width="95%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="56" background="images/left.gif" align="right" valign="top">&nbsp;</td>
+			<td bgcolor="#DBCCB1" align="center" valign="top">
+			<div align="left">
+
+<!-- CLIP -->
+
+<p><b><font size="4">IniFormatPlugin</font></b></p>
+<p>This plugin uses Rainlendar's custom ini-format for the events. The plugin 
+can read and write events. You can have multiple event and todo files. The 
+plus-button adds a new file and the cross removes the selected file. Note that 
+the items will be saved to all of them unless you set them Read-Only (can be set 
+from the star-button). Read Only events cannot be modified and they are not sent 
+to other plugins (including the ServerPlugin, so they are not distributed).</p>
+
+<hr noshade>
+
+<p><font size="4"><b>Outlook Plugin</font></b></p>
+<p>This plugin can read appointments and tasks from Outlook. The read items are 
+considered as read-only so they cannot be modified. The plugin is meant to be used only 
+in Win2k or WinXP (the timezone conversion does not work in Win9x).</p>
+<p>Note that the exception dates are not supported. So if you have a repeating
+event and you have deleted/modified one of the events in Outlook Rainlendar will show the
+original event still.</p>
+<p><b>Outlook Profile<br>
+</b>If you have an Outlook profile write it here. If not, leave this empty.</p>
+<p><b>Use Outlook labels as event profiles<br>
+</b>If enabled the labels in Outlook appointments are used as Rainlendar's event 
+profiles. Otherwise the profiles are called &quot;Outlook&quot;.</p>
+<p><b>Keep MAPI-connection alive<br>
+</b>If enabled the MAPI connection is not closed after the appointments have 
+been read from Outlook. I suggest to keep this enabled otherwise since MAPI 
+leaks memory.</p>
+<p><b>Don't show message body<br>
+</b>If enabled only the subject-field&nbsp; is shown,</p>
+<p><b>Don't show completed tasks<br>
+</b>If enabled the completed tasks do not appear in the todo-list.</p>
+<p><b>Imported message stores<br>
+</b>This lists all the message stores that are supported by Rainlendar. You can select which ones are read from Outlook.</p>
+
+<hr noshade>
+
+<p><b><font size="4">ServerPlugin</font></b></p>
+
+
+      <p>This plugin syncronizes the events with a different clients. You need 
+		to be running the RainlendarServer (see the ReadMe.txt in the server 
+		package for more info). If the plugin is made as a default it updates 
+		the event from the server before it is edited, so there might be a small 
+		delay before the Edit Event-dialog is opened. The events are requested 
+		from the server when Rainlendar is started or when it is refreshed.</p>
+
+      <p><b>User ID<br>
+      </b>The User ID is the identification for your events. The server will
+use the       ID to store and retrieve the events. So, you can use the
+same server to       store different events from clients by giving
+different IDs. Please note       that there is no security checks or
+authentication of any kind, so       basically anyone who can access to
+the server from network can read and       modify your events. If you
+are running Linux version of the server, the ID       is case sensitive.</p>
+      <p><b>Address<br>
+      </b>This is the address of the the computer that runs the
+RainlendarServer. You can use the IP number or the network name if the 
+machine has one. Note that there is no public server that you can
+connect to (as far as I know), so you need to run the RainlendarServer
+on your own       computer or on a one that you have access to.</p>
+
+<p><b>Port<br>
+</b>The is the port that the Rainlendar tries to connect to. You
+can use       any port you wish, just make sure that it's the same what
+RainlendarServer       is listening.</p>
+
+<p><b>Poll events from the server<br>
+</b>If enabled the plugin checks for new events from the server after the specified time period.</p>
+
+<hr noshade>
+
+<p><font size="4"><b>iCalendar Plugin</font></b></p>
+<p>This plugin can read/write events and tasks from .ics files. This plugin can be used for example to show Sunbird's events in Rainlendar. The plugin is meant to be used only in Win2k or WinXP.</p>
+
+      <p><b>Refresh when file changes</b><br>
+      If enabled the plugin monitors the files and reloads them when they change.</p>
+      
+      <p><b>Ignore completed tasks</b><br>
+      If enabled the completed tasks are not shown in the todo-list.</p>
+
+Few Notes:<br>
+<li>It's a bad idea to use the same .ics-file in different applications (unless you load it as read-only). You are asking for problems if you for example edit the Sunbird's file with Rainlendar while both applications are running.</li>
+<li>If the UID (i.e. identification string) is not in correct format the event/todo-item is always imported as read-only.</li>
+<li>Deleting an event removes it completely from the .ics-file. This can cause problems with RainlendarServer.</li>
+<li>The iCalendar does not have a done-list so tasks that are moved to there are not saved to the ics-file.</li>
+<li>Exception dates are not supported!</li>
+<!-- CLIP -->
+			</div>
+			</td>
+			<td width="56" background="images/right.gif">&nbsp;</td>
+		</tr>
+	</table>
+</div>
+<div align="center">
+	<table border="0" width="95%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="56"><img border="0" src="images/bottomleft.gif" width="56" height="62"></td>
+			<td background="images/bottom.gif" align="right" valign="top">&nbsp;</td>
+			<td width="56"><img border="0" src="images/bottomright.gif" width="56" height="62"></td>
+		</tr>
+	</table>
+</div>
+
+</body>
+
+</html>
+
+

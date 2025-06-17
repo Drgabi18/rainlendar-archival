@@ -27,6 +27,62 @@
 
 <!-- CLIP -->
 
+      <p>1 MAR 2005 (Version 0.21 ß)</p>
+      <ul>
+	    <li>Added support for iCalendar files.</li>
+	    <li>Fixed a bug when importing old Rainlendar events that had time in the message left the time and removed the rest of the text even though it should have done exactly the opposite :-(</li>
+	    <li>The plugin doesn't have to be active to be able to export events.</li>
+	    <li>Fixed a crash bug when todo-files were removed from the IniFormatPlugin's list.</li>
+	    <li>OutlookPlugin is not directly dependent from mapi32.dll anymore. This should get rid of those missing ordinal errors.</li>
+	    <li>Fixed a problem where the end time was shown as one minute less than what it really was.</li>
+	    <li>Added automatic polling to the ServerPlugin.</li>
+	    <li>Recurrency -> Recurrence</li>
+	    <li>All events list doesn't lose the selection when event is edited.</li>
+	    <li>Monthly recurrence displayed sometimes 'fifth' instead of 'last' like it should have been. Fixed.</li>
+	    <li>Seventh day of the month was displayed to belong to the second week in the monthly recurrence. Fixed.</li>
+	    <li>Rainlendar now checks if it's already running before it starts. Use -m argument to disable the check.</li>
+	    <li>Deleting items from the Done-list didn't work very well. Fixed.</li>
+	    <li>The events in the message box are now sorted.</li>
+	    <li>The "due in ..." text is not shown for the all day events and negative numbers are not shown for past events.</li>
+	    <li>Editing todo-items when ServerPlugin was set as default crashed Rainlendar. Fixed.</li>
+	    <li>Added fading effect. Use FadeDuration=0 to disable it.</li>
+	    <li>Added "Opaque on mouse over" and "Transparent on mouse over" features.</li>
+	    <li>Disabled possibility to open several instances of the dialogs.</li>
+	    <li>Todo and events list can be made to grow upwards with GrowUpwards.</li>
+	    <li>The hidden windows do not pop up anymore when "Hide on mouse over" is selected.</li>
+	    <li>Sorting algorithm of the events now uses only the time and not the date.</li>
+	    <li>It's possible to select which message stores are imported from Outlook.</li>
+	    <li>Removed negative coords option from the config dialog (no point keeping it there).</li>
+	    <li>Transparency settings won't apply to the message box; it is always opaque.</li>
+	    <li>Stretched background is not included in the calendar size.</li>
+	    <li>Fixed a crash bug with recurring events.</li>
+	    <li>Changed the skin-format slightly (the old files still work too). It is now possible to define the drawing order.</li>
+	    <li>Small adjustments to the OnDesktop-setting (the calendar shouldn't disappear so easily anymore).</li>
+	    <li>The duration field is editable. Use m for minutes, h for hours and d for days. E.g. 90m for 90 minutes.</li>
+	    <li>Added bangs: !RainlendarShowItem, !RainlendarHideItem, !RainlendarToggleItem, !RainlendarRedraw and !RainlendarChangeSkin.</li>
+	    <li>Edit event dialog remembers the previously used profile again.</li>
+	    <li>Added "Delete item" to the Todo-window's context menu.</li>
+	    <li>!RainlendarQuit works in buttons.</li>
+	    <li>The edit box for event message now wraps words instead of extends to the right.</li>
+	    <li>Added ShowContextMenu option can be used to show only the context menu when right mouse button is pressed.</li>
+	    <li>Added CalendarAction, TodoAction and EventListAction that can be used to define what happens when the window is double clicked.</li>
+	    <li>Locked windows hide/show together.</li>
+	    <li>It's possible to define the position of the message box with MessageBoxX and MessageBoxY.</li>
+	    <li>The calendar quits from to Alt-F4.</li>
+	    <li>Optimized text rendering. This should speed up refresh with multiple calendars.</li>
+	    <li>EventListHeaderSeparation is included in header alignment rect. This might break some skins :(</li>
+	    <li>Added HideFromCalendar and HideFromEventList which can be used to hide events with certain profile.</li>
+	    <li>Multiday events show also the start and end date.</li>
+	    <li>It's possible to define the color of the event with EventListFontColor in the profile section.</li>
+	    <li>All day events can be longer than one day (there is no GUI to create multiday events though).</li>
+	    <li>Keyboard override for click through and mouse hide can be disabled with DisableKeyboardOverride.</li>
+	    <li>The profile priority is applied to the always drawn profiles too.</li>
+	    <li>Added "visible"-argument to the !RainlendarToggle, which toggles only the visible windows.</li>
+	    <li>"!RainlendarShow activate" only shows the calendar window.</li>
+	    <li>The config editor can be changed with ConfigEditor (do not use any spaces in the path!)</li>
+	    <li>Fonts use the default charset instead of the one defined in the skin. This can be overridden with UseSkinCharSet.</li>
+      </ul>
+
       <p>5 DEC 2004 (Version 0.20 ß)</p>
       <ul>
 
@@ -76,7 +132,8 @@
 		<li>Loading bmps don't create temp files anymore.</li>
 		<li>Changed the wallpaper polling routine a little.</li>
       </ul>
-<p>9 MAY 2004 (Version 0.19.3 ß)</p>
+
+      <p>9 MAY 2004 (Version 0.19.3 ß)</p>
       <ul>
 		<li>Refreshing the calendar lost the OnDesktop state. Fixed.</li>
 		<li>Rainlendar should work a bit better with Outlook 2000 now.</li>

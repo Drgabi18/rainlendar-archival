@@ -1,0 +1,109 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Finnish resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FIN)
+#ifdef _WIN32
+LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_SERVER_DIALOG DIALOG DISCARDABLE  0, 0, 186, 124
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "#Server Settings#"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "#OK#",IDOK,40,103,50,14
+    PUSHBUTTON      "#Cancel#",IDCANCEL,96,103,50,14
+    EDITTEXT        IDC_SERVER_ID,91,7,88,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_SERVER_ADDRESS,91,26,88,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_SERVER_PORT,91,44,46,14,ES_AUTOHSCROLL
+    RTEXT           "#User ID:#",IDC_SERVER_ID_STATIC,15,10,71,8
+    RTEXT           "#Server Address:#",IDC_SERVER_ADDRESS_STATIC,16,28,71,8
+    RTEXT           "#Server Port:#",IDC_SERVER_PORT_STATIC,16,47,71,8
+    CONTROL         "#Poll events from the server#",IDC_SERVER_POLL,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,65,165,10
+    EDITTEXT        IDC_SERVER_POLL_EDIT,91,81,40,14,ES_AUTOHSCROLL
+    RTEXT           "#Polling frequency:#",IDC_SERVER_POLL_STATIC,7,84,80,8
+    LTEXT           "#minutes#",IDC_SERVER_POLL2_STATIC,134,84,45,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_SERVER_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        VERTGUIDE, 91
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 117
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Finnish resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

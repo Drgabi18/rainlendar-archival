@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<HEAD>
+<meta name="GENERATOR" content="Microsoft&reg; HTML Help Workshop 4.1">
+<Title>Introduction</Title>
+</HEAD>
+<body bgcolor="#A25D56" text="#603D37" link="#3E6099" vlink="#3E6099" alink="#000000">
+
+<div align="center">
+	<table border="0" width="95%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="56">
+			<img border="0" src="images/topleft.gif" width="56" height="56"></td>
+			<td background="images/top.gif" align="left" valign="bottom"><font size="6"><b>INSTALLATION</b></font></td>
+			<td width="56">
+			<img border="0" src="images/topright.gif" width="56" height="56"></td>
+		</tr>
+	</table>
+</div>
+
+<div align="center">
+	<table border="0" width="95%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="56" background="images/left.gif" align="right" valign="top">&nbsp;</td>
+			<td bgcolor="#DBCCB1" align="center" valign="top">
+			<div align="left">
+
+<!-- CLIP -->
+
+
+
+<p><b><font size="4">Installing for Explorer</font></b></p>
+
+<p>If you are in doubt, just get the installer version of Rainlendar from the webpage (<a href=http://www.rainlendar.net>http://www.rainlendar.net</a>) and run it. If you dislike installers, you can also get the zipped archive and uncompress it to some folder. Rainlendar is ready to be used after that. Note that if you want that the calendar starts with the Windows you need to keep the "Startup folder"-option checked in the installation.</p>
+
+<p>Rainlendar is installed for the current user by default. If you want to install it for different users, just run the installer for each of them.</p>
+
+<p><b><font size="4">Installing for Litestep</font></b></p>
+
+<p>Rainlendar works also as Litestep's plugin. To install in Litestep grap the zip archive and just copy the Rainlendar.dll and the skin, language and plugins folders to your Litestep directory (e.g. C:\Litestep\). You don't need the Rainlendar.exe if you are using Rainlendar as Litestep plugin. After copying, open your step.rc and add following line:</p>
+
+<p>LoadModule C:\Litestep\Rainlendar.dll</p>
+
+<p>... and recycle. If that doesn't work, check the config part of this document for additional step.rc commands that you might need. You can also put the Rainlendar in other folder if you like, just make sure that the LoadModule path points to the correct place (as well as other Rainlendar specific step.rc commands).</p>
+
+<p><b><font size="4">Uninstalling</font></b></p>
+
+<p>If you installed Rainlendar with the installer you can uninstall it from the "Add or Remove Programs". Otherwise just delete all the files you uncompressed from the zip-file (make sure that Rainlendar isn't running when doing that). </p>
+
+<p><b><font size="4">Installing skins</font></b></p>
+The skins are usually distributed in zip-files that hold the skin's ini-file and 
+graphics files. To install a new skin you need to unzip the file into the 
+Rainlendar's Skins-folder (usually located in C:\Program 
+Files\Rainlendar\Skins). <p>
+
+The skin has one or more ini-files (i.e. a file with .ini extension). The skin's ini-file must be located in a separate 
+subfolder under the Skins-folder (e.g. C:\Program Files\Rainlendar\Skins\MyTestSkin\Skin.ini). If you put it directly into the 
+Skins-folder or if there are more than one subfolder things won't work. After you have the skin in correct place just refresh the calendar and you should see the new skin in the skin menu. If the skin is not visible in the menu the most likely reason is that you created an extra subfolder when the zip was uncompressed. Check the folder structure again and remove the extra subfolder by moving the skin's ini and graphics files to the parent folder.
+
+<!-- CLIP -->
+			</div>
+			</td>
+			<td width="56" background="images/right.gif">&nbsp;</td>
+		</tr>
+	</table>
+</div>
+<div align="center">
+	<table border="0" width="95%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="56"><img border="0" src="images/bottomleft.gif" width="56" height="62"></td>
+			<td background="images/bottom.gif" align="right" valign="top">&nbsp;</td>
+			<td width="56"><img border="0" src="images/bottomright.gif" width="56" height="62"></td>
+		</tr>
+	</table>
+</div>
+
+</body>
+
+</html>
