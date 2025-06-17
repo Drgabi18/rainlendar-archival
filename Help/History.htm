@@ -1,0 +1,465 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<HEAD>
+<meta name="GENERATOR" content="Microsoft&reg; HTML Help Workshop 4.1">
+<Title>Introduction</Title>
+</HEAD>
+<body bgcolor="#A25D56" text="#603D37" link="#3E6099" vlink="#3E6099" alink="#000000">
+
+<div align="center">
+	<table border="0" width="95%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="56">
+			<img border="0" src="images/topleft.gif" width="56" height="56"></td>
+			<td background="images/top.gif" align="left" valign="bottom"><font size="6"><b>HISTORY</b></font></td>
+			<td width="56">
+			<img border="0" src="images/topright.gif" width="56" height="56"></td>
+		</tr>
+	</table>
+</div>
+
+<div align="center">
+	<table border="0" width="95%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="56" background="images/left.gif" align="right" valign="top">&nbsp;</td>
+			<td bgcolor="#DBCCB1" align="center" valign="top">
+			<div align="left">
+
+<!-- CLIP -->
+
+      <p>5 DEC 2004 (Version 0.20 ß)</p>
+      <ul>
+
+	    <li>New program icon by dieselx graphics (http://www.dieselx.de)</li>
+		<li>Fixed a negative coordinate problem with the tooltip.</li>
+		<li>Fixed a crash bug with Outlook support.</li>
+		<li>Message box shouldn't grow too large anymore.</li>
+		<li>Added "Get More Languages..." and "Get More Skins..." to the menu.</li>
+		<li>The order of todo-items can be changed.</li>
+
+		<li>Todo-list is multiselectable.</li>
+		<li>DisableDoneList=1 in Rainlendar.ini gets rid of the done-list.</li>
+		<li>Double-clicking on a todo-item will mark it done instead of opening the todo-dialog.</li>
+		<li>The plugins path can be defined with RainlendarPluginsPath in Litestep's step.rc.</li>
+		<li>Added Import and Export buttons to All Events dialog.</li>
+
+		<li>The windows can be enabled/disabled from the context menu.</li>
+		<li>Removed window coordinates from the config dialog.</li>
+		<li>Implemented an event list window which shows the coming events.</li>
+		<li>Added delete button to the all events dialog.</li>
+		<li>The columns in all events dialog are sortable.</li>
+		<li>Improved support for recurring events.</li>
+
+		<li>Skins can have custom text and date-items. See Skins-part in the 
+		docs for more info.</li>
+		<li>Skins can have buttons. See Skins-part in the docs for more info.</li>
+		<li>Windows snap to each other now too.</li>
+		<li>It is possible to lock window position to the calendar window.</li>
+		<li>Days can be set horizontally and vertically.</li>
+		<li>Weekends can be drawn with different font color/bitmap.</li>
+
+		<li>Added support for Outlook tasks.</li>
+		<li>Added a transparency slider to the config dialog.</li>
+		<li>Added click through feature (use Shift-key to disable it)</li>
+		<li>OnDesktop can be used with transparency.</li>
+		<li>!RainlendarShowEvents is gone.</li>
+		<li>Browsing for image files removes the absolute path automatically.</li>
+		<li>Small fixes to the usability of the skin editor.</li>
+
+		<li>It's possible to change the months with mouse wheel.</li>
+		<li>The todo-items can be synced with the server now too.</li>
+		<li>Weeknumbering can be adjusted with WeekNumberDelta.</li>
+		<li>Added &quot;Don't show completed tasks&quot; and &quot;Don't show message body&quot; to 
+		Outlook support.</li>
+		<li>Added some more hotkeys and !bangs.</li>
+		<li>Removed EventsPath-rcCommand (it doesn't work anymore).</li>
+		<li>Loading bmps don't create temp files anymore.</li>
+		<li>Changed the wallpaper polling routine a little.</li>
+      </ul>
+<p>9 MAY 2004 (Version 0.19.3 ß)</p>
+      <ul>
+		<li>Refreshing the calendar lost the OnDesktop state. Fixed.</li>
+		<li>Rainlendar should work a bit better with Outlook 2000 now.</li>
+		<li>Fixed a crash bug with All events dialog.</li>
+
+		<li>Fixed a crash bug with Outlook sync.</li>
+		<li>Fixed !RainlendarShow activate. It only works when it's executed with Rainlendar.exe though,</li>
+		<li>Litestep variables can be used in the colors.</li>
+		<li>Rainlendar should now be able to access Outlook's appointments even if Outlook is not the default email client.</li>
+		<li>The todo list wasn't read from the Todo.ini-file unless it was enabled. Fixed.</li>
+		<li>Added DST calculations to Outlook dates, so they are not an hour off anymore (well, some still could be...).</li>
+
+		<li>Rainlendar is only logged in to MAPI when it's updating the Outlook appointments. Use OutlookKeepAlive=1 to keep the connection always on.</li>
+		<li>Fixed tooltip opening in wrong place.</li>
+		<li>The message box opened with wrong size sometimes. Fixed.</li>
+      </ul>
+      <p>20 MAR 2004 (Version 0.19.2 ß)</p>
+      <ul>
+		<li>If %APPDATA% is not defined Rainlendar writes the ini-files to it's own folder.</li>
+
+		<li>The messagebox has now correct size when it is opened the first time.</li>
+		<li>Rewrote the Outlook support to use the MAPI. This will get rid of the security warning with Outlook 2003.</li>
+		<li>Outlook's recurring events are better supported now.</li>
+		<li>Outlook profile can be selected with OutlookProfile in Rainlendar.ini.</li>
+		<li>Outlook appointment labels can be used as profiles with OutlookLabels=1 in Rainlendar.ini.</li>
+		<li>Fixed tooltip positioning in multimonitor systems.</li>
+
+		<li>Fixed some Win9x issues. The alphablending doesn't work correctly but at least it shouldn't crash anymore.</li>
+      </ul>
+      <p>28 JAN 2004 (Version 0.19.1 ß)</p>
+      <ul>
+		<li>If the Rainlendar.ini file was in the Rainlendar's folder a new file was created into Windows folder. Fixed.</li>
+		<li>Added internal handling for !Execute bang so that it can be used without Litestep too.</li>
+		<li>Refreshing doesn't pop up the todo window anymore if it is hidden.</li>
+
+		<li>Tray icon behaviour can be controlled with TrayExecuteL, TrayExecuteR, TrayExecuteM, TrayExecuteDL, TrayExecuteDM and TrayExecuteDR.</li>
+      </ul>
+      <p>25 JAN 2004 (Version 0.19 ß)</p>
+      <ul>
+		<li>The lists of languages and skins are now sorted.</li>
+		<li>It's not anymore possible to override general settings in the skin's ini-file.</li>
+		<li>Added a todo-list. It's a separate window, but most of the general settings apply also to it (movable, zposition etc).</li>
+
+		<li>Rewrote the window routines. Wharf/lsBox is not supported anymore :-(</li>
+		<li>All events list is now multiselectable and the read-only entries are drawn with gray color.</li>
+		<li>Changed image loading routine. JPEG-images should work now too and the wierd bug with vertical lines as days should be gone.</li>
+		<li>Outlook sync at startup is now optional.</li>
+		<li>Added control for setting the max tooltip width.</li>
+		<li>%n in execute will only use the 255 first characters in the text.</li>
+
+		<li>Replaced the standard message box with a skinnable one (LMB hides it, RMB snoozes).</li>
+		<li>Events are sorted by the start time.</li>
+		<li>Added a simple alarm system. Add time in front of the event message to define the time when the message box will appear. Time must be in HH:MM or HH:MM AM (or PM).</li>
+		<li>Added a trayicon (doubleclicking it toggles the calendar).</li>
+		<li>Improved the (un)installer. The installer can be now localized too.</li>
+		<li>Added context menu to the event editor.</li>
+
+		<li>It wasn't possible to set the event's valid until date to a day before the selected event. Fixed.</li>
+		<li>Manual can be opened from the context menu.</li>
+		<li>Added hotkey for the todo dialog.</li>
+		<li>Removed the warning messages with OnDesktop & Native transparency (they were quite annoying). The incompatible settings are now disabled.</li>
+		<li>"Execute on event" can play sounds now too. Just enter PLAY and the sound file. E.g. "PLAY boing.wav" </li>
+		<li>Event icons are drawn on top of the day numbers again.</li>
+
+		<li>The events, todos and settings are now written to the current user's application folder. This should make it easier to use Rainlendar in multiuser environment.</li>
+		<li>Added few new bangs: !RainlendarEditTodo, !RainlendarShowTodo, !RainlendarHideTodo, !RainlendarToggleTodo, !RainlendarAddEvent and !RainlendarShowEvents</li>
+		<li>The edit event dialog's position should be remembered now as well.</li>
+		<li>Month & year didn't restrict the window size. Fixed.</li>
+      </ul>
+      <p>4 OCT 2003 (Version 0.18 ß)</p>
+
+      <ul>
+		<li>It wasn't possible to add new events on days that already had repeating events. Fixed.</li>
+		<li>Improved the support for Outlook. It's still far from perfect though.</li>
+		<li>Added EventDrawAlways for profiles.</li>
+		<li>Added word wrapping to the tooltips. No GUI for it yet, but add ToolTipMaxWidth=500 to Rainlendar.ini to limit the tooltip window's width to 500 pixels.</li>
+		<li>The skin-list is now updated when the calendar is refreshed.</li>
+
+		<li>The Language-folders path defaults now to the folder where Rainlendar.dll is located.</li>
+		<li>Automatic refresh after suspend mode should work again.</li>
+		<li>Added priority system which defines what to display when a single day has several events.</li>
+      </ul>
+      <p>23 AUG 2003 (Version 0.17.1 ß)</p>
+      <ul>
+		<li>Months in the context menu and some other texts weren't translated. Fixed.</li>
+
+		<li>Some texts weren't translated at all or were wrong. Fixed.</li>
+      </ul>
+      <p>9 AUG 2003 (Version 0.17 ß)</p>
+      <ul>
+		<li>OnDestop radiobutton wasn't in the same group as other. Fixed.</li>
+		<li>Enlarged the dialogs a bit so that localized strings will fit better.</li>
+		<li>The DLL doesn't assume that its name is "Rainlendar.dll" anymore.</li>
+
+		<li>Newlines are removed from the event messages in the All Events -dialog.</li>
+		<li>Profiles and ordinals can be also localized.</li>
+		<li>The Outlook sync rate is now user definable and it can be also updated manually.</li>
+		<li>The window is not activated anymore during refresh (Note that Outlook sync does still activate the window).</li>
+		<li>Server synchronization got stuck if there were no events to be sent. Fixed.</li>
+		<li>Yearly Outlook appintments were displayed in every 12 years in Rainlendar. Fixed. </li>
+
+		<li>The current year can be changed with up and down keys.</li>
+		<li>Added support for XP styles.</li>
+		<li>Rewrote the Edit Event -dialog.</li>
+		<li>Double click on the All events -dialog allows editing of the selected event.</li>
+		<li>Added new option: Remember dialog positions.</li>
+		<li>Bottom right corner relative negative coordinates are now optional.</li>
+
+		<li>Native transparency is disabled if OnDesktop is selected and vice versa (they are incompatible settings).</li>
+		<li>Deleted events weren't propagated to other clients. Fixed.</li>
+		<li>Rainlendar shouldn't crash anymore if one of the images is missing.</li>
+		<li>The message box wasn't shown when day changed. Fixed.</li>
+      </ul>
+      <p>15 JUN 2003 (Version 0.16 ß)</p>
+
+      <ul>
+	    <li>Negative y-coords didn't work. Fixed.</li>
+	    <li>Added an option to show Outlook appointments in the calendar.</li>
+	    <li>The background was clipped when native transparency was not used. Fixed.</li>
+	    <li>"!RainlendarShow Activate" didn't work if executed with Rainlendar.exe. Fixed.</li>
+	    <li>Added an option to start the week numbering from the week that contains January 1st.</li>
+
+	    <li>Snapping should work now on all monitors.</li>
+	    <li>Added option to sync with the server before adding/editing an event.</li>
+	    <li>Added an error message if the server has a newer version of an event than the one sent to it.</li>
+	    <li>The calendar is refreshed automatically after Windows returns from suspend state.</li>
+	    <li>Switching on the native transparency while the calendar is set OnDesktop should work a bit better now.</li>
+	    <li>The events for the same day are now sorted, so they should be always in the same order.</li>
+
+	    <li>Added option to use separator line between events in the tooltip.</li>
+	    <li>Added a dialog that shows all the events at the same time.</li>
+	    <li>Added support for external language files for easier localization.</li>
+		<li>Stretching non-alpha backgrounds messed up the alpha channel. Fixed.</li>
+		<li>Added possiblity to show several months at the same time.</li>
+      </ul>
+
+      <p>3 FEB 2003 (Version 0.15 ß)</p>
+      <ul>
+	    <li>Added !RainlendarMove and !RainlendarZPos bangs.</li>
+		<li>Fixed a bug that crashed the program if server name was empty.</li>
+		<li>Made the refresh on screen resolution optional, since it caused problems with some games.</li>
+		<li>The size of the today-image wasn't included in the window size calculation so part of the image was clipped in few skins. Fixed.</li>
+
+      </ul>
+      <p>23 NOV 2002 (Version 0.14 ß)</p>
+      <ul>
+		<li>The skins are loaded from the skins-subfolder by default.</li>
+		<li>The events path now defaults to the same folder where the Rainlendar.ini file is.</li>
+		<li>Fixed a bug that put wrong week number if the first day of the month was sunday.</li>
+		<li>Fixed a bug that sometimes caused multiplication of events when they were deleted.</li>
+
+		<li>Added support for icons in event profiles (check the shadow3-skin for examples).</li>
+		<li>Added PNG support for easier alpha transparency handling.</li>
+		<li>Improved the wallpaper polling routine; now it checks the timestamp too.</li>
+		<li>Added support for native Win2k/XP transparency.</li>
+		<li>Use Window Name -option was broken. Fixed.</li>
+		<li>Fixed a bug that caused a wrong day to be selected sometimes when the calendar was double clicked.</li>
+
+		<li>Added support for solid background with an optional bevel edge.</li>
+		<li>Added OnDesktop option to keep the calendar visible even with Explorer's "Show Desktop" feature.</li>
+      </ul>
+      <p>24 AUG 2002 (Version 0.13 ß)</p>
+      <ul>
+		<li>Messages are trimmed before they are sent to the server (to keep them below 1000 chars).</li>
+		<li>Removed mouse hooking code due to compatibility problems.</li>
+
+		<li>Added support for Litestep logging so it's easier to find bugs.</li>
+		<li>Fixed a bug that caused Litestep to crash after recycle.</li>
+		<li>Changing the months should be a bit faster now.</li>
+		<li>Added "Copy to Clipboard" button in the server config dialog.</li>
+      </ul>
+      <p>10 AUG 2002 (Version 0.12 ß)</p>
+
+      <ul>
+		<li>The window is now opened below all other windows when the
+position is set OnBottom.</li>
+		<li>Added an option to snap the window on the screen edges when it is
+moved.</li>
+		<li>Added !RainlendarLsBoxHook.</li>
+		<li>Fixed a bug that left the 'm' on the line when %m was used in the
+"Execute on event".</li>
+		<li>Added repeating events for daily, weekly, monthly and annual
+events.</li>
+
+		<li>Added profiles for event customization (check skinning.txt for
+more info).</li>
+		<li>Tooltip color &amp; font can be changed from the skin settings.</li>
+		<li>!RainlendarShow can be executed with "activate" argument, which
+activates the window and puts it on top of other windows (doesn't work
+with OnBottom).</li>
+      </ul>
+      <p>11 JUN 2002 (Version 0.11 ß)</p>
+      <ul>
+
+		<li>Fixed a bug that set the dates to start from wrong day when the
+day changed.</li>
+		<li>Moving transparent window should be slightly faster now.</li>
+		<li>It was not possible to change the typeface of the fonts. Fixed.</li>
+		<li>Week numbers were not put in all lines that had days. Fixed.</li>
+		<li>Added possibility to set the separation (i.e. the space between)
+of the numbers in days, today, event, year and week numbers.</li>
+		<li>Separated the general settings and skin settings in different ini
+files. The skin settings override the general settings.</li>
+
+		<li>Now it is possible to change the skin from the context menu.</li>
+		<li>Negative coordinates are saved as zero to prevent the window to
+be placed off screen.</li>
+		<li>The GUI is back. You can once more change the skinning settings
+with it.</li>
+		<li>Added RainlendarSkinsPath step.rc command which defines the path
+for the skins.</li>
+		<li>Added RainlendarCurrentSkin and RainlendarCurrentSkinIni which
+will select the given skin.</li>
+		<li>Added !RainlendarEditSkin bang, which will open the skin editor
+dialog.</li>
+
+      </ul>
+      <p>3 JUN 2002 (Version 0.10 ß)</p>
+      <ul>
+		<li>Removed all MFC code from the Rainlendar.dll.</li>
+		<li>Added RainlendarEventsPath step.rc command.</li>
+		<li>The Rainlendar.ini file is only saved if it hasn't been changed
+by the user (this prevents overwriting manual modifications to the
+Rainlendar.ini).</li>
+		<li>Rainlendar is not anymore dependant on lsapi.dll. It only uses
+lsapi.dll's functions if ran as Litestep plugin.</li>
+
+		<li>Removed all skinning stuff from the GUI.</li>
+      </ul>
+      <p>2 MAR 2002 (Version 0.9 ß)</p>
+      <ul>
+	 <li>Added support for distribution of Rainlendar's events. Check the
+Server part in the documentation for more info.</li>
+		<li>The calendar is automatically refreshed when the screen
+resolution changes.</li>
+		<li>Multimonitor functions are only used if the the OS supports them.</li>
+
+		<li>Fixed a bug with stretched wallpapers having noise pixels in the
+calendar window.</li>
+		<li>Now it is possible to use Rainlendar.exe to send the !bangs to
+the calendar (Only Rainlendar's !bangs work).</li>
+		<li>The items can be aligned a bit more freely on the calendar. This
+might affect existing configs, so check the Align-widget if something is
+in wrong place.</li>
+		<li>The background image can now be automatically stretched or tiled
+if it's too small for the calendar.</li>
+		<li>Added option to check if the name of the wallpaper has been
+changed since last refresh. And if it has, the calendar is automatically
+refreshed.</li>
+		<li>Added an About-dialog.</li>
+
+		<li>Rainlendar supports now Litestep's $evar$-variables</li>
+		<li>The calendar window can be moved with the mouse. Note that moving
+alphamasked calendar might cause problems with some gfx-cards.</li>
+		<li>Added support for OnTop, OnBottom and Normal positioning of the
+window.</li>
+		<li>Added support for transparency, which is based on window regions.
+Use magic pink color (FF00FF) in the background picture for transparent
+pixels (Note that you cannot use alphamask with the background).</li>
+		<li>Added an option to hide the window automatically when mouse is
+over the calendar         (like in Rainmeter).</li>
+      </ul>
+
+      <p>15 JAN 2002 (Version 0.8 ß)</p>
+      <ul>
+	 <li>Fixed a bug that prevented Rainlendar to find all its files if
+the command line argument was surrounded with quotes.</li>
+	 <li>Changed the way the calendar is refreshed. Now it works even if
+there are other windows over it during the refreshing.</li>
+	 <li>Now it is possible to define custom color/bitmap for different
+events.</li>
+	 <li>Added possibility to show the event texts in the calendar window.</li>
+
+		<li>Fixed a memory leak during the refresh.</li>
+		<li>Added week numbers. They are calculated according to the ISO
+8601-standard, so in countries that do not follow international
+standards (like in the U.S.) the week numbers might be incorrect.</li>
+		<li>The bitmap rasterized years are now placed in correct position.</li>
+		<li>By default Rainlendar.exe tries to load the configuration from a 
+folder called <i>Default</i>. So, now it can be started without the
+need to         give any arguments to the exe.</li>
+		<li>Removed the start delay option as it is quite unnecessary at the 
+moment (let me know if someone wants it back :-).</li>
+
+      </ul>
+      <p>26 DEC 2001 (Version 0.7 ß)</p>
+      <ul>
+        <li>Now linked dynamically against MFC. You need might need to
+update your MFC42.DLL to run this.</li>
+        <li>Fixed small gfx-bugs in the dialogs.</li>
+        <li>The window name is now optional and can be disabled from
+the config-dialog.</li>
+		<li>The Quit button is grayed out if Rainlendar is ran as Litestep
+plug-in.</li>
+
+		<li>Added Wharf-interface so Rainlendar can be put inside a lsBox.</li>
+      </ul>
+      <p>3 DEC 2000 (Version 0.6 ß)</p>
+      <ul>
+        <li> Added new menu item to jump to the current month and a
+equivalent !bang for it           (!RainlendarShowCurrent) </li>
+        <li> Added possibility disable hotkeys from the config. </li>
+
+        <li> Added hotkeys for changing the months. Note that key
+presses must be clean, i.e. modifiers (alt, shift, ...) cannot
+be used. This prevents accidental keypresses with vwm. Also note that
+that the calendar window must be active           for hotkeys to work. </li>
+        <li> Rainlendar's window now has a name "Rainlendar" </li>
+      </ul>
+      <p>2 OCT 2000 (Version 0.5 ß)</p>
+      <ul>
+        <li>Fixed to work with the latest lsapi.dll's.</li>
+
+        <li>Rainlendar.exe now accepts quoted path as argument.</li>
+        <li>Fixed a bug that prevented the background image to display
+fully.</li>
+      </ul>
+      <p>4 JULY 2000 (Version 0.4 ß)</p>
+      <ul>
+        <li>Months can now cycled with cursor-keys.</li>
+        <li>Added few bangs: !RainlendarShow, !RainlendarHide,
+!RainlendarToggle, !RainlendarRefresh,           !RainlendarConfig,
+!RainlendarQuit, !RainlendarShowNext, !RainlendarShowPrev,
+!RainlendarShowMonth [Month] [Year]</li>
+
+        <li>Added possibility to start the calendar hidden.</li>
+        <li>Changed the double buffering to full window version. This
+should reduce flickering.</li>
+      </ul>
+      <p>13 MAY 2000 (Version 0.3 ß)</p>
+      <ul>
+        <li>Changed the way how days are calculated.</li>
+        <li>Added possibility to display the current event in a
+MessageBox.</li>
+
+        <li>Added possibility execute a command (or !Bang) on a
+event-day. You can use %m for the event-message.</li>
+        <li>Added event days to display important dates. Doubleclick on
+a day to           insert a text.</li>
+        <li>Added new tab in config-dialog to set the appearance of
+event days.</li>
+        <li>Alpha-Bitmaps can now have full path as well.</li>
+        <li>Displayed month can be selected form the context- menu.</li>
+      </ul>
+
+      <p>6 APRIL 2000 (Version 0.2 ß)</p>
+      <ul>
+        <li>Removed the Reload-menuitem.</li>
+        <li>RefreshDelay moved to the ini-file. There is no GUI for
+setting it,  so you'll have to edit the ini-file by hand.</li>
+        <li>Month &amp; weekday names are now in the ini-file for
+localization purposes.</li>
+        <li>Changed the way alpha-transparency is calculated.</li>
+
+        <li>Magic Pink works now for the background too.</li>
+        <li>Auto-refreshes when the day changes.</li>
+      </ul>
+      <p>26 MARCH 2000 (Version 0.1 ß)</p>
+      <ul>
+        <li>Initial Betarelease</li>
+      </ul>
+
+
+
+<!-- CLIP -->
+			</div>
+			</td>
+			<td width="56" background="images/right.gif">&nbsp;</td>
+		</tr>
+	</table>
+</div>
+<div align="center">
+	<table border="0" width="95%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="56"><img border="0" src="images/bottomleft.gif" width="56" height="62"></td>
+			<td background="images/bottom.gif" align="right" valign="top">&nbsp;</td>
+			<td width="56"><img border="0" src="images/bottomright.gif" width="56" height="62"></td>
+		</tr>
+	</table>
+</div>
+
+</body>
+
+</html>
+
+
