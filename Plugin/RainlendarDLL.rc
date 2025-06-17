@@ -28,8 +28,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,17,0,0
- PRODUCTVERSION 0,17,0,0
+ FILEVERSION 0,17,1,0
+ PRODUCTVERSION 0,17,1,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -47,14 +47,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "Rainlendar DLL\0"
-            VALUE "FileVersion", "0, 17, 0, 0\0"
+            VALUE "FileVersion", "0, 17, 1, 0\0"
             VALUE "InternalName", "Rainlendar\0"
             VALUE "LegalCopyright", "Copyright (C) 2003\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "Rainlendar.DLL\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Rainlendar Dynamic Link Library\0"
-            VALUE "ProductVersion", "0, 17, 0, 0\0"
+            VALUE "ProductVersion", "0, 17, 1, 0\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -690,48 +690,48 @@ CAPTION "Hotkeys"
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         "HotKey1",IDC_HOTKEYS_HIDE,"msctls_hotkey32",WS_BORDER | 
-                    WS_TABSTOP,92,7,131,14
+                    WS_TABSTOP,110,7,131,14
     CONTROL         "HotKey1",IDC_HOTKEYS_SHOW,"msctls_hotkey32",WS_BORDER | 
-                    WS_TABSTOP,92,25,131,14
+                    WS_TABSTOP,110,25,131,14
     CONTROL         "HotKey1",IDC_HOTKEYS_TOGGLE,"msctls_hotkey32",WS_BORDER | 
-                    WS_TABSTOP,92,43,131,14
-    RTEXT           "Hide",IDC_HOTKEYS_HIDE_STATIC,13,9,75,8
-    RTEXT           "Show",IDC_HOTKEYS_SHOW_STATIC,13,27,75,8
-    RTEXT           "Toggle",IDC_HOTKEYS_TOGGLE_STATIC,13,45,75,8
-    RTEXT           "Activate",IDC_HOTKEYS_ACTIVATE_STATIC,13,63,75,8
-    RTEXT           "Refresh",IDC_HOTKEYS_REFRESH_STATIC,13,81,75,8
-    RTEXT           "Edit Config",IDC_HOTKEYS_CONFIG_STATIC,13,99,75,8
-    RTEXT           "Edit Skin",IDC_HOTKEYS_SKIN_STATIC,13,117,75,8
-    RTEXT           "Next Month",IDC_HOTKEYS_NEXT_STATIC,13,135,75,8
-    RTEXT           "Previous Month",IDC_HOTKEYS_PREVIOUS_STATIC,13,153,75,8
-    RTEXT           "Current Month",IDC_HOTKEYS_CURRENT_STATIC,13,207,75,8
-    RTEXT           "All Events",IDC_HOTKEYS_ALL_STATIC,13,225,75,8
+                    WS_TABSTOP,110,43,131,14
+    RTEXT           "Hide",IDC_HOTKEYS_HIDE_STATIC,7,9,99,8
+    RTEXT           "Show",IDC_HOTKEYS_SHOW_STATIC,7,27,99,8
+    RTEXT           "Toggle",IDC_HOTKEYS_TOGGLE_STATIC,7,45,99,8
+    RTEXT           "Activate",IDC_HOTKEYS_ACTIVATE_STATIC,7,63,99,8
+    RTEXT           "Refresh",IDC_HOTKEYS_REFRESH_STATIC,7,81,99,8
+    RTEXT           "Edit Config",IDC_HOTKEYS_CONFIG_STATIC,7,99,99,8
+    RTEXT           "Edit Skin",IDC_HOTKEYS_SKIN_STATIC,7,117,99,8
+    RTEXT           "Next Month",IDC_HOTKEYS_NEXT_STATIC,7,135,99,8
+    RTEXT           "Previous Month",IDC_HOTKEYS_PREVIOUS_STATIC,7,153,99,8
+    RTEXT           "Current Month",IDC_HOTKEYS_CURRENT_STATIC,7,207,99,8
+    RTEXT           "All Events",IDC_HOTKEYS_ALL_STATIC,7,225,99,8
     CONTROL         "HotKey1",IDC_HOTKEYS_ACTIVATE,"msctls_hotkey32",
-                    WS_BORDER | WS_TABSTOP,92,61,131,14
+                    WS_BORDER | WS_TABSTOP,110,61,131,14
     CONTROL         "HotKey1",IDC_HOTKEYS_REFRESH,"msctls_hotkey32",
-                    WS_BORDER | WS_TABSTOP,92,79,131,14
+                    WS_BORDER | WS_TABSTOP,110,79,131,14
     CONTROL         "HotKey1",IDC_HOTKEYS_CONFIG,"msctls_hotkey32",WS_BORDER | 
-                    WS_TABSTOP,92,97,131,14
+                    WS_TABSTOP,110,97,131,14
     CONTROL         "HotKey1",IDC_HOTKEYS_SKIN,"msctls_hotkey32",WS_BORDER | 
-                    WS_TABSTOP,92,115,131,14
+                    WS_TABSTOP,110,115,131,14
     CONTROL         "HotKey1",IDC_HOTKEYS_NEXT,"msctls_hotkey32",WS_BORDER | 
-                    WS_TABSTOP,92,133,131,14
+                    WS_TABSTOP,110,133,131,14
     CONTROL         "HotKey1",IDC_HOTKEYS_PREVIOUS,"msctls_hotkey32",
-                    WS_BORDER | WS_TABSTOP,92,151,131,14
+                    WS_BORDER | WS_TABSTOP,110,151,131,14
     CONTROL         "HotKey1",IDC_HOTKEYS_CURRENT,"msctls_hotkey32",
-                    WS_BORDER | WS_TABSTOP,92,205,131,14
+                    WS_BORDER | WS_TABSTOP,110,205,131,14
     CONTROL         "HotKey1",IDC_HOTKEYS_ALL,"msctls_hotkey32",WS_BORDER | 
-                    WS_TABSTOP,92,223,131,14
-    RTEXT           "Next Year",IDC_HOTKEYS_NEXT_YEAR_STATIC,13,171,75,8
-    RTEXT           "Previous Year",IDC_HOTKEYS_PREVIOUS_YEAR_STATIC,13,189,
-                    75,8
+                    WS_TABSTOP,110,223,131,14
+    RTEXT           "Next Year",IDC_HOTKEYS_NEXT_YEAR_STATIC,7,171,99,8
+    RTEXT           "Previous Year",IDC_HOTKEYS_PREVIOUS_YEAR_STATIC,7,189,
+                    99,8
     CONTROL         "HotKey1",IDC_HOTKEYS_NEXT_YEAR,"msctls_hotkey32",
-                    WS_BORDER | WS_TABSTOP,92,169,131,14
+                    WS_BORDER | WS_TABSTOP,110,169,131,14
     CONTROL         "HotKey1",IDC_HOTKEYS_PREVIOUS_YEAR,"msctls_hotkey32",
-                    WS_BORDER | WS_TABSTOP,92,187,131,14
-    RTEXT           "Update Outlook",IDC_HOTKEYS_OUTLOOK_STATIC,13,242,75,8
+                    WS_BORDER | WS_TABSTOP,110,187,131,14
+    RTEXT           "Update Outlook",IDC_HOTKEYS_OUTLOOK_STATIC,7,242,99,8
     CONTROL         "HotKey1",IDC_HOTKEYS_OUTLOOK,"msctls_hotkey32",
-                    WS_BORDER | WS_TABSTOP,92,240,131,14
+                    WS_BORDER | WS_TABSTOP,110,240,131,14
 END
 
 IDD_EDITEVENT_PAGE DIALOG DISCARDABLE  0, 0, 252, 132

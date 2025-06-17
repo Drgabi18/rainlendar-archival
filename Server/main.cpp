@@ -1,4 +1,4 @@
-     /*
+      /*
   Copyright (C) 2000 Kimmo Pekkola
 
   This program is free software; you can redistribute it and/or
@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Server/main.cpp,v 1.6 2003/08/09 15:24:30 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Server/main.cpp,v 1.7 2003/08/23 09:16:06 Rainy Exp $
 
   $Log: main.cpp,v $
+  Revision 1.7  2003/08/23 09:16:06  Rainy
+  0.4.1
+
   Revision 1.6  2003/08/09 15:24:30  Rainy
   Version 0.4
 
@@ -53,7 +56,7 @@
 
 using namespace ssobjects;
 
-#define VERSION "0.4"
+#define VERSION "0.4.1"
 
 void initDaemon();
 

@@ -16,9 +16,13 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Server/EventCombiner.cpp,v 1.14 2003/08/09 15:23:08 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Server/EventCombiner.cpp,v 1.15 2003/08/23 09:15:57 Rainy Exp $
 
   $Log: EventCombiner.cpp,v $
+  Revision 1.15  2003/08/23 09:15:57  Rainy
+  Added some more logging.
+  The date format is verified.
+
   Revision 1.14  2003/08/09 15:23:08  Rainy
   Added LastModified and CreatedBy fields for server.
 
@@ -98,7 +102,7 @@ CEventCombiner::~CEventCombiner()
 
 bool CEventCombiner::ReadEvents(const char* filename)
 {
-	char buffer[1100];
+	char buffer[4096];
 	EventInfo* newEvent = NULL;
 	std::string date;
 
@@ -185,7 +189,7 @@ bool CEventCombiner::ReadEvents(const char* filename)
 		}
 	
 		// Add the last event to the map
-		AddEvent(date, newEvent);
+		if (newEvent) AddEvent(date, newEvent);
 		fclose(file);
 	}
 	else
@@ -198,7 +202,7 @@ bool CEventCombiner::ReadEvents(const char* filename)
 
 bool CEventCombiner::WriteEvents(const char* filename)
 {
-	char buffer[1100];
+	char buffer[4096];
 	std::string date;
 
 #ifdef SERVER
@@ -318,6 +322,13 @@ bool CEventCombiner::AddEvent(std::string& date, EventInfo* newEvent)
 {
 	if (newEvent)
 	{
+		if (!VerifyDate(date.c_str()))
+		{
+			LOG("Ignored the event %s because it has an incorrect format.", date.c_str());
+			delete newEvent;
+			return false;
+		}
+
 		std::map<std::string, EventInfo*>::iterator i = m_Events.find(date);
 
 		if (i != m_Events.end())
@@ -456,3 +467,21 @@ bool CEventCombiner::DecodePacket(PacketBuffer* packet, CIPFilter* filter, ULONG
 	return newEventsAvailable;
 }
 
+bool CEventCombiner::VerifyDate(const char* date)
+{
+	// Verify that the format is correct
+	int size = strlen(date);
+
+	if (size < 10 || size > 16) return false;
+	if (date[0] != '[' || date[size - 1] != ']') return false;
+
+	for (int i = 1; i < size - 1; i++)
+	{
+		if (!(((date[i] >= '0' && date[i] <= '9') || date[i] <= '-'  || date[i] <= ' ')))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}

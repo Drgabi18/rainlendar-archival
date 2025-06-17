@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ConfigDialog.cpp,v 1.10 2003/08/09 16:38:27 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ConfigDialog.cpp,v 1.11 2003/08/23 09:14:36 Rainy Exp $
 
   $Log: ConfigDialog.cpp,v $
+  Revision 1.11  2003/08/23 09:14:36  Rainy
+  Added translations to settings group and outlook. hotkey
+
   Revision 1.10  2003/08/09 16:38:27  Rainy
   Added hotkeys.
 
@@ -411,6 +414,8 @@ BOOL OnInitLayoutDialog(HWND window)
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("LayoutConfigGUI", 14));
 	widget = GetDlgItem(window, IDC_NEGATIVE_COORDS);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("LayoutConfigGUI", 15));
+	widget = GetDlgItem(window, IDC_SETTINGS_GROUP);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("GeneralConfigGUI", 9));
 
 	widget = GetDlgItem(window, IDC_X);
 	itoa(CCalendarWindow::c_Config.GetX(), tmpSz, 10);
@@ -641,6 +646,8 @@ BOOL OnInitHotkeysDialog(HWND window)
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("HotkeysConfigGUI", 9));
 	widget = GetDlgItem(window, IDC_HOTKEYS_ALL_STATIC);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("HotkeysConfigGUI", 10));
+	widget = GetDlgItem(window, IDC_HOTKEYS_OUTLOOK_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("HotkeysConfigGUI", 13));
 
 
 	// Set hotkeys

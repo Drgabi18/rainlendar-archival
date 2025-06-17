@@ -8,7 +8,7 @@
 #
 # Variables
 #
-Name "Rainlendar 0.17"
+Name "Rainlendar 0.17.1"
 OutFile "RainlendarInstaller.exe"
 InstallDir "$PROGRAMFILES\Rainlendar"
 InstallDirRegKey HKLM SOFTWARE\Rainlendar "Install_Dir"

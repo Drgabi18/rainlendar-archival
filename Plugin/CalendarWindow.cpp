@@ -16,9 +16,13 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/CalendarWindow.cpp,v 1.23 2003/08/10 08:45:01 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/CalendarWindow.cpp,v 1.24 2003/08/23 09:14:12 Rainy Exp $
 
   $Log: CalendarWindow.cpp,v $
+  Revision 1.24  2003/08/23 09:14:12  Rainy
+  Fixed a crash on exit if the calendar isn't initialized.
+  Wrong submenu was translated.
+
   Revision 1.23  2003/08/10 08:45:01  Rainy
   Fixed the hotkeys.
 
@@ -183,7 +187,7 @@ CCalendarWindow::CCalendarWindow()
 */
 CCalendarWindow::~CCalendarWindow()
 {
-	c_Config.WriteConfig(CConfig::WRITE_FULL);
+	if(m_Window) c_Config.WriteConfig(CConfig::WRITE_FULL);
 
 	CRasterizerFont::ClearBuffers();
 
@@ -447,7 +451,7 @@ void CCalendarWindow::FillMenu(HMENU subMenu, int x, int y)
 	ModifyMenu(subMenu, 10, MF_BYPOSITION | MF_STRING, GetMenuItemID(subMenu, 10), c_Language.GetString("Menu", 19));	// Show all events...
 	ModifyMenu(subMenu, 12, MF_BYPOSITION | MF_STRING, GetMenuItemID(subMenu, 12), c_Language.GetString("Menu", 21));	// Quit
 
-	HMENU monthsMenu = GetSubMenu(subMenu, 7);
+	HMENU monthsMenu = GetSubMenu(subMenu, 8);
 	if (monthsMenu)
 	{
 		ModifyMenu(monthsMenu, 0, MF_BYPOSITION | MF_STRING, GetMenuItemID(monthsMenu, 0), c_Language.GetString("Menu", 2));	// Next Month

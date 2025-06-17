@@ -16,9 +16,13 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Server/EventCombiner.h,v 1.8 2003/08/09 15:23:08 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Server/EventCombiner.h,v 1.9 2003/08/23 09:15:57 Rainy Exp $
 
   $Log: EventCombiner.h,v $
+  Revision 1.9  2003/08/23 09:15:57  Rainy
+  Added some more logging.
+  The date format is verified.
+
   Revision 1.8  2003/08/09 15:23:08  Rainy
   Added LastModified and CreatedBy fields for server.
 
@@ -97,6 +101,7 @@ public:
 	std::list<ssobjects::PacketBuffer*>& EncodePackets(CIPFilter* filter, ULONG ipAddr);
 	unsigned32 GetEventCount() { return m_Events.size(); };
 	unsigned32 GetErrorCode() { return m_ErrorCode; };
+	bool VerifyDate(const char* date);
 
 private:
 	// We are not using the CEventMessage class here, cooz we are re-using this class in the server/client
