@@ -1,6 +1,6 @@
 Historical source code for the **Rainlendar** project. The latest version can be found at http://www.rainlendar.net.
 
-Rainlendar was initially hosted using *CVS* and not *Git*. I have not used Git's conversion tools for the CVS to Git migration, please refer to the headers at the top of the files for precise dates. Additionally, this repo does not maintain chronological order, as it consists of files I just unzipped and committed sequentially.
+Rainlendar was initially hosted using *CVS* and not *Git*. I have not used Git's conversion tools for the CVS to Git migration, please refer to the headers at the top of the files for precise dates. Additionally, this repo does not maintain chronological order, as it consists of files I just unzipped and committed sequentially, please use tags to see the individual versions easier.
 
 The original source files - including binaries and other tools - are available for download as a .tar archive in the **Releases** section.
 
