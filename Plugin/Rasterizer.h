@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Rasterizer.h,v 1.1.1.1 2001/10/29 18:56:23 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Rasterizer.h,v 1.2 2002/01/10 16:41:17 rainy Exp $
 
   $Log: Rasterizer.h,v $
+  Revision 1.2  2002/01/10 16:41:17  rainy
+  Added vertical positioning.
+
   Revision 1.1.1.1  2001/10/29 18:56:23  rainy
   Moved to CVS
 
@@ -35,9 +38,11 @@ class CRasterizer
 {
 public:
 	enum ALIGN {
-		ALIGN_LEFT,
-		ALIGN_RIGHT,
-		ALIGN_CENTER
+		ALIGN_LEFT = 0,
+		ALIGN_RIGHT = 1,
+		ALIGN_CENTER = 2,
+		ALIGN_TOP = 4,
+		ALIGN_BOTTOM = 8
 	};
 
 	enum TYPE {

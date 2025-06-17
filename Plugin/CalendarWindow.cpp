@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.cpp,v 1.2 2001/12/23 10:03:57 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.cpp,v 1.4 2002/01/15 17:59:19 rainy Exp $
 
   $Log: CalendarWindow.cpp,v $
+  Revision 1.4  2002/01/15 17:59:19  rainy
+  Changed the way refreshing is done.
+
+  Revision 1.3  2002/01/10 16:49:14  rainy
+  The items weren't deallocated during refresh. Fixed and changed them to pointers.
+
   Revision 1.2  2001/12/23 10:03:57  rainy
   Renamed the static variables (C_ -> c_).
   Added possibility to run as wharf module.
@@ -42,12 +48,10 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-#define VERSION "0.7"
+#define VERSION "0.8"
 
 // Timers
-#define REFRESH_START_TIMER 1
-#define REFRESH_END_TIMER 2
-#define DATE_TIMER 3
+#define DATE_TIMER 1
 
 CConfig CCalendarWindow::c_Config;		// Static instance of CConfig
 CTime CCalendarWindow::c_TodaysDate;
@@ -65,16 +69,30 @@ CCalendarWindow::CCalendarWindow()
 	m_Background.SetWindow(this);
 	m_Width=0;
 	m_Height=0;
-	m_Refreshing=false;
 	m_FirstExecute=true;
 	m_SelectedDay=0;
 	m_DoubleBuffer=0;
-	m_FirstRun=true;
+
+	m_Days = NULL;
+	m_Event = NULL;
+	m_Today = NULL;
+	m_Weekdays = NULL;
+	m_WeekNumbers = NULL;
+	m_Month = NULL;
+	m_Year = NULL;
 }
 
 CCalendarWindow::~CCalendarWindow()
 {
 	if(m_DoubleBuffer) delete m_DoubleBuffer;
+
+	delete m_Days;
+	delete m_Event;
+	delete m_Today;
+	delete m_Weekdays;
+	delete m_WeekNumbers;
+	delete m_Month;
+	delete m_Year;
 }
 
 
@@ -150,9 +168,21 @@ void CCalendarWindow::Initialize(HWND ParentWnd, HINSTANCE dllInst, wharfDataTyp
 			PixPath=c_CmdLine;
 		}
 
+		// Remove quotes from the commandline
+		PixPath.Remove('\"');
+
 		if(!PixPath.IsEmpty() && PixPath[PixPath.GetLength()-1]!='\\') {
 			PixPath+="\\";
 		}
+
+		// Create the items
+		m_Days = new CItemDays;
+		m_Event = new CItemEvent;
+		m_Today = new CItemToday;
+		m_Weekdays = new CItemWeekdays;
+		m_WeekNumbers = new CItemWeekNumbers;
+		m_Month = new CItemMonth;
+		m_Year = new CItemYear;
 
 		c_Config.SetPath(PixPath);
 		c_Config.ReadConfig();
@@ -178,6 +208,7 @@ void CCalendarWindow::Initialize(HWND ParentWnd, HINSTANCE dllInst, wharfDataTyp
 		{
 			if(!CreateEx(WS_EX_TOOLWINDOW, Classname, NULL, winStyle, R, ParentWnd?&parent:NULL, NULL, NULL)) throw ERR_WINDOW;
 		}
+
 		if(ParentWnd)
 		{
 			parent.Detach();
@@ -198,17 +229,8 @@ void CCalendarWindow::Initialize(HWND ParentWnd, HINSTANCE dllInst, wharfDataTyp
 		// c_CurrentDate is set always to the first day of the month
 		c_CurrentDate=CTime(c_TodaysDate.GetYear(), c_TodaysDate.GetMonth(), 1, 0, 0, 0);
 
-		m_Refreshing=true;
-		if(c_WharfData == NULL)
-		{
-			SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
-		}
-		else
-		{
-			ShowWindow();	// If run from wharf, just show the window
-		}
-
-		SetTimer(REFRESH_START_TIMER, c_Config.GetStartDelay()*1000, NULL);	
+		if(!c_Config.GetStartHidden()) ShowWindow();
+		OnRefresh();
 
 		SetTimer(DATE_TIMER, 1000, NULL);	// Date is checked once per second
 
@@ -253,7 +275,7 @@ void CCalendarWindow::FillMenu(CMenu& Menu, CPoint point)
 	}
 
 	ScreenToClient(&Point);
-	m_SelectedDay=m_Days.HitTest(Point.x, Point.y);
+	m_SelectedDay=m_Days->HitTest(Point.x, Point.y);
 	if(m_SelectedDay!=0) {
 		Popup->EnableMenuItem( ID_SETEVENT, MF_ENABLED );
 	} else {
@@ -279,20 +301,24 @@ void CCalendarWindow::CalcWindowSize()
 	m_Height=0;
 
 	if(c_Config.GetDaysEnable()) {
-		m_Width=max(m_Width, m_Days.GetX()+m_Days.GetW());
-		m_Height=max(m_Height, m_Days.GetY()+m_Days.GetH());
+		m_Width=max(m_Width, m_Days->GetX()+m_Days->GetW());
+		m_Height=max(m_Height, m_Days->GetY()+m_Days->GetH());
 	}
 	if(c_Config.GetWeekdaysEnable()) {
-		m_Width=max(m_Width, m_Weekdays.GetX()+m_Weekdays.GetW());
-		m_Height=max(m_Height, m_Weekdays.GetY()+m_Weekdays.GetH());
+		m_Width=max(m_Width, m_Weekdays->GetX()+m_Weekdays->GetW());
+		m_Height=max(m_Height, m_Weekdays->GetY()+m_Weekdays->GetH());
+	}
+	if(c_Config.GetWeekNumbersEnable()) {
+		m_Width=max(m_Width, m_WeekNumbers->GetX()+m_WeekNumbers->GetW());
+		m_Height=max(m_Height, m_WeekNumbers->GetY()+m_WeekNumbers->GetH());
 	}
 	if(c_Config.GetMonthEnable()) {
-		m_Width=max(m_Width, m_Month.GetX()+m_Month.GetW());
-		m_Height=max(m_Height, m_Month.GetY()+m_Month.GetH());
+		m_Width=max(m_Width, m_Month->GetX()+m_Month->GetW());
+		m_Height=max(m_Height, m_Month->GetY()+m_Month->GetH());
 	}
 	if(c_Config.GetYearEnable()) {
-		m_Width=max(m_Width, m_Year.GetX()+m_Year.GetW());
-		m_Height=max(m_Height, m_Year.GetY()+m_Year.GetH());
+		m_Width=max(m_Width, m_Year->GetX()+m_Year->GetW());
+		m_Height=max(m_Height, m_Year->GetY()+m_Year->GetH());
 	}
 
 	if(m_Background.GetWidth()>m_Width) m_Width=m_Background.GetWidth();
@@ -313,18 +339,35 @@ void CCalendarWindow::Refresh()
 		int X, Y;
 
 		// Initialize
+		delete m_Days;
+		delete m_Event;
+		delete m_Today;
+		delete m_Weekdays;
+		delete m_WeekNumbers;
+		delete m_Month;
+		delete m_Year;
+
+		m_Days = new CItemDays;
+		m_Event = new CItemEvent;
+		m_Today = new CItemToday;
+		m_Weekdays = new CItemWeekdays;
+		m_WeekNumbers = new CItemWeekNumbers;
+		m_Month = new CItemMonth;
+		m_Year = new CItemYear;
+
 		if(c_WharfData == NULL || m_FirstExecute)
 		{
 			m_Background.Initialize();
 		}
-		m_Days.Initialize();
-		m_Event.Initialize();
-		m_Today.Initialize();
-		m_Weekdays.Initialize();
-		m_Month.Initialize();
-		m_Year.Initialize();
+		m_Days->Initialize();
+		m_Event->Initialize();
+		m_Today->Initialize();
+		m_Weekdays->Initialize();
+		m_WeekNumbers->Initialize();
+		m_Month->Initialize();
+		m_Year->Initialize();
 
-		m_Event.AddToolTips(this);
+		m_Event->AddToolTips(this);
 
 		CalcWindowSize();
 
@@ -335,8 +378,6 @@ void CCalendarWindow::Refresh()
 		if(X<0) X+=r.Width();
 		if(Y<0) Y+=r.Height();
 
-		// Set window on top, so that desktop background is copied correctly.
-		// The window is set to bottom with the first Paint()
 		SetWindowPos(NULL, X, Y, m_Width, m_Height, SWP_NOACTIVATE | SWP_NOZORDER);
 
 		if(c_WharfData == NULL || m_FirstExecute)
@@ -371,17 +412,22 @@ void CCalendarWindow::Refresh()
 			if(CCalendarWindow::c_CurrentDate.GetMonth()==CCalendarWindow::c_TodaysDate.GetMonth() &&
 				CCalendarWindow::c_CurrentDate.GetYear()==CCalendarWindow::c_TodaysDate.GetYear()) {
 	
-				CEvent* TodaysEvent=m_Event.GetEvent(c_TodaysDate.GetDay());
+				CEvent* TodaysEvent=m_Event->GetEvent(c_TodaysDate.GetDay());
 				if(c_Config.GetEventEnable() && TodaysEvent!=NULL) {
 					if(c_Config.GetEventMessageBox()) {
 						MessageBox(TodaysEvent->GetMessage(), "Rainlendar", MB_OK | MB_TOPMOST);
 					}
 					CString& Execute=c_Config.GetEventExecute();
-					if(!Execute.IsEmpty()) {
-						CString tmpString;
-						tmpString=Execute;
-						tmpString.Replace("%m", TodaysEvent->GetMessage());
-						LSExecute(NULL, tmpString, SW_SHOWNORMAL);
+					if(!Execute.IsEmpty()) 
+					{
+						// Do not run bangs if litestep is not enabled
+						if(!c_DummyLitestep || Execute[0] != '!')
+						{
+							CString tmpString;
+							tmpString=Execute;
+							tmpString.Replace("%m", TodaysEvent->GetMessage());
+							LSExecute(NULL, tmpString, SW_SHOWNORMAL);
+						}
 					}
 				} 
 			}
@@ -482,14 +528,15 @@ void CCalendarWindow::DrawCalendar()
 
 		m_Background.Paint(tmpDC);
 
-		if(c_Config.GetYearEnable()) m_Year.Paint(tmpDC);
-		if(c_Config.GetMonthEnable()) m_Month.Paint(tmpDC);
+		if(c_Config.GetYearEnable()) m_Year->Paint(tmpDC);
+		if(c_Config.GetMonthEnable()) m_Month->Paint(tmpDC);
 
 		if(c_Config.GetDaysEnable()) {
-			m_Days.Paint(tmpDC);
-			if(c_Config.GetEventEnable()) m_Event.Paint(tmpDC);
-			if(c_Config.GetWeekdaysEnable()) m_Weekdays.Paint(tmpDC);
-			if(c_Config.GetTodayEnable()) m_Today.Paint(tmpDC);
+			m_Days->Paint(tmpDC);
+			if(c_Config.GetEventEnable()) m_Event->Paint(tmpDC);
+			if(c_Config.GetWeekdaysEnable()) m_Weekdays->Paint(tmpDC);
+			if(c_Config.GetWeekNumbersEnable()) m_WeekNumbers->Paint(tmpDC);
+			if(c_Config.GetTodayEnable()) m_Today->Paint(tmpDC);
 		}
 
 		tmpDC.SelectObject(OldBitmap);
@@ -502,8 +549,6 @@ void CCalendarWindow::DrawCalendar()
 void CCalendarWindow::OnPaint() 
 {
 	CPaintDC dc(this); // device context for painting
-
-	if(m_Refreshing) return;	// No painting while refreshing
 
 	if(m_DoubleBuffer) {
 		CDC tmpDC;
@@ -534,14 +579,8 @@ void CCalendarWindow::OnQuit()
 
 void CCalendarWindow::OnRefresh() 
 {
-	m_Refreshing=true;
-
-	// Set window to top, so that the desktop can be painted on it fully
-	if(c_WharfData == NULL)
-	{
-		SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-	}
-	SetTimer(REFRESH_START_TIMER, c_Config.GetRefreshDelay(), NULL);	
+	Refresh();
+	Invalidate();
 }
 
 void CCalendarWindow::OnConfig() 
@@ -552,6 +591,7 @@ void CCalendarWindow::OnConfig()
 	Dialog.AddPage(&m_DialogDays);
 	Dialog.AddPage(&m_DialogToday);
 	Dialog.AddPage(&m_DialogWeekdays);
+	Dialog.AddPage(&m_DialogWeekNumbers);
 	Dialog.AddPage(&m_DialogMonth);
 	Dialog.AddPage(&m_DialogYear);
 	Dialog.AddPage(&m_DialogEvent);
@@ -576,45 +616,12 @@ void CCalendarWindow::OnTimer(UINT nIDEvent)
 		{
 			// Day changed!
 			
-			// Move mouse so that screensaver is deactivated
-			POINT Pos;
-			GetCursorPos(&Pos);
-			SetCursorPos(Pos.x+50, Pos.y+50);
-			
 			c_TodaysDate=CTime::GetCurrentTime();
 			c_CurrentDate=CTime(c_TodaysDate.GetYear(), c_TodaysDate.GetMonth(), 1, 0, 0, 0);
-			nIDEvent=REFRESH_START_TIMER;		// This causes refresh!
 			m_FirstExecute=true;				// Act like Rainlendar was first time executed
+			OnRefresh();
 		}
 	}
-
-	if(nIDEvent==REFRESH_START_TIMER) 
-	{
-		KillTimer(REFRESH_START_TIMER);
-		// After the delay, let's refresh
-		Refresh();
-
-		// If the calendar was set to show hidden hide it
-		if(m_FirstRun && c_Config.GetStartHidden()) 
-		{
-			CWnd::ShowWindow(SW_HIDE);
-		} else {
-			if(c_WharfData == NULL)
-			{
-				SetWindowPos(&wndNoTopMost, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-			}
-		}
-		m_FirstRun=false;
-
-		// We'll have to wait a while so thet the window has time to reposition itself
-		SetTimer(REFRESH_END_TIMER, c_Config.GetRefreshDelay(), NULL);	
-	
-	} else if(nIDEvent==REFRESH_END_TIMER) {
-		KillTimer(REFRESH_END_TIMER);
-		// Refreshing is over, we can disable the Z-positioning of the window
-		m_Refreshing=false;
-		Invalidate();
-	} 
 
 	CWnd::OnTimer(nIDEvent);
 }
@@ -638,8 +645,8 @@ afx_msg LRESULT CCalendarWindow::OnGetRevID(WPARAM wParam, LPARAM lParam) {
 
 void CCalendarWindow::OnWindowPosChanging(WINDOWPOS FAR* lpwndpos) 
 {
-	// Disable Z-order unless we are refreshing
-	if(!m_Refreshing) lpwndpos->flags|=SWP_NOZORDER;
+	// Disable Z-order
+	lpwndpos->flags |= SWP_NOZORDER;
 
 	CWnd::OnWindowPosChanging(lpwndpos);
 }
@@ -647,8 +654,6 @@ void CCalendarWindow::OnWindowPosChanging(WINDOWPOS FAR* lpwndpos)
 
 BOOL CCalendarWindow::DestroyWindow() 
 {
-	KillTimer(REFRESH_START_TIMER);	
-	KillTimer(REFRESH_END_TIMER);	
 	KillTimer(DATE_TIMER);	
 
 	return CWnd::DestroyWindow();
@@ -676,7 +681,7 @@ BOOL CCalendarWindow::OnToolTipNotify( UINT id, NMHDR * pNMHDR, LRESULT * pResul
 	static char ToolTipText[MAX_LINE_LENGTH];
     TOOLTIPTEXT *pTTT = (TOOLTIPTEXT*)pNMHDR;
 
-	CEvent* Event=m_Event.GetEvent(pNMHDR->idFrom);
+	CEvent* Event=m_Event->GetEvent(pNMHDR->idFrom);
 	if(Event) {
 		strncpy(ToolTipText, Event->GetMessage(), MAX_LINE_LENGTH-1);
 		ToolTipText[MAX_LINE_LENGTH-1]='\0';
@@ -800,7 +805,7 @@ BOOL CCalendarWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 
 void CCalendarWindow::OnLButtonDblClk(UINT nFlags, CPoint point) 
 {
-	int Day=m_Days.HitTest(point.x, point.y);
+	int Day=m_Days->HitTest(point.x, point.y);
 	
 	if(Day!=0) {
 		CEditEvent EditEvent;

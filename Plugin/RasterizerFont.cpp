@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.cpp,v 1.1.1.1 2001/10/29 18:56:24 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.cpp,v 1.2 2002/01/10 16:40:59 rainy Exp $
 
   $Log: RasterizerFont.cpp,v $
+  Revision 1.2  2002/01/10 16:40:59  rainy
+  Added vertical positioning.
+
   Revision 1.1.1.1  2001/10/29 18:56:24  rainy
   Moved to CVS
 
@@ -203,17 +206,23 @@ void CRasterizerFont::Paint(CDC& dc, int X, int Y, int W, int H, int Index)
 	// Set the alignment
 	switch(m_Align) {
 	case CRasterizer::ALIGN_LEFT:
-		Format=DT_LEFT;
+		Format=DT_LEFT | DT_VCENTER;
 		break;
 	case CRasterizer::ALIGN_CENTER:
-		Format=DT_CENTER;
+		Format=DT_CENTER | DT_VCENTER;
 		break;
 	case CRasterizer::ALIGN_RIGHT:
-		Format=DT_RIGHT;
+		Format=DT_RIGHT | DT_VCENTER;
+		break;
+	case CRasterizer::ALIGN_TOP:
+		Format=DT_TOP | DT_CENTER;
+		break;
+	case CRasterizer::ALIGN_BOTTOM:
+		Format=DT_BOTTOM | DT_CENTER;
 		break;
 	}	
 
-	Format|=DT_NOCLIP | DT_VCENTER | DT_SINGLELINE;
+	Format|=DT_NOCLIP | DT_SINGLELINE;
 
 	if(m_StringTable==NULL) {
 		sprintf(tmpSz, "%i", Index);

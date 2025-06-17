@@ -2,6 +2,7 @@
 // Microsoft Developer Studio generated include file.
 // Used by RainlendarDLL.rc
 //
+#define IDD_WEEKNUMBERS                 102
 #define IDD_GENERAL                     106
 #define IDD_DAYS                        107
 #define IDD_WEEKDAYS                    108
@@ -90,6 +91,24 @@
 #define IDC_EVENT_MESSAGEBOX            1075
 #define IDC_EVENT_EXECUTE               1076
 #define IDC_EDITEVENT_MESSAGE           1077
+#define IDC_WEEKNUM_ENABLE              1078
+#define IDC_WEEKNUM_RASTERIZER          1079
+#define IDC_WEEKNUM_ALIGN               1080
+#define IDC_WEEKNUM_FONTNAME            1081
+#define IDC_WEEKNUM_SELECT              1082
+#define IDC_WEEKNUM_FONTCOLOR           1083
+#define IDC_WEEKNUM_BITMAP              1084
+#define IDC_WEEKNUM_BROWSE              1085
+#define IDC_WEEKNUM_COMPONENTS_10       1086
+#define IDC_WEEKNUM_COMPONENTS_54       1087
+#define IDC_EVENT_CALENDAR              1088
+#define IDC_EVENT_FONTCOLOR2            1089
+#define IDC_EVENT_SELECT2               1090
+#define IDC_EVENT_FONTNAME2             1091
+#define IDC_EDITEVENT_BROWSE            1092
+#define IDC_EDITEVENT_BITMAP            1093
+#define IDC_EDITEVENT_LABEL             1094
+#define IDC_EDITEVENT_FONTCOLOR         1095
 #define ID_RELOAD                       32771
 #define ID_CONFIG                       32772
 #define ID_POPUP_SELECTMONTH_JANUARY    32774
@@ -115,9 +134,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        1013
+#define _APS_NEXT_RESOURCE_VALUE        1014
 #define _APS_NEXT_COMMAND_VALUE         32793
-#define _APS_NEXT_CONTROL_VALUE         1078
+#define _APS_NEXT_CONTROL_VALUE         1096
 #define _APS_NEXT_SYMED_VALUE           1000
 #endif
 #endif

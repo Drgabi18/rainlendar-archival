@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/DialogEvent.cpp,v 1.2 2001/12/23 10:00:18 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/DialogEvent.cpp,v 1.3 2002/01/10 16:48:09 rainy Exp $
 
   $Log: DialogEvent.cpp,v $
+  Revision 1.3  2002/01/10 16:48:09  rainy
+  Added widgets to define the event text's color and font.
+
   Revision 1.2  2001/12/23 10:00:18  rainy
   Renamed the static variables (C_ -> c_)
 
@@ -52,6 +55,8 @@ CDialogEvent::CDialogEvent() : CPropertyPage(CDialogEvent::IDD)
 	m_ShowToolTips = FALSE;
 	m_ShowMessageBox = FALSE;
 	m_Execute = _T("");
+	m_Font2 = _T("");
+	m_ShowCalendar = FALSE;
 	//}}AFX_DATA_INIT
 }
 
@@ -71,6 +76,8 @@ void CDialogEvent::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_EVENT_TOOLTIP, m_ShowToolTips);
 	DDX_Check(pDX, IDC_EVENT_MESSAGEBOX, m_ShowMessageBox);
 	DDX_Text(pDX, IDC_EVENT_EXECUTE, m_Execute);
+	DDX_Text(pDX, IDC_EVENT_FONTNAME2, m_Font2);
+	DDX_Check(pDX, IDC_EVENT_CALENDAR, m_ShowCalendar);
 	//}}AFX_DATA_MAP
 }
 
@@ -92,6 +99,10 @@ BEGIN_MESSAGE_MAP(CDialogEvent, CPropertyPage)
 	ON_BN_CLICKED(IDC_EVENT_TOOLTIP, OnEventTooltip)
 	ON_BN_CLICKED(IDC_EVENT_MESSAGEBOX, OnEventMessagebox)
 	ON_EN_CHANGE(IDC_EVENT_EXECUTE, OnChangeEventExecute)
+	ON_BN_CLICKED(IDC_EVENT_FONTCOLOR2, OnEventFontcolor2)
+	ON_EN_CHANGE(IDC_EVENT_FONTNAME2, OnChangeEventFontname2)
+	ON_BN_CLICKED(IDC_EVENT_SELECT2, OnEventSelect2)
+	ON_BN_CLICKED(IDC_EVENT_CALENDAR, OnEventCalendar)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -138,6 +149,10 @@ void CDialogEvent::UpdateConfig()
 	CCalendarWindow::c_Config.SetEventExecute(m_Execute);
 	CCalendarWindow::c_Config.SetEventToolTips(m_ShowToolTips==TRUE);
 	CCalendarWindow::c_Config.SetEventMessageBox(m_ShowMessageBox==TRUE);
+
+	CCalendarWindow::c_Config.SetEventInCalendar(m_ShowCalendar==TRUE);
+	CCalendarWindow::c_Config.SetEventFontColor2(m_FontColor2);
+	CCalendarWindow::c_Config.SetEventFont2(m_RealFont2);
 }
 
 BOOL CDialogEvent::OnApply() 
@@ -162,10 +177,20 @@ void CDialogEvent::OnOK()
 
 void CDialogEvent::OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct) 
 {
-	HBRUSH Brush=CreateSolidBrush(m_FontColor);
-	FillRect(lpDrawItemStruct->hDC, &lpDrawItemStruct->rcItem, Brush);
-	DeleteObject(Brush);
+	if(nIDCtl == IDC_EVENT_FONTCOLOR)
+	{
+		HBRUSH Brush=CreateSolidBrush(m_FontColor);
+		FillRect(lpDrawItemStruct->hDC, &lpDrawItemStruct->rcItem, Brush);
+		DeleteObject(Brush);
+	}
 	
+	if(nIDCtl == IDC_EVENT_FONTCOLOR2)
+	{
+		HBRUSH Brush=CreateSolidBrush(m_FontColor2);
+		FillRect(lpDrawItemStruct->hDC, &lpDrawItemStruct->rcItem, Brush);
+		DeleteObject(Brush);
+	}
+
 	CPropertyPage::OnDrawItem(nIDCtl, lpDrawItemStruct);
 }
 
@@ -210,12 +235,16 @@ BOOL CDialogEvent::OnInitDialog()
 
 	m_RealFont=CCalendarWindow::c_Config.GetEventFont();
 	m_Font=m_RealFont.Mid(m_RealFont.ReverseFind('/')+1);
-
 	m_FontColor=CCalendarWindow::c_Config.GetEventFontColor();
 
 	m_ShowMessageBox=CCalendarWindow::c_Config.GetEventMessageBox();
 	m_ShowToolTips=CCalendarWindow::c_Config.GetEventToolTips();
 	m_Execute=CCalendarWindow::c_Config.GetEventExecute();
+
+	m_ShowCalendar=CCalendarWindow::c_Config.GetEventInCalendar();
+	m_RealFont2=CCalendarWindow::c_Config.GetEventFont2();
+	m_Font2=m_RealFont2.Mid(m_RealFont2.ReverseFind('/')+1);
+	m_FontColor2=CCalendarWindow::c_Config.GetEventFontColor2();
 
 	UpdateData(FALSE);
 
@@ -272,7 +301,9 @@ void CDialogEvent::OnEventEnable()
 		GetDlgItem(IDC_EVENT_TOOLTIP)->EnableWindow(true);
 		GetDlgItem(IDC_EVENT_MESSAGEBOX)->EnableWindow(true);
 		GetDlgItem(IDC_EVENT_EXECUTE)->EnableWindow(true);
+		GetDlgItem(IDC_EVENT_CALENDAR)->EnableWindow(true);
 		OnSelchangeEventRasterizer();
+		OnEventCalendar();
 	} else {
 		GetDlgItem(IDC_EVENT_RASTERIZER)->EnableWindow(false);
 		GetDlgItem(IDC_EVENT_SELECT)->EnableWindow(false);
@@ -286,6 +317,9 @@ void CDialogEvent::OnEventEnable()
 		GetDlgItem(IDC_EVENT_TOOLTIP)->EnableWindow(false);
 		GetDlgItem(IDC_EVENT_MESSAGEBOX)->EnableWindow(false);
 		GetDlgItem(IDC_EVENT_EXECUTE)->EnableWindow(false);
+		GetDlgItem(IDC_EVENT_SELECT2)->EnableWindow(false);
+		GetDlgItem(IDC_EVENT_FONTCOLOR2)->EnableWindow(false);
+		GetDlgItem(IDC_EVENT_CALENDAR)->EnableWindow(false);
 	}
 
 	SetModified(TRUE);
@@ -302,7 +336,23 @@ void CDialogEvent::OnEventFontcolor()
 	}
 }
 
+void CDialogEvent::OnEventFontcolor2() 
+{
+	CColorDialog ColorDialog(m_FontColor2);
+
+	if(IDOK==ColorDialog.DoModal()) {
+		m_FontColor2=ColorDialog.GetColor();
+		GetDlgItem(IDC_EVENT_FONTCOLOR2)->Invalidate();
+		SetModified(TRUE);
+	}
+}
+
 void CDialogEvent::OnChangeEventFontname() 
+{
+	SetModified(TRUE);
+}
+
+void CDialogEvent::OnChangeEventFontname2() 
 {
 	SetModified(TRUE);
 }
@@ -373,6 +423,41 @@ void CDialogEvent::OnEventSelect()
 	}
 }
 
+void CDialogEvent::OnEventSelect2() 
+{
+	LOGFONT lf;
+	sscanf(m_RealFont2, "%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i", 
+					&lf.lfHeight, &lf.lfWidth, &lf.lfEscapement, &lf.lfOrientation, &lf.lfWeight,
+					&lf.lfItalic, &lf.lfUnderline, &lf.lfStrikeOut, &lf.lfCharSet, &lf.lfOutPrecision, 
+					&lf.lfClipPrecision, &lf.lfQuality, &lf.lfPitchAndFamily);
+
+	strncpy(lf.lfFaceName, m_Font2, 32);
+
+	CFontDialog	FontDialog(&lf, CF_SCREENFONTS);
+
+	if(IDOK==FontDialog.DoModal()) {
+		m_RealFont2.Format("%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%s",
+			FontDialog.m_lf.lfHeight,
+			FontDialog.m_lf.lfWidth,
+			FontDialog.m_lf.lfEscapement,
+			FontDialog.m_lf.lfOrientation,
+			FontDialog.m_lf.lfWeight,
+			FontDialog.m_lf.lfItalic,
+			FontDialog.m_lf.lfUnderline,
+			FontDialog.m_lf.lfStrikeOut,
+			FontDialog.m_lf.lfCharSet,
+			FontDialog.m_lf.lfOutPrecision,
+			FontDialog.m_lf.lfClipPrecision,
+			FontDialog.m_lf.lfQuality,
+			FontDialog.m_lf.lfPitchAndFamily,
+			FontDialog.m_lf.lfFaceName);
+
+		m_Font2=m_RealFont2.Mid(m_RealFont2.ReverseFind('/')+1);
+
+		GetDlgItem(IDC_EVENT_FONTNAME2)->SetWindowText(m_Font2);
+		SetModified(TRUE);
+	}
+}
 
 void CDialogEvent::OnEventTooltip() 
 {
@@ -386,5 +471,23 @@ void CDialogEvent::OnEventMessagebox()
 
 void CDialogEvent::OnChangeEventExecute() 
 {
+	SetModified(TRUE);
+}
+
+void CDialogEvent::OnEventCalendar() 
+{
+	UpdateData();
+	
+	if(m_ShowCalendar) 
+	{
+		GetDlgItem(IDC_EVENT_SELECT2)->EnableWindow(true);
+		GetDlgItem(IDC_EVENT_FONTCOLOR2)->EnableWindow(true);
+	}
+	else
+	{
+		GetDlgItem(IDC_EVENT_SELECT2)->EnableWindow(false);
+		GetDlgItem(IDC_EVENT_FONTCOLOR2)->EnableWindow(false);
+	}
+
 	SetModified(TRUE);
 }

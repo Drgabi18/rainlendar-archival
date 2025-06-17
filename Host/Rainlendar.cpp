@@ -16,9 +16,13 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Host/Rainlendar.cpp,v 1.2 2001/12/23 09:59:35 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Host/Rainlendar.cpp,v 1.3 2002/01/15 17:58:09 rainy Exp $
 
   $Log: Rainlendar.cpp,v $
+  Revision 1.3  2002/01/15 17:58:09  rainy
+  Now adds \ to the end of the path if necessary.
+  Uses Default folder if command line is empty.
+
   Revision 1.2  2001/12/23 09:59:35  rainy
   Rainlendar.dll uses a bit different interface.
 
@@ -62,9 +66,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
-	if(lpCmdLine==NULL || lpCmdLine[0]=='\0') {
-		MessageBox(NULL, "Unable to initialize Rainlendar!\nError: You must give the ini-file path as an argument!", "Rainlendar", MB_OK | MB_ICONERROR);
-		return 0;
+	if(lpCmdLine==NULL || lpCmdLine[0]=='\0') 
+	{
+		lpCmdLine = "Default\\";
 	}
 
 	Length=strlen(lpCmdLine);
@@ -81,6 +85,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	// Check that Rainlendar.ini is found
 	strcpy(Filename, Path);
+	if(Filename[strlen(Filename) - 1] != '\\') strcat(Filename, "\\");
 	strcat(Filename, "Rainlendar.ini");
 	Filename[255]='\0';
 	FILE* File=fopen(Filename, "r");

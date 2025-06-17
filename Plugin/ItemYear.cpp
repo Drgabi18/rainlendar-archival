@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemYear.cpp,v 1.2 2001/12/23 10:00:17 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemYear.cpp,v 1.3 2002/01/10 16:42:02 rainy Exp $
 
   $Log: ItemYear.cpp,v $
+  Revision 1.3  2002/01/10 16:42:02  rainy
+  Fixed the height calculation
+
   Revision 1.2  2001/12/23 10:00:17  rainy
   Renamed the static variables (C_ -> c_)
 
@@ -85,23 +88,33 @@ int CItemYear::GetY()
 
 int CItemYear::GetW()
 {
-	if(m_Rasterizer) return m_Rasterizer->GetWidth()/NUMOFCOMPONENTS;
-
+	if(m_Rasterizer) {
+		if(m_Rasterizer->GetHeight()>m_Rasterizer->GetWidth()) {
+			return m_Rasterizer->GetWidth();
+		} else {
+			return m_Rasterizer->GetWidth()/NUMOFCOMPONENTS;
+		}
+	}
 	return 0;
 }
 
 int CItemYear::GetH()
 {
-	if(m_Rasterizer) return m_Rasterizer->GetHeight();
+	if(m_Rasterizer) {
+		if(m_Rasterizer->GetHeight()>m_Rasterizer->GetWidth()) {
+			return m_Rasterizer->GetHeight()/NUMOFCOMPONENTS;
+		} else {
+			return m_Rasterizer->GetHeight();
+		}
+	}
 
 	return 0;
 }
 
-
 /* 
 ** Initialize
 **
-** 
+** Initializes the rasterizer 
 **
 */
 void CItemYear::Initialize()
@@ -149,8 +162,8 @@ void CItemYear::Paint(CDC& dc)
 	int X, Y, W, H;
 
 	if(m_Rasterizer!=NULL) {
-		W=m_Rasterizer->GetWidth();
-		H=m_Rasterizer->GetHeight();
+		W=GetW();
+		H=GetH();
 		Y=CCalendarWindow::c_Config.GetYearY();
 
 		switch(CCalendarWindow::c_Config.GetYearAlign()) {

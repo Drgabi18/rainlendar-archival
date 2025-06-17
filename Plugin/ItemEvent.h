@@ -16,9 +16,13 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.h,v 1.1.1.1 2001/10/29 18:56:23 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.h,v 1.2 2002/01/10 16:46:35 rainy Exp $
 
   $Log: ItemEvent.h,v $
+  Revision 1.2  2002/01/10 16:46:35  rainy
+  Added possibility to show the events in the calendar window.
+  Added support for event specific colors/bitmaps.
+
   Revision 1.1.1.1  2001/10/29 18:56:23  rainy
   Moved to CVS
 
@@ -50,11 +54,13 @@ public:
 	void AddToolTips(CCalendarWindow* CalendarWnd);
 
 protected:
+	void SetFont(CString& FontName);
 	void AddToolTip(CCalendarWindow* CalendarWnd, RECT* Rect, int Day);
 	void RemoveToolTip(CCalendarWindow* CalendarWnd, int Day);
 
 	void ReadEvents();
 
+	CFont m_EventFont;
 	CEvent* m_Events[32];
 };
 

@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/DialogGeneral.cpp,v 1.2 2001/12/23 10:00:18 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/DialogGeneral.cpp,v 1.3 2002/01/15 17:58:42 rainy Exp $
 
   $Log: DialogGeneral.cpp,v $
+  Revision 1.3  2002/01/15 17:58:42  rainy
+  Removed the StartDelay
+
   Revision 1.2  2001/12/23 10:00:18  rainy
   Renamed the static variables (C_ -> c_)
 
@@ -50,7 +53,6 @@ CDialogGeneral::CDialogGeneral() : CPropertyPage(CDialogGeneral::IDD)
 	m_X = 0;
 	m_Y = 0;
 	m_StartFromMonday = FALSE;
-	m_StartDelay = 0;
 	m_StartHidden = FALSE;
 	m_DisableHotkeys = FALSE;
 	m_UseWindowName = FALSE;
@@ -69,7 +71,6 @@ void CDialogGeneral::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_X, m_X);
 	DDX_Text(pDX, IDC_Y, m_Y);
 	DDX_Check(pDX, IDC_START_FROM_MONDAY, m_StartFromMonday);
-	DDX_Text(pDX, IDC_START_DELAY, m_StartDelay);
 	DDX_Check(pDX, IDC_START_HIDDEN, m_StartHidden);
 	DDX_Check(pDX, IDC_DISABLE_HOTKEYS, m_DisableHotkeys);
 	DDX_Check(pDX, IDC_USE_WINDOW_NAME, m_UseWindowName);
@@ -83,7 +84,6 @@ BEGIN_MESSAGE_MAP(CDialogGeneral, CPropertyPage)
 	ON_EN_CHANGE(IDC_X, OnChangeX)
 	ON_EN_CHANGE(IDC_Y, OnChangeY)
 	ON_EN_CHANGE(IDC_BACKGROUND, OnChangeBackground)
-	ON_EN_CHANGE(IDC_START_DELAY, OnChangeStartDelay)
 	ON_BN_CLICKED(IDC_START_FROM_MONDAY, OnStartFromMonday)
 	ON_BN_CLICKED(IDC_START_HIDDEN, OnStartHidden)
 	ON_BN_CLICKED(IDC_DISABLE_HOTKEYS, OnDisableHotkeys)
@@ -114,7 +114,6 @@ BOOL CDialogGeneral::OnInitDialog()
 	m_Y=CCalendarWindow::c_Config.GetY();
 	m_StartFromMonday=CCalendarWindow::c_Config.GetStartFromMonday();
 	m_StartHidden=CCalendarWindow::c_Config.GetStartHidden();
-	m_StartDelay=CCalendarWindow::c_Config.GetStartDelay();
 	m_DisableHotkeys=CCalendarWindow::c_Config.GetDisableHotkeys();
 	m_UseWindowName=CCalendarWindow::c_Config.GetUseWindowName();
 
@@ -131,7 +130,6 @@ void CDialogGeneral::UpdateConfig()
 	CCalendarWindow::c_Config.SetY(m_Y);
 	CCalendarWindow::c_Config.SetStartFromMonday(m_StartFromMonday==TRUE);
 	CCalendarWindow::c_Config.SetStartHidden(m_StartHidden==TRUE);
-	CCalendarWindow::c_Config.SetStartDelay(m_StartDelay);
 	CCalendarWindow::c_Config.SetDisableHotkeys(m_DisableHotkeys==TRUE);
 	CCalendarWindow::c_Config.SetUseWindowName(m_UseWindowName==TRUE);
 }
@@ -157,11 +155,6 @@ BOOL CDialogGeneral::OnApply()
 }
 
 void CDialogGeneral::OnChangeBackground() 
-{
-	SetModified(TRUE);
-}
-
-void CDialogGeneral::OnChangeStartDelay() 
 {
 	SetModified(TRUE);
 }

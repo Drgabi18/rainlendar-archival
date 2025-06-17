@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "..\..\..\3rdparty\ls-b24" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "..\..\..\3rdparty\ls-b24" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "_WINDLL" /D "_AFXDLL" /FD /c
 # SUBTRACT CPP /YX /Yc /Yu
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
@@ -57,7 +57,7 @@ LINK32=link.exe
 # ADD LINK32 lsapi.lib /nologo /subsystem:windows /dll /machine:I386 /out:"Release/Rainlendar.dll" /libpath:"..\..\..\3rdparty\ls-b24\lsapi\Release"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=Copy    Release\Rainlendar.dll    ..\TestBench\ 
+PostBuild_Cmds=Copy        Release\Rainlendar.dll        ..\TestBench\ 
 # End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "Plugin - Win32 Debug"
@@ -88,7 +88,7 @@ LINK32=link.exe
 # ADD LINK32 lsapi.lib /nologo /subsystem:windows /dll /debug /machine:I386 /out:"Debug/Rainlendar.dll" /pdbtype:sept /libpath:"..\..\..\3rdparty\ls-b24\lsapi\Debug"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=Copy    Debug\Rainlendar.dll    ..\TestBench\ 
+PostBuild_Cmds=Copy        Debug\Rainlendar.dll        ..\TestBench\ 
 # End Special Build Tool
 
 !ENDIF 
@@ -138,6 +138,10 @@ SOURCE=.\DialogWeekdays.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\DialogWeekNumbers.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\DialogYear.cpp
 # End Source File
 # Begin Source File
@@ -171,6 +175,10 @@ SOURCE=.\ItemToday.cpp
 # Begin Source File
 
 SOURCE=.\ItemWeekdays.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\ItemWeekNumbers.cpp
 # End Source File
 # Begin Source File
 
@@ -275,6 +283,14 @@ SOURCE=.\ItemToday.h
 # Begin Source File
 
 SOURCE=.\ItemWeekdays.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Host\ItemWeekNumbers.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\ItemWeekNumbers.h
 # End Source File
 # Begin Source File
 

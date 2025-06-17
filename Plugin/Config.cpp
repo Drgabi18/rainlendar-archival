@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.cpp,v 1.1.1.1 2001/10/29 18:56:23 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.cpp,v 1.3 2002/01/15 17:58:51 rainy Exp $
 
   $Log: Config.cpp,v $
+  Revision 1.3  2002/01/15 17:58:51  rainy
+  Removed the StartDelay
+
+  Revision 1.2  2002/01/10 16:48:27  rainy
+  Added the weeknumber stuff
+
   Revision 1.1.1.1  2001/10/29 18:56:23  rainy
   Moved to CVS
 
@@ -46,7 +52,6 @@ CConfig::CConfig()
 	m_StartHidden=false;
 	m_DisableHotkeys=false;
 	m_UseWindowName=false;
-	m_StartDelay=0;
 	m_RefreshDelay=100;
 
 	m_DaysEnable=false;
@@ -54,33 +59,61 @@ CConfig::CConfig()
 	m_DaysY=0;
 	m_DaysW=100;
 	m_DaysH=100;
-	m_DaysAlign=CRasterizer::ALIGN_CENTER;
 	m_DaysNumOfComponents=1;
+	m_DaysAlign=CRasterizer::ALIGN_CENTER;
+	m_DaysRasterizer=CRasterizer::TYPE_NONE;
+	m_DaysFont="-11/0/0/0/400/0/0/0/0/3/2/1/34/Arial";
+	m_DaysFontColor=0;
 	m_DaysIgnoreToday=false;
 	m_DaysIgnoreEvent=false;
 
 	m_TodayEnable=false;
 	m_TodayAlign=CRasterizer::ALIGN_CENTER;
 	m_TodayNumOfComponents=1;
+	m_TodayRasterizer=CRasterizer::TYPE_NONE;
+	m_TodayFont="-11/0/0/0/400/0/0/0/0/3/2/1/34/Arial";
+	m_TodayFontColor=0;
 
 	m_WeekdaysEnable=false;
 	m_WeekdaysAlign=CRasterizer::ALIGN_CENTER;
+	m_WeekdaysRasterizer=CRasterizer::TYPE_NONE;
+	m_WeekdaysFont="-11/0/0/0/400/0/0/0/0/3/2/1/34/Arial";
+	m_WeekdaysFontColor=0;
 
 	m_MonthEnable=false;
 	m_MonthX=0;
 	m_MonthY=0;
 	m_MonthAlign=CRasterizer::ALIGN_CENTER;
+	m_MonthRasterizer=CRasterizer::TYPE_NONE;
+	m_MonthFont="-11/0/0/0/400/0/0/0/0/3/2/1/34/Arial";
+	m_MonthFontColor=0;
 
 	m_YearEnable=false;
 	m_YearX=0;
 	m_YearY=0;
 	m_YearAlign=CRasterizer::ALIGN_CENTER;
+	m_YearRasterizer=CRasterizer::TYPE_NONE;
+	m_YearFont="-11/0/0/0/400/0/0/0/0/3/2/1/34/Arial";
+	m_YearFontColor=0;
 
 	m_EventEnable=false;
 	m_EventAlign=CRasterizer::ALIGN_CENTER;
 	m_EventNumOfComponents=1;
 	m_EventToolTips=true;
 	m_EventMessageBox=true;
+	m_EventInCalendar=false;
+	m_EventRasterizer=CRasterizer::TYPE_NONE;
+	m_EventFont="-11/0/0/0/400/0/0/0/0/3/2/1/34/Arial";
+	m_EventFont2="-11/0/0/0/400/0/0/0/0/3/2/1/34/Arial";
+	m_EventFontColor=0;
+	m_EventFontColor2=0;
+		
+	m_WeekNumbersEnable = false;
+	m_WeekNumbersAlign = CRasterizer::ALIGN_CENTER;
+	m_WeekNumbersNumOfComponents = 10;
+	m_WeekNumbersRasterizer=CRasterizer::TYPE_NONE;
+	m_WeekNumbersFont="-11/0/0/0/400/0/0/0/0/3/2/1/34/Arial";
+	m_WeekNumbersFontColor=0;
 }
 
 
@@ -109,7 +142,6 @@ void CConfig::ReadConfig()
 	m_StartHidden=(1==GetPrivateProfileInt( "Rainlendar", "StartHidden", 0, INIPath))?true:false;
 	m_DisableHotkeys=(1==GetPrivateProfileInt( "Rainlendar", "DisableHotkeys", 0, INIPath))?true:false;
 	m_UseWindowName=(1==GetPrivateProfileInt( "Rainlendar", "UseWindowName", 0, INIPath))?true:false;
-	m_StartDelay=GetPrivateProfileInt( "Rainlendar", "StartDelay", 0, INIPath);
 	if(GetPrivateProfileString( "Rainlendar", "BackgroundBitmapName", "", tmpSz, MAX_LINE_LENGTH, INIPath) > 0) {
 		m_BackgroundBitmapName=tmpSz;
 	}
@@ -238,6 +270,31 @@ void CConfig::ReadConfig()
 	}
 	m_EventToolTips=(1==GetPrivateProfileInt( "Rainlendar", "EventToolTips", 0, INIPath))?true:false;
 	m_EventMessageBox=(1==GetPrivateProfileInt( "Rainlendar", "EventMessageBox", 0, INIPath))?true:false;
+	m_EventInCalendar=(1==GetPrivateProfileInt( "Rainlendar", "EventInCalendar", 0, INIPath))?true:false;
+	if(GetPrivateProfileString( "Rainlendar", "EventFont2", "", tmpSz, MAX_LINE_LENGTH, INIPath) > 0) {
+		m_EventFont2=tmpSz;
+	}
+	if(GetPrivateProfileString( "Rainlendar", "EventFontColor2", "", tmpSz, MAX_LINE_LENGTH, INIPath) > 0) {
+		sscanf(tmpSz, "%X", &m_EventFontColor2);
+	}
+
+	// Week numbers stuff
+	m_WeekNumbersEnable=(1==GetPrivateProfileInt( "Rainlendar", "WeekNumbersEnable", 0, INIPath))?true:false;
+	if(GetPrivateProfileString( "Rainlendar", "WeekNumbersBitmapName", "", tmpSz, MAX_LINE_LENGTH, INIPath) > 0) {
+		m_WeekNumbersBitmapName=tmpSz;
+	}
+	m_WeekNumbersAlign=(CRasterizer::ALIGN)GetPrivateProfileInt( "Rainlendar", "WeekNumbersAlign", 2, INIPath);
+	m_WeekNumbersNumOfComponents=GetPrivateProfileInt( "Rainlendar", "WeekNumbersNumOfComponents", 10, INIPath);
+	if(GetPrivateProfileString( "Rainlendar", "WeekNumbersRasterizer", "", tmpSz, MAX_LINE_LENGTH, INIPath) > 0) {
+		m_WeekNumbersRasterizer=ConvertRasterizer(tmpSz);
+	} else m_WeekNumbersRasterizer=CRasterizer::TYPE_NONE;
+	if(GetPrivateProfileString( "Rainlendar", "WeekNumbersFont", "", tmpSz, MAX_LINE_LENGTH, INIPath) > 0) {
+		m_WeekNumbersFont=tmpSz;
+	}
+	if(GetPrivateProfileString( "Rainlendar", "WeekNumbersFontColor", "", tmpSz, MAX_LINE_LENGTH, INIPath) > 0) {
+		sscanf(tmpSz, "%X", &m_WeekNumbersFontColor);
+	}
+
 }
 
 /* 
@@ -266,8 +323,6 @@ void CConfig::WriteConfig()
 	WritePrivateProfileString( "Rainlendar", "DisableHotkeys", tmpSz, INIPath );
 	sprintf(tmpSz, "%i", m_UseWindowName);
 	WritePrivateProfileString( "Rainlendar", "UseWindowName", tmpSz, INIPath );
-	sprintf(tmpSz, "%i", m_StartDelay);
-	WritePrivateProfileString( "Rainlendar", "StartDelay", tmpSz, INIPath );
 	WritePrivateProfileString( "Rainlendar", "BackgroundBitmapName", m_BackgroundBitmapName, INIPath );
 	WritePrivateProfileString( "Rainlendar", "MonthNames", m_MonthNames, INIPath );
 	WritePrivateProfileString( "Rainlendar", "WeekdayNames", m_WeekdayNames, INIPath );
@@ -370,6 +425,24 @@ void CConfig::WriteConfig()
 	WritePrivateProfileString( "Rainlendar", "EventToolTips", tmpSz, INIPath );
 	sprintf(tmpSz, "%i", m_EventMessageBox);
 	WritePrivateProfileString( "Rainlendar", "EventMessageBox", tmpSz, INIPath );
+	sprintf(tmpSz, "%i", m_EventInCalendar);
+	WritePrivateProfileString( "Rainlendar", "EventInCalendar", tmpSz, INIPath );
+	WritePrivateProfileString( "Rainlendar", "EventFont2", m_EventFont2, INIPath );
+	sprintf(tmpSz, "%X", m_EventFontColor2);
+	WritePrivateProfileString( "Rainlendar", "EventFontColor2", tmpSz, INIPath );
+
+	// Week numbers stuff
+	sprintf(tmpSz, "%i", m_WeekNumbersEnable);
+	WritePrivateProfileString( "Rainlendar", "WeekNumbersEnable", tmpSz, INIPath );
+	WritePrivateProfileString( "Rainlendar", "WeekNumbersBitmapName", m_WeekNumbersBitmapName, INIPath );
+	sprintf(tmpSz, "%i", m_WeekNumbersAlign);
+	WritePrivateProfileString( "Rainlendar", "WeekNumbersAlign", tmpSz, INIPath );
+	WritePrivateProfileString( "Rainlendar", "WeekNumbersRasterizer", ConvertRasterizer(m_WeekNumbersRasterizer), INIPath );
+	WritePrivateProfileString( "Rainlendar", "WeekNumbersFont", m_WeekNumbersFont, INIPath );
+	sprintf(tmpSz, "%X", m_WeekNumbersFontColor);
+	WritePrivateProfileString( "Rainlendar", "WeekNumbersFontColor", tmpSz, INIPath );
+	sprintf(tmpSz, "%i", m_WeekNumbersNumOfComponents);
+	WritePrivateProfileString( "Rainlendar", "WeekNumbersNumOfComponents", tmpSz, INIPath );
 
 	WritePrivateProfileString( NULL, NULL, NULL, INIPath );	// FLUSH
 }

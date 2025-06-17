@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.cpp,v 1.2 2001/12/23 10:02:31 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.cpp,v 1.3 2002/01/15 17:59:44 rainy Exp $
 
   $Log: Background.cpp,v $
+  Revision 1.3  2002/01/15 17:59:44  rainy
+  Now uses different way to get the desktop image.
+
   Revision 1.2  2001/12/23 10:02:31  rainy
   The background is grapped only once if ran as wharf module.
 
@@ -243,44 +246,226 @@ void CBackground::CopyBackground(int Width, int Height)
 {
 	HDC tmpDC;
 	HBITMAP OldBitmap;
-	HBITMAP tmpBitmap;
+	HBITMAP tmpBitmap = NULL;
 	CDC* WinDC;
 
 	if(m_CalendarWindow==NULL) throw ERR_BACKGROUND;
 
-	WinDC=m_CalendarWindow->GetWindowDC();
-	if(WinDC==NULL) throw ERR_BACKGROUND;
-
 	if(CCalendarWindow::GetWharfData() == NULL)
 	{
-		// Paint the desktop, so we'll get correct background
-		PaintDesktop(*WinDC);
+		// The new way
+		tmpBitmap = GetWallpaper();
 	}
 
-	// These are initialized only if grapping is successful
-	m_Width=0;
-	m_Height=0;
+	if(tmpBitmap == NULL)
+	{
+		// If the new way fails, use the old way
 
-	tmpDC=CreateCompatibleDC(*WinDC);
-	if(tmpDC==NULL) throw ERR_BACKGROUND;
+		WinDC=m_CalendarWindow->GetWindowDC();
+		if(WinDC==NULL) throw ERR_BACKGROUND;
 
-	m_Background.DeleteObject();	// Delete the old (if there was one)
-	tmpBitmap=CreateCompatibleBitmap(*WinDC, Width, Height);
-	if(tmpBitmap==NULL) throw ERR_BACKGROUND;
+		if(CCalendarWindow::GetWharfData() == NULL)
+		{
+			// Paint the desktop, so we'll get correct background
+			PaintDesktop(*WinDC);
+		}
 
-	m_Background.Attach(tmpBitmap);
+		// These are initialized only if grapping is successful
+		m_Width=0;
+		m_Height=0;
 
-	// Fetch the background
-	OldBitmap=(HBITMAP)SelectObject(tmpDC, m_Background);
-	BitBlt(tmpDC, 0, 0, Width, Height, *WinDC, 0, 0, SRCCOPY);
-	
-	m_CalendarWindow->ReleaseDC(WinDC);
+		tmpDC=CreateCompatibleDC(*WinDC);
+		if(tmpDC==NULL) throw ERR_BACKGROUND;
 
-	SelectObject(tmpDC, OldBitmap);
-	DeleteDC(tmpDC);
+		m_Background.DeleteObject();	// Delete the old (if there was one)
+		tmpBitmap=CreateCompatibleBitmap(*WinDC, Width, Height);
+		if(tmpBitmap==NULL) throw ERR_BACKGROUND;
+
+		m_Background.Attach(tmpBitmap);
+
+		// Fetch the background
+		OldBitmap=(HBITMAP)SelectObject(tmpDC, m_Background);
+		BitBlt(tmpDC, 0, 0, Width, Height, *WinDC, 0, 0, SRCCOPY);
+		
+		m_CalendarWindow->ReleaseDC(WinDC);
+
+		SelectObject(tmpDC, OldBitmap);
+		DeleteDC(tmpDC);
+	}
+	else
+	{
+		m_Background.DeleteObject();	// Delete the old (if there was one)
+		m_Background.Attach(tmpBitmap);
+	}
 
 	m_Width=Width;
 	m_Height=Height;
+}
+
+/*
+** GetWallpaper
+**
+** Loads the background image and cuts a given part from it.
+**
+*/
+HBITMAP CBackground::GetWallpaper()
+{
+	DWORD size = 256;
+	char str[256];
+	bool tile = false;
+	bool stretch = false;
+	COLORREF bgColor = 0;
+	HBITMAP bitmap = NULL;
+	HBITMAP bgBitmap = NULL;
+	
+    HKEY hKey = NULL;
+
+	// Get the wallpaper name and options from registry
+    if(RegOpenKeyEx(HKEY_CURRENT_USER, "Control Panel\\Desktop", 0, KEY_READ, &hKey) == ERROR_SUCCESS) 
+	{
+		if(RegQueryValueEx(hKey, "Wallpaper", NULL, NULL, (LPBYTE)&str, (LPDWORD)&size) == ERROR_SUCCESS)
+		{
+			if(strlen(str) > 0)
+			{
+				bitmap = LoadLSImage(str, NULL);
+				if(bitmap == NULL) return NULL;	// Unable to load the bitmap :(
+			}
+		}
+		size = 256;
+		if(RegQueryValueEx(hKey, "TileWallpaper", NULL, NULL, (LPBYTE)&str, (LPDWORD)&size) == ERROR_SUCCESS)
+		{
+			if(strcmp(str, "1") == 0) tile = true;
+		}
+		size = 256;
+		if(RegQueryValueEx(hKey, "WallpaperStyle", NULL, NULL, (LPBYTE)&str, (LPDWORD)&size) == ERROR_SUCCESS)
+		{
+			if(strcmp(str, "2") == 0) stretch = true;
+		}
+		RegCloseKey(hKey);
+	}
+	size = 256;
+	// Also get the background color
+    if(RegOpenKeyEx(HKEY_CURRENT_USER, "Control Panel\\Colors", 0, KEY_READ, &hKey) == ERROR_SUCCESS) 
+	{
+		if(RegQueryValueEx(hKey, "Background", NULL, NULL, (LPBYTE)&str, (LPDWORD)&size) == ERROR_SUCCESS)
+		{
+			int R, G, B;
+			sscanf(str, "%i %i %i", &R, &G, &B);
+			bgColor = RGB(R, G, B);
+		}
+		RegCloseKey(hKey);
+	}
+
+	// Get the window's pos and size
+	RECT windowRect, screenRect;
+	m_CalendarWindow->GetWindowRect(&windowRect);
+
+	// Get the screen size
+	GetClientRect(GetDesktopWindow(), &screenRect); 
+
+	HDC winDC = GetWindowDC(*m_CalendarWindow);
+	if(winDC == NULL) throw ERR_BACKGROUND;
+
+	HDC tmpDC = CreateCompatibleDC(winDC);
+	if(tmpDC == NULL) throw ERR_BACKGROUND;
+
+	bgBitmap = CreateCompatibleBitmap(winDC, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top);
+	if(bgBitmap==NULL) throw ERR_BACKGROUND;
+
+	ReleaseDC(*m_CalendarWindow, winDC);
+
+	HBITMAP oldBitmap = (HBITMAP)SelectObject(tmpDC, bgBitmap);
+	
+	// Fill the bitmap with bgcolor
+	HBRUSH brush = CreateSolidBrush(bgColor);
+	RECT r = { 0, 0, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top };
+	FillRect(tmpDC, &r, brush);
+	DeleteObject(brush);
+
+	if(bitmap)
+	{
+		HDC bgDC = CreateCompatibleDC(tmpDC);
+		if(bgDC == NULL) throw ERR_BACKGROUND;
+		HBITMAP oldBitmap2 = (HBITMAP)SelectObject(bgDC, bitmap);
+
+		// Get the size of the loaded wallpaper
+		BITMAP bm;
+		GetObject(bitmap, sizeof(BITMAP), &bm);
+
+		// If the window is off the primary monitor, we'll have to modify the values a bit
+		POINT point = {windowRect.left, windowRect.top };
+		HMONITOR monitor = MonitorFromPoint(point, MONITOR_DEFAULTTOPRIMARY);
+		if(monitor)
+		{
+			MONITORINFO monInfo;
+			monInfo.cbSize = sizeof(MONITORINFO);
+			GetMonitorInfo(monitor, &monInfo);
+			if(monInfo.dwFlags != MONITORINFOF_PRIMARY)
+			{
+				// Not a primary monitor -> adjust the values
+				if(tile)
+				{
+					screenRect.left = 0;
+					screenRect.top = 0;
+					screenRect.right = monInfo.rcMonitor.right;
+					screenRect.bottom = monInfo.rcMonitor.bottom;
+					if(screenRect.left > screenRect.right) 
+					{
+						screenRect.left = screenRect.right;
+						screenRect.right = 0;
+					}
+					if(screenRect.top > screenRect.bottom) 
+					{
+						screenRect.top = screenRect.bottom;
+						screenRect.bottom = 0;
+					}
+				}
+				else
+				{
+					windowRect.left -= monInfo.rcMonitor.left;
+					windowRect.right -= monInfo.rcMonitor.left;
+					windowRect.top -= monInfo.rcMonitor.top;
+					windowRect.bottom -= monInfo.rcMonitor.top;
+					screenRect.right = (monInfo.rcMonitor.right - monInfo.rcMonitor.left);
+					screenRect.bottom = (monInfo.rcMonitor.bottom - monInfo.rcMonitor.top);
+				}
+			}
+		}
+
+		if(stretch)
+		{
+			StretchBlt(tmpDC, -windowRect.left, -windowRect.top, screenRect.right - screenRect.left, screenRect.bottom - screenRect.top,
+					   bgDC, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
+		}
+		else if(tile)
+		{
+			// We should probably calculate the proper starting point, but why bother
+			for(int i = screenRect.left; i < screenRect.right; i += bm.bmWidth)
+			{
+				for(int j = screenRect.top; j < screenRect.bottom; j += bm.bmHeight)
+				{
+					BitBlt(tmpDC, i - windowRect.left, j - windowRect.top, bm.bmWidth, bm.bmHeight,
+						   bgDC, 0, 0, SRCCOPY);
+				}
+			}
+		}
+		else // Center
+		{
+			int imageLeft = (screenRect.right - screenRect.left) / 2 - bm.bmWidth / 2;
+			int imageTop = (screenRect.bottom - screenRect.top) / 2 - bm.bmHeight / 2;
+			BitBlt(tmpDC, imageLeft - windowRect.left, imageTop - windowRect.top, bm.bmWidth, bm.bmHeight,
+				   bgDC, 0, 0, SRCCOPY);
+		}
+
+		SelectObject(bgDC, oldBitmap2);
+		DeleteDC(bgDC);
+		DeleteObject(bitmap);	// We do not need this one anymore
+	}
+
+	SelectObject(tmpDC, oldBitmap);
+	DeleteDC(tmpDC);
+
+	return bgBitmap;
 }
 
 /* 

@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.h,v 1.1.1.1 2001/10/29 18:56:24 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.h,v 1.2 2002/01/15 17:59:44 rainy Exp $
 
   $Log: Background.h,v $
+  Revision 1.2  2002/01/15 17:59:44  rainy
+  Now uses different way to get the desktop image.
+
   Revision 1.1.1.1  2001/10/29 18:56:24  rainy
   Moved to CVS
 
@@ -50,6 +53,8 @@ public:
 	void Initialize();
 
 private:
+	HBITMAP GetWallpaper();
+
 	CString m_Filename;
 	
 	int m_Width;

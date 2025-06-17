@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/DialogEvent.h,v 1.1.1.1 2001/10/29 18:56:23 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/DialogEvent.h,v 1.2 2002/01/10 16:48:09 rainy Exp $
 
   $Log: DialogEvent.h,v $
+  Revision 1.2  2002/01/10 16:48:09  rainy
+  Added widgets to define the event text's color and font.
+
   Revision 1.1.1.1  2001/10/29 18:56:23  rainy
   Moved to CVS
 
@@ -56,6 +59,8 @@ public:
 	BOOL	m_ShowToolTips;
 	BOOL	m_ShowMessageBox;
 	CString	m_Execute;
+	CString	m_Font2;
+	BOOL	m_ShowCalendar;
 	//}}AFX_DATA
 
 
@@ -73,6 +78,8 @@ public:
 protected:
 	CString m_RealFont;
 	COLORREF m_FontColor;
+	CString m_RealFont2;
+	COLORREF m_FontColor2;
 
 	void UpdateConfig();
 
@@ -94,6 +101,10 @@ protected:
 	afx_msg void OnEventTooltip();
 	afx_msg void OnEventMessagebox();
 	afx_msg void OnChangeEventExecute();
+	afx_msg void OnEventFontcolor2();
+	afx_msg void OnChangeEventFontname2();
+	afx_msg void OnEventSelect2();
+	afx_msg void OnEventCalendar();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.h,v 1.1.1.1 2001/10/29 18:56:23 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.h,v 1.3 2002/01/15 17:58:51 rainy Exp $
 
   $Log: Config.h,v $
+  Revision 1.3  2002/01/15 17:58:51  rainy
+  Removed the StartDelay
+
+  Revision 1.2  2002/01/10 16:48:27  rainy
+  Added the weeknumber stuff
+
   Revision 1.1.1.1  2001/10/29 18:56:23  rainy
   Moved to CVS
 
@@ -45,7 +51,6 @@ public:
 	int GetY() { return m_Y; };
 	CString& GetPath() { return m_Path; };
 	bool GetStartFromMonday() { return m_StartFromMonday; };
-	int GetStartDelay() { return m_StartDelay; };
 	CString& GetWeekdayNames() { return m_WeekdayNames; };
 	CString& GetMonthNames() { return m_MonthNames; };
 	int GetRefreshDelay() { return m_RefreshDelay; };
@@ -57,7 +62,6 @@ public:
 	void SetY(int Y ) { m_Y=Y; };
 	void SetPath(CString& Path) { m_Path=Path; };
 	void SetStartFromMonday(bool StartFromMonday ) { m_StartFromMonday=StartFromMonday; };
-	void SetStartDelay(int StartDelay ) { m_StartDelay=StartDelay; };
 	void SetWeekdayNames(CString& WeekdayNames ) { m_WeekdayNames=WeekdayNames; };
 	void SetMonthNames(CString& MonthNames ) { m_MonthNames=MonthNames; };
 	void SetRefreshDelay(int RefreshDelay ) { m_RefreshDelay=RefreshDelay; };
@@ -178,6 +182,9 @@ public:
 	bool GetEventToolTips() { return m_EventToolTips; };
 	bool GetEventMessageBox() { return m_EventMessageBox; };
 	CString& GetEventExecute() { return m_EventExecute; };
+	bool GetEventInCalendar() { return m_EventInCalendar; };
+	COLORREF GetEventFontColor2() { return m_EventFontColor2; };
+	CString& GetEventFont2() { return m_EventFont2; };
 
 	void SetEventExecute(CString& EventExecute ) { m_EventExecute=EventExecute; };
 	void SetEventFont(CString& EventFont ) { m_EventFont=EventFont; };
@@ -189,6 +196,26 @@ public:
 	void SetEventNumOfComponents(int EventNumOfComponents ) { m_EventNumOfComponents=EventNumOfComponents; };
 	void SetEventRasterizer(CRasterizer::TYPE EventRasterizer ) { m_EventRasterizer=EventRasterizer; };
 	void SetEventFontColor(COLORREF EventFontColor ) { m_EventFontColor=EventFontColor; };
+	void SetEventInCalendar(bool EventInCalendar) { m_EventInCalendar=EventInCalendar; };
+	void SetEventFont2(CString& EventFont2 ) { m_EventFont2=EventFont2; };
+	void SetEventFontColor2(COLORREF EventFontColor2 ) { m_EventFontColor2=EventFontColor2; };
+
+	// Week numbers
+	bool GetWeekNumbersEnable() { return m_WeekNumbersEnable; };
+	CString& GetWeekNumbersBitmapName() { return m_WeekNumbersBitmapName; };
+	CRasterizer::ALIGN GetWeekNumbersAlign() { return m_WeekNumbersAlign; };
+	CString& GetWeekNumbersFont() { return m_WeekNumbersFont; };
+	CRasterizer::TYPE GetWeekNumbersRasterizer() { return m_WeekNumbersRasterizer; };
+	COLORREF GetWeekNumbersFontColor() { return m_WeekNumbersFontColor; };
+	int GetWeekNumbersNumOfComponents() { return m_WeekNumbersNumOfComponents; };
+
+	void SetWeekNumbersEnable(bool WeekNumbersEnable ) { m_WeekNumbersEnable=WeekNumbersEnable; };
+	void SetWeekNumbersBitmapName(CString& WeekNumbersBitmapName ) { m_WeekNumbersBitmapName=WeekNumbersBitmapName; };
+	void SetWeekNumbersAlign(CRasterizer::ALIGN WeekNumbersAlign ) { m_WeekNumbersAlign=WeekNumbersAlign; };
+	void SetWeekNumbersFont(CString& WeekNumbersFont ) { m_WeekNumbersFont=WeekNumbersFont; };
+	void SetWeekNumbersRasterizer(CRasterizer::TYPE WeekNumbersRasterizer ) { m_WeekNumbersRasterizer=WeekNumbersRasterizer; };
+	void SetWeekNumbersFontColor(COLORREF WeekNumbersFontColor ) { m_WeekNumbersFontColor=WeekNumbersFontColor; };
+	void SetWeekNumbersNumOfComponents(int WeekNumbersNumOfComponents ) { m_WeekNumbersNumOfComponents=WeekNumbersNumOfComponents; };
 
 	void ReadConfig();
 	void WriteConfig();
@@ -205,7 +232,6 @@ private:
 	bool m_StartHidden;
 	bool m_DisableHotkeys;
 	bool m_UseWindowName;
-	int m_StartDelay;
 	CString m_BackgroundBitmapName;	// Name of the background picture
 	CString m_MonthNames;
 	CString m_WeekdayNames;
@@ -268,6 +294,17 @@ private:
 	CString m_EventExecute;
 	bool m_EventToolTips;
 	bool m_EventMessageBox;
+	bool m_EventInCalendar;
+	CString m_EventFont2;
+	COLORREF m_EventFontColor2;
+
+	bool m_WeekNumbersEnable;
+	CString m_WeekNumbersBitmapName;	// Name of the today bitmap
+	CRasterizer::ALIGN m_WeekNumbersAlign;
+	CRasterizer::TYPE m_WeekNumbersRasterizer;
+	CString m_WeekNumbersFont;
+	COLORREF m_WeekNumbersFontColor;
+	int m_WeekNumbersNumOfComponents;	// Components in the bitmap
 };
 
 #endif // !defined(AFX_CONFIG_H__C7D0FDBB_F062_11D3_92A3_0080AD90417B__INCLUDED_)

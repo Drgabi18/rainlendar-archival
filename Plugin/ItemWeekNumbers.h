@@ -16,37 +16,31 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Event.cpp,v 1.2 2002/01/10 16:46:56 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemWeekNumbers.h,v 1.1 2002/01/10 16:40:37 rainy Exp $
 
-  $Log: Event.cpp,v $
-  Revision 1.2  2002/01/10 16:46:56  rainy
-  Now holds the bitmap and color too.
-
-  Revision 1.1.1.1  2001/10/29 18:56:23  rainy
-  Moved to CVS
+  $Log: ItemWeekNumbers.h,v $
+  Revision 1.1  2002/01/10 16:40:37  rainy
+  Initial version
 
 */
 
-#include "stdafx.h"
-#include "rainlendardll.h"
-#include "Event.h"
+#if !defined(AFX_ITEMWEEKNUMBERS_H__CC665490_4370_400D_9903_3471FD1AB032__INCLUDED_)
+#define AFX_ITEMWEEKNUMBERS_H__CC665490_4370_400D_9903_3471FD1AB032__INCLUDED_
 
-#ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
-#endif
+#if _MSC_VER > 1000
+#pragma once
+#endif // _MSC_VER > 1000
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
+#include "Item.h"
 
-CEvent::CEvent()
+class CItemWeekNumbers : public CItem  
 {
-	m_Color = 0;
-}
+public:
+	CItemWeekNumbers();
+	virtual ~CItemWeekNumbers();
 
-CEvent::~CEvent()
-{
+	void Initialize();
+	void Paint(CDC& dc);
+};
 
-}
+#endif // !defined(AFX_ITEMWEEKNUMBERS_H__CC665490_4370_400D_9903_3471FD1AB032__INCLUDED_)

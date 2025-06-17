@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Event.h,v 1.1.1.1 2001/10/29 18:56:23 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Event.h,v 1.2 2002/01/10 16:46:56 rainy Exp $
 
   $Log: Event.h,v $
+  Revision 1.2  2002/01/10 16:46:56  rainy
+  Now holds the bitmap and color too.
+
   Revision 1.1.1.1  2001/10/29 18:56:23  rainy
   Moved to CVS
 
@@ -38,12 +41,18 @@ public:
 	~CEvent();
 
 	CString& GetMessage() { return m_Message; };
+	CString& GetBitmap() { return m_Bitmap; };
+	COLORREF GetColor() { return m_Color; };
+
 	void SetMessage(CString& Message ) { m_Message=Message; };
 	void SetMessage(char* Message ) { m_Message=Message; };
+	void SetBitmap(CString& Bitmap ) { m_Bitmap=Bitmap; };
+	void SetColor(COLORREF Color ) { m_Color=Color; };
 
 private:
 	CString m_Message;
-
+	COLORREF m_Color;
+	CString m_Bitmap;
 };
 
 #endif // !defined(AFX_EVENT_H__3B699F74_B75F_4CDC_ACCA_F98A33D0D58B__INCLUDED_)

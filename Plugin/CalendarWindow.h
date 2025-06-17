@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.h,v 1.2 2001/12/23 10:02:55 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.h,v 1.4 2002/01/15 17:59:18 rainy Exp $
 
   $Log: CalendarWindow.h,v $
+  Revision 1.4  2002/01/15 17:59:18  rainy
+  Changed the way refreshing is done.
+
+  Revision 1.3  2002/01/10 16:49:14  rainy
+  The items weren't deallocated during refresh. Fixed and changed them to pointers.
+
   Revision 1.2  2001/12/23 10:02:55  rainy
   Rainlendar.dll uses a bit different interface.
 
@@ -42,12 +48,14 @@
 #include "ItemEvent.h"
 #include "ItemToday.h"
 #include "ItemWeekdays.h"
+#include "ItemWeekNumbers.h"
 #include "ItemMonth.h"
 #include "ItemYear.h"
 #include "DialogGeneral.h"
 #include "DialogDays.h"
 #include "DialogToday.h"
 #include "DialogWeekdays.h"
+#include "DialogWeekNumbers.h"
 #include "DialogMonth.h"
 #include "DialogYear.h"
 #include "DialogEvent.h"
@@ -68,8 +76,6 @@ public:
 	static CTime c_CurrentDate;
 
 protected:
-	bool m_FirstRun;
-
 	HINSTANCE m_DllInstance;
 	CBackground m_Background;
 	CBitmap* m_DoubleBuffer;
@@ -77,22 +83,23 @@ protected:
 	int m_Width;
 	int m_Height;
 
-	bool m_Refreshing;
 	bool m_FirstExecute;
 
 	int m_SelectedDay;
 
-	CItemDays m_Days;
-	CItemEvent m_Event;
-	CItemToday m_Today;
-	CItemWeekdays m_Weekdays;
-	CItemMonth m_Month;
-	CItemYear m_Year;
+	CItemDays* m_Days;
+	CItemEvent* m_Event;
+	CItemToday* m_Today;
+	CItemWeekdays* m_Weekdays;
+	CItemWeekNumbers* m_WeekNumbers;
+	CItemMonth* m_Month;
+	CItemYear* m_Year;
 
 	CDialogGeneral m_DialogGeneral;
 	CDialogDays m_DialogDays;
 	CDialogToday m_DialogToday;
 	CDialogWeekdays m_DialogWeekdays;
+	CDialogWeekNumbers m_DialogWeekNumbers;
 	CDialogMonth m_DialogMonth;
 	CDialogYear m_DialogYear;
 	CDialogEvent m_DialogEvent;

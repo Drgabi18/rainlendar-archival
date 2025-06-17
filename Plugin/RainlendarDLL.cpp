@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RainlendarDLL.cpp,v 1.2 2001/12/23 10:01:30 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RainlendarDLL.cpp,v 1.3 2002/01/10 16:41:35 rainy Exp $
 
   $Log: RainlendarDLL.cpp,v $
+  Revision 1.3  2002/01/10 16:41:35  rainy
+  no message
+
   Revision 1.2  2001/12/23 10:01:30  rainy
   Rainlendar.dll uses a bit different interface.
   Added Wharf interface.
@@ -126,7 +129,6 @@ void quitModule(HINSTANCE)
 		theApp.m_pMainWnd=NULL;
 	}
 }
-
 
 int initWharfModule(HWND ParentWnd, HINSTANCE dllInst, wharfDataType* wd)
 {

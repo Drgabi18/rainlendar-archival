@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/EditEvent.h,v 1.1.1.1 2001/10/29 18:56:23 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/EditEvent.h,v 1.2 2002/01/10 16:47:15 rainy Exp $
 
   $Log: EditEvent.h,v $
+  Revision 1.2  2002/01/10 16:47:15  rainy
+  Added support for bitmap/color,
+
   Revision 1.1.1.1  2001/10/29 18:56:23  rainy
   Moved to CVS
 
@@ -53,6 +56,8 @@ public:
 	//{{AFX_DATA(CEditEvent)
 	enum { IDD = IDD_EDITEVENT };
 	CString	m_Message;
+	CString	m_Label;
+	CString	m_Bitmap;
 	//}}AFX_DATA
 
 
@@ -69,11 +74,14 @@ protected:
 	// Generated message map functions
 	//{{AFX_MSG(CEditEvent)
 	virtual BOOL OnInitDialog();
+	afx_msg void OnDrawItem(int nIDCtl, LPDRAWITEMSTRUCT lpDrawItemStruct);
+	afx_msg void OnEditeventBrowse();
+	afx_msg void OnEditeventFontcolor();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
 private:
-
+	COLORREF m_FontColor;
 	int m_Day;
 };
 

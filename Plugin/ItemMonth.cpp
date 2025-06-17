@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemMonth.cpp,v 1.2 2001/12/23 10:00:17 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemMonth.cpp,v 1.3 2002/01/10 16:45:33 rainy Exp $
 
   $Log: ItemMonth.cpp,v $
+  Revision 1.3  2002/01/10 16:45:33  rainy
+  no message
+
   Revision 1.2  2001/12/23 10:00:17  rainy
   Renamed the static variables (C_ -> c_)
 
@@ -79,7 +82,6 @@ int CItemMonth::GetX()
 	return 0;
 }
 
-
 int CItemMonth::GetY()
 {
 	return CCalendarWindow::c_Config.GetMonthY();
@@ -109,7 +111,6 @@ int CItemMonth::GetH()
 
 	return 0;
 }
-
 
 /* 
 ** Initialize
