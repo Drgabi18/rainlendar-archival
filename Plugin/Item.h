@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Item.h,v 1.4 2002/08/24 11:11:58 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Item.h,v 1.5 2002/11/12 18:11:41 rainy Exp $
 
   $Log: Item.h,v $
+  Revision 1.5  2002/11/12 18:11:41  rainy
+  The interface of Paint changed a little.
+
   Revision 1.4  2002/08/24 11:11:58  rainy
   Added ResetDayTypes()
 
@@ -51,7 +54,7 @@ public:
 
 	virtual void Initialize() = 0;
 	virtual void ResetDayTypes() { /* Nothing */ };
-	virtual void Paint(HDC dc) = 0;
+	virtual void Paint(CImage& background) = 0;
 
 	CRasterizer* GetRasterizer() { return m_Rasterizer; };
 	void SetRasterizer(CRasterizer* Rasterizer);

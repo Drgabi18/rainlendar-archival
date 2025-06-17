@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.h,v 1.7 2002/08/03 16:19:06 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.h,v 1.8 2002/11/12 18:02:33 rainy Exp $
 
   $Log: Config.h,v $
+  Revision 1.8  2002/11/12 18:02:33  rainy
+  Added Native Transparency and solid background (with bevel).
+
   Revision 1.7  2002/08/03 16:19:06  rainy
   Added some new configs.
   Added support for profiles.
@@ -60,6 +63,10 @@ struct Profile
 	COLORREF fontColor;
 	COLORREF fontColor2;
 	std::string bitmapName;
+	CImage bitmap;
+	std::string iconName;
+	CRasterizer::ALIGN iconAlign;
+	CImage icon;
 };
 
 class CConfig  
@@ -77,7 +84,8 @@ public:
 	{
 		WINDOWPOS_ONBOTTOM,
 		WINDOWPOS_NORMAL,
-		WINDOWPOS_ONTOP
+		WINDOWPOS_ONTOP,
+		WINDOWPOS_ONDESKTOP
 	};
 
 	enum BG_COPY_MODE
@@ -120,7 +128,7 @@ public:
 	bool GetMovable() { return m_Movable; };
 	bool GetSnapEdges() { return m_SnapEdges; };
 	bool GetMouseHide() { return m_MouseHide; };
-	CBackground::MODE GetBackgroundMode() { return m_BackgroundMode; };
+	bool GetNativeTransparency() { return m_NativeTransparency; };
 	WINDOWPOS GetWindowPos() { return m_WindowPos; };
 	BG_COPY_MODE GetBGCopyMode() { return m_BGCopyMode; };
 
@@ -137,12 +145,19 @@ public:
 	void SetMovable(bool Movable) { m_Movable=Movable; };
 	void SetSnapEdges(bool SnapEdges) { m_SnapEdges=SnapEdges; };
 	void SetMouseHide(bool MouseHide) { m_MouseHide=MouseHide; };
-	void SetBackgroundMode(CBackground::MODE BackgroundMode ) { m_BackgroundMode=BackgroundMode; };
+	void SetNativeTransparency(bool NativeTransparency) { m_NativeTransparency=NativeTransparency; };
 	void SetWindowPos(WINDOWPOS WindowPos) { m_WindowPos=WindowPos; };
 	void SetBGCopyMode(BG_COPY_MODE bgMode) { m_BGCopyMode=bgMode; };
 
+	CBackground::MODE GetBackgroundMode() { return m_BackgroundMode; };
     const std::string& GetBackgroundBitmapName() { return m_BackgroundBitmapName; };
+	bool GetBackgroundBevel() { return m_BackgroundBevel; };
+	COLORREF GetBackgroundSolidColor() { return m_BackgroundSolidColor; };
+
+	void SetBackgroundMode(CBackground::MODE BackgroundMode ) { m_BackgroundMode=BackgroundMode; };
 	void SetBackgroundBitmapName(const std::string& BackgroundBitmapName ) { m_BackgroundBitmapName=BackgroundBitmapName; };
+	void SetBackgroundBevel(bool BackgroundBevel ) { m_BackgroundBevel=BackgroundBevel; };
+	void SetBackgroundSolidColor(COLORREF BackgroundSolidColor ) { m_BackgroundSolidColor=BackgroundSolidColor; };
 
 	// Days
 	bool GetDaysEnable() { return m_DaysEnable; };
@@ -325,8 +340,9 @@ public:
 	void WriteConfig(WRITE_FLAGS flags);
 
 	const Profile* GetProfile(const char* name);
-	const std::list<Profile>& GetAllProfiles();
+	const std::list<Profile*>& GetAllProfiles();
 
+	static void AddPath(std::string& filename);
 private:
 	void GetIniTime(const std::string& filename);
 	bool CompareIniTime(const std::string& filename);
@@ -339,7 +355,7 @@ private:
 	const char* ConvertRasterizer(CRasterizer::TYPE Type);
 	void SeparateMonths();
 
-	std::list<Profile> m_Profiles;
+	std::list<Profile*> m_Profiles;
 
 	FILETIME m_WriteTime;	// Last write time for the events.ini
 
@@ -361,6 +377,7 @@ private:
 	bool m_Movable;
 	bool m_MouseHide;
 	bool m_SnapEdges;
+	bool m_NativeTransparency;
 	std::string m_MonthNames;
 	std::string m_WeekdayNames;
 	int m_RefreshDelay;
@@ -381,6 +398,8 @@ private:
 	// Skinning settings
 	std::string m_BackgroundBitmapName;	// Name of the background picture
 	CBackground::MODE m_BackgroundMode;
+	COLORREF m_BackgroundSolidColor;
+	bool m_BackgroundBevel;
 
 	bool m_DaysEnable;
 	std::string m_DaysBitmapName;	// Name of the day number bitmap

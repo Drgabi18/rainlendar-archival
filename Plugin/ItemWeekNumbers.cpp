@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemWeekNumbers.cpp,v 1.4 2002/08/24 11:10:35 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemWeekNumbers.cpp,v 1.5 2002/11/12 18:11:34 rainy Exp $
 
   $Log: ItemWeekNumbers.cpp,v $
+  Revision 1.5  2002/11/12 18:11:34  rainy
+  The interface of Paint changed a little.
+
   Revision 1.4  2002/08/24 11:10:35  rainy
   Changed the error handling.
 
@@ -125,11 +128,11 @@ int weekno(int d, int m, int y)
 ** Paints the week numbers in correct place (next to the days)
 **
 */
-void CItemWeekNumbers::Paint(HDC dc)
+void CItemWeekNumbers::Paint(CImage& background)
 {
 	int FirstWeekday, NumOfDays;
 	int X, Y, W, H;
-	int i, base, lines;
+	int i, base, lines, weeksFirstDay = 1;
 
 	W = CCalendarWindow::c_Config.GetDaysW() / 7;	// 7 Columns
 	H = CCalendarWindow::c_Config.GetDaysH() / 6;	// 6 Rows
@@ -142,7 +145,17 @@ void CItemWeekNumbers::Paint(HDC dc)
 	{
 		FirstWeekday = (FirstWeekday - 1);
 		if(FirstWeekday == -1) FirstWeekday = 6;
-	} 
+	}
+	else
+	{
+		// If the days start from sunday and the month's first is sunday,
+		// we'll have to use monday to determine the week's number or it's
+		// calculated wrong
+		if (FirstWeekday == 0)
+		{
+			weeksFirstDay = 2;
+		}
+	}
 
 	if(FirstWeekday + NumOfDays > 7 * 5)
 	{
@@ -160,8 +173,8 @@ void CItemWeekNumbers::Paint(HDC dc)
 		for(i = 0; i < lines; i++) 
 		{
 			Y = CCalendarWindow::c_Config.GetDaysY() + i * H;
-			base = weekno(i * 7 + 1, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
-			m_Rasterizer->Paint(dc, X, Y, W, H, base);
+			base = weekno(i * 7 + weeksFirstDay, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
+			m_Rasterizer->Paint(background, X, Y, W, H, base);
 		}
 	}
 }

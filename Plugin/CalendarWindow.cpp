@@ -16,9 +16,18 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.cpp,v 1.12 2002/08/24 11:14:35 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.cpp,v 1.14 2002/11/12 18:05:46 rainy Exp $
 
   $Log: CalendarWindow.cpp,v $
+  Revision 1.14  2002/11/12 18:05:46  rainy
+  Added support for native transparency.
+  The window is created after configs are loaded.
+  Snapping is disabled when control or shift is down.
+
+  Revision 1.13  2002/09/07 09:37:38  rainy
+  Fixed a bug that selected wrong day sometimes.
+  Added support for OnDesktop setting.
+
   Revision 1.12  2002/08/24 11:14:35  rainy
   Changed the error handling.
   Added lite refreshing.
@@ -83,13 +92,17 @@
 #include "ConfigDialog.h"
 #include "SkinDialog.h"
 #include "Tooltip.h"
+#include "RasterizerFont.h"
 #include <crtdbg.h>
+
+#define ULW_ALPHA               0x00000002
+#define WS_EX_LAYERED           0x00080000
 
 // Timers
 #define DATE_TIMER 1
 
 // Defines
-#define SNAPDISTANCE 5
+#define SNAPDISTANCE 10
 
 // Class variables
 CConfig CCalendarWindow::c_Config;
@@ -108,7 +121,7 @@ CCalendarWindow::CCalendarWindow()
 	m_Height=0;
 	m_FirstExecute=true;
 	m_SelectedDay=0;
-	m_DoubleBuffer=0;
+	m_MenuSelectedDay=0;
 
 	m_Days = NULL;
 	m_Event = NULL;
@@ -120,6 +133,8 @@ CCalendarWindow::CCalendarWindow()
 	m_ConnectionCounter = 0;
 	m_Hidden = false;
 	m_Refreshing = false;
+	m_WallpaperTime.dwLowDateTime = 0;
+	m_WallpaperTime.dwHighDateTime = 0;
 }
 
 /* 
@@ -130,8 +145,9 @@ CCalendarWindow::CCalendarWindow()
 */
 CCalendarWindow::~CCalendarWindow()
 {
-	if(m_DC) DeleteObject(m_DC);
-	if(m_DoubleBuffer) DeleteObject(m_DoubleBuffer);
+	CRasterizerFont::ClearBuffers();
+
+	if(m_DC) DeleteDC(m_DC);
 
 	delete m_Days;
 	delete m_Event;
@@ -160,6 +176,7 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 	int flags;
 	WNDCLASSEX wc;
 	char tmpName[MAX_LINE_LENGTH];
+	char* windowName = NULL;
 
 	if(Parent==NULL || Instance==NULL) 
 	{
@@ -169,72 +186,6 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 	m_Instance = Instance;
 	m_DllInstance = GetModuleHandle("Rainlendar.dll");
 	m_Rainlendar = &Rainlendar;
-
-	// Register the windowclass
-	memset(&wc, 0, sizeof(WNDCLASSEX));
-	wc.style = CS_NOCLOSE | CS_DBLCLKS;
-	wc.cbSize = sizeof(WNDCLASSEX);
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wc.lpfnWndProc = WndProc;
-	wc.hInstance = m_Instance;
-	wc.lpszClassName = "Rainlendar";
-	
-	if(!RegisterClassEx(&wc))
-	{
-		if (ERROR_CLASS_ALREADY_EXISTS != GetLastError())
-		{
-			THROW(ERR_WINDOWCLASS);
-		}
-	}
-	
-	if (Rainlendar.GetDummyLitestep())
-	{
-		LSLog(LOG_DEBUG, "Rainlendar", "Running as stand-alone.");
-	}
-	else
-	{
-		LSLog(LOG_DEBUG, "Rainlendar", "Running as Litestep plugin.");
-	}
-
-	if(Rainlendar.IsWharf())
-	{
-		// If we're in lsBox or in wharf, this is a childwindow
-		flags = WS_CHILD;
-		LSLog(LOG_DEBUG, "Rainlendar", "Running as wharf module.");
-	}
-	else
-	{
-		// ... otherwise this is normal popup window
-		flags = WS_POPUP;
-		Parent = NULL;
-	}
-
-	m_Window = CreateWindowEx(WS_EX_TOOLWINDOW, 
-							"Rainlendar", 
-							NULL, 
-							flags,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							Parent,
-							NULL,
-							m_Instance,
-							this);
-
-	if(m_Window == NULL) 
-	{ 
-		THROW(ERR_WINDOW);
-	}
-
-	INITCOMMONCONTROLSEX cce;
-	cce.dwSize = sizeof(INITCOMMONCONTROLSEX);
-	cce.dwICC = ICC_DATE_CLASSES;
-	InitCommonControlsEx(&cce);
-
-	CToolTip::Instance().Initialize(m_Window, m_Instance);
-
-	SetWindowLong(m_Window, GWL_USERDATA, magicDWord);
 
 	std::string PixPath, EventsPath, SkinsPath;
 	std::string skin, skinIni;
@@ -295,19 +246,7 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 
 	if (EventsPath.empty())
 	{
-		// Get the DLL's directory
-		GetModuleFileName(m_DllInstance, tmpName, MAX_LINE_LENGTH);
-
-		char* Slash = strrchr(tmpName, '\\');
-		if(Slash == NULL) 
-		{
-			strcpy(tmpName, "Events.ini");
-		} 
-		else 
-		{
-			strcpy(Slash, "\\Events.ini");
-		}
-		EventsPath = tmpName;
+		EventsPath = PixPath + "Events.ini";
 	}
 
 	if (SkinsPath.empty())
@@ -317,6 +256,7 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 		char* Slash = strrchr(tmpName, '\\');
 		*(Slash + 1) = 0;	// Cut the Rainlendar.dll from the name
 		SkinsPath = tmpName;
+		SkinsPath += "Skins\\";
 	}
 
 	LSLog(LOG_DEBUG, "Rainlendar", "Rainlendar paths:");
@@ -328,6 +268,78 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 	c_Config.SetEventsPath(EventsPath);	
 	c_Config.SetSkinsPath(SkinsPath);
 	c_Config.ReadConfig();
+
+	// Register the windowclass
+	memset(&wc, 0, sizeof(WNDCLASSEX));
+	wc.style = CS_NOCLOSE | CS_DBLCLKS;
+	wc.cbSize = sizeof(WNDCLASSEX);
+	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wc.lpfnWndProc = WndProc;
+	wc.hInstance = m_Instance;
+	wc.lpszClassName = "Rainlendar";
+	
+	if(!RegisterClassEx(&wc))
+	{
+		if (ERROR_CLASS_ALREADY_EXISTS != GetLastError())
+		{
+			THROW(ERR_WINDOWCLASS);
+		}
+	}
+	
+	if (Rainlendar.GetDummyLitestep())
+	{
+		LSLog(LOG_DEBUG, "Rainlendar", "Running as stand-alone.");
+	}
+	else
+	{
+		LSLog(LOG_DEBUG, "Rainlendar", "Running as Litestep plugin.");
+	}
+
+	if(Rainlendar.IsWharf())
+	{
+		// If we're in lsBox or in wharf, this is a childwindow
+		flags = WS_CHILD;
+		LSLog(LOG_DEBUG, "Rainlendar", "Running as wharf module.");
+	}
+	else
+	{
+		// ... otherwise this is normal popup window
+		flags = WS_POPUP;
+		Parent = NULL;
+	}
+
+	if (c_Config.GetUseWindowName())
+	{
+		windowName = "Rainlendar";
+	}
+
+	m_Window = CreateWindowEx(WS_EX_TOOLWINDOW, 
+							"Rainlendar", 
+							windowName, 
+							flags,
+							c_Config.GetX(),
+							c_Config.GetY(),
+							CW_USEDEFAULT,
+							CW_USEDEFAULT,
+							Parent,
+							NULL,
+							m_Instance,
+							this);
+
+	if(m_Window == NULL) 
+	{ 
+		THROW(ERR_WINDOW);
+	}
+
+	INITCOMMONCONTROLSEX cce;
+	cce.dwSize = sizeof(INITCOMMONCONTROLSEX);
+	cce.dwICC = ICC_DATE_CLASSES;
+	InitCommonControlsEx(&cce);
+
+	CToolTip::Instance().Initialize(m_Window, m_Instance);
+
+	SetWindowLong(m_Window, GWL_USERDATA, magicDWord);
+
 
 	// If the skin was defined explicitely, let's use it
 	if (!skin.empty() && !skinIni.empty())
@@ -392,9 +404,9 @@ void CCalendarWindow::FillMenu(HMENU subMenu, int x, int y)
 	
 	// If mouse was pressed on a day, enable set event
 
-	m_SelectedDay = m_Days->HitTest(x, y);
+	m_MenuSelectedDay = m_Days->HitTest(x, y);
 
-	if (m_SelectedDay != 0) 
+	if (m_MenuSelectedDay != 0) 
 	{
 		EnableMenuItem( subMenu, ID_SETEVENT, MF_ENABLED );
 	} 
@@ -560,6 +572,8 @@ void CCalendarWindow::Refresh(bool lite)
 			CToolTip::Instance().SetFont(c_Config.GetToolTipFont());
 		}
 
+		CRasterizerFont::ClearBuffers();
+
 		// Only days and event days change the day types
 		m_Days->ResetDayTypes();
 		m_Event->ResetDayTypes();
@@ -584,33 +598,40 @@ void CCalendarWindow::Refresh(bool lite)
 			if(m_FirstExecute || (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_WALLPAPER_ALWAYS ||
 								 (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_NORMAL && !(m_Rainlendar->IsWharf()))))
 			{
-				if(c_Config.GetBackgroundMode() == CBackground::MODE_COPY ||
-				   c_Config.GetBackgroundBitmapName().empty()) 
+				CalcWindowSize();
+				if (m_Background.Create(X, Y, m_Width, m_Height))
 				{
-					m_Background.CopyBackground(X, Y, m_Width, m_Height);
-				}
-				else 
-				{
-					m_Background.Load(c_Config.GetBackgroundBitmapName());
 					CalcWindowSize();	// Must be recalced if BG is bigger than current window
-					m_Background.Create(X, Y, m_Width, m_Height);
 				}
 			}
 
-			HWND winPos;
+			HWND winPos = HWND_NOTOPMOST;
 			UINT flags = SWP_NOACTIVATE;
+			LONG style = GetWindowLong(m_Window, GWL_STYLE);
+
 			switch (c_Config.GetWindowPos())
 			{
 			case CConfig::WINDOWPOS_ONTOP:
-				 winPos = HWND_TOPMOST;
+				winPos = HWND_TOPMOST;
+				if (!m_Rainlendar->IsWharf())
+				{
+					style = (style & ~WS_CHILD) | WS_POPUP;		// Change from child to popup
+					SetWindowLong(m_Window, GWL_STYLE, style);
+					SetParent(m_Window, NULL);
+				}
 				break;
 
 			case CConfig::WINDOWPOS_ONBOTTOM:
-				 winPos = HWND_BOTTOM;
-				 break;
+				winPos = HWND_BOTTOM;
+				if (!m_Rainlendar->IsWharf())
+				{
+					style = (style & ~WS_CHILD) | WS_POPUP;		// Change from child to popup
+					SetWindowLong(m_Window, GWL_STYLE, style);
+					SetParent(m_Window, NULL);
+				}
+				break;
 
-			default:
-				 winPos = HWND_NOTOPMOST;
+			// CConfig::WINDOWPOS_ONDESKTOP: is handled below
 			}
 
 			if(m_Rainlendar->IsWharf()) flags |= SWP_NOZORDER;		// Children shouldn't change z-position
@@ -619,11 +640,7 @@ void CCalendarWindow::Refresh(bool lite)
 		}
 
 		// Create the DoubleBuffer
-		if(m_DoubleBuffer) DeleteObject(m_DoubleBuffer);
-		HWND DeskTop = GetDesktopWindow();
-		HDC DDC = GetDC(DeskTop);
-		m_DoubleBuffer = CreateCompatibleBitmap(DDC, m_Width, m_Height);
-		ReleaseDC(DeskTop, DDC);
+		m_DoubleBuffer.Create(m_Width, m_Height, 0x0);	// Fully transparent
 
 		DrawCalendar();
 
@@ -632,7 +649,7 @@ void CCalendarWindow::Refresh(bool lite)
 			if(c_Config.GetBackgroundMode() != CBackground::MODE_COPY && !m_Background.HasAlpha())
 			{
 				// Set window region
-				HRGN region = BitmapToRegion(m_DoubleBuffer, RGB(255,0,255), 0x101010, 0, 0);
+				HRGN region = BitmapToRegion(m_DoubleBuffer.GetBitmap(), RGB(255,0,255), 0x101010, 0, 0);
 				SetWindowRgn(m_Window, region, TRUE);
 			}
 
@@ -682,7 +699,28 @@ void CCalendarWindow::Refresh(bool lite)
 			PollWallpaper(true);
 		}
 
+		UpdateTransparency();
+
 		InvalidateRect(m_Window, NULL, false);
+
+		if (!lite)
+		{
+			if (c_Config.GetWindowPos() == CConfig::WINDOWPOS_ONDESKTOP)
+			{
+				if (!m_Rainlendar->IsWharf())
+				{
+					// Set the window's parent to progman, so it stays always on desktop
+					HWND ProgmanHwnd = FindWindow("Progman", "Program Manager");
+					if (ProgmanHwnd && GetParent(m_Window) != ProgmanHwnd)
+					{
+						LONG style = GetWindowLong(m_Window, GWL_STYLE);
+						style = (style & ~WS_POPUP) | WS_CHILD;
+						SetWindowLong(m_Window, GWL_STYLE, style);
+						SetParent(m_Window, ProgmanHwnd);
+					}
+				}
+			}
+		}
 
 		m_Refreshing = false;
 	} 
@@ -694,6 +732,70 @@ void CCalendarWindow::Refresh(bool lite)
 
 	sprintf(buffer, "Refresh ended (took: %i ms).", GetTickCount() - time);
 	LSLog(LOG_DEBUG, "Rainlendar", buffer);
+}
+
+/*
+** UpdateTransparency
+**
+** Updates the native Windows transparency
+*/
+void CCalendarWindow::UpdateTransparency()
+{
+	if (Is2k())
+	{
+		if (c_Config.GetNativeTransparency())
+		{
+			// Add the window flag
+			LONG style = GetWindowLong(m_Window, GWL_EXSTYLE);
+			SetWindowLong(m_Window, GWL_EXSTYLE, style | WS_EX_LAYERED);
+
+			RECT r;
+			GetWindowRect(m_Window, &r);
+
+			typedef BOOL (WINAPI * FPUPDATELAYEREDWINDOW)(HWND hWnd, HDC hdcDst, POINT *pptDst, SIZE *psize, HDC hdcSrc, POINT *pptSrc, COLORREF crKey, BLENDFUNCTION *pblend, DWORD dwFlags);
+			HINSTANCE h = LoadLibrary("user32.dll");
+			FPUPDATELAYEREDWINDOW UpdateLayeredWindow = (FPUPDATELAYEREDWINDOW)GetProcAddress(h, "UpdateLayeredWindow");
+
+			BLENDFUNCTION blendPixelFunction= {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
+			POINT ptWindowScreenPosition = {r.left, r.top};
+			POINT ptSrc = {0, 0};
+			SIZE szWindow = {m_Width, m_Height};
+			
+			HDC dcScreen = GetDC(GetDesktopWindow());
+			HDC dcMemory = CreateCompatibleDC(dcScreen);
+			HBITMAP oldBitmap = (HBITMAP)SelectObject(dcMemory, m_DoubleBuffer.GetBitmap());
+			UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
+			ReleaseDC(GetDesktopWindow(), dcScreen);
+			SelectObject(dcMemory, oldBitmap);
+			DeleteDC(dcMemory);
+			FreeLibrary(h);
+		}
+		else
+		{
+			// Remove the window flag
+			LONG style = GetWindowLong(m_Window, GWL_EXSTYLE);
+			SetWindowLong(m_Window, GWL_EXSTYLE, style & ~WS_EX_LAYERED);
+		}
+	}
+}
+
+/*
+** Is2k
+**
+** Returns true if ew're running modern OS.
+**
+*/
+bool CCalendarWindow::Is2k()
+{
+	OSVERSIONINFO version;
+	version.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+	GetVersionEx(&version);
+
+	if (version.dwPlatformId == VER_PLATFORM_WIN32_NT && version.dwMajorVersion > 4)
+	{
+		return true;
+	}
+	return false;
 }
 
 /*
@@ -814,6 +916,14 @@ void CCalendarWindow::PollWallpaper(bool set)
 				if (set)
 				{
 					m_WallpaperName = str;
+					// Get the timestamp from the file too
+
+					HANDLE file = CreateFile(m_WallpaperName.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+					if (file != INVALID_HANDLE_VALUE)
+					{
+						GetFileTime(file, NULL, NULL, &m_WallpaperTime);
+						CloseHandle(file);
+					}
 				}
 				else
 				{
@@ -821,6 +931,22 @@ void CCalendarWindow::PollWallpaper(bool set)
 					{
 						// If the names differ, refresh
 						Refresh();
+					}
+					else
+					{
+						// Check the timastamp
+						FILETIME newTime;
+						HANDLE file = CreateFile(m_WallpaperName.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+						if (file != INVALID_HANDLE_VALUE)
+						{
+							GetFileTime(file, NULL, NULL, &newTime);
+							CloseHandle(file);
+
+							if (newTime.dwHighDateTime != m_WallpaperTime.dwHighDateTime || newTime.dwLowDateTime != m_WallpaperTime.dwLowDateTime)
+							{
+								Refresh();
+							}
+						}
 					}
 				}
 			}
@@ -898,27 +1024,28 @@ void CCalendarWindow::ShowMonth(int Month, int Year)
 */
 void CCalendarWindow::DrawCalendar()
 {
-	if(m_DoubleBuffer) 
+	if(m_DoubleBuffer.GetBitmap()) 
 	{
-		HDC tmpDC = CreateCompatibleDC(NULL);
-		HBITMAP oldBitmap = (HBITMAP)SelectObject(tmpDC, m_DoubleBuffer);
+		m_Background.Paint(m_DoubleBuffer);
 
-		m_Background.Paint(tmpDC);
-
-		if(c_Config.GetYearEnable()) m_Year->Paint(tmpDC);
-		if(c_Config.GetMonthEnable()) m_Month->Paint(tmpDC);
+		if(c_Config.GetYearEnable()) m_Year->Paint(m_DoubleBuffer);
+		if(c_Config.GetMonthEnable()) m_Month->Paint(m_DoubleBuffer);
 
 		if(c_Config.GetDaysEnable()) 
 		{
-			m_Days->Paint(tmpDC);
-			if(c_Config.GetEventEnable()) m_Event->Paint(tmpDC);
-			if(c_Config.GetWeekdaysEnable()) m_Weekdays->Paint(tmpDC);
-			if(c_Config.GetWeekNumbersEnable()) m_WeekNumbers->Paint(tmpDC);
-			if(c_Config.GetTodayEnable()) m_Today->Paint(tmpDC);
+			m_Days->Paint(m_DoubleBuffer);
+			if(c_Config.GetEventEnable()) m_Event->Paint(m_DoubleBuffer);
+			if(c_Config.GetWeekdaysEnable()) m_Weekdays->Paint(m_DoubleBuffer);
+			if(c_Config.GetWeekNumbersEnable()) m_WeekNumbers->Paint(m_DoubleBuffer);
+			if(c_Config.GetTodayEnable()) m_Today->Paint(m_DoubleBuffer);
 		}
 
-		SelectObject(tmpDC, oldBitmap);
-		DeleteObject(tmpDC);
+		if (CRasterizerFont::GetColorBuffer().GetBitmap() != NULL  && CRasterizerFont::GetAlphaBuffer().GetBitmap() != NULL)
+		{
+			CImage textImage;
+			textImage.Create(CRasterizerFont::GetColorBuffer().GetBitmap(), CRasterizerFont::GetAlphaBuffer().GetBitmap(), 0);
+			m_DoubleBuffer.Blit(textImage, 0, 0, 0, 0, textImage.GetWidth(), textImage.GetHeight());
+		}
 	}
 }
 
@@ -927,17 +1054,51 @@ void CCalendarWindow::DrawCalendar()
 
 LRESULT CCalendarWindow::OnPaint(WPARAM wParam, LPARAM lParam) 
 {
-	if(m_DoubleBuffer) 
+	if(m_DoubleBuffer.GetBitmap()) 
 	{
 		PAINTSTRUCT ps;
 		HDC winDC = BeginPaint(m_Window, &ps);
 		HDC tmpDC = CreateCompatibleDC(NULL);
-		HBITMAP oldBitmap = (HBITMAP)SelectObject(tmpDC, m_DoubleBuffer);
+		HBITMAP oldBitmap = (HBITMAP)SelectObject(tmpDC, m_DoubleBuffer.GetBitmap());
+
+		// TEST
+//		m_DoubleBuffer.MultiplyAlpha();
+//		HBITMAP bm = CreateBitmap(m_Width, m_Height, 1, 16, NULL);
+//		HBITMAP bm = CreateCompatibleBitmap(tmpDC, m_Width, m_Height);
+
+//		VOID *pvBits;
+//		BITMAPINFO bmi;
+//		ZeroMemory(&bmi, sizeof(BITMAPINFO));
+//		bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+//		bmi.bmiHeader.biWidth = 200;
+//		bmi.bmiHeader.biHeight = 200;
+//		bmi.bmiHeader.biPlanes = 1;
+//		bmi.bmiHeader.biBitCount = 32;         // four 8-bit components
+//		bmi.bmiHeader.biCompression = BI_RGB;
+//		bmi.bmiHeader.biSizeImage = 200 * 200 * 4;
+//		
+//		// create our DIB section and select the bitmap into the dc
+//		HBITMAP bm = CreateDIBSection(winDC, &bmi, DIB_RGB_COLORS, &pvBits, NULL, 0x0);
+//    		SelectObject(tmpDC, bm);
+//
+//		HBRUSH br = CreateSolidBrush(RGB(255,0,0));
+//		RECT r = {0, 0, 100, 100 };
+//		FillRect(tmpDC, &r, br);
+//		DeleteObject(br);
 		
+		// ~TEST
+
 		BitBlt(winDC, 0, 0, m_Width, m_Height, tmpDC, 0, 0, SRCCOPY);
 
+		// TEST
+		//HBRUSH br = CreateSolidBrush(RGB(255,0,0));
+		//RECT r = {0, 0, 100, 100 };
+		//FillRect(winDC, &r, br);
+		//DeleteObject(br);
+		// ~TEST
+
 		SelectObject(tmpDC, oldBitmap);
-		DeleteObject(tmpDC);
+		DeleteDC(tmpDC);
 
 		EndPaint(m_Window, &ps);
 	}
@@ -1042,8 +1203,9 @@ LRESULT CCalendarWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 	
 		case ID_SETEVENT:
 			// Fake doubleclick action will show the edit event dialog
+			m_SelectedDay = m_MenuSelectedDay;
 			OnLButtonDblClk(0, 0);
-			m_SelectedDay = 0;
+			m_MenuSelectedDay = 0;
 			break;
 
 		case ID_QUIT:
@@ -1186,7 +1348,8 @@ void CCalendarWindow::ConnectServer(int type)
 
 		// Launch the network communication thread
 		DWORD id;
-		CreateThread(NULL, 0, NetworkThreadProc, &param, 0, &id);
+		HANDLE thread = CreateThread(NULL, 0, NetworkThreadProc, &param, 0, &id);
+		CloseHandle(thread);
 	}
 }
 
@@ -1279,7 +1442,7 @@ LRESULT CCalendarWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam)
 		wp->flags|=SWP_NOZORDER;
 	}
 
-	if (c_Config.GetSnapEdges())
+	if (c_Config.GetSnapEdges() && !(GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000))
 	{
 		RECT r;
 		GetClientRect(GetDesktopWindow(), &r);
@@ -1355,10 +1518,6 @@ LRESULT CCalendarWindow::OnLButtonDblClk(WPARAM wParam, LPARAM lParam)
 	{
 		m_SelectedDay = m_Days->HitTest(x, y);
 	}
-
-	char buffer[256];
-	sprintf(buffer, "Selected day %i in (%i, %i)", m_SelectedDay, x, y);
-	LSLog(LOG_DEBUG, "Rainlendar", buffer);
 
 	if(m_SelectedDay != 0) 
 	{

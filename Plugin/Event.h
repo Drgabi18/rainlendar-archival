@@ -77,8 +77,9 @@ public:
 	void SetCount(int Count ) { m_Count=Count; };
 	bool IsDeleted() { return m_Deleted; };
 	void SetDeleted() { m_Deleted=true; };
-
 	int GetID() { return m_ID; };
+	void SetID(int ID) { m_ID = ID; };
+
 	const char* GetTypeText();
 
 	CEventMessage& operator=(const CEventMessage& event);

@@ -84,14 +84,16 @@ BOOL OnInitDialog(HWND window)
 	std::list<CEventMessage*>::iterator i = eventList.begin();
 	for( ; i != eventList.end(); i++)
 	{
-		if (!((*i)->IsDeleted()))	// No deleted messages
+		CEventMessage* event = *i;
+		if (!(event->IsDeleted()))	// No deleted messages
 		{
-			g_Events.push_back(*(*i));
+			g_Events.push_back(*event);
 		}
 	}
 
 	if (g_Events.empty())
 	{
+		// Create a empty event if there are no events on this day
 		CEventMessage event;
 		event.SetDate(CEventMessage::DateToValue(day, month, year));
 		event.SetProfile(CCalendarWindow::c_Config.GetCurrentProfile());
@@ -110,11 +112,11 @@ BOOL OnInitDialog(HWND window)
 	// Fill in the profiles from skin
 	SendDlgItemMessage(window, IDC_EDITEVENT_PROFILE, CB_ADDSTRING, NULL, (LPARAM)"Default");
 
-	const std::list<Profile>& allProfiles = CCalendarWindow::c_Config.GetAllProfiles();
-	std::list<Profile>::const_iterator profileIter = allProfiles.begin();
+	const std::list<Profile*>& allProfiles = CCalendarWindow::c_Config.GetAllProfiles();
+	std::list<Profile*>::const_iterator profileIter = allProfiles.begin();
 	for( ; profileIter != allProfiles.end(); profileIter++)
 	{
-		SendDlgItemMessage(window, IDC_EDITEVENT_PROFILE, CB_ADDSTRING, NULL, (LPARAM)(*profileIter).name.c_str());
+		SendDlgItemMessage(window, IDC_EDITEVENT_PROFILE, CB_ADDSTRING, NULL, (LPARAM)(*profileIter)->name.c_str());
 	}
 
 	UpdateWidgets(window, true);
@@ -439,14 +441,19 @@ BOOL CALLBACK EditEventProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lP
 						for( ; eventIter != g_Events.end(); eventIter++)
 						{
 							// If the event has different type, we'll remove the old one and set this to new date
-							CEventMessage* oldEvent = GetRainlendar()->GetCalendarWindow().GetEventManager()->GetEvent((*eventIter).GetID());
-							if (oldEvent && oldEvent->GetType() != (*eventIter).GetType())
+							CEventMessage& event = *eventIter;
+							CEventMessage* oldEvent = GetRainlendar()->GetCalendarWindow().GetEventManager()->GetEvent(event.GetID());
+							if (oldEvent && oldEvent->GetType() != event.GetType())
 							{
-								GetRainlendar()->GetCalendarWindow().GetEventManager()->RemoveEvent(*eventIter);
-								(*eventIter).SetDate(CEventMessage::DateToValue(day, month, year));
+								GetRainlendar()->GetCalendarWindow().GetEventManager()->RemoveEvent(event);
+								event.SetDate(CEventMessage::DateToValue(day, month, year));
+
+								// We'll forge a new event so that previously deleted events do not confuse the logic
+								CEventMessage newEvent;
+								event.SetID(newEvent.GetID());
 							}
 
-							GetRainlendar()->GetCalendarWindow().GetEventManager()->AddEvent(*eventIter);
+							GetRainlendar()->GetCalendarWindow().GetEventManager()->AddEvent(event);
 						}
 						GetRainlendar()->GetCalendarWindow().GetEventManager()->WriteEvents(day, month, year);
 					}

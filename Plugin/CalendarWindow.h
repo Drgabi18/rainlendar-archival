@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.h,v 1.11 2002/08/24 11:14:35 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.h,v 1.12 2002/11/12 18:12:03 rainy Exp $
 
   $Log: CalendarWindow.h,v $
+  Revision 1.12  2002/11/12 18:12:03  rainy
+  Added support for native transparency.
+
   Revision 1.11  2002/08/24 11:14:35  rainy
   Changed the error handling.
   Added lite refreshing.
@@ -124,6 +127,8 @@ public:
 
 	void ConnectServer(int type);
 
+	static bool Is2k();
+
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -147,6 +152,7 @@ protected:
 	LRESULT OnCopyData(WPARAM wParam, LPARAM lParam);
 
 private:
+	void UpdateTransparency();
 	void ReadSkins();
 	void PollWallpaper(bool set);
 	void FillMenu(HMENU Menu, int x, int y);
@@ -165,7 +171,7 @@ private:
 
 	CBackground m_Background;
 	HDC m_DC;									// DC used with drawing
-	HBITMAP m_DoubleBuffer;						// Double buffer for flicker free drawing
+	CImage m_DoubleBuffer;						// Double buffer for flicker free drawing
 	HWND m_Window;								// Handle to the Rainlendar window
 	HINSTANCE m_DllInstance;					// Handle to the DLL
 	HINSTANCE m_Instance;						// Handle to the main instance
@@ -178,11 +184,14 @@ private:
 	std::vector<CONFIG> m_ConfigStrings;	    // All configs found in the given folder
 
 	std::string m_WallpaperName;
+	FILETIME m_WallpaperTime;
+
 	int m_Width;
 	int m_Height;
 	bool m_FirstExecute;
 	bool m_Hidden;
 	int m_SelectedDay;
+	int m_MenuSelectedDay;
 	unsigned int m_ConnectionCounter;
 	bool m_Refreshing;
 

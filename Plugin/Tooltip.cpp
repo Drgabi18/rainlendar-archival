@@ -41,6 +41,8 @@
 // Globals
 CToolTip CToolTip ::c_ToolTip;
 int CToolTip::c_CurrentID = 1;
+POINT CToolTip::c_MousePos = {0, 0};
+
 #define CORNER_ROUNDING 20
 #define ARROW_SIZE 10
 
@@ -649,12 +651,15 @@ LRESULT CALLBACK CToolTip::MouseProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 			c_ToolTip.ShowTip(pt, tip);
 			InvalidateRect(c_ToolTip.m_Window, NULL, FALSE);
 		}
-		else
+		else if (c_MousePos.x != pt.x || c_MousePos.y != pt.y)
 		{
 			// Restart the timer
 			KillTimer(c_ToolTip.m_Window, TOOLTIP_TIMER);
 			SetTimer(c_ToolTip.m_Window, TOOLTIP_TIMER, c_ToolTip.m_Delay, NULL);
 		}
+		
+		c_MousePos.x = pt.x;
+		c_MousePos.y = pt.y;
 		break;
 	}
 

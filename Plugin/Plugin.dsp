@@ -23,8 +23,8 @@ CFG=Plugin - Win32 Release
 
 # Begin Project
 # PROP AllowPerConfigDependencies 0
-# PROP Scc_ProjName ""
-# PROP Scc_LocalPath ""
+# PROP Scc_ProjName "Plugin"
+# PROP Scc_LocalPath ".."
 CPP=cl.exe
 MTL=midl.exe
 RSC=rc.exe
@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O1 /I "..\..\..\3rdparty\ssobjects\\" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_EXPORTS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O1 /I "..\..\..\3rdparty\ssobjects\\" /I "..\..\..\3rdparty\lpng125\\" /I "..\..\..\3rdparty\zlib\\" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_EXPORTS" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x40b /d "NDEBUG"
@@ -53,10 +53,10 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib Advapi32.lib Ws2_32.lib ssobjects.lib comdlg32.lib comctl32.lib shell32.lib /nologo /dll /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Release/Rainlendar.dll" /libpath:"..\..\..\3rdparty\ssobjects"
+# ADD LINK32 libpng.lib Msimg32.lib kernel32.lib user32.lib gdi32.lib Advapi32.lib Ws2_32.lib ssobjects.lib comdlg32.lib comctl32.lib shell32.lib /nologo /dll /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Release/Rainlendar.dll" /libpath:"..\..\..\3rdparty\ssobjects" /libpath:"..\..\..\3rdparty\lpng125\projects\msvc\win32\libpng\lib"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=Copy                      Release\Rainlendar.dll                      ..\TestBench\Rainlendar.dll                     	Copy                      Release\Rainlendar.dll                           C:\Litestep\modules\ 
+PostBuild_Cmds=Copy                               Release\Rainlendar.dll                               ..\TestBench\Rainlendar.dll                              	Copy                               Release\Rainlendar.dll                                    C:\Litestep\modules\ 
 # End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "Plugin - Win32 Debug"
@@ -73,7 +73,7 @@ PostBuild_Cmds=Copy                      Release\Rainlendar.dll                 
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "..\..\..\3rdparty\ssobjects\\" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_EXPORTS" /YX /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "..\..\..\3rdparty\ssobjects\\" /I "..\..\..\3rdparty\lpng125\\" /I "..\..\..\3rdparty\zlib\\" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_EXPORTS" /YX /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x40b /d "_DEBUG"
@@ -83,10 +83,10 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib Advapi32.lib Ws2_32.lib ssobjects.lib comdlg32.lib shell32.lib comctl32.lib /nologo /dll /debug /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Debug/Rainlendar.dll" /pdbtype:sept /libpath:"..\..\..\3rdparty\ssobjects"
+# ADD LINK32 libpng.lib Msimg32.lib kernel32.lib user32.lib gdi32.lib Advapi32.lib Ws2_32.lib ssobjects.lib comdlg32.lib shell32.lib comctl32.lib /nologo /dll /debug /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Debug/Rainlendar.dll" /pdbtype:sept /libpath:"..\..\..\3rdparty\ssobjects" /libpath:"..\..\..\3rdparty\lpng125\projects\msvc\win32\libpng\lib"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=Copy                      Debug\Rainlendar.dll                      ..\TestBench\Rainlendar.dll                     	Copy                      Debug\Rainlendar.dll                           C:\Litestep\modules\ 
+PostBuild_Cmds=Copy                        Debug\Rainlendar.dll                        ..\TestBench\Rainlendar.dll
 # End Special Build Tool
 
 !ENDIF 
@@ -133,6 +133,10 @@ SOURCE=..\Server\EventCombiner.cpp
 # Begin Source File
 
 SOURCE=.\EventManager.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Image.cpp
 # End Source File
 # Begin Source File
 
@@ -236,6 +240,10 @@ SOURCE=.\EventManager.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\Image.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Item.h
 # End Source File
 # Begin Source File
@@ -311,6 +319,10 @@ SOURCE=.\Tooltip.h
 SOURCE=.\RainlendarDLL.rc
 # End Source File
 # End Group
+# Begin Source File
+
+SOURCE=..\license.txt
+# End Source File
 # Begin Source File
 
 SOURCE=..\Manual.html

@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemYear.cpp,v 1.7 2002/08/24 11:10:35 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemYear.cpp,v 1.8 2002/11/12 18:11:33 rainy Exp $
 
   $Log: ItemYear.cpp,v $
+  Revision 1.8  2002/11/12 18:11:33  rainy
+  The interface of Paint changed a little.
+
   Revision 1.7  2002/08/24 11:10:35  rainy
   Changed the error handling.
 
@@ -186,7 +189,7 @@ void CItemYear::Initialize()
 ** Paints the Year in correct place (over the days)
 **
 */
-void CItemYear::Paint(HDC dc)
+void CItemYear::Paint(CImage& background)
 {
 	int X, Y, W, H;
 
@@ -225,6 +228,6 @@ void CItemYear::Paint(HDC dc)
 			break;
 		};
 
-		m_Rasterizer->Paint(dc, X, Y, W, H, CCalendarWindow::c_MonthsFirstDate.wYear);
+		m_Rasterizer->Paint(background, X, Y, W, H, CCalendarWindow::c_MonthsFirstDate.wYear);
 	}
 }

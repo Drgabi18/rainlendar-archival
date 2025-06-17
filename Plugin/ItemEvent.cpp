@@ -16,9 +16,13 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.cpp,v 1.10 2002/08/24 11:11:10 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.cpp,v 1.11 2002/11/12 18:13:32 rainy Exp $
 
   $Log: ItemEvent.cpp,v $
+  Revision 1.11  2002/11/12 18:13:32  rainy
+  The interface of Paint changed a little.
+  Calendar text can be painted on RasterizerFont's alpha buffer.
+
   Revision 1.10  2002/08/24 11:11:10  rainy
   Few changes to prevent showing the deleted events.
 
@@ -156,7 +160,7 @@ void CItemEvent::ResetDayTypes()
 ** Paints the numbers in correct place
 **
 */
-void CItemEvent::Paint(HDC dc)
+void CItemEvent::Paint(CImage& background)
 {
 	int FirstWeekday;
 	int X, Y, W, H, Index, DayType, NumOfDays, i;
@@ -191,13 +195,16 @@ void CItemEvent::Paint(HDC dc)
 				// Set the correct profile
 				m_Rasterizer->SetProfile(GetEventProfile(i + 1));
 
-				m_Rasterizer->Paint(dc, X, Y, W, H, i + 1);
+				m_Rasterizer->Paint(background, X, Y, W, H, i + 1);
 
+				DrawIcon(background, i + 1, X, Y, W, H);
 
 				// Draw the event texts
 				if(CCalendarWindow::c_Config.GetEventInCalendar()) 
 				{
+					HDC dc = CreateCompatibleDC(NULL);
 					HFONT OldFont;
+					HBITMAP OldBitmap;
 					int count = 0, width = 0, height = 0;
 					RECT rect;
 					std::vector<int> heights;
@@ -205,6 +212,7 @@ void CItemEvent::Paint(HDC dc)
 					std::list<CEventMessage*> eventList = m_EventManager.GetEvents(i + 1, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 
 					OldFont = (HFONT)SelectObject(dc, m_EventFont);
+					OldBitmap = (HBITMAP)SelectObject(dc, background.GetBitmap());
 
 					// First calculate the size of the texts
 					for(eventIter = eventList.begin();  eventIter != eventList.end(); eventIter++)
@@ -240,13 +248,90 @@ void CItemEvent::Paint(HDC dc)
 							{
 								SetTextColor(dc, CCalendarWindow::c_Config.GetEventFontColor2());
 							}
-							DrawText(dc, (*eventIter)->GetMessage().c_str(), (*eventIter)->GetMessage().size(), &rect, DT_CENTER | DT_NOPREFIX);
+
+							if (CCalendarWindow::Is2k() && CCalendarWindow::c_Config.GetNativeTransparency())
+							{
+								// The font rasterizer has a buffer for us, where we can draw the text
+								CRasterizerFont::CreateBuffers(background.GetWidth(), background.GetHeight());
+
+								SelectObject(dc, CRasterizerFont::GetColorBuffer().GetBitmap());
+								DrawText(dc, (*eventIter)->GetMessage().c_str(), (*eventIter)->GetMessage().size(), &rect, DT_CENTER | DT_NOPREFIX);
+								
+								SelectObject(dc, CRasterizerFont::GetAlphaBuffer().GetBitmap());
+								SetTextColor(dc, RGB(255, 255, 255));
+								DrawText(dc, (*eventIter)->GetMessage().c_str(), (*eventIter)->GetMessage().size(), &rect, DT_CENTER | DT_NOPREFIX);
+							}
+							else
+							{
+								// Just draw it normally
+								DrawText(dc, (*eventIter)->GetMessage().c_str(), (*eventIter)->GetMessage().size(), &rect, DT_CENTER | DT_NOPREFIX);
+							}
 
 							rect.top += heights[count];
 							count++;
 						}
 					}
+
+					SelectObject(dc, OldBitmap);
 					SelectObject(dc, OldFont);
+					DeleteDC(dc);
+				}
+			}
+		}
+	}
+}
+
+void CItemEvent::DrawIcon(CImage& background, int day, int X, int Y, int W, int H)
+{
+	// Draw all icons 
+	std::list<CEventMessage*> eventList = m_EventManager.GetEvents(day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
+	
+	if (!eventList.empty())
+	{
+		std::list<CEventMessage*>::iterator i = eventList.begin();
+		for( ;  i != eventList.end(); i++)
+		{
+			int x = X;
+			int y = Y;
+
+			if (!((*i)->GetProfile().empty()) && !((*i)->IsDeleted()))
+			{
+				const Profile* profile = CCalendarWindow::c_Config.GetProfile((*i)->GetProfile().c_str());
+
+				if (profile  && profile->icon.GetBitmap() != NULL)
+				{
+					// Align the bitmap correctly
+					switch (profile->iconAlign & 0x0F)
+					{
+					case CRasterizer::ALIGN_LEFT:
+						x = X;
+						break;
+
+					case CRasterizer::ALIGN_HCENTER:
+						x = X + (W - profile->icon.GetWidth()) / 2;
+						break;
+
+					case CRasterizer::ALIGN_RIGHT:
+						x = X + W - profile->icon.GetWidth();
+						break;
+					};
+
+					switch (profile->iconAlign & 0x0F0)
+					{
+					case CRasterizer::ALIGN_TOP:
+						y = Y;
+						break;
+
+					case CRasterizer::ALIGN_VCENTER:
+						y = Y + (H - profile->icon.GetHeight()) / 2;
+						break;
+
+					case CRasterizer::ALIGN_BOTTOM:
+						y = Y + (H - profile->icon.GetHeight());
+						break;
+					};
+
+					background.Blit(profile->icon, x, y, 0, 0, profile->icon.GetWidth(), profile->icon.GetHeight());
 				}
 			}
 		}

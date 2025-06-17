@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemDays.h,v 1.3 2002/08/24 11:11:54 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemDays.h,v 1.4 2002/11/12 18:11:41 rainy Exp $
 
   $Log: ItemDays.h,v $
+  Revision 1.4  2002/11/12 18:11:41  rainy
+  The interface of Paint changed a little.
+
   Revision 1.3  2002/08/24 11:11:54  rainy
   Added ResetDayTypes()
 
@@ -43,7 +46,7 @@ public:
 
 	void Initialize();
 	void ResetDayTypes();
-	void Paint(HDC dc);
+	void Paint(CImage& background);
 	int HitTest(int x, int y);
 
 	int GetX();

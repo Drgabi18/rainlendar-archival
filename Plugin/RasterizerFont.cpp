@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.cpp,v 1.7 2002/08/24 11:09:00 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.cpp,v 1.8 2002/11/12 18:10:18 rainy Exp $
 
   $Log: RasterizerFont.cpp,v $
+  Revision 1.8  2002/11/12 18:10:18  rainy
+  Added support for real alpha.
+
   Revision 1.7  2002/08/24 11:09:00  rainy
   Changed the error handling.
 
@@ -44,9 +47,13 @@
 
 #pragma warning(disable: 4786)
 
+#include "CalendarWindow.h"
 #include "RasterizerFont.h"
 #include "Error.h"
 #include "Config.h"
+
+CImage CRasterizerFont::m_ColorBuffer;
+CImage CRasterizerFont::m_AlphaBuffer;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -218,9 +225,10 @@ void CRasterizerFont::UpdateDimensions(const char* defaultString)
 ** Paints the given part of the image. W & H are for align.
 **
 */
-void CRasterizerFont::Paint(HDC dc, int X, int Y, int W, int H, int Index)
+void CRasterizerFont::Paint(CImage& background, int X, int Y, int W, int H, int Index)
 {
 	HFONT oldFont;
+	HBITMAP oldBitmap;
 	UINT format = 0;
 	RECT rect = { X, Y, X + W, Y + H };
 	char tmpSz[16];
@@ -258,6 +266,8 @@ void CRasterizerFont::Paint(HDC dc, int X, int Y, int W, int H, int Index)
 
 	format |= DT_NOCLIP | DT_SINGLELINE;
 
+	HDC dc = CreateCompatibleDC(NULL);
+	oldBitmap = (HBITMAP)SelectObject(dc, background.GetBitmap());
 	oldFont = (HFONT)SelectObject(dc, m_Font);
 
 	SetBkMode(dc, TRANSPARENT);
@@ -270,15 +280,62 @@ void CRasterizerFont::Paint(HDC dc, int X, int Y, int W, int H, int Index)
 		SetTextColor(dc, m_Color);
 	}
 
+	const char* text = NULL;
 	if(m_StringTable.empty()) 
 	{
 		sprintf(tmpSz, "%i", Index);
-		DrawText(dc, tmpSz, strlen(tmpSz), &rect, format);
+		text = tmpSz;
 	} 
 	else 
 	{
-		DrawText(dc, m_StringTable[Index].c_str(), m_StringTable[Index].size(), &rect, format);
+		text = m_StringTable[Index].c_str();
 	}
 
+	if (CCalendarWindow::Is2k() && CCalendarWindow::c_Config.GetNativeTransparency())
+	{
+		CreateBuffers(background.GetWidth(), background.GetHeight());
+
+		SelectObject(dc, m_ColorBuffer.GetBitmap());
+		DrawText(dc, text, strlen(text), &rect, format);
+		
+		SelectObject(dc, m_AlphaBuffer.GetBitmap());
+		SetTextColor(dc, RGB(255, 255, 255));
+		DrawText(dc, text, strlen(text), &rect, format);
+	}
+	else
+	{
+		// Just draw it normally
+		DrawText(dc, text, strlen(text), &rect, format);
+	}
+
+	SelectObject(dc, oldBitmap);
 	SelectObject(dc, oldFont);
+	DeleteDC(dc);
+}
+
+void CRasterizerFont::CreateBuffers(int width, int height)
+{
+	// We need to draw the text to another bitmap for the alpha
+	if (m_AlphaBuffer.GetBitmap() == NULL || m_ColorBuffer.GetBitmap() == NULL)
+	{
+		m_AlphaBuffer.Create(width, height, 255);
+		m_ColorBuffer.Create(width, height, 255);
+
+		HDC dc = CreateCompatibleDC(NULL);
+		RECT r = { 0, 0, width, height };
+		HBRUSH brush;
+
+		brush = CreateSolidBrush(RGB(0, 0, 0));
+		HBITMAP oldBitmap = (HBITMAP)SelectObject(dc, m_AlphaBuffer.GetBitmap());
+		FillRect(dc, &r, brush);
+		DeleteObject(brush);
+
+		brush = CreateSolidBrush(RGB(128, 128, 128));
+		SelectObject(dc, m_ColorBuffer.GetBitmap());
+		FillRect(dc, &r, brush);
+		DeleteObject(brush);
+
+		SelectObject(dc, oldBitmap);
+		DeleteDC(dc);
+	}
 }

@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/SkinDialog.cpp,v 1.1 2002/08/03 16:37:08 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/SkinDialog.cpp,v 1.2 2002/11/12 18:09:53 rainy Exp $
 
   $Log: SkinDialog.cpp,v $
+  Revision 1.2  2002/11/12 18:09:53  rainy
+  Added solid background widgets.
+
   Revision 1.1  2002/08/03 16:37:08  rainy
   Intial version.
 
@@ -35,6 +38,7 @@
 #define NUM_OF_TABS 8
 
 // Few globals
+COLORREF g_SolidColor = 0;
 COLORREF g_DaysFontColor = 0;
 LOGFONT g_DaysFont;
 COLORREF g_TodayFontColor = 0;
@@ -389,6 +393,18 @@ void UpdateBackgroundWidgets(HWND window)
 		EnableWindow(GetDlgItem(window, IDC_BACKGROUND_FILENAME), TRUE);
 	}
 
+	if (IsDlgButtonChecked(window, IDC_BACKGROUND_SOLID) == BST_CHECKED)
+	{
+		EnableWindow(GetDlgItem(window, IDC_BACKGROUND_FILENAME), FALSE);
+		EnableWindow(GetDlgItem(window, IDC_BACKGROUND_SOLIDCOLOR), TRUE);
+		EnableWindow(GetDlgItem(window, IDC_BACKGROUND_BEVEL), TRUE);
+	}
+	else
+	{
+		EnableWindow(GetDlgItem(window, IDC_BACKGROUND_SOLIDCOLOR), FALSE);
+		EnableWindow(GetDlgItem(window, IDC_BACKGROUND_BEVEL), FALSE);
+	}
+
 	// This is always disabled
 	EnableWindow(GetDlgItem(window, IDC_TOOLTIP_FONTNAME), FALSE);
 
@@ -423,16 +439,24 @@ BOOL OnInitBackgroundDialog(HWND window)
 		state = IDC_BACKGROUND_STRETCH;
 		break;
 
+	case CBackground::MODE_SOLID:
+		state = IDC_BACKGROUND_SOLID;
+		break;
+
 	case CBackground::MODE_COPY:
 	default:
 		state = IDC_BACKGROUND_COPYWALLPAPER;
 		break;
 	}
-	CheckRadioButton(window, IDC_BACKGROUND_TILE, IDC_BACKGROUND_COPYWALLPAPER, state);
+	CheckRadioButton(window, IDC_BACKGROUND_TILE, IDC_BACKGROUND_SOLID, state);
 
+	g_SolidColor = CCalendarWindow::c_Config.GetBackgroundSolidColor();
 	g_ToolTipFontColor = CCalendarWindow::c_Config.GetToolTipFontColor();
 	g_ToolTipBGColor = CCalendarWindow::c_Config.GetToolTipBGColor();
 	InitFont(CCalendarWindow::c_Config.GetToolTipFont(), &g_ToolTipFont);
+
+	state = CCalendarWindow::c_Config.GetBackgroundBevel() ? BST_CHECKED : BST_UNCHECKED;
+	CheckDlgButton(window, IDC_BACKGROUND_BEVEL, state);
 
 	UpdateBackgroundWidgets(window);
 
@@ -456,15 +480,23 @@ void OnOKBackgroundDialog(HWND window)
 	{
 		CCalendarWindow::c_Config.SetBackgroundMode(CBackground::MODE_TILE);
 	}
+	else if (BST_CHECKED == IsDlgButtonChecked(window, IDC_BACKGROUND_SOLID))
+	{
+		CCalendarWindow::c_Config.SetBackgroundMode(CBackground::MODE_SOLID);
+	}
 	else
 	{
 		CCalendarWindow::c_Config.SetBackgroundMode(CBackground::MODE_COPY);
 	}
 
+	CCalendarWindow::c_Config.SetBackgroundSolidColor(g_SolidColor);
 	CCalendarWindow::c_Config.SetToolTipFontColor(g_ToolTipFontColor);
 	CCalendarWindow::c_Config.SetToolTipBGColor(g_ToolTipBGColor);
 	std::string fontStr = GetFontString(&g_ToolTipFont);
 	CCalendarWindow::c_Config.SetToolTipFont(fontStr);
+
+	bool state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_BACKGROUND_BEVEL));
+	CCalendarWindow::c_Config.SetBackgroundBevel(state);
 }
 
 BOOL CALLBACK BackgroundPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
@@ -482,6 +514,10 @@ BOOL CALLBACK BackgroundPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			if (wParam == IDC_TOOLTIP_BGCOLOR)
 			{
 				return DrawItemFontColor(g_ToolTipBGColor, wParam, lParam);
+			}
+			if (wParam == IDC_BACKGROUND_SOLIDCOLOR)
+			{
+				return DrawItemFontColor(g_SolidColor, wParam, lParam);
 			}
 			return FALSE;
 
@@ -507,11 +543,16 @@ BOOL CALLBACK BackgroundPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			case IDC_BACKGROUND_TILE:
 			case IDC_BACKGROUND_STRETCH:
 			case IDC_BACKGROUND_COPYWALLPAPER:
+			case IDC_BACKGROUND_SOLID:
 				UpdateBackgroundWidgets(hwndDlg);
 				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
 				return TRUE;
 
 			case IDC_BACKGROUND_FILENAME:
+				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
+				return TRUE;
+
+			case IDC_BACKGROUND_BEVEL:
 				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
 				return TRUE;
 
@@ -522,6 +563,10 @@ BOOL CALLBACK BackgroundPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			case IDC_TOOLTIP_BGCOLOR:
 				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
 				return SelectFontColor(hwndDlg, &g_ToolTipBGColor);
+
+			case IDC_BACKGROUND_SOLIDCOLOR:
+				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
+				return SelectFontColor(hwndDlg, &g_SolidColor);
 
 			case IDC_TOOLTIP_SELECT:
 				SelectFont(hwndDlg, &g_ToolTipFont);

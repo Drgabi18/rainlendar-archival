@@ -95,6 +95,7 @@
 #define IDC_EVENT_MESSAGEBOX            1080
 #define IDC_EVENT_EXECUTE               1081
 #define IDC_EDITEVENT_MESSAGE           1082
+#define IDC_EVENT_EXECUTE2              1082
 #define IDC_WEEKNUM_ENABLE              1083
 #define IDC_WEEKNUM_RASTERIZER          1084
 #define IDC_WEEKNUM_ALIGN               1085
@@ -125,12 +126,13 @@
 #define IDC_SERVER_COPY                 1109
 #define IDC_POLL_WALLPAPER              1110
 #define IDC_BACKGROUND_TILE             1111
+#define IDC_NATIVE_TRANSPARENCY         1111
 #define IDC_BACKGROUND_STRETCH          1112
 #define IDC_BACKGROUND_COPYWALLPAPER    1113
-#define IDC_WINDOW_MOVABLE              1114
+#define IDC_BACKGROUND_SOLID            1114
 #define IDC_WINDOW_ONBOTTOM             1115
 #define IDC_WINDOW_NORMAL               1116
-#define IDC_DAY                         1117
+#define IDC_WINDOW_ONDESKTOP            1117
 #define IDC_WINDOW_ONTOP                1118
 #define IDC_WINDOW_MOUSEHIDE            1119
 #define IDC_DAYS_SEPARATION             1120
@@ -203,6 +205,10 @@
 #define IDC_TOOLTIP_FONTNAME            1187
 #define IDC_TOOLTIP_SELECT              1188
 #define IDC_TOOLTIP_TEXTFONTCOLOR       1189
+#define IDC_DAY                         1190
+#define IDC_WINDOW_MOVABLE              1191
+#define IDC_BACKGROUND_SOLIDCOLOR       1192
+#define IDC_BACKGROUND_BEVEL            1193
 #define ID_SKIN                         30000
 #define ID_SKIN_END                     32770
 #define ID_EDIT_SKIN                    32771
@@ -233,7 +239,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        1025
 #define _APS_NEXT_COMMAND_VALUE         32795
-#define _APS_NEXT_CONTROL_VALUE         1216
+#define _APS_NEXT_CONTROL_VALUE         1217
 #define _APS_NEXT_SYMED_VALUE           1000
 #endif
 #endif

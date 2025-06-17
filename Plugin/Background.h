@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.h,v 1.5 2002/08/03 16:22:37 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.h,v 1.6 2002/11/12 18:01:41 rainy Exp $
 
   $Log: Background.h,v $
+  Revision 1.6  2002/11/12 18:01:41  rainy
+  Modified to use the CImage class.
+
   Revision 1.5  2002/08/03 16:22:37  rainy
   Changed the background handling to cache the wallpaper when
   the window is moved.
@@ -41,6 +44,8 @@
 #ifndef __BACKGROUND_H__
 #define __BACKGROUND_H__
 
+#include "Image.h"
+
 class CBackground
 {
 public:
@@ -48,16 +53,15 @@ public:
 	{
 		MODE_TILE,
 		MODE_COPY,
-		MODE_STRETCH
+		MODE_STRETCH,
+		MODE_SOLID
 	};
 
 	CBackground();
 	~CBackground();
 
-	void Load(std::string Filename);
-	void Create(int X, int Y, int Width, int Height);
-	void CopyBackground(int X, int Y, int Width, int Height);
-	void Paint(HDC dc);
+	bool Create(int X, int Y, int Width, int Height);
+	void Paint(CImage& background);
 
 	int GetWidth() { return m_Width; };
 	int GetHeight() { return m_Height; };
@@ -71,6 +75,8 @@ public:
 	static void FlushWallpaper();
 
 private:
+	void Load(const std::string& Filename);
+	HBITMAP CopyBackground(int X, int Y, int Width, int Height);
 	static HBITMAP GetWallpaper(int X, int Y, int Width, int Height);
 	static HBITMAP c_Wallpaper;	// The current wallpaper picture
 
@@ -78,9 +84,9 @@ private:
 	int m_Width;
 	int m_Height;
 	bool m_Alpha;
-	HBITMAP m_AlphaImage;
-	HBITMAP m_Image;
-	HBITMAP m_Background;	// The background picture
+
+	CImage m_BGImage;
+	CImage m_Image;
 };
 
 #endif

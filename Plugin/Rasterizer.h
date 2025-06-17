@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Rasterizer.h,v 1.6 2002/08/03 16:09:10 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Rasterizer.h,v 1.7 2002/11/12 18:10:37 rainy Exp $
 
   $Log: Rasterizer.h,v $
+  Revision 1.7  2002/11/12 18:10:37  rainy
+  The interface of Paint changed a little.
+
   Revision 1.6  2002/08/03 16:09:10  rainy
   Added support for profiles.
 
@@ -47,6 +50,7 @@
 #endif
 
 #include <windows.h>
+#include "Image.h"
 
 struct Profile;
 
@@ -77,7 +81,7 @@ public:
 	int GetAlign() { return m_Align; };
 	void SetAlign(int Align ) { m_Align=Align; };
 
-	virtual void Paint(HDC dc, int X, int Y, int W, int H, int Index) = 0;
+	virtual void Paint(CImage& background, int X, int Y, int W, int H, int Index) = 0;
 
 	int GetHeight() { return m_Height; };
 	int GetWidth() { return m_Width; };

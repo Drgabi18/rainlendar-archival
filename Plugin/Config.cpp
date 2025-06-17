@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.cpp,v 1.10 2002/08/24 11:14:01 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.cpp,v 1.11 2002/11/12 18:02:33 rainy Exp $
 
   $Log: Config.cpp,v $
+  Revision 1.11  2002/11/12 18:02:33  rainy
+  Added Native Transparency and solid background (with bevel).
+
   Revision 1.10  2002/08/24 11:14:01  rainy
   Changed the error handling.
 
@@ -64,7 +67,7 @@ CConfig::CConfig()
 {
 	m_X=0;
 	m_Y=0;
-	m_StartFromMonday=false;
+	m_StartFromMonday=true;
 	m_StartHidden=false;
 	m_DisableHotkeys=false;
 	m_UseWindowName=false;
@@ -72,11 +75,15 @@ CConfig::CConfig()
 	m_Movable=false;
 	m_MouseHide=false;
 	m_SnapEdges=false;
+	m_NativeTransparency=true;
 	m_RefreshDelay=100;
-	m_BackgroundMode=CBackground::MODE_TILE;
 	m_WindowPos=WINDOWPOS_ONBOTTOM;
-	m_BGCopyMode=BG_NORMAL;
 	m_CurrentProfile="Default";
+	m_BGCopyMode=BG_NORMAL;
+
+	m_BackgroundMode=CBackground::MODE_TILE;
+	m_BackgroundSolidColor=GetSysColor(COLOR_3DFACE);
+	m_BackgroundBevel=true;
 
 	m_DaysEnable=false;
 	m_DaysX=0;
@@ -156,11 +163,14 @@ CConfig::CConfig()
 	m_ToolTipFont = "-11/0/0/0/400/0/0/0/0/3/2/1/34/Arial";
 }
 
-
 CConfig::~CConfig()
 {
+	std::list<Profile*>::iterator i = m_Profiles.begin();
+	for( ; i != m_Profiles.end(); i++)
+	{
+		delete (*i);
+	}
 }
-
 
 void CConfig::GetIniTime(const std::string& filename)
 {
@@ -235,6 +245,7 @@ void CConfig::ReadGeneralConfig(const char* iniFile)
 	m_Movable=(1==GetPrivateProfileInt( "Rainlendar", "Movable", m_Movable?1:0, iniFile))?true:false;
 	m_MouseHide=(1==GetPrivateProfileInt( "Rainlendar", "MouseHide", m_MouseHide?1:0, iniFile))?true:false;
 	m_SnapEdges=(1==GetPrivateProfileInt( "Rainlendar", "SnapEdges", m_SnapEdges?1:0, iniFile))?true:false;
+	m_NativeTransparency=(1==GetPrivateProfileInt( "Rainlendar", "NativeTransparency", m_NativeTransparency?1:0, iniFile))?true:false;
 	m_RefreshDelay=GetPrivateProfileInt( "Rainlendar", "RefreshDelay", m_RefreshDelay, iniFile);
 	m_WindowPos=(WINDOWPOS)GetPrivateProfileInt( "Rainlendar", "WindowPos", m_WindowPos, iniFile);
 	m_BGCopyMode=(BG_COPY_MODE)GetPrivateProfileInt( "Rainlendar", "BGCopyMode", m_BGCopyMode, iniFile);
@@ -283,6 +294,11 @@ void CConfig::ReadSkinConfig(const char* iniFile)
 		m_BackgroundBitmapName=tmpSz;
 	}
 	m_BackgroundMode=(CBackground::MODE)GetPrivateProfileInt( "Rainlendar", "BackgroundMode", m_BackgroundMode, iniFile);
+	m_BackgroundBevel=(1==GetPrivateProfileInt( "Rainlendar", "BackgroundBevel", m_BackgroundBevel?1:0, iniFile))?true:false;
+	if(GetPrivateProfileString( "Rainlendar", "BackgroundSolidColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		sscanf(tmpSz, "%X", &m_BackgroundSolidColor);
+	}
 
 	// Day stuff
 	m_DaysEnable=(1==GetPrivateProfileInt( "Rainlendar", "DaysEnable", m_DaysEnable?1:0, iniFile))?true:false;
@@ -527,6 +543,11 @@ void CConfig::ReadProfiles(const char* iniFile)
 		profiles = new char[size];
 	};
 
+	std::list<Profile*>::iterator i = m_Profiles.begin();
+	for( ; i != m_Profiles.end(); i++)
+	{
+		delete (*i);
+	}
 	m_Profiles.clear();
 
 	char* pos = profiles;
@@ -534,52 +555,71 @@ void CConfig::ReadProfiles(const char* iniFile)
 	{
 		if (0 == strncmp(pos, "Profile", 7))
 		{
-			Profile profile;
+			Profile* profile = new Profile;
 
 			if(GetPrivateProfileString(pos, "Name", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 			{
-				profile.name = tmpSz;
+				profile->name = tmpSz;
 			}
 
 			if(GetPrivateProfileString(pos, "EventFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 			{
-				sscanf(tmpSz, "%X", &profile.fontColor);
+				sscanf(tmpSz, "%X", &profile->fontColor);
 			}
 			else
 			{
-				profile.fontColor = m_EventFontColor;
+				profile->fontColor = m_EventFontColor;
 			}
 
 			if(GetPrivateProfileString(pos, "EventFontColor2", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 			{
-				sscanf(tmpSz, "%X", &profile.fontColor2);
+				sscanf(tmpSz, "%X", &profile->fontColor2);
 			}
 			else
 			{
-				profile.fontColor2 = m_EventFontColor2;
+				profile->fontColor2 = m_EventFontColor2;
 			}
 
 			if(GetPrivateProfileString(pos, "ToolTipFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 			{
-				sscanf(tmpSz, "%X", &profile.toolTipColor);
+				sscanf(tmpSz, "%X", &profile->toolTipColor);
 			}
 			else
 			{
-				profile.toolTipColor = m_ToolTipFontColor;
+				profile->toolTipColor = m_ToolTipFontColor;
 			}
 
 			if(GetPrivateProfileString(pos, "EventBitmapName", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 			{
-				profile.bitmapName = tmpSz;
+				profile->bitmapName = tmpSz;
+			}
+			
+			if(GetPrivateProfileString(pos, "EventIconName", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+			{
+				profile->iconName = tmpSz;
+			}
+			profile->iconAlign = (CRasterizer::ALIGN)GetPrivateProfileInt(pos, "EventIconAlign", m_DaysAlign, iniFile);
+
+			// Load the images (if they are defined)
+			if (!profile->bitmapName.empty())
+			{
+				AddPath(profile->bitmapName);
+				profile->bitmap.Load(profile->bitmapName);
+			}
+
+			if (!profile->iconName.empty())
+			{
+				AddPath(profile->iconName);
+				profile->icon.Load(profile->iconName);
+			}
+
+			if (!profile->name.empty())
+			{
+				m_Profiles.push_back(profile);
 			}
 			else
 			{
-				profile.bitmapName = m_EventBitmapName;
-			}
-			
-			if (!profile.name.empty())
-			{
-				m_Profiles.push_back(profile);
+				delete profile;
 			}
 		}
 		pos = pos + strlen(pos) + 1;
@@ -588,7 +628,28 @@ void CConfig::ReadProfiles(const char* iniFile)
 	delete [] profiles;
 }
 
-const std::list<Profile>& CConfig::GetAllProfiles()
+void CConfig::AddPath(std::string& filename)
+{
+	char buffer[MAX_LINE_LENGTH];
+
+	if(!CRainlendar::GetDummyLitestep()) 
+	{
+		VarExpansion(buffer, filename.c_str());
+		filename = buffer;
+	}
+
+	// Check for absolute path
+	if(-1 == filename.find(':')) 
+	{
+		if (!CCalendarWindow::c_Config.GetCurrentSkin().empty())
+		{
+			filename.insert(0, CCalendarWindow::c_Config.GetCurrentSkin() + "\\");
+		}
+		filename.insert(0, CCalendarWindow::c_Config.GetSkinsPath());
+	}
+}
+
+const std::list<Profile*>& CConfig::GetAllProfiles()
 {
 	return m_Profiles;
 }
@@ -597,12 +658,12 @@ const Profile* CConfig::GetProfile(const char* name)
 {
 	if (name == NULL) return NULL;
 
-	std::list<Profile>::iterator i = m_Profiles.begin();
+	std::list<Profile*>::iterator i = m_Profiles.begin();
 	for( ; i != m_Profiles.end(); i++)
 	{
-		if ((*i).name == name)
+		if ((*i)->name == name)
 		{
-			return &(*i);
+			return (*i);
 		}
 	}
 	return NULL;
@@ -654,6 +715,8 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			WritePrivateProfileString( "Rainlendar", "SnapEdges", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_MouseHide);
 			WritePrivateProfileString( "Rainlendar", "MouseHide", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_NativeTransparency);
+			WritePrivateProfileString( "Rainlendar", "NativeTransparency", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_RefreshDelay);
 			WritePrivateProfileString( "Rainlendar", "RefreshDelay", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_WindowPos);
@@ -689,6 +752,10 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 		WritePrivateProfileString( "Rainlendar", "BackgroundBitmapName", m_BackgroundBitmapName.c_str(), INIPath.c_str() );
 		sprintf(tmpSz, "%i", m_BackgroundMode);
 		WritePrivateProfileString( "Rainlendar", "BackgroundMode", tmpSz, INIPath.c_str() );
+		sprintf(tmpSz, "%i", m_BackgroundBevel);
+		WritePrivateProfileString( "Rainlendar", "BackgroundBevel", tmpSz, INIPath.c_str() );
+		sprintf(tmpSz, "%X", m_BackgroundSolidColor);
+		WritePrivateProfileString( "Rainlendar", "BackgroundSolidColor", tmpSz, INIPath.c_str() );
 
 		// Day stuff
 		sprintf(tmpSz, "%i", m_DaysEnable);

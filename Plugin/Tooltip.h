@@ -111,6 +111,7 @@ private:
 
 	static CToolTip c_ToolTip;
 	static int c_CurrentID;
+	static POINT c_MousePos;
 };
 
 #endif

@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemWeekdays.cpp,v 1.5 2002/08/24 11:10:36 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemWeekdays.cpp,v 1.6 2002/11/12 18:11:34 rainy Exp $
 
   $Log: ItemWeekdays.cpp,v $
+  Revision 1.6  2002/11/12 18:11:34  rainy
+  The interface of Paint changed a little.
+
   Revision 1.5  2002/08/24 11:10:36  rainy
   Changed the error handling.
 
@@ -107,7 +110,7 @@ void CItemWeekdays::Initialize()
 ** Paints the weekdays in correct place (over the days)
 **
 */
-void CItemWeekdays::Paint(HDC dc)
+void CItemWeekdays::Paint(CImage& background)
 {
 	int X, Y, W, H;
 	int i;
@@ -127,16 +130,16 @@ void CItemWeekdays::Paint(HDC dc)
 			{
 				if(i == 6) 
 				{
-					m_Rasterizer->Paint(dc, X, Y, W, H, 0);
+					m_Rasterizer->Paint(background, X, Y, W, H, 0);
 				} 
 				else 
 				{
-					m_Rasterizer->Paint(dc, X, Y, W, H, i + 1);
+					m_Rasterizer->Paint(background, X, Y, W, H, i + 1);
 				}
 			}
 			else 
 			{
-				m_Rasterizer->Paint(dc, X, Y, W, H, i);
+				m_Rasterizer->Paint(background, X, Y, W, H, i);
 			}
 		}
 	}

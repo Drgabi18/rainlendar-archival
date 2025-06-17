@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.h,v 1.3 2002/08/03 16:07:54 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.h,v 1.4 2002/11/12 18:10:18 rainy Exp $
 
   $Log: RasterizerFont.h,v $
+  Revision 1.4  2002/11/12 18:10:18  rainy
+  Added support for real alpha.
+
   Revision 1.3  2002/08/03 16:07:54  rainy
   Added CreateFont and modified SetFont to use that.
 
@@ -49,14 +52,21 @@ public:
 
 	void UpdateDimensions(const char* defaultString = NULL);
 
-	void Paint(HDC dc, int X, int Y, int W, int H, int Index);
+	void Paint(CImage& background, int X, int Y, int W, int H, int Index);
 
 	static HFONT CreateFont(const std::string& FontName);
+	static void ClearBuffers() { m_AlphaBuffer.Clear(); m_ColorBuffer.Clear(); };
+	static void CreateBuffers(int width, int height);
+	static CImage& GetAlphaBuffer() { return m_AlphaBuffer; };
+	static CImage& GetColorBuffer() { return m_ColorBuffer; };
 
 protected:
 	std::vector<std::string> m_StringTable;
 	HFONT m_Font;
 	COLORREF m_Color;
+
+	static CImage m_AlphaBuffer;
+	static CImage m_ColorBuffer;
 };
 
 #endif

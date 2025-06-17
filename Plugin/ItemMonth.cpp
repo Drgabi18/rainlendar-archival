@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemMonth.cpp,v 1.7 2002/08/24 11:10:36 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemMonth.cpp,v 1.8 2002/11/12 18:11:35 rainy Exp $
 
   $Log: ItemMonth.cpp,v $
+  Revision 1.8  2002/11/12 18:11:35  rainy
+  The interface of Paint changed a little.
+
   Revision 1.7  2002/08/24 11:10:36  rainy
   Changed the error handling.
 
@@ -187,7 +190,7 @@ void CItemMonth::Initialize()
 ** Paints the Month in correct place
 **
 */
-void CItemMonth::Paint(HDC dc)
+void CItemMonth::Paint(CImage& background)
 {
 	int X, Y, W, H;
 
@@ -226,6 +229,6 @@ void CItemMonth::Paint(HDC dc)
 			break;
 		};
 
-		m_Rasterizer->Paint(dc, X, Y, W, H, CCalendarWindow::c_MonthsFirstDate.wMonth - 1);
+		m_Rasterizer->Paint(background, X, Y, W, H, CCalendarWindow::c_MonthsFirstDate.wMonth - 1);
 	}
 }

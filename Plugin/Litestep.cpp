@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Litestep.cpp,v 1.2 2002/08/24 11:10:07 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Litestep.cpp,v 1.4 2002/09/08 14:14:54 rainy Exp $
 
   $Log: Litestep.cpp,v $
+  Revision 1.4  2002/09/08 14:14:54  rainy
+  The name of the log file is the same as the module's name.
+
+  Revision 1.3  2002/09/06 21:44:51  rainy
+  Added logging functions.
+
   Revision 1.2  2002/08/24 11:10:07  rainy
   Added support for logging.
 
@@ -30,6 +36,7 @@
 #include "Litestep.h"
 #include "Error.h"
 #include <shellapi.h>
+#include <crtdbg.h>
 
 typedef BOOL (*FPADDBANGCOMMAND)(LPCSTR command, BangCommand f);
 FPADDBANGCOMMAND fpAddBangCommand = NULL;
@@ -404,21 +411,27 @@ BOOL LSLog(int nLevel, LPCSTR pszModule, LPCSTR pszMessage)
 	// Use the lsapi.dll version of the method if possible
 	if (fpLSLog) return fpLSLog(nLevel, pszModule, pszMessage);
 
+	_RPT0(_CRT_WARN, "DEBUG: ");
+	_RPT0(_CRT_WARN, pszMessage);
+	_RPT0(_CRT_WARN, "\n");
+
 	// The stub implementation
 	static int logFound = 0;
 	FILE* logFile;
+	std::string logfile = pszModule;
+	logfile += ".log";
 
 	if (logFound == 0)
 	{
 		// Check if the file exists
-		logFile = fopen("Rainlendar.log", "r");
+		logFile = fopen(logfile.c_str(), "r");
 		if (logFile)
 		{
 			logFound = 1;
 			fclose(logFile);
 
 			// Clear the file
-			logFile = fopen("Rainlendar.log", "w");
+			logFile = fopen(logfile.c_str(), "w");
 			fclose(logFile);
 		}
 		else
@@ -429,7 +442,7 @@ BOOL LSLog(int nLevel, LPCSTR pszModule, LPCSTR pszMessage)
 
 	if (logFound == 1)
 	{
-		logFile = fopen("Rainlendar.log", "a+");
+		logFile = fopen(logfile.c_str(), "a+");
 		if (logFile)
 		{
 			switch(nLevel)

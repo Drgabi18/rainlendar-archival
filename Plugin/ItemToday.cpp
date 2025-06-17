@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemToday.cpp,v 1.5 2002/08/24 11:10:36 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemToday.cpp,v 1.6 2002/11/12 18:11:34 rainy Exp $
 
   $Log: ItemToday.cpp,v $
+  Revision 1.6  2002/11/12 18:11:34  rainy
+  The interface of Paint changed a little.
+
   Revision 1.5  2002/08/24 11:10:36  rainy
   Changed the error handling.
 
@@ -104,7 +107,7 @@ void CItemToday::Initialize()
 ** Paints the numbers in correct place
 **
 */
-void CItemToday::Paint(HDC dc)
+void CItemToday::Paint(CImage& background)
 {
 	int FirstWeekday;
 	int X, Y, W, H, Index;
@@ -130,7 +133,7 @@ void CItemToday::Paint(HDC dc)
 			X = CCalendarWindow::c_Config.GetDaysX() + (Index % 7) * W;
 			Y = CCalendarWindow::c_Config.GetDaysY() + (Index / 7) * H;
 		
-			m_Rasterizer->Paint(dc, X, Y, W, H, CCalendarWindow::c_TodaysDate.wDay);
+			m_Rasterizer->Paint(background, X, Y, W, H, CCalendarWindow::c_TodaysDate.wDay);
 		}
 	}
 }

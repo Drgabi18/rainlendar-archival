@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerBitmap.h,v 1.3 2002/08/03 16:08:59 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerBitmap.h,v 1.4 2002/11/12 18:10:23 rainy Exp $
 
   $Log: RasterizerBitmap.h,v $
+  Revision 1.4  2002/11/12 18:10:23  rainy
+  Added support for real alpha.
+
   Revision 1.3  2002/08/03 16:08:59  rainy
   Added support for profiles.
 
@@ -34,6 +37,7 @@
 #define __RASTERIZERBITMAP_H__
 
 #include "Rasterizer.h"
+#include "Image.h"
 
 class CRasterizerBitmap : public CRasterizer  
 {
@@ -41,33 +45,15 @@ public:
 	CRasterizerBitmap();
 	virtual ~CRasterizerBitmap();
 
-	void Load(std::string filename);
+	void Load(const std::string& filename);
 	void SetNumOfComponents(int Number) { m_NumOfComponents = Number; };
 	void SetSeparation(int Number) { m_Separation = Number; };
-	void Paint(HDC dc, int X, int Y, int W, int H, int Index);
-
-	static bool CreateAlpha(HBITMAP Source, HBITMAP Alpha, HBITMAP Background);
+	void Paint(CImage& background, int X, int Y, int W, int H, int Index);
 
 protected:
-	HBITMAP GetBackground(HDC dc, int X, int Y, int Width, int Height);
-	void PaintAlpha(HDC dc, int X, int Y, int NumOfNums, int Index);
-
 	int m_NumOfComponents;
 	int m_Separation;
-	HBITMAP m_Bitmap;
-	HBITMAP m_AlphaBitmap;
-	bool m_Alpha;
-
-	struct BitmapData
-	{
-		int width;
-		int height;
-		HBITMAP bitmap;
-		HBITMAP alphaBitmap;
-		bool alpha;
-	};
-
-	std::map<const Profile*, BitmapData> m_ProfileBitmaps;
+	CImage m_Image;
 };
 
 #endif

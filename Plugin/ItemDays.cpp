@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemDays.cpp,v 1.5 2002/08/24 11:11:54 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemDays.cpp,v 1.6 2002/11/12 18:11:41 rainy Exp $
 
   $Log: ItemDays.cpp,v $
+  Revision 1.6  2002/11/12 18:11:41  rainy
+  The interface of Paint changed a little.
+
   Revision 1.5  2002/08/24 11:11:54  rainy
   Added ResetDayTypes()
 
@@ -154,7 +157,7 @@ void CItemDays::ResetDayTypes()
 ** Paints the numbers in correct place
 **
 */
-void CItemDays::Paint(HDC dc)
+void CItemDays::Paint(CImage& background)
 {
 	int FirstWeekday;
 	int X, Y, W, H, Index, DayType, NumOfDays, i;
@@ -186,7 +189,7 @@ void CItemDays::Paint(HDC dc)
 				X = CCalendarWindow::c_Config.GetDaysX() + (Index % 7) * W;
 				Y = CCalendarWindow::c_Config.GetDaysY() + (Index / 7) * H;
 	
-				m_Rasterizer->Paint(dc, X, Y, W, H, i + 1);
+				m_Rasterizer->Paint(background, X, Y, W, H, i + 1);
 			}
 		}
 	}
@@ -234,10 +237,6 @@ int CItemDays::HitTest(int x, int y)
 	{
 		if(Day < 1 || Day > m_DaysInMonth) return 0;	// No hit
 	}
-
-	char buffer[256];
-	sprintf(buffer, "HitTest %i in (%i, %i), %i, %i, (%i, %i), (%i, %i)", Day, x, y, m_DaysInMonth, FirstWeekday, W, H, X, Y);
-	LSLog(LOG_DEBUG, "Rainlendar", buffer);
 
 	return Day;
 }

@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemToday.h,v 1.2 2002/05/23 17:33:41 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemToday.h,v 1.3 2002/11/12 18:11:34 rainy Exp $
 
   $Log: ItemToday.h,v $
+  Revision 1.3  2002/11/12 18:11:34  rainy
+  The interface of Paint changed a little.
+
   Revision 1.2  2002/05/23 17:33:41  rainy
   Removed all MFC stuff
 
@@ -39,7 +42,7 @@ public:
 	virtual ~CItemToday();
 
 	void Initialize();
-	void Paint(HDC dc);
+	void Paint(CImage& background);
 };
 
 #endif

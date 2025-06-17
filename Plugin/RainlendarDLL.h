@@ -61,7 +61,7 @@
 #define END_MESSAGEPROC } return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 #define APPNAME "Rainlendar"
-#define VERSION "0.13"
+#define VERSION "0.14"
 
 #define DLLDECL __declspec( dllexport )
 

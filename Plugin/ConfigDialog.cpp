@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ConfigDialog.cpp,v 1.3 2002/08/24 11:12:58 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ConfigDialog.cpp,v 1.4 2002/11/12 18:03:27 rainy Exp $
 
   $Log: ConfigDialog.cpp,v $
+  Revision 1.4  2002/11/12 18:03:27  rainy
+  Added widgets for the native transparency
+
   Revision 1.3  2002/08/24 11:12:58  rainy
   Added Copy to clipboard.
 
@@ -117,6 +120,10 @@ BOOL OnInitGeneralDialog(HWND window)
 		check = IDC_WINDOW_ONTOP;
 		break;
 
+	case CConfig::WINDOWPOS_ONDESKTOP:
+		check = IDC_WINDOW_ONDESKTOP;
+		break;
+
 	case CConfig::WINDOWPOS_NORMAL:
 	default:
 		check = IDC_WINDOW_NORMAL;
@@ -148,6 +155,14 @@ BOOL OnInitGeneralDialog(HWND window)
 	CheckDlgButton(window, IDC_POLL_WALLPAPER, state);
 	state = CCalendarWindow::c_Config.GetSnapEdges() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_SNAP_EDGES, state);
+	state = CCalendarWindow::c_Config.GetNativeTransparency() ? BST_CHECKED : BST_UNCHECKED;
+	CheckDlgButton(window, IDC_NATIVE_TRANSPARENCY, state);
+
+	if (!CCalendarWindow::Is2k())
+	{
+		// Disable the button if we're running wintendo
+		EnableWindow(GetDlgItem(window, IDC_NATIVE_TRANSPARENCY), FALSE);
+	}
 
 	return TRUE;
 }
@@ -173,6 +188,10 @@ BOOL OnOKGeneralDialog(HWND window)
 	else if (BST_CHECKED == IsDlgButtonChecked(window, IDC_WINDOW_ONTOP))
 	{
 		CCalendarWindow::c_Config.SetWindowPos(CConfig::WINDOWPOS_ONTOP);
+	}
+	else if (BST_CHECKED == IsDlgButtonChecked(window, IDC_WINDOW_ONDESKTOP))
+	{
+		CCalendarWindow::c_Config.SetWindowPos(CConfig::WINDOWPOS_ONDESKTOP);
 	}
 	else
 	{
@@ -204,6 +223,8 @@ BOOL OnOKGeneralDialog(HWND window)
 	CCalendarWindow::c_Config.SetPollWallpaper(state);
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_SNAP_EDGES));
 	CCalendarWindow::c_Config.SetSnapEdges(state);
+	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_NATIVE_TRANSPARENCY));
+	CCalendarWindow::c_Config.SetNativeTransparency(state);
 
 	return TRUE;
 }
@@ -431,7 +452,7 @@ void AddStatusString(const char* string)
 	// Create a mutex if it's not yet created
 	if (g_Mutex == NULL)
 	{
-		g_Mutex = CreateMutex (NULL, FALSE, "AddStatusStringMutex");
+		g_Mutex = CreateMutex(NULL, FALSE, "AddStatusStringMutex");
 	}
 
 	GetLocalTime(&time);

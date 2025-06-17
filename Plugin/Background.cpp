@@ -16,9 +16,16 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.cpp,v 1.8 2002/08/24 11:14:44 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.cpp,v 1.10 2002/11/12 18:01:41 rainy Exp $
 
   $Log: Background.cpp,v $
+  Revision 1.10  2002/11/12 18:01:41  rainy
+  Modified to use the CImage class.
+
+  Revision 1.9  2002/09/07 09:35:30  rainy
+  Added Solid backgrounds.
+  Fixed a bug that copied the background from wrong place.
+
   Revision 1.8  2002/08/24 11:14:44  rainy
   Changed the error handling.
 
@@ -65,9 +72,6 @@ CBackground::CBackground()
 	m_Width = 0;
 	m_Height = 0;
 	m_Alpha = false;
-	m_AlphaImage = NULL;
-	m_Image = NULL;
-	m_Background = NULL;
 }
 
 CBackground::~CBackground()
@@ -83,77 +87,26 @@ CBackground::~CBackground()
 */
 void CBackground::Initialize()
 {
-	if (m_AlphaImage) DeleteObject(m_AlphaImage);
-	if (m_Image) DeleteObject(m_Image);
-	if (m_Background) DeleteObject(m_Background);
-
 	m_Width = 0;
 	m_Height = 0;
 	m_Alpha = false;
-	m_AlphaImage = NULL;
-	m_Image = NULL;
-	m_Background = NULL;
 }
 
 /* 
 ** Load
 **
-** Loads the given image.
+** Loads the given image and puts it in the m_BGImage.
 **
 */
-void CBackground::Load(std::string Filename)
+void CBackground::Load(const std::string& filename)
 {
-	BITMAP bm;
-	char buffer[1024];
-
-	if(!CRainlendar::GetDummyLitestep()) 
+	std::string name = filename;
+	CConfig::AddPath(name);
+	if (!m_BGImage.Load(name.c_str()))
 	{
-		VarExpansion(buffer, Filename.c_str());
-		Filename = buffer;
-	}
-
-	// Check for absolute path
-	if(-1 == Filename.find(':')) 
-	{
-		if (!CCalendarWindow::c_Config.GetCurrentSkin().empty())
-		{
-			Filename.insert(0, CCalendarWindow::c_Config.GetCurrentSkin() + "\\");
-		}
-		Filename.insert(0, CCalendarWindow::c_Config.GetSkinsPath());
-	} 
-
-	m_Image = LoadLSImage(Filename.c_str(), NULL);
-
-	if(m_Image == NULL) 
-	{
-		std::string err = "File not found: ";
-		err += Filename;
+		std::string err = "Unable to load file: ";
+		err += name;
 		THROW(err);
-	}
-
-	GetObject(m_Image, sizeof(BITMAP), &bm);
-	m_Width = bm.bmWidth;
-	m_Height = bm.bmHeight;
-
-	// Check for Alpha-map
-	m_Alpha = false;
-	int pos = Filename.rfind('.');
-	if (pos != -1)
-	{
-		std::string alphaName;
-
-		alphaName = Filename;
-		alphaName.insert(pos, "-Alpha");
-
-		m_AlphaImage = LoadLSImage(alphaName.c_str(), NULL);
-
-		if(m_AlphaImage != NULL) 
-		{
-			// Check that it is correct size
-			GetObject(m_AlphaImage, sizeof(BITMAP), &bm);
-			if (m_Width != bm.bmWidth || m_Height != bm.bmHeight) THROW(ERR_BACKGROUNDALPHASIZE);
-			m_Alpha = true;
-		}
 	}
 }
 
@@ -163,197 +116,140 @@ void CBackground::Load(std::string Filename)
 ** Creates the background image from the desktop and loaded image.
 ** Width and height are from current window size.
 ** Window's size must be correct when calling this.
-**
+** Returns true, if the background image is larger than the Width and Height.
 */
-void CBackground::Create(int X, int Y, int Width, int Height)
+bool CBackground::Create(int X, int Y, int Width, int Height)
 {
-	int i, j;
 	HWND Desktop;
 	HDC DDC;
-	HDC tmpDC;
 	HDC BGDC;
 	HBITMAP OldBitmap;
-	HBITMAP OldBitmap2;
-	HBITMAP tmpBitmap;
-	HBITMAP tmpBitmapA;
-	int RealWidth, RealHeight;
+	bool resize = false;
 
-	Desktop = GetDesktopWindow();
-	if(Desktop == NULL) THROW(ERR_BACKGROUND);
+	m_Image.Clear();
+	m_BGImage.Clear();
 
-	DDC = GetDC(Desktop);
-	if(DDC == NULL) THROW(ERR_BACKGROUND);
-		
-	tmpDC = CreateCompatibleDC(DDC);
-	if(tmpDC == NULL) THROW(ERR_BACKGROUND);
+	m_Width = Width;
+	m_Height = Height;
 
-	BGDC = CreateCompatibleDC(DDC);
-	if(BGDC == NULL) THROW(ERR_BACKGROUND);
-
-	ReleaseDC(Desktop, DDC);
-
-	RealWidth = max(Width, m_Width);
-	RealHeight = max(Height, m_Height);
-
-	if(m_Width < Width || m_Height < Height) 
+	// If the background is set as solid, we'll create a solid bitmap
+	if (CCalendarWindow::c_Config.GetBackgroundMode() == CBackground::MODE_SOLID)
 	{
-		// Must tile the background and possible alphamap
+		Desktop = GetDesktopWindow();
+		if(Desktop == NULL) THROW(ERR_BACKGROUND);
 
-		OldBitmap2 = (HBITMAP)SelectObject(BGDC, m_Image);
+		DDC = GetDC(Desktop);
+		if(DDC == NULL) THROW(ERR_BACKGROUND);
+			
+		BGDC = CreateCompatibleDC(DDC);
+		if(BGDC == NULL) THROW(ERR_BACKGROUND);
 
-		tmpBitmap = CreateCompatibleBitmap(BGDC, RealWidth, RealHeight);
-		if(tmpBitmap == NULL) THROW(ERR_BACKGROUND);
+		// Create background from solid color
+		HBITMAP background = CreateCompatibleBitmap(DDC, Width, Height);
+		if(background == NULL) THROW(ERR_BACKGROUND);
+		OldBitmap = (HBITMAP)SelectObject(BGDC, background);
 
-		if(m_Alpha) 
+		ReleaseDC(Desktop, DDC);
+		
+		RECT r = { 0, 0, Width, Height };
+		HBRUSH brush = CreateSolidBrush(CCalendarWindow::c_Config.GetBackgroundSolidColor());
+		FillRect(BGDC, &r, brush);
+		DeleteObject(brush);
+
+		if(CCalendarWindow::c_Config.GetBackgroundBevel())
 		{
-			tmpBitmapA = CreateCompatibleBitmap(BGDC, RealWidth, RealHeight);
-			if(tmpBitmapA == NULL) THROW(ERR_BACKGROUND);
+			// Draw bevel
+			DrawEdge(BGDC, &r, EDGE_RAISED, BF_RECT);
 		}
 
-		OldBitmap = (HBITMAP)SelectObject(tmpDC, tmpBitmap);
+		SelectObject(BGDC, OldBitmap);
+		DeleteDC(BGDC);
 
-		if(CCalendarWindow::c_Config.GetBackgroundMode() == MODE_TILE)
-		{
-			// Tile the background
-			for(j=0; j<RealHeight; j+=m_Height) 
-			{
-				for(i=0; i<RealWidth; i+=m_Width) 
-				{
-					BitBlt(tmpDC, i, j, min(m_Width, RealWidth-i), min(m_Height, RealHeight-j), BGDC, 0, 0, SRCCOPY);
-				}
-			}
+		m_BGImage.Create(background, NULL, 0x0ff);
 
-			// Alpha must be tiled too
-			if(m_Alpha) 
-			{
-				SelectObject(tmpDC, tmpBitmapA);
-				SelectObject(BGDC, m_AlphaImage);
-				for(j=0; j<RealHeight; j+=m_Height) 
-				{
-					for(i=0; i<RealWidth; i+=m_Width) 
-					{
-						BitBlt(tmpDC, i, j, min(m_Width, RealWidth-i), min(m_Height, RealHeight-j), BGDC, 0, 0, SRCCOPY);
-					}
-				}
-			}
-		}
-		else
-		{
-			SetStretchBltMode(tmpDC, HALFTONE);
-			SetBrushOrgEx(tmpDC, 0, 0, NULL);
-			StretchBlt(tmpDC, 0, 0, Width, Height, BGDC, 0, 0, m_Width, m_Width, SRCCOPY);
-
-			// Alpha must be stretched too
-			if(m_Alpha) 
-			{
-				SelectObject(tmpDC, tmpBitmapA);
-				SelectObject(BGDC, m_AlphaImage);
-				StretchBlt(tmpDC, 0, 0, Width, Height, BGDC, 0, 0, m_Width, m_Width, SRCCOPY);
-			}
-		}
-
-		SelectObject(tmpDC, OldBitmap);
-		SelectObject(BGDC, OldBitmap2);
-
-		DeleteObject(m_Image);
-		m_Image = tmpBitmap;
-
-		if(m_Alpha) 
-		{
-			DeleteObject(m_AlphaImage);
-			m_AlphaImage = tmpBitmapA;
-		}
-
-		m_Width = RealWidth;
-		m_Height = RealHeight;
+		m_Alpha = false;
 	}
+	else if (!CCalendarWindow::c_Config.GetBackgroundBitmapName().empty() && CCalendarWindow::c_Config.GetBackgroundMode() != CBackground::MODE_COPY)
+	{
+		// Otherwise we'll load the background image and grab a piece of wallpaper
+		Load(CCalendarWindow::c_Config.GetBackgroundBitmapName());
 
-	if(m_Width==0 || m_Height==0) return;
+		if (m_BGImage.GetWidth() < Width || m_BGImage.GetHeight() < Height)
+		{
+			m_Width = max(Width, m_BGImage.GetWidth());
+			m_Height = max(Height, m_BGImage.GetHeight());
+
+			// We need to resize the image to match the desired windowsize
+			if(CCalendarWindow::c_Config.GetBackgroundMode() == MODE_TILE)
+			{
+				m_BGImage.Resize(m_Width, m_Height, IMAGE_RESIZE_TYPE_TILE);
+			}
+			else 
+			{
+				m_BGImage.Resize(m_Width, m_Height, IMAGE_RESIZE_TYPE_STRETCH);
+			}
+		}
+
+		if (m_BGImage.GetWidth() > Width || m_BGImage.GetHeight() > Height)
+		{
+			m_Width = max(Width, m_BGImage.GetWidth());
+			m_Height = max(Height, m_BGImage.GetHeight());
+			resize = true;
+		}
+		m_Alpha = m_BGImage.HasAlpha();
+	}
 
 	if (m_Alpha || CCalendarWindow::c_Config.GetBackgroundMode() == CBackground::MODE_COPY)
 	{
 		// Take a copy of the BG
-		CopyBackground(X, Y, m_Width, m_Height);
-
-		if(m_Alpha) 
-		{
-			// ..and create and alphamasked version of the background bitmap
-			CRasterizerBitmap::CreateAlpha(m_Image, m_AlphaImage, m_Background);
-		} 
-	}
-	else 
-	{
-		if (m_Background) DeleteObject(m_Background);			// Delete the old (if there was one)
-
-		// Create new background image from the m_Image
-		OldBitmap = (HBITMAP)SelectObject(tmpDC, m_Image);
-		m_Background = CreateCompatibleBitmap(tmpDC, m_Width, m_Height);
-		if(m_Background == NULL) THROW(ERR_BACKGROUND);
-		OldBitmap2 = (HBITMAP)SelectObject(BGDC, m_Background);
-
-		BitBlt(BGDC, 0, 0, m_Width, m_Height, tmpDC, 0, 0, SRCCOPY);
-		
-		SelectObject(tmpDC, OldBitmap);
-		SelectObject(BGDC, OldBitmap2);
+		UpdateWallpaper(X, Y);
 	}
 
-	DeleteDC(BGDC);
-	DeleteDC(tmpDC);
+	return resize;
 }
 
 /* 
 ** CopyBackground
 **
 ** Takes a copy of the desktop to use as background
-** The copy goes to m_Background.
 */
-void CBackground::CopyBackground(int X, int Y, int Width, int Height) 
+HBITMAP CBackground::CopyBackground(int X, int Y, int Width, int Height) 
 {
 	HDC tmpDC;
 	HBITMAP OldBitmap;
+	HBITMAP wallpaper = NULL;
 	HDC WinDC;
-
-	if (m_Background) 
-	{
-		DeleteObject(m_Background);	// Delete the old (if there was one)
-		m_Background = NULL;
-	}
 
 	if(GetRainlendar() && (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_WALLPAPER_ALWAYS ||
 						  (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_NORMAL && !(GetRainlendar()->IsWharf()))))
 	{
 		// The new way
-		m_Background = GetWallpaper(X, Y, Width, Height);
+		wallpaper = GetWallpaper(X, Y, Width, Height);
 	}
 
-	if(m_Background == NULL)
+	if(wallpaper == NULL)
 	{
 		// If the new way fails, use the old way
-		WinDC = GetWindowDC(GetRainlendar()->GetCalendarWindow().GetWindow());
+		WinDC = GetWindowDC(GetDesktopWindow());
 		if(WinDC == NULL) THROW(ERR_BACKGROUND);
-
-		// These are initialized only if grapping is successful
-		m_Width=0;
-		m_Height=0;
 
 		tmpDC = CreateCompatibleDC(WinDC);
 		if(tmpDC==NULL) THROW(ERR_BACKGROUND);
 
-		m_Background = CreateCompatibleBitmap(WinDC, Width, Height);
-		if(m_Background==NULL) THROW(ERR_BACKGROUND);
+		wallpaper = CreateCompatibleBitmap(WinDC, Width, Height);
+		if(wallpaper==NULL) THROW(ERR_BACKGROUND);
 
 		// Fetch the background
-		OldBitmap = (HBITMAP)SelectObject(tmpDC, m_Background);
-		BitBlt(tmpDC, 0, 0, Width, Height, WinDC, 0, 0, SRCCOPY);
+		OldBitmap = (HBITMAP)SelectObject(tmpDC, wallpaper);
+		BitBlt(tmpDC, 0, 0, Width, Height, WinDC, CCalendarWindow::c_Config.GetX(), CCalendarWindow::c_Config.GetY(), SRCCOPY);
 		
-		ReleaseDC(GetRainlendar()->GetCalendarWindow().GetWindow(), WinDC);
+		ReleaseDC(GetDesktopWindow(), WinDC);
 
 		SelectObject(tmpDC, OldBitmap);
 		DeleteDC(tmpDC);
 	}
 
-	m_Width = Width;
-	m_Height = Height;
+	return wallpaper;
 }
 
 /*
@@ -545,21 +441,19 @@ HBITMAP CBackground::GetWallpaper(int X, int Y, int Width, int Height)
 /* 
 ** Paint
 **
-** Paints the background
+** Paints the background to the give DC
 **
 */
-void CBackground::Paint(HDC dc)
+void CBackground::Paint(CImage& background)
 {
-	HBITMAP OldBitmap;
-	HDC tmpDC;
-
-	tmpDC = CreateCompatibleDC(dc);
-	OldBitmap = (HBITMAP)SelectObject(tmpDC, m_Background);
-
-	BitBlt(dc, 0, 0, m_Width, m_Height, tmpDC, 0, 0, SRCCOPY);
-
-	SelectObject(tmpDC, OldBitmap);
-	DeleteDC(tmpDC);
+	if (m_Image.GetBitmap() != NULL)
+	{
+		background.Blit(m_Image, 0, 0, 0, 0, m_Width, m_Height);
+	}
+	else if (m_BGImage.GetBitmap() != NULL)
+	{
+		background.Blit(m_BGImage, 0, 0, 0, 0, m_Width, m_Height);
+	}
 }
 
 /* 
@@ -585,12 +479,15 @@ void CBackground::FlushWallpaper()
 */
 void CBackground::UpdateWallpaper(int X, int Y)
 {
-	// Take a copy of the BG
-	CopyBackground(X, Y, m_Width, m_Height);
-
-	if(m_Alpha) 
+	if (!CCalendarWindow::Is2k() || !CCalendarWindow::c_Config.GetNativeTransparency())	// No need to mess with wallpaper if we're using real transparency
 	{
-		// ..and create and alphamasked version of the background bitmap
-		CRasterizerBitmap::CreateAlpha(m_Image, m_AlphaImage, m_Background);
-	} 
+		// Take a copy of the BG
+		HBITMAP wallpaper = CopyBackground(X, Y, m_Width, m_Height);
+		m_Image.Create(wallpaper, NULL, 0x0ff);
+
+		if (m_BGImage.GetBitmap() != NULL)
+		{
+			m_Image.Blit(m_BGImage, 0, 0, 0, 0, m_Width, m_Height);
+		}
+	}
 }
