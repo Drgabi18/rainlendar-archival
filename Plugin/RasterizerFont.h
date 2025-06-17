@@ -16,23 +16,23 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.h,v 1.1.1.1 2001/10/29 18:56:23 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.h,v 1.2 2002/05/23 17:33:40 rainy Exp $
 
   $Log: RasterizerFont.h,v $
+  Revision 1.2  2002/05/23 17:33:40  rainy
+  Removed all MFC stuff
+
   Revision 1.1.1.1  2001/10/29 18:56:23  rainy
   Moved to CVS
 
 */
 
-#if !defined(AFX_RASTERIZERFONT_H__132BB028_0E9C_4BC1_A3DA_A173056A3298__INCLUDED_)
-#define AFX_RASTERIZERFONT_H__132BB028_0E9C_4BC1_A3DA_A173056A3298__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#ifndef __RASTERIZERFONT_H__
+#define __RASTERIZERFONT_H__
 
 #include "Rasterizer.h"
-#include <afxtempl.h>
+#include <string>
+#include <vector>
 
 class CRasterizerFont : public CRasterizer  
 {
@@ -40,16 +40,16 @@ public:
 	CRasterizerFont();
 	virtual ~CRasterizerFont();
 
-	void SetFont(CString& FontName);
-	void CreateStringTable(CString& String, int Count);
+	void SetFont(const std::string& FontName);
+	void CreateStringTable(const std::string& text, int count);
 
-	void UpdateDimensions(char* DefaultString=NULL);
+	void UpdateDimensions(const char* defaultString = NULL);
 
-	void Paint(CDC& dc, int X, int Y, int W, int H, int Index);
+	void Paint(HDC dc, int X, int Y, int W, int H, int Index);
 
 protected:
-	char** m_StringTable;
-	CFont m_Font;
+	std::vector<std::string> m_StringTable;
+	HFONT m_Font;
 };
 
-#endif // !defined(AFX_RASTERIZERFONT_H__132BB028_0E9C_4BC1_A3DA_A173056A3298__INCLUDED_)
+#endif

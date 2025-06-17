@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.cpp,v 1.4 2002/02/27 18:59:00 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.cpp,v 1.6 2002/05/30 18:28:05 rainy Exp $
 
   $Log: Background.cpp,v $
+  Revision 1.6  2002/05/30 18:28:05  rainy
+  Removed some Litestep related stuff.
+
+  Revision 1.5  2002/05/23 17:33:42  rainy
+  Removed all MFC stuff
+
   Revision 1.4  2002/02/27 18:59:00  rainy
   Fixed multimonitor stuff.
   Added support for background stretching.
@@ -34,19 +40,11 @@
 
 */
 
-#include "stdafx.h"
 #include "RainlendarDLL.h"
 #include "Background.h"
 #include "CalendarWindow.h"
 #include "Error.h"
 #include "RasterizerBitmap.h"
-#include <assert.h>
-
-#ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
-#endif
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -56,12 +54,15 @@ CBackground::CBackground()
 {
 	m_Width = 0;
 	m_Height = 0;
-	m_CalendarWindow = NULL;
+	m_Alpha = false;
+	m_AlphaImage = NULL;
+	m_Image = NULL;
+	m_Background = NULL;
 }
 
 CBackground::~CBackground()
 {
-
+	Initialize();	// This gets rid of the bitmaps
 }
 
 /* 
@@ -72,8 +73,16 @@ CBackground::~CBackground()
 */
 void CBackground::Initialize()
 {
-	m_Width=0;
-	m_Height=0;
+	if (m_AlphaImage) DeleteObject(m_AlphaImage);
+	if (m_Image) DeleteObject(m_Image);
+	if (m_Background) DeleteObject(m_Background);
+
+	m_Width = 0;
+	m_Height = 0;
+	m_Alpha = false;
+	m_AlphaImage = NULL;
+	m_Image = NULL;
+	m_Background = NULL;
 }
 
 /* 
@@ -82,59 +91,57 @@ void CBackground::Initialize()
 ** Loads the given image.
 **
 */
-void CBackground::Load(CString& Filename)
+void CBackground::Load(std::string Filename)
 {
-	HBITMAP BM;
-	HBITMAP ABM;
 	BITMAP bm;
-	CString PicName;
-	int End, Len;
+	char buffer[1024];
 
-	if (!CCalendarWindow::GetDummyLitestep())
+	if(!CRainlendar::GetDummyLitestep()) 
 	{
-		char buffer[1024];
-		VarExpansion(buffer, Filename);
+		VarExpansion(buffer, Filename.c_str());
 		Filename = buffer;
 	}
 
-	if(-1==Filename.Find(':', 0)) 
+	// Check for absolute path
+	if(-1 == Filename.find(':')) 
 	{
-		PicName.Format("%s%s", CCalendarWindow::c_Config.GetPath(), Filename);
+		Filename.insert(0, CCalendarWindow::c_Config.GetPath());
 	} 
-	else 
+
+	m_Image = LoadLSImage(Filename.c_str(), NULL);
+
+	if(m_Image == NULL) 
 	{
-		PicName=Filename;
+		std::string err = "File not found: ";
+		err += Filename;
+		throw CError(err, __LINE__, __FILE__);
 	}
-	BM=LoadLSImage(PicName, NULL);
 
-	if(BM==NULL) throw Filename;		// File not found
-
-	m_Image.Attach(BM);
-
-	GetObject(BM, sizeof(BITMAP), &bm);
-	m_Width=bm.bmWidth;
-	m_Height=bm.bmHeight;
+	GetObject(m_Image, sizeof(BITMAP), &bm);
+	m_Width = bm.bmWidth;
+	m_Height = bm.bmHeight;
 
 	// Check for Alpha-map
-	m_Alpha=false;
-	End=PicName.ReverseFind('.');
-	Len=PicName.GetLength();
-	if(End!=-1) {
-		CString AlphaName;
-		AlphaName.Format("%s-Alpha%s", PicName.Left(Len-(Len-End)), Filename.Right(Len-End));
-		ABM=LoadLSImage(AlphaName, NULL);
-		if(ABM!=NULL) {
-			m_Alpha=true;		// Alphamap found!
-			m_AlphaImage.Attach(ABM);
+	m_Alpha = false;
+	int pos = Filename.rfind('.');
+	if (pos != -1)
+	{
+		std::string alphaName;
 
+		alphaName = Filename;
+		alphaName.insert(pos, "-Alpha");
+
+		m_AlphaImage = LoadLSImage(alphaName.c_str(), NULL);
+
+		if(m_AlphaImage != NULL) 
+		{
 			// Check that it is correct size
-			GetObject(ABM, sizeof(BITMAP), &bm);
-			if(m_Width!=bm.bmWidth || m_Height!=bm.bmHeight) throw ERR_BACKGROUNDALPHASIZE;
+			GetObject(m_AlphaImage, sizeof(BITMAP), &bm);
+			if (m_Width != bm.bmWidth || m_Height != bm.bmHeight) throw CError(CError::ERR_BACKGROUNDALPHASIZE, __LINE__, __FILE__);
+			m_Alpha = true;
 		}
 	}
-
 }
-
 
 /* 
 ** Create
@@ -144,7 +151,7 @@ void CBackground::Load(CString& Filename)
 ** Window's size must be correct when calling this.
 **
 */
-void CBackground::Create(int Width, int Height)
+void CBackground::Create(int X, int Y, int Width, int Height)
 {
 	int i, j;
 	HWND Desktop;
@@ -157,17 +164,17 @@ void CBackground::Create(int Width, int Height)
 	HBITMAP tmpBitmapA;
 	int RealWidth, RealHeight;
 
-	Desktop=GetDesktopWindow();
-	if(Desktop==NULL) throw ERR_BACKGROUND;
+	Desktop = GetDesktopWindow();
+	if(Desktop == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
 
-	DDC=GetDC(Desktop);
-	if(DDC==NULL) throw ERR_BACKGROUND;
+	DDC = GetDC(Desktop);
+	if(DDC == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
 		
-	tmpDC=CreateCompatibleDC(DDC);
-	if(tmpDC==NULL) throw ERR_BACKGROUND;
+	tmpDC = CreateCompatibleDC(DDC);
+	if(tmpDC == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
 
-	BGDC=CreateCompatibleDC(DDC);
-	if(BGDC==NULL) throw ERR_BACKGROUND;
+	BGDC = CreateCompatibleDC(DDC);
+	if(BGDC == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
 
 	ReleaseDC(Desktop, DDC);
 
@@ -178,34 +185,39 @@ void CBackground::Create(int Width, int Height)
 	{
 		// Must tile the background and possible alphamap
 
-		OldBitmap2=(HBITMAP)SelectObject(BGDC, m_Image);
+		OldBitmap2 = (HBITMAP)SelectObject(BGDC, m_Image);
 
-		tmpBitmap=CreateCompatibleBitmap(BGDC, RealWidth, RealHeight);
-		if(tmpBitmap==NULL) throw ERR_BACKGROUND;
+		tmpBitmap = CreateCompatibleBitmap(BGDC, RealWidth, RealHeight);
+		if(tmpBitmap == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
 
 		if(m_Alpha) 
 		{
-			tmpBitmapA=CreateCompatibleBitmap(BGDC, RealWidth, RealHeight);
-			if(tmpBitmapA==NULL) throw ERR_BACKGROUND;
+			tmpBitmapA = CreateCompatibleBitmap(BGDC, RealWidth, RealHeight);
+			if(tmpBitmapA == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
 		}
 
-		OldBitmap=(HBITMAP)SelectObject(tmpDC, tmpBitmap);
+		OldBitmap = (HBITMAP)SelectObject(tmpDC, tmpBitmap);
 
 		if(CCalendarWindow::c_Config.GetBackgroundMode() == MODE_TILE)
 		{
 			// Tile the background
-			for(j=0; j<RealHeight; j+=m_Height) {
-				for(i=0; i<RealWidth; i+=m_Width) {
+			for(j=0; j<RealHeight; j+=m_Height) 
+			{
+				for(i=0; i<RealWidth; i+=m_Width) 
+				{
 					BitBlt(tmpDC, i, j, min(m_Width, RealWidth-i), min(m_Height, RealHeight-j), BGDC, 0, 0, SRCCOPY);
 				}
 			}
 
 			// Alpha must be tiled too
-			if(m_Alpha) {
+			if(m_Alpha) 
+			{
 				SelectObject(tmpDC, tmpBitmapA);
 				SelectObject(BGDC, m_AlphaImage);
-				for(j=0; j<RealHeight; j+=m_Height) {
-					for(i=0; i<RealWidth; i+=m_Width) {
+				for(j=0; j<RealHeight; j+=m_Height) 
+				{
+					for(i=0; i<RealWidth; i+=m_Width) 
+					{
 						BitBlt(tmpDC, i, j, min(m_Width, RealWidth-i), min(m_Height, RealHeight-j), BGDC, 0, 0, SRCCOPY);
 					}
 				}
@@ -222,7 +234,6 @@ void CBackground::Create(int Width, int Height)
 			{
 				SelectObject(tmpDC, tmpBitmapA);
 				SelectObject(BGDC, m_AlphaImage);
-
 				StretchBlt(tmpDC, 0, 0, Width, Height, BGDC, 0, 0, m_Width, m_Width, SRCCOPY);
 			}
 		}
@@ -230,17 +241,17 @@ void CBackground::Create(int Width, int Height)
 		SelectObject(tmpDC, OldBitmap);
 		SelectObject(BGDC, OldBitmap2);
 
-		m_Image.DeleteObject();
-		m_Image.Attach(tmpBitmap);
+		DeleteObject(m_Image);
+		m_Image = tmpBitmap;
 
 		if(m_Alpha) 
 		{
-			m_AlphaImage.DeleteObject();
-			m_AlphaImage.Attach(tmpBitmapA);
+			DeleteObject(m_AlphaImage);
+			m_AlphaImage = tmpBitmapA;
 		}
 
-		m_Width=RealWidth;
-		m_Height=RealHeight;
+		m_Width = RealWidth;
+		m_Height = RealHeight;
 	}
 
 	if(m_Width==0 || m_Height==0) return;
@@ -248,25 +259,22 @@ void CBackground::Create(int Width, int Height)
 	if (m_Alpha || CCalendarWindow::c_Config.GetBackgroundMode() == CBackground::MODE_COPY)
 	{
 		// Take a copy of the BG
-		CopyBackground(m_Width, m_Height);
+		CopyBackground(X, Y, m_Width, m_Height);
 
 		if(m_Alpha) 
 		{
 			// ..and create and alphamasked version of the background bitmap
 			CRasterizerBitmap::CreateAlpha(m_Image, m_AlphaImage, m_Background);
-			m_AlphaImage.DeleteObject();	// We won't need this one anymore
-			m_Background.DeleteObject();	// Delete the old (if there was one)
-			m_Background.Attach(m_Image.Detach());
+			DeleteObject(m_AlphaImage);		// We won't need this one anymore
+			DeleteObject(m_Background);		// Delete the old (if there was one)
+			m_Background = m_Image;
 		} 
 	}
 	else 
 	{
-		m_Background.DeleteObject();	// Delete the old (if there was one)
-		m_Background.Attach(m_Image.Detach());
+		if (m_Background) DeleteObject(m_Background);			// Delete the old (if there was one)
+		m_Background = m_Image;
 	}
-
-	assert(m_Image.Detach()==NULL);
-	assert(m_AlphaImage.Detach()==NULL);
 
 	DeleteDC(BGDC);
 	DeleteDC(tmpDC);
@@ -278,64 +286,48 @@ void CBackground::Create(int Width, int Height)
 ** Takes a copy of the desktop to use as background
 ** The copy goes to m_Background.
 */
-void CBackground::CopyBackground(int Width, int Height) 
+void CBackground::CopyBackground(int X, int Y, int Width, int Height) 
 {
 	HDC tmpDC;
 	HBITMAP OldBitmap;
-	HBITMAP tmpBitmap = NULL;
-	CDC* WinDC;
+	HDC WinDC;
 
-	if(m_CalendarWindow==NULL) throw ERR_BACKGROUND;
-
-	if(CCalendarWindow::GetWharfData() == NULL)
+	if (m_Background) DeleteObject(m_Background);	// Delete the old (if there was one)
+	
+	if(GetRainlendar() && !(GetRainlendar()->IsWharf()))
 	{
 		// The new way
-		tmpBitmap = GetWallpaper();
+		m_Background = GetWallpaper(X, Y, Width, Height);
 	}
 
-	if(tmpBitmap == NULL)
+	if(m_Background == NULL)
 	{
 		// If the new way fails, use the old way
-
-		WinDC=m_CalendarWindow->GetWindowDC();
-		if(WinDC==NULL) throw ERR_BACKGROUND;
-
-		if(CCalendarWindow::GetWharfData() == NULL)
-		{
-			// Paint the desktop, so we'll get correct background
-			PaintDesktop(*WinDC);
-		}
+		WinDC = GetWindowDC(GetRainlendar()->GetCalendarWindow().GetWindow());
+		if(WinDC == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
 
 		// These are initialized only if grapping is successful
 		m_Width=0;
 		m_Height=0;
 
-		tmpDC=CreateCompatibleDC(*WinDC);
-		if(tmpDC==NULL) throw ERR_BACKGROUND;
+		tmpDC = CreateCompatibleDC(WinDC);
+		if(tmpDC==NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
 
-		m_Background.DeleteObject();	// Delete the old (if there was one)
-		tmpBitmap=CreateCompatibleBitmap(*WinDC, Width, Height);
-		if(tmpBitmap==NULL) throw ERR_BACKGROUND;
-
-		m_Background.Attach(tmpBitmap);
+		m_Background = CreateCompatibleBitmap(WinDC, Width, Height);
+		if(m_Background==NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
 
 		// Fetch the background
-		OldBitmap=(HBITMAP)SelectObject(tmpDC, m_Background);
-		BitBlt(tmpDC, 0, 0, Width, Height, *WinDC, 0, 0, SRCCOPY);
+		OldBitmap = (HBITMAP)SelectObject(tmpDC, m_Background);
+		BitBlt(tmpDC, 0, 0, Width, Height, WinDC, 0, 0, SRCCOPY);
 		
-		m_CalendarWindow->ReleaseDC(WinDC);
+		ReleaseDC(GetRainlendar()->GetCalendarWindow().GetWindow(), WinDC);
 
 		SelectObject(tmpDC, OldBitmap);
 		DeleteDC(tmpDC);
 	}
-	else
-	{
-		m_Background.DeleteObject();	// Delete the old (if there was one)
-		m_Background.Attach(tmpBitmap);
-	}
 
-	m_Width=Width;
-	m_Height=Height;
+	m_Width = Width;
+	m_Height = Height;
 }
 
 /*
@@ -344,7 +336,7 @@ void CBackground::CopyBackground(int Width, int Height)
 ** Loads the background image and cuts a given part from it.
 **
 */
-HBITMAP CBackground::GetWallpaper()
+HBITMAP CBackground::GetWallpaper(int X, int Y, int Width, int Height)
 {
 	DWORD size = 256;
 	char str[256];
@@ -379,6 +371,7 @@ HBITMAP CBackground::GetWallpaper()
 		}
 		RegCloseKey(hKey);
 	}
+
 	size = 256;
 	// Also get the background color
     if(RegOpenKeyEx(HKEY_CURRENT_USER, "Control Panel\\Colors", 0, KEY_READ, &hKey) == ERROR_SUCCESS) 
@@ -392,21 +385,18 @@ HBITMAP CBackground::GetWallpaper()
 		RegCloseKey(hKey);
 	}
 
-	// Get the window's pos and size
-	RECT windowRect, screenRect;
-	m_CalendarWindow->GetWindowRect(&windowRect);
-
 	// Get the screen size
+	RECT screenRect;
 	GetClientRect(GetDesktopWindow(), &screenRect); 
 	
 	HDC winDC = GetDC(GetDesktopWindow());
-	if(winDC == NULL) throw ERR_BACKGROUND;
+	if(winDC == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
 
 	HDC tmpDC = CreateCompatibleDC(winDC);
-	if(tmpDC == NULL) throw ERR_BACKGROUND;
+	if(tmpDC == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
 
-	bgBitmap = CreateCompatibleBitmap(winDC, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top);
-	if(bgBitmap==NULL) throw ERR_BACKGROUND;
+	bgBitmap = CreateCompatibleBitmap(winDC, Width, Height);
+	if(bgBitmap==NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
 
 	ReleaseDC(GetDesktopWindow(), winDC);
 
@@ -414,14 +404,14 @@ HBITMAP CBackground::GetWallpaper()
 	
 	// Fill the bitmap with bgcolor
 	HBRUSH brush = CreateSolidBrush(bgColor);
-	RECT r = { 0, 0, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top };
+	RECT r = { 0, 0, Width, Height };
 	FillRect(tmpDC, &r, brush);
 	DeleteObject(brush);
 
 	if(bitmap)
 	{
 		HDC bgDC = CreateCompatibleDC(tmpDC);
-		if(bgDC == NULL) throw ERR_BACKGROUND;
+		if(bgDC == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
 		HBITMAP oldBitmap2 = (HBITMAP)SelectObject(bgDC, bitmap);
 
 		// Get the size of the loaded wallpaper
@@ -432,19 +422,19 @@ HBITMAP CBackground::GetWallpaper()
 		// Multimon?
 		if (GetSystemMetrics(SM_CMONITORS) > 0)
 		{
-			typedef HMONITOR (WINAPI * FPMONITORFROMWINDOW)( HWND hwnd, DWORD dwFlags);
+			typedef HMONITOR (WINAPI * FPMONITORFROMPOINT)( POINT pt, DWORD dwFlags);
 			typedef BOOL (WINAPI * FPGETMONITORINFO)(HMONITOR hMonitor, LPMONITORINFO lpmi);
-			FPMONITORFROMWINDOW fpMonitorFromWindow;
+			FPMONITORFROMPOINT fpMonitorFromPoint;
 			FPGETMONITORINFO	fpGetMonitorInfo;
 
-			HINSTANCE h = LoadLibrary(_T("user32.dll"));
+			HINSTANCE h = LoadLibrary("user32.dll");
 			
-			fpMonitorFromWindow = (FPMONITORFROMWINDOW)GetProcAddress(h,_T("MonitorFromWindow"));
-			fpGetMonitorInfo = (FPGETMONITORINFO)GetProcAddress(h,_T("GetMonitorInfoA"));
+			fpMonitorFromPoint = (FPMONITORFROMPOINT)GetProcAddress(h, "MonitorFromPoint");
+			fpGetMonitorInfo = (FPGETMONITORINFO)GetProcAddress(h, "GetMonitorInfoA");
 			
 			// If the window is off the primary monitor, we'll have to modify the values a bit
-			POINT point = {windowRect.left, windowRect.top };
-			HMONITOR monitor = fpMonitorFromWindow(m_CalendarWindow->GetSafeHwnd(), MONITOR_DEFAULTTONEAREST);
+			POINT point = { X, Y };
+			HMONITOR monitor = fpMonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
 
 			if (monitor)
 			{
@@ -473,15 +463,13 @@ HBITMAP CBackground::GetWallpaper()
 					}
 					else if(stretch)
 					{
-						windowRect.left -= monInfo.rcMonitor.left + (((monInfo.rcMonitor.right - monInfo.rcMonitor.left) - screenRect.right) / 2);
-						windowRect.top -= monInfo.rcMonitor.top + (((monInfo.rcMonitor.bottom - monInfo.rcMonitor.top) - screenRect.bottom) / 2);;
+						X -= monInfo.rcMonitor.left + (((monInfo.rcMonitor.right - monInfo.rcMonitor.left) - screenRect.right) / 2);
+						Y -= monInfo.rcMonitor.top + (((monInfo.rcMonitor.bottom - monInfo.rcMonitor.top) - screenRect.bottom) / 2);;
 					}
 					else
 					{
-						windowRect.left -= monInfo.rcMonitor.left;
-						windowRect.right -= monInfo.rcMonitor.left;
-						windowRect.top -= monInfo.rcMonitor.top;
-						windowRect.bottom -= monInfo.rcMonitor.top;
+						X -= monInfo.rcMonitor.left;
+						Y -= monInfo.rcMonitor.top;
 						screenRect.right = (monInfo.rcMonitor.right - monInfo.rcMonitor.left);
 						screenRect.bottom = (monInfo.rcMonitor.bottom - monInfo.rcMonitor.top);
 					}
@@ -495,7 +483,7 @@ HBITMAP CBackground::GetWallpaper()
 			SetStretchBltMode(tmpDC, HALFTONE);
 			SetBrushOrgEx(tmpDC, 0, 0, NULL);
 
-			StretchBlt(tmpDC, -windowRect.left, -windowRect.top, screenRect.right - screenRect.left, screenRect.bottom - screenRect.top,
+			StretchBlt(tmpDC, -X, -Y, screenRect.right - screenRect.left, screenRect.bottom - screenRect.top,
 					   bgDC, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
 		}
 		else if(tile)
@@ -505,7 +493,7 @@ HBITMAP CBackground::GetWallpaper()
 			{
 				for(int j = screenRect.top; j < screenRect.bottom; j += bm.bmHeight)
 				{
-					BitBlt(tmpDC, i - windowRect.left, j - windowRect.top, bm.bmWidth, bm.bmHeight,
+					BitBlt(tmpDC, i - X, j - Y, bm.bmWidth, bm.bmHeight,
 						   bgDC, 0, 0, SRCCOPY);
 				}
 			}
@@ -514,7 +502,7 @@ HBITMAP CBackground::GetWallpaper()
 		{
 			int imageLeft = (screenRect.right - screenRect.left) / 2 - bm.bmWidth / 2;
 			int imageTop = (screenRect.bottom - screenRect.top) / 2 - bm.bmHeight / 2;
-			BitBlt(tmpDC, imageLeft - windowRect.left, imageTop - windowRect.top, bm.bmWidth, bm.bmHeight,
+			BitBlt(tmpDC, imageLeft - X, imageTop - Y, bm.bmWidth, bm.bmHeight,
 				   bgDC, 0, 0, SRCCOPY);
 		}
 
@@ -533,29 +521,18 @@ HBITMAP CBackground::GetWallpaper()
 ** Paint
 **
 ** Paints the background
-** TODO: Blit only the invalidated area
+**
 */
-void CBackground::Paint(CDC& dc)
+void CBackground::Paint(HDC dc)
 {
 	HBITMAP OldBitmap;
 	HDC tmpDC;
-	HDC DDC=NULL;
-	HWND Desktop;
 
-	Desktop=GetDesktopWindow();
-	if(Desktop!=NULL) DDC=GetDC(Desktop);
+	tmpDC = CreateCompatibleDC(dc);
+	OldBitmap = (HBITMAP)SelectObject(tmpDC, m_Background);
 
-	if(DDC!=NULL) {
+	BitBlt(dc, 0, 0, m_Width, m_Height, tmpDC, 0, 0, SRCCOPY);
 
-		tmpDC=CreateCompatibleDC(DDC);
-		ReleaseDC(Desktop, DDC);
-
-		OldBitmap=(HBITMAP)SelectObject(tmpDC, m_Background);
-	
-		BitBlt(dc, 0, 0, m_Width, m_Height, tmpDC, 0, 0, SRCCOPY);
-
-		SelectObject(tmpDC, OldBitmap);
-
-		DeleteDC(tmpDC);
-	}
+	SelectObject(tmpDC, OldBitmap);
+	DeleteDC(tmpDC);
 }

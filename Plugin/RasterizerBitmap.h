@@ -16,23 +16,21 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerBitmap.h,v 1.1.1.1 2001/10/29 18:56:23 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerBitmap.h,v 1.2 2002/05/23 17:33:40 rainy Exp $
 
   $Log: RasterizerBitmap.h,v $
+  Revision 1.2  2002/05/23 17:33:40  rainy
+  Removed all MFC stuff
+
   Revision 1.1.1.1  2001/10/29 18:56:23  rainy
   Moved to CVS
 
 */
 
-#if !defined(AFX_RASTERIZERBITMAP_H__C7D0FDC2_F062_11D3_92A3_0080AD90417B__INCLUDED_)
-#define AFX_RASTERIZERBITMAP_H__C7D0FDC2_F062_11D3_92A3_0080AD90417B__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#ifndef __RASTERIZERBITMAP_H__
+#define __RASTERIZERBITMAP_H__
 
 #include "Rasterizer.h"
-#include <afxtempl.h>
 
 class CRasterizerBitmap : public CRasterizer  
 {
@@ -40,21 +38,20 @@ public:
 	CRasterizerBitmap();
 	virtual ~CRasterizerBitmap();
 
-	void Load(CString& Filename);
-	void SetNumOfComponents(int Number) { m_NumOfComponents=Number; };
-	void Paint(CDC& dc, int X, int Y, int W, int H, int Index);
+	void Load(std::string filename);
+	void SetNumOfComponents(int Number) { m_NumOfComponents = Number; };
+	void Paint(HDC dc, int X, int Y, int W, int H, int Index);
 
 	static bool CreateAlpha(HBITMAP Source, HBITMAP Alpha, HBITMAP Background);
 
 protected:
-	void GetBackground(CDC& dc, CBitmap& Bitmap, int X, int Y, int Width, int Height);
-	void PaintAlpha(CDC& dc, int X, int Y, int NumOfNums, int Index);
+	HBITMAP GetBackground(HDC dc, int X, int Y, int Width, int Height);
+	void PaintAlpha(HDC dc, int X, int Y, int NumOfNums, int Index);
 
 	int m_NumOfComponents;
-
-	CBitmap m_Bitmap;
-	CBitmap m_AlphaBitmap;
+	HBITMAP m_Bitmap;
+	HBITMAP m_AlphaBitmap;
 	bool m_Alpha;
 };
 
-#endif // !defined(AFX_RASTERIZERBITMAP_H__C7D0FDC2_F062_11D3_92A3_0080AD90417B__INCLUDED_)
+#endif

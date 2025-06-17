@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Rasterizer.h,v 1.3 2002/02/27 18:49:52 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Rasterizer.h,v 1.5 2002/05/30 18:24:17 rainy Exp $
 
   $Log: Rasterizer.h,v $
+  Revision 1.5  2002/05/30 18:24:17  rainy
+  Added WIN32_LEAN_AND_MEAN
+
+  Revision 1.4  2002/05/23 17:33:40  rainy
+  Removed all MFC stuff
+
   Revision 1.3  2002/02/27 18:49:52  rainy
   Added mode alignments
 
@@ -30,12 +36,14 @@
 
 */
 
-#if !defined(AFX_RASTERIZER_H__C7D0FDC1_F062_11D3_92A3_0080AD90417B__INCLUDED_)
-#define AFX_RASTERIZER_H__C7D0FDC1_F062_11D3_92A3_0080AD90417B__INCLUDED_
+#ifndef __RASTERIZER_H__
+#define __RASTERIZER_H__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#include <windows.h>
 
 class CRasterizer  
 {
@@ -64,7 +72,7 @@ public:
 	int GetAlign() { return m_Align; };
 	void SetAlign(int Align ) { m_Align=Align; };
 
-	virtual void Paint(CDC& dc, int X, int Y, int W, int H, int Index) = 0;
+	virtual void Paint(HDC dc, int X, int Y, int W, int H, int Index) = 0;
 
 	int GetHeight() { return m_Height; };
 	int GetWidth() { return m_Width; };
@@ -75,4 +83,4 @@ protected:
 	int m_Height;
 };
 
-#endif // !defined(AFX_RASTERIZER_H__C7D0FDC1_F062_11D3_92A3_0080AD90417B__INCLUDED_)
+#endif

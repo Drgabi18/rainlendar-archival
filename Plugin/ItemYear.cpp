@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemYear.cpp,v 1.4 2002/02/27 18:52:12 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemYear.cpp,v 1.5 2002/05/23 17:33:40 rainy Exp $
 
   $Log: ItemYear.cpp,v $
+  Revision 1.5  2002/05/23 17:33:40  rainy
+  Removed all MFC stuff
+
   Revision 1.4  2002/02/27 18:52:12  rainy
   Added new alignments
 
@@ -33,19 +36,12 @@
 
 */
 
-#include "stdafx.h"
 #include "RainlendarDLL.h"
 #include "ItemYear.h"
 #include "Error.h"
 #include "RasterizerBitmap.h"
 #include "RasterizerFont.h"
 #include "CalendarWindow.h"
-
-#ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
-#endif
 
 // Year must be defined with 0...9 -bitmap
 #define NUMOFCOMPONENTS 10
@@ -152,7 +148,7 @@ void CItemYear::Initialize()
 			CRasterizerBitmap* BMRast;
 
 			BMRast=new CRasterizerBitmap;
-			if(BMRast==NULL) throw ERR_OUTOFMEM;
+			if(BMRast==NULL) throw CError(CError::ERR_OUTOFMEM);
 
 			BMRast->Load(CCalendarWindow::c_Config.GetYearBitmapName());
 			BMRast->SetNumOfComponents(NUMOFCOMPONENTS);
@@ -165,7 +161,7 @@ void CItemYear::Initialize()
 			CRasterizerFont* FNRast;
 
 			FNRast=new CRasterizerFont;
-			if(FNRast==NULL) throw ERR_OUTOFMEM;
+			if(FNRast==NULL) throw CError(CError::ERR_OUTOFMEM);
 
 			FNRast->SetFont(CCalendarWindow::c_Config.GetYearFont());
 			FNRast->SetAlign(CCalendarWindow::c_Config.GetYearAlign());
@@ -182,14 +178,14 @@ void CItemYear::Initialize()
 ** Paints the Year in correct place (over the days)
 **
 */
-void CItemYear::Paint(CDC& dc)
+void CItemYear::Paint(HDC dc)
 {
 	int X, Y, W, H;
 
-	if(m_Rasterizer!=NULL) 
+	if(m_Rasterizer != NULL) 
 	{
-		W=GetW();
-		H=GetH();
+		W = GetW();
+		H = GetH();
 
 		switch (m_Rasterizer->GetAlign() & 0x0F)
 		{
@@ -221,9 +217,9 @@ void CItemYear::Paint(CDC& dc)
 			break;
 		};
 
-		dc.SetBkMode(TRANSPARENT);
-		dc.SetTextColor(CCalendarWindow::c_Config.GetYearFontColor());
+		SetBkMode(dc, TRANSPARENT);
+		SetTextColor(dc, CCalendarWindow::c_Config.GetYearFontColor());
 
-		m_Rasterizer->Paint(dc, X, Y, W, H, CCalendarWindow::c_CurrentDate.GetYear());
+		m_Rasterizer->Paint(dc, X, Y, W, H, CCalendarWindow::c_MonthsFirstDate.wYear);
 	}
 }

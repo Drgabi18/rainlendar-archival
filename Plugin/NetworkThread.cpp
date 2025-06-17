@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/NetworkThread.cpp,v 1.3 2002/01/29 17:34:38 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/NetworkThread.cpp,v 1.5 2002/05/30 18:26:03 rainy Exp $
 
   $Log: NetworkThread.cpp,v $
+  Revision 1.5  2002/05/30 18:26:03  rainy
+  The logging stuff is back.
+
+  Revision 1.4  2002/05/23 17:33:40  rainy
+  Removed all MFC stuff
+
   Revision 1.3  2002/01/29 17:34:38  rainy
   Displays the ID in the lid.
 
@@ -27,39 +33,43 @@
 
 */
 
-#include "stdafx.h"
 #include "../Server/EventCombiner.h"
-#include "rainlendardll.h"
+#include "RainlendarDLL.h"
 #include "NetworkThread.h"
 #include "CalendarWindow.h"
+#include "ConfigDialog.h"
 
 using namespace ssobjects;
-
-#ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
-#endif
 
 void Update(NetworkParams& param, ClientConnector& connection);
 void Request(NetworkParams& param, ClientConnector& connection);
 
-UINT NetworkThreadProc(LPVOID pParam)
+DWORD WINAPI NetworkThreadProc(LPVOID pParam)
 {
-	CString string;
+	char tmpSz[256];
+	std::string string;
+
 	NetworkParams param = *(NetworkParams*)pParam;	// Take a copy of the parameters
-	if (param.userID.IsEmpty())
+
+	if (param.userID.empty())
 	{
 		param.userID = "Rainlendar";	// Gotta have a name
 	}
 
-	string.Format("Connecting to %s:%i (%s)", param.serverAddress, param.serverPort, param.userID);
-	param.dialogServer->AddStatusString(string);
+	string = "Connecting to ";
+	string += param.serverAddress;
+	string += ":";
+	itoa(param.serverPort, tmpSz, 10);
+	string += tmpSz;
+	string += " (";
+	string += param.userID;
+	string += ")";
+	AddStatusString(string.c_str());
 
 	try
 	{
-		ClientConnector connection(param.serverAddress, param.serverPort);
-		param.dialogServer->AddStatusString("Connection successful");
+		ClientConnector connection(param.serverAddress.c_str(), param.serverPort);
+		AddStatusString("Connection successful");
 
 		switch (param.requestType)
 		{
@@ -77,16 +87,17 @@ UINT NetworkThreadProc(LPVOID pParam)
 			break;
 
 		default:
-			param.dialogServer->AddStatusString("Unknown request type");
+			AddStatusString("Unknown request type");
 		}
 	}
 	catch(GeneralException& e)
 	{
-		string.Format("Connection failed: %s", e.getErrorMsg());
-		param.dialogServer->AddStatusString(string);
+		string = "Connection failed: ";
+		string += e.getErrorMsg();
+		AddStatusString(string.c_str());
 	}
 
-	param.dialogServer->AddStatusString("Network thread completed successfully");
+	AddStatusString("Network thread completed successfully");
 
     return 0;   // thread completed successfully
 }
@@ -95,23 +106,9 @@ void Update(NetworkParams& param, ClientConnector& connection)
 {
 	// Read Events.ini and send it to the server
 	// Wait for confirmation from server
-	char buffer[MAX_LINE_LENGTH];
-	char* Slash;
+	const char* buffer = CCalendarWindow::c_Config.GetEventsPath().c_str();
 	
-	// Get the DLL's directory
-	GetModuleFileName(GetModuleHandle("Rainlendar.dll"), buffer, MAX_LINE_LENGTH);
-
-	Slash = strrchr(buffer, '\\');
-	if (Slash == NULL) 
-	{
-		strcpy(buffer, "Events.ini");
-	} 
-	else 
-	{
-		strcpy(Slash, "\\Events.ini");
-	}
-
-	param.dialogServer->AddStatusString("Sending the events to the server");
+	AddStatusString("Sending the events to the server");
 
 	CEventCombiner combiner;
 	combiner.ReadEvents(buffer);
@@ -120,7 +117,7 @@ void Update(NetworkParams& param, ClientConnector& connection)
 	PacketBuffer update(pcUpdateEvents), reply;
 
 	update << PROTOCOL_VERSION;
-	update << param.userID;
+	update << param.userID.c_str();
 	update << (unsigned32)packetList.size();
 
 	// Send the packet
@@ -139,20 +136,20 @@ void Update(NetworkParams& param, ClientConnector& connection)
 			{
 				connection << (*listIter);
 			}
-			param.dialogServer->AddStatusString("Update successful");
+			AddStatusString("Update successful");
 		}
 		break;
 
 	case pcIncorrectVersion:
-		param.dialogServer->AddStatusString("The server uses a different protocol version than the client");
+		AddStatusString("The server uses a different protocol version than the client");
 		break;
 
 	case pcServerBusy:
-		param.dialogServer->AddStatusString("The server is busy");
+		AddStatusString("The server is busy");
 		break;
 
 	default:
-		param.dialogServer->AddStatusString("Unknown reply received from the server");
+		AddStatusString("Unknown reply received from the server");
 	}
 }
 
@@ -160,12 +157,12 @@ void Request(NetworkParams& param, ClientConnector& connection)
 {
 	PacketBuffer request(pcRequestEvents), reply;
 
-	param.dialogServer->AddStatusString("Requesting the events from the server");
+	AddStatusString("Requesting the events from the server");
 
 	// Fill the package
 	request << PROTOCOL_VERSION;
 	// The id
-	request << param.userID;
+	request << param.userID.c_str();
 	// Send request to the server
 	connection << request;
 
@@ -176,22 +173,7 @@ void Request(NetworkParams& param, ClientConnector& connection)
 	{
 	case pcSendingEvents:
 		{
-			char buffer[MAX_LINE_LENGTH];
-			char* Slash;
-			
-			// Get the DLL's directory
-			GetModuleFileName(GetModuleHandle("Rainlendar.dll"), buffer, MAX_LINE_LENGTH);
-
-			Slash = strrchr(buffer, '\\');
-			if (Slash == NULL) 
-			{
-				strcpy(buffer, "Events.ini");
-			} 
-			else 
-			{
-				strcpy(Slash, "\\Events.ini");
-			}
-
+			const char* buffer = CCalendarWindow::c_Config.GetEventsPath().c_str();
 			CEventCombiner combiner;
 			combiner.ReadEvents(buffer);
 			unsigned32 eventCount;
@@ -224,20 +206,20 @@ void Request(NetworkParams& param, ClientConnector& connection)
 					SendMessage(param.window, WM_COMMAND, ID_REFRESH, 0);
 				}
 			}
-			param.dialogServer->AddStatusString("Request successful");
+			AddStatusString("Request successful");
 		}
 		break;
 
 	case pcIncorrectVersion:
-		param.dialogServer->AddStatusString("The server uses a different protocol version than the client");
+		AddStatusString("The server uses a different protocol version than the client");
 		break;
 
 	case pcServerBusy:
-		param.dialogServer->AddStatusString("The server is busy");
+		AddStatusString("The server is busy");
 		break;
 
 	default:
-		param.dialogServer->AddStatusString("Unknown reply received from the server");
+		AddStatusString("Unknown reply received from the server");
 	}
 }
 

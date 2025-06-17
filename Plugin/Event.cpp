@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Event.cpp,v 1.3 2002/01/27 16:03:53 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Event.cpp,v 1.4 2002/05/23 17:33:41 rainy Exp $
 
   $Log: Event.cpp,v $
+  Revision 1.4  2002/05/23 17:33:41  rainy
+  Removed all MFC stuff
+
   Revision 1.3  2002/01/27 16:03:53  rainy
   Changed CEvent to CEventMessage to avoid name clash
 
@@ -30,19 +33,8 @@
 
 */
 
-#include "stdafx.h"
-#include "rainlendardll.h"
+#include "RainlendarDLL.h"
 #include "Event.h"
-
-#ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
-#endif
-
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
 
 CEventMessage::CEventMessage()
 {

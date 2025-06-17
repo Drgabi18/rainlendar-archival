@@ -16,15 +16,17 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemWeekNumbers.cpp,v 1.1 2002/01/10 16:40:37 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemWeekNumbers.cpp,v 1.2 2002/05/23 17:33:40 rainy Exp $
 
   $Log: ItemWeekNumbers.cpp,v $
+  Revision 1.2  2002/05/23 17:33:40  rainy
+  Removed all MFC stuff
+
   Revision 1.1  2002/01/10 16:40:37  rainy
   Initial version
 
 */
 
-#include "stdafx.h"
 #include "RainlendarDLL.h"
 #include "Error.h"
 #include "RasterizerBitmap.h"
@@ -62,7 +64,7 @@ void CItemWeekNumbers::Initialize()
 			CRasterizerBitmap* BMRast;
 
 			BMRast=new CRasterizerBitmap;
-			if(BMRast==NULL) throw ERR_OUTOFMEM;
+			if(BMRast==NULL) throw CError(CError::ERR_OUTOFMEM);
 
 			BMRast->Load(CCalendarWindow::c_Config.GetWeekNumbersBitmapName());
 			BMRast->SetNumOfComponents(CCalendarWindow::c_Config.GetWeekNumbersNumOfComponents());
@@ -75,7 +77,7 @@ void CItemWeekNumbers::Initialize()
 			CRasterizerFont* FNRast;
 
 			FNRast=new CRasterizerFont;
-			if(FNRast==NULL) throw ERR_OUTOFMEM;
+			if(FNRast==NULL) throw CError(CError::ERR_OUTOFMEM);
 
 			FNRast->SetFont(CCalendarWindow::c_Config.GetWeekNumbersFont());
 			FNRast->SetAlign(CCalendarWindow::c_Config.GetWeekNumbersAlign());
@@ -114,7 +116,7 @@ int weekno(int d, int m, int y)
 ** Paints the week numbers in correct place (next to the days)
 **
 */
-void CItemWeekNumbers::Paint(CDC& dc)
+void CItemWeekNumbers::Paint(HDC dc)
 {
 	int FirstWeekday, NumOfDays;
 	int X, Y, W, H;
@@ -123,21 +125,17 @@ void CItemWeekNumbers::Paint(CDC& dc)
 	W = CCalendarWindow::c_Config.GetDaysW() / 7;	// 7 Columns
 	H = CCalendarWindow::c_Config.GetDaysH() / 6;	// 6 Rows
 
-	dc.SetBkMode(TRANSPARENT);
-	dc.SetTextColor(CCalendarWindow::c_Config.GetWeekNumbersFontColor());
+	SetBkMode(dc, TRANSPARENT);
+	SetTextColor(dc, CCalendarWindow::c_Config.GetWeekNumbersFontColor());
 
 	// Calculate if the last line (=6) contains days or not
-	CTime ThisMonth=CCalendarWindow::c_CurrentDate;
-	CTime NextMonth((ThisMonth.GetMonth()==12)?(ThisMonth.GetYear()+1):ThisMonth.GetYear(),
-		(ThisMonth.GetMonth()==12)?1:ThisMonth.GetMonth()+1, 1, 0, 0, 0);
-	CTimeSpan MonthSpan=NextMonth-ThisMonth;
-	NumOfDays=(MonthSpan.GetTotalMinutes()+60)/(24*60);		// Add a hour for possible daylight saving
+	NumOfDays = GetDaysInMonth(CCalendarWindow::c_MonthsFirstDate.wYear, CCalendarWindow::c_MonthsFirstDate.wMonth);
+	FirstWeekday = CCalendarWindow::c_MonthsFirstDate.wDayOfWeek;
 
-	FirstWeekday=ThisMonth.GetDayOfWeek();
-
-	if(CCalendarWindow::c_Config.GetStartFromMonday()) {
-		FirstWeekday=(FirstWeekday-1);
-		if(FirstWeekday==0) FirstWeekday=7;
+	if(CCalendarWindow::c_Config.GetStartFromMonday()) 
+	{
+		FirstWeekday = (FirstWeekday-1);
+		if(FirstWeekday == -1) FirstWeekday = 6;
 	} 
 
 	if(FirstWeekday + NumOfDays > 7 * 5 + 1)
@@ -149,14 +147,14 @@ void CItemWeekNumbers::Paint(CDC& dc)
 		lines = 5;
 	}
 
-	if(m_Rasterizer!=NULL) 
+	if(m_Rasterizer != NULL) 
 	{
 		X = CCalendarWindow::c_Config.GetDaysX() - W;
 
 		for(i = 0; i < lines; i++) 
 		{
 			Y = CCalendarWindow::c_Config.GetDaysY() + i * H;
-			base = weekno(i * 7 + 1, ThisMonth.GetMonth(), ThisMonth.GetYear());
+			base = weekno(i * 7 + 1, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 			m_Rasterizer->Paint(dc, X, Y, W, H, base);
 		}
 	}

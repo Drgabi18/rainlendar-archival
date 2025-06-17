@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Event.h,v 1.3 2002/01/27 16:03:53 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Event.h,v 1.4 2002/05/23 17:33:41 rainy Exp $
 
   $Log: Event.h,v $
+  Revision 1.4  2002/05/23 17:33:41  rainy
+  Removed all MFC stuff
+
   Revision 1.3  2002/01/27 16:03:53  rainy
   Changed CEvent to CEventMessage to avoid name clash
 
@@ -30,12 +33,8 @@
 
 */
 
-#if !defined(AFX_EVENT_H__3B699F74_B75F_4CDC_ACCA_F98A33D0D58B__INCLUDED_)
-#define AFX_EVENT_H__3B699F74_B75F_4CDC_ACCA_F98A33D0D58B__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#ifndef __EVENT_H__
+#define __EVENT_H__
 
 class CEventMessage  
 {
@@ -43,19 +42,19 @@ public:
 	CEventMessage();
 	~CEventMessage();
 
-	CString& GetMessage() { return m_Message; };
-	CString& GetBitmap() { return m_Bitmap; };
+	const std::string& GetMessage() { return m_Message; };
+	const std::string& GetBitmap() { return m_Bitmap; };
 	COLORREF GetColor() { return m_Color; };
 
-	void SetMessage(CString& Message ) { m_Message=Message; };
+	void SetMessage(const std::string& Message ) { m_Message=Message; };
 	void SetMessage(char* Message ) { m_Message=Message; };
-	void SetBitmap(CString& Bitmap ) { m_Bitmap=Bitmap; };
+	void SetBitmap(const std::string& Bitmap ) { m_Bitmap=Bitmap; };
 	void SetColor(COLORREF Color ) { m_Color=Color; };
 
 private:
-	CString m_Message;
+	std::string m_Message;
 	COLORREF m_Color;
-	CString m_Bitmap;
+	std::string m_Bitmap;
 };
 
-#endif // !defined(AFX_EVENT_H__3B699F74_B75F_4CDC_ACCA_F98A33D0D58B__INCLUDED_)
+#endif

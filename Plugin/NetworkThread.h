@@ -16,22 +16,23 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/NetworkThread.h,v 1.2 2002/01/27 16:20:46 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/NetworkThread.h,v 1.4 2002/05/30 18:26:03 rainy Exp $
 
   $Log: NetworkThread.h,v $
+  Revision 1.4  2002/05/30 18:26:03  rainy
+  The logging stuff is back.
+
+  Revision 1.3  2002/05/23 17:33:40  rainy
+  Removed all MFC stuff
+
   Revision 1.2  2002/01/27 16:20:46  rainy
   Added header comment
 
 */
 
-#if !defined(AFX_NETWORKTHREAD_H__2ABC4B7C_B95B_485E_AB90_A49741C7B4BD__INCLUDED_)
-#define AFX_NETWORKTHREAD_H__2ABC4B7C_B95B_485E_AB90_A49741C7B4BD__INCLUDED_
+#ifndef __NETWORKTHREAD_H__
+#define __NETWORKTHREAD_H__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
-#include "DialogServer.h"
 #include <clientconnector.h>
 
 // requestTypes
@@ -44,14 +45,13 @@ enum
 
 struct NetworkParams
 {
-	CString userID;
-	CString serverAddress;
+	std::string userID;
+	std::string serverAddress;
 	UINT serverPort;
-	CDialogServer* dialogServer;
 	int requestType;
 	HWND window;
 };
 
-UINT NetworkThreadProc(LPVOID pParam);
+DWORD WINAPI NetworkThreadProc(LPVOID pParam);
 
-#endif // !defined(AFX_NETWORKTHREAD_H__2ABC4B7C_B95B_485E_AB90_A49741C7B4BD__INCLUDED_)
+#endif

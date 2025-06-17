@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemToday.cpp,v 1.2 2001/12/23 10:00:17 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemToday.cpp,v 1.3 2002/05/23 17:33:41 rainy Exp $
 
   $Log: ItemToday.cpp,v $
+  Revision 1.3  2002/05/23 17:33:41  rainy
+  Removed all MFC stuff
+
   Revision 1.2  2001/12/23 10:00:17  rainy
   Renamed the static variables (C_ -> c_)
 
@@ -27,19 +30,12 @@
 
 */
 
-#include "stdafx.h"
 #include "RainlendarDLL.h"
 #include "ItemToday.h"
 #include "Error.h"
 #include "RasterizerBitmap.h"
 #include "RasterizerFont.h"
 #include "CalendarWindow.h"
-
-#ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
-#endif
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -71,7 +67,7 @@ void CItemToday::Initialize()
 			CRasterizerBitmap* BMRast;
 
 			BMRast=new CRasterizerBitmap;
-			if(BMRast==NULL) throw ERR_OUTOFMEM;
+			if(BMRast==NULL) throw CError(CError::ERR_OUTOFMEM);
 
 			BMRast->Load(CCalendarWindow::c_Config.GetTodayBitmapName());
 			BMRast->SetNumOfComponents(CCalendarWindow::c_Config.GetTodayNumOfComponents());
@@ -84,7 +80,7 @@ void CItemToday::Initialize()
 			CRasterizerFont* FNRast;
 
 			FNRast=new CRasterizerFont;
-			if(FNRast==NULL) throw ERR_OUTOFMEM;
+			if(FNRast==NULL) throw CError(CError::ERR_OUTOFMEM);
 
 			FNRast->SetFont(CCalendarWindow::c_Config.GetTodayFont());
 			FNRast->SetAlign(CCalendarWindow::c_Config.GetTodayAlign());
@@ -101,40 +97,36 @@ void CItemToday::Initialize()
 ** Paints the numbers in correct place
 **
 */
-void CItemToday::Paint(CDC& dc)
+void CItemToday::Paint(HDC dc)
 {
-	int FirstWeekday, NumOfDays;
+	int FirstWeekday;
 	int X, Y, W, H, Index;
 
-	// Calculate the number of days until today
-	CTime ThisMonth=CCalendarWindow::c_CurrentDate;
-	CTime Today(ThisMonth.GetYear(), ThisMonth.GetMonth(), CCalendarWindow::c_TodaysDate.GetDay(), 0, 0, 0);
-	CTimeSpan TodaySpan=Today-ThisMonth;
-	NumOfDays=(TodaySpan.GetTotalMinutes()+60)/(24*60);		// Add a hour for possible daylight saving
-
 	// Only Paint if this month is shown
-	if(CCalendarWindow::c_CurrentDate.GetMonth()==CCalendarWindow::c_TodaysDate.GetMonth() &&
-		CCalendarWindow::c_CurrentDate.GetYear()==CCalendarWindow::c_TodaysDate.GetYear()) {
+	if(CCalendarWindow::c_MonthsFirstDate.wMonth == CCalendarWindow::c_TodaysDate.wMonth &&
+		CCalendarWindow::c_MonthsFirstDate.wYear == CCalendarWindow::c_TodaysDate.wYear) 
+	{
+		FirstWeekday = CCalendarWindow::c_MonthsFirstDate.wDayOfWeek;
 
-		FirstWeekday=ThisMonth.GetDayOfWeek();
+		if(CCalendarWindow::c_Config.GetStartFromMonday()) 
+		{
+			FirstWeekday = (FirstWeekday - 1);
+			if(FirstWeekday == -1) FirstWeekday = 6;
+		} 
 
-		if(CCalendarWindow::c_Config.GetStartFromMonday()) {
-			FirstWeekday=(FirstWeekday-1);
-			if(FirstWeekday==0) FirstWeekday=7;
-		}
+		W = CCalendarWindow::c_Config.GetDaysW() / 7;	// 7 Columns
+		H = CCalendarWindow::c_Config.GetDaysH() / 6;	// 6 Rows
 
-		W=CCalendarWindow::c_Config.GetDaysW()/7;	// 7 Columns
-		H=CCalendarWindow::c_Config.GetDaysH()/6;	// 6 Rows
+		SetBkMode(dc, TRANSPARENT);
+		SetTextColor(dc, CCalendarWindow::c_Config.GetTodayFontColor());
 
-		dc.SetBkMode(TRANSPARENT);
-		dc.SetTextColor(CCalendarWindow::c_Config.GetTodayFontColor());
-
-		if(m_Rasterizer!=NULL) {
-			Index=NumOfDays+FirstWeekday-1;
-			X=CCalendarWindow::c_Config.GetDaysX()+(Index%7)*W;
-			Y=CCalendarWindow::c_Config.GetDaysY()+(Index/7)*H;
+		if(m_Rasterizer != NULL) 
+		{
+			Index = CCalendarWindow::c_TodaysDate.wDay + FirstWeekday - 1;
+			X = CCalendarWindow::c_Config.GetDaysX() + (Index % 7) * W;
+			Y = CCalendarWindow::c_Config.GetDaysY() + (Index / 7) * H;
 		
-			m_Rasterizer->Paint(dc, X, Y, W, H, NumOfDays+1);
+			m_Rasterizer->Paint(dc, X, Y, W, H, CCalendarWindow::c_TodaysDate.wDay);
 		}
 	}
 }

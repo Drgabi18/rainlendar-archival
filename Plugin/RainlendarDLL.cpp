@@ -16,9 +16,16 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RainlendarDLL.cpp,v 1.3 2002/01/10 16:41:35 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RainlendarDLL.cpp,v 1.5 2002/05/30 18:25:44 rainy Exp $
 
   $Log: RainlendarDLL.cpp,v $
+  Revision 1.5  2002/05/30 18:25:44  rainy
+  Removed some Litestep related stuff.
+  Rainlendar is now a static object.
+
+  Revision 1.4  2002/05/23 17:33:40  rainy
+  Removed all MFC stuff
+
   Revision 1.3  2002/01/10 16:41:35  rainy
   no message
 
@@ -31,241 +38,356 @@
 
 */
 
-#include "stdafx.h"
 #include "RainlendarDLL.h"
 #include "CalendarWindow.h"
 #include "Error.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
+CRainlendar Rainlendar; // The module
+bool CRainlendar::c_DummyLitestep=false;
+std::string CRainlendar::c_CmdLine;
 
-//
-//	Note!
-//
-//		If this DLL is dynamically linked against the MFC
-//		DLLs, any functions exported from this DLL which
-//		call into MFC must have the AFX_MANAGE_STATE macro
-//		added at the very beginning of the function.
-//
-//		For example:
-//
-//		extern "C" BOOL PASCAL EXPORT ExportedFunction()
-//		{
-//			AFX_MANAGE_STATE(AfxGetStaticModuleState());
-//			// normal function body here
-//		}
-//
-//		It is very important that this macro appear in each
-//		function, prior to any calls into MFC.  This means that
-//		it must appear as the first statement within the 
-//		function, even before any object variable declarations
-//		as their constructors may generate calls into the MFC
-//		DLL.
-//
-//		Please see MFC Technical Notes 33 and 58 for additional
-//		details.
-//
+CRainlendar* GetRainlendar()
+{ 
+	return &Rainlendar; 
+};
 
-/////////////////////////////////////////////////////////////////////////////
-// CRainlendarDLLApp
-
-BEGIN_MESSAGE_MAP(CRainlendarDLLApp, CWinApp)
-	//{{AFX_MSG_MAP(CRainlendarDLLApp)
-		// NOTE - the ClassWizard will add and remove mapping macros here.
-		//    DO NOT EDIT what you see in these blocks of generated code!
-	//}}AFX_MSG_MAP
-END_MESSAGE_MAP()
-
-/////////////////////////////////////////////////////////////////////////////
-// CRainlendarDLLApp construction
-
-CRainlendarDLLApp::CRainlendarDLLApp()
+/*
+** initWharfModule
+**
+** This function is called when the plugin is initialized by wharf or lsbox.
+**
+*/
+int initWharfModule(HWND ParentWnd, HINSTANCE dllInst, void* wd)
 {
-	// TODO: add construction code here,
-	// Place all significant initialization in InitInstance
-}
-
-/////////////////////////////////////////////////////////////////////////////
-// The one and only CRainlendarDLLApp object
-
-CRainlendarDLLApp theApp;
-
-int initModuleEx(HWND ParentWnd, HINSTANCE dllInst, LPCSTR szPath)
-{
-	AFX_MANAGE_STATE(AfxGetStaticModuleState());
-
-	try {
-		theApp.m_pMainWnd=new CCalendarWindow;
-		if(theApp.m_pMainWnd==NULL) throw ERR_OUTOFMEM;
-
-		((CCalendarWindow*)theApp.m_pMainWnd)->Initialize(ParentWnd, dllInst, NULL, szPath);
+	int Result=1;
 	
-	} catch(RAIN_ERROR Err) {
-
-		if(Err!=ERR_NONE) {
-			CString ErrorStr;
-			ErrorStr.Format("Unable to initialize Rainlendar!\nError: %s", GetErrorMessage(Err));
-
-			MessageBox(NULL, ErrorStr, APPNAME, MB_OK | MB_ICONERROR);
-		}
-
-		return 1;
+	try 
+	{
+		Result = Rainlendar.Initialize(ParentWnd, dllInst, wd != NULL, NULL);
+	} 
+    catch(CError& error) 
+    {
+		MessageBox(ParentWnd, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 	}
 
-	return 0;
+	return Result;
 }
 
-void quitModule(HINSTANCE)
-{
-	AFX_MANAGE_STATE(AfxGetStaticModuleState());
-
-	if(theApp.m_pMainWnd) {
-		CCalendarWindow* CW=(CCalendarWindow*)theApp.m_pMainWnd;
-		CW->DestroyWindow();
-		delete CW;
-		theApp.m_pMainWnd=NULL;
-	}
-}
-
-int initWharfModule(HWND ParentWnd, HINSTANCE dllInst, wharfDataType* wd)
-{
-	AFX_MANAGE_STATE(AfxGetStaticModuleState());
-
-	try {
-		theApp.m_pMainWnd=new CCalendarWindow;
-		if(theApp.m_pMainWnd==NULL) throw ERR_OUTOFMEM;
-
-		((CCalendarWindow*)theApp.m_pMainWnd)->Initialize(ParentWnd, dllInst, wd, NULL);
-	
-	} catch(RAIN_ERROR Err) {
-
-		if(Err!=ERR_NONE) {
-			CString ErrorStr;
-			ErrorStr.Format("Unable to initialize Rainlendar!\nError: %s", GetErrorMessage(Err));
-
-			MessageBox(NULL, ErrorStr, APPNAME, MB_OK | MB_ICONERROR);
-		}
-
-		return 1;
-	}
-
-	return 0;
-}
-
+/*
+** quitWharfModule
+**
+** This is called when the wharf plugin quits.
+**
+*/
 void quitWharfModule(HINSTANCE dllInst)
 {
 	quitModule(dllInst);
 }
 
-void Initialize(bool DummyLS, LPCSTR CmdLine)
+/*
+** getLSRegion
+**
+** Returns the window region for the wharf
+**
+*/
+HRGN getLSRegion(int xOffset, int yOffset)
 {
-	((CCalendarWindow*)theApp.m_pMainWnd)->SetDummyLitestep(DummyLS);
-	((CCalendarWindow*)theApp.m_pMainWnd)->SetCommandLine(CmdLine);
+	return Rainlendar.GetRegion(xOffset, yOffset);
+
+	return NULL;
 }
 
 /*
-** Bang callbacks
+** initModuleEx
+**
+** This is called when the plugin is initialized
+**
 */
-
-extern "C" void RainlendarToggle(HWND, const char* arg)
+int initModuleEx(HWND ParentWnd, HINSTANCE dllInst, LPCSTR szPath)
 {
-	if(theApp.m_pMainWnd) {
-		CCalendarWindow* CW=(CCalendarWindow*)theApp.m_pMainWnd;
-		CW->ToggleWindow();
+	int Result=1;
+	
+	try 
+	{
+		Result = Rainlendar.Initialize(ParentWnd, dllInst, NULL, szPath);
+	} 
+    catch(CError& error) 
+    {
+		MessageBox(ParentWnd, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 	}
+
+	return Result;
 }
 
-extern "C" void RainlendarShow(HWND, const char* arg)
+/*
+** quitModule
+**
+** This is called when the plugin quits.
+**
+*/
+void quitModule(HINSTANCE dllInst)
 {
-	if(theApp.m_pMainWnd) {
-		CCalendarWindow* CW=(CCalendarWindow*)theApp.m_pMainWnd;
-		CW->ShowWindow();
-	}
+	Rainlendar.Quit(dllInst);
 }
 
-extern "C" void RainlendarHide(HWND, const char* arg)
+/*
+** Initialize
+**
+** Init Rainlendar
+**
+*/
+void Initialize(bool DummyLS, LPCSTR CmdLine)
 {
-	if(theApp.m_pMainWnd) {
-		CCalendarWindow* CW=(CCalendarWindow*)theApp.m_pMainWnd;
-		CW->HideWindow();
-	}
+	CRainlendar::SetDummyLitestep(DummyLS);
+	CRainlendar::SetCommandLine(CmdLine);
 }
 
-extern "C" void RainlendarRefresh(HWND, const char* arg)
+/*
+** RainlendarToggle
+**
+** Callback for the !RainlendarToggle bang
+**
+*/
+void RainlendarToggle(HWND, const char* arg)
 {
-	if(theApp.m_pMainWnd) {
-		CCalendarWindow* CW=(CCalendarWindow*)theApp.m_pMainWnd;
-		CW->RefreshWindow();
-	}
+	Rainlendar.ToggleWindow();
 }
 
-extern "C" void RainlendarConfig(HWND, const char* arg)
+/*
+** RainlendarHide
+**
+** Callback for the !RainlendarHide bang
+**
+*/
+void RainlendarHide(HWND, const char* arg)
 {
-	if(theApp.m_pMainWnd) {
-		CCalendarWindow* CW=(CCalendarWindow*)theApp.m_pMainWnd;
-		CW->ShowConfig();
-	}
+	Rainlendar.HideWindow();
 }
 
-extern "C" void RainlendarQuit(HWND, const char* arg)
+/*
+** RainlendarShow
+**
+** Callback for the !RainlendarShow bang
+**
+*/
+void RainlendarShow(HWND, const char* arg)
 {
-	if(theApp.m_pMainWnd) {
-		CCalendarWindow* CW=(CCalendarWindow*)theApp.m_pMainWnd;
-		CW->QuitRainlendar();
-	}
+	Rainlendar.ShowWindow();
 }
 
-extern "C" void RainlendarShowNext(HWND, const char* arg)
+/*
+** RainlendarRefresh
+**
+** Callback for the !RainlendarRefresh bang
+**
+*/
+void RainlendarRefresh(HWND, const char* arg)
 {
-	if(theApp.m_pMainWnd) {
-		CCalendarWindow* CW=(CCalendarWindow*)theApp.m_pMainWnd;
-		CW->ShowNextMonth();
-	}
+	Rainlendar.RefreshWindow();
 }
 
-extern "C" void RainlendarShowPrev(HWND, const char* arg)
+/*
+** RainlendarConfig
+**
+** Callback for the !RainlendarConfig bang
+**
+*/
+void RainlendarConfig(HWND, const char* arg)
 {
-	if(theApp.m_pMainWnd) {
-		CCalendarWindow* CW=(CCalendarWindow*)theApp.m_pMainWnd;
-		CW->ShowPrevMonth();
-	}
+	Rainlendar.ShowConfig();
 }
 
-extern "C" void RainlendarShowCurrent(HWND, const char* arg)
+/*
+** RainlendarQuit
+**
+** Callback for the !RainlendarQuit bang
+**
+*/
+void RainlendarQuit(HWND, const char* arg)
 {
-	if(theApp.m_pMainWnd) {
-		CCalendarWindow* CW=(CCalendarWindow*)theApp.m_pMainWnd;
-		CW->ShowCurrentMonth();
-	}
+	Rainlendar.QuitRainlendar();
 }
 
-extern "C" void RainlendarShowMonth(HWND, const char* arg)
+/*
+** RainlendarShowNext
+**
+** Callback for the !RainlendarShowNext bang
+**
+*/
+void RainlendarShowNext(HWND, const char* arg)
+{
+	Rainlendar.ShowNextMonth();
+}
+
+/*
+** RainlendarShowPrev
+**
+** Callback for the !RainlendarShowPrev bang
+**
+*/
+void RainlendarShowPrev(HWND, const char* arg)
+{
+	Rainlendar.ShowPrevMonth();
+}
+
+/*
+** RainlendarShowCurrent
+**
+** Callback for the !RainlendarShowCurrent bang
+**
+*/
+void RainlendarShowCurrent(HWND, const char* arg)
+{
+	Rainlendar.ShowCurrentMonth();
+}
+
+/*
+** RainlendarShowCurrent
+**
+** Callback for the !RainlendarShowCurrent bang
+**
+*/
+void RainlendarShowMonth(HWND, const char* arg)
 {
 	char Buffer[256];
 	char* Token;
 	int Month=0, Year=0;
 	
-	if(theApp.m_pMainWnd) {
-		CCalendarWindow* CW=(CCalendarWindow*)theApp.m_pMainWnd;
-		if(arg!=NULL && arg[0]!='\0') {
+	
+	{
+		if(arg!=NULL && arg[0]!='\0') 
+		{
 			strncpy(Buffer, arg, 255);
-			Buffer[255]='\0';
-			Token=strtok(Buffer, " ");
-			if(Token!=NULL) {
-				Month=atoi(Token);
-				Token=strtok(NULL, " ");
-				if(Token!=NULL) {
-					Year=atoi(Token);
-					CW->ShowMonth(Month, Year);
-				} else {
-					CW->ShowMonth(Month, -1);
+			Buffer[255] = '\0';
+			Token = strtok(Buffer, " ");
+			
+			if(Token!=NULL) 
+			{
+				Month = atoi(Token);
+				Token = strtok(NULL, " ");
+				
+				if(Token != NULL) 
+				{
+					Year = atoi(Token);
+					Rainlendar.ShowMonth(Month, Year);
+				}
+				else 
+				{
+					Rainlendar.ShowMonth(Month, -1);
 				}
 			}
-		} else {
-			CW->ShowMonth(-1, -1);
+		} 
+		else 
+		{
+			Rainlendar.ShowMonth(-1, -1);
 		}
 	}
 }
+
+/* 
+** CRainlendar
+**
+** Constructor
+**
+*/
+CRainlendar::CRainlendar()
+{
+	m_Wharf = false;
+}
+
+/* 
+** ~CRainlendar
+**
+** Destructor
+**
+*/
+CRainlendar::~CRainlendar()
+{
+}
+
+/* 
+** Initialize
+**
+** The main initialization function for the module.
+** May throw CErrors !!!!
+**
+*/
+int CRainlendar::Initialize(HWND Parent, HINSTANCE Instance, bool wd, LPCSTR szPath)
+{
+	int Result=0;
+
+	if(Parent==NULL || Instance==NULL) 
+	{
+		throw CError(CError::ERR_NULLPARAMETER, __LINE__, __FILE__);
+	}	
+
+	m_Wharf = wd;
+
+	if(!c_DummyLitestep) InitalizeLitestep();
+
+	// Create the meter window and initialize it
+	Result = m_Calendar.Initialize(*this, Parent, Instance);
+
+	// If we're running as Litestep's plugin, register the !bangs
+	if(!c_DummyLitestep) 
+	{
+		int Msgs[] = { LM_GETREVID, 0 };
+		// Register RevID message to Litestep
+		::SendMessage(GetLitestepWnd(), LM_REGISTERMESSAGE, (WPARAM)m_Calendar.GetWindow(), (LPARAM)Msgs);
+
+		AddBangCommand("!RainlendarToggle", RainlendarToggle);
+		AddBangCommand("!RainlendarHide", RainlendarHide);
+		AddBangCommand("!RainlendarShow", RainlendarShow);
+		AddBangCommand("!RainlendarRefresh", RainlendarRefresh);
+		AddBangCommand("!RainlendarConfig", RainlendarConfig);
+		AddBangCommand("!RainlendarQuit", RainlendarQuit);
+		AddBangCommand("!RainlendarShowNext", RainlendarShowNext);
+		AddBangCommand("!RainlendarShowPrev", RainlendarShowPrev);
+		AddBangCommand("!RainlendarShowCurrent", RainlendarShowCurrent);
+		AddBangCommand("!RainlendarShowMonth", RainlendarShowMonth);
+	}
+
+	return Result;	// Alles OK
+}
+
+/* 
+** Quit
+**
+** Called when the module quits
+**
+*/
+void CRainlendar::Quit(HINSTANCE dllInst)
+{
+	// If we're running as Litestep's plugin, unregister the !bangs
+	if(!c_DummyLitestep) 
+	{
+		int Msgs[] = { LM_GETREVID, 0 };
+		// Unregister RevID message
+		if(m_Calendar.GetWindow()) ::SendMessage(GetLitestepWnd(), LM_UNREGISTERMESSAGE, (WPARAM)m_Calendar.GetWindow(), (LPARAM)Msgs);
+
+		RemoveBangCommand("!RainlendarToggle");
+		RemoveBangCommand("!RainlendarHide");
+		RemoveBangCommand("!RainlendarShow");
+		RemoveBangCommand("!RainlendarRefresh");
+		RemoveBangCommand("!RainlendarConfig");
+		RemoveBangCommand("!RainlendarQuit");
+		RemoveBangCommand("!RainlendarShowNext");
+		RemoveBangCommand("!RainlendarShowPrev");
+		RemoveBangCommand("!RainlendarShowCurrent");
+		RemoveBangCommand("!RainlendarShowMonth");
+	}
+}
+
+/* 
+** GetRegion
+**
+** Function returns the window region for the Wharf. Probably should 
+** add the implementation to here for better combatibility with wharf 
+** and lsbox.
+**
+*/
+HRGN CRainlendar::GetRegion(int xOffset, int yOffset)
+{
+	return NULL;
+}
+

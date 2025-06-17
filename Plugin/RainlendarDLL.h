@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RainlendarDLL.h,v 1.2 2001/12/23 10:01:13 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RainlendarDLL.h,v 1.4 2002/05/30 18:25:23 rainy Exp $
 
   $Log: RainlendarDLL.h,v $
+  Revision 1.4  2002/05/30 18:25:23  rainy
+  Removed some Litestep related stuff.
+
+  Revision 1.3  2002/05/23 17:33:40  rainy
+  Removed all MFC stuff
+
   Revision 1.2  2001/12/23 10:01:13  rainy
   Rainlendar.dll uses a bit different interface.
 
@@ -27,54 +33,30 @@
 
 */
 
-#if !defined(AFX_RAINLENDARDLL_H__B983FF06_2C75_425C_BEEA_7E32FDD0182A__INCLUDED_)
-#define AFX_RAINLENDARDLL_H__B983FF06_2C75_425C_BEEA_7E32FDD0182A__INCLUDED_
+#ifndef __RAINLENDAR_H__
+#define __RAINLENDAR_H__
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#pragma warning(disable: 4786)
 
-#ifndef __AFXWIN_H__
-	#error include 'stdafx.h' before including this file for PCH
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #endif
 
-#include "resource.h"		// main symbols
-#include "litestep\wharfdata.h"
+#include <windows.h>
+#include "Litestep.h"
+#include "CalendarWindow.h"
 
-#define	APPNAME "Rainlendar"
-#define	MAX_LINE_LENGTH 4096
+#define MAX_LINE_LENGTH 4096
 
-/////////////////////////////////////////////////////////////////////////////
-// CRainlendarDLLApp
-// See RainlendarDLL.cpp for the implementation of this class
-//
+#define BEGIN_MESSAGEPROC switch(uMsg) {
+#define MESSAGE(handler, msg) case msg: return Window?Window->handler(wParam, lParam):DefWindowProc(hWnd, uMsg, wParam, lParam);
+#define REJECT_MESSAGE(msg) case msg: return 0;
+#define END_MESSAGEPROC } return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
-class CRainlendarDLLApp : public CWinApp
-{
-public:
-	CRainlendarDLLApp();
+#define APPNAME "Rainlendar"
+#define VERSION "0.10"
 
-// Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CRainlendarDLLApp)
-	//}}AFX_VIRTUAL
-
-	//{{AFX_MSG(CRainlendarDLLApp)
-		// NOTE - the ClassWizard will add and remove member functions here.
-		//    DO NOT EDIT what you see in these blocks of generated code !
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
-};
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-__declspec( dllexport ) int initWharfModule(HWND ParentWnd, HINSTANCE dllInst, wharfDataType *wd);
-__declspec( dllexport ) void quitWharfModule(HINSTANCE dll);
-__declspec( dllexport ) int initModuleEx(HWND ParentWnd, HINSTANCE dllInst, LPCSTR szPath);
-__declspec( dllexport ) void quitModule(HINSTANCE dllInst);
-__declspec( dllexport ) void Initialize(bool DummyLS, LPCSTR CmdLine);
+#define DLLDECL __declspec( dllexport )
 
 void RainlendarToggle(HWND caller, const char* arg);
 void RainlendarHide(HWND caller, const char* arg);
@@ -87,14 +69,52 @@ void RainlendarShowPrev(HWND caller, const char* arg);
 void RainlendarShowCurrent(HWND caller, const char* arg);
 void RainlendarShowMonth(HWND caller, const char* arg);
 
-#ifdef __cplusplus
+class CRainlendar
+{
+public:
+	CRainlendar();
+	~CRainlendar();
+
+	int Initialize(HWND Parent, HINSTANCE Instance, bool wd, LPCSTR szPath);
+	void Quit(HINSTANCE dllInst);
+	HRGN GetRegion(int xOffset, int yOffset);
+
+	void QuitRainlendar() { m_Calendar.QuitRainlendar(); };
+	void HideWindow() { m_Calendar.HideWindow(); };
+	void ShowWindow() { m_Calendar.ShowWindow(); };
+	void ToggleWindow() { m_Calendar.ToggleWindow(); };
+	void RefreshWindow() { m_Calendar.RefreshWindow(); };
+	void ShowConfig() { m_Calendar.ShowConfig(); };
+	void ShowMonth(int Month, int Year) { m_Calendar.ShowMonth(Month, Year); };
+	void ShowNextMonth() { m_Calendar.ShowNextMonth(); };
+	void ShowPrevMonth() { m_Calendar.ShowPrevMonth(); };
+	void ShowCurrentMonth() { m_Calendar.ShowCurrentMonth(); };
+
+	bool IsWharf() { return m_Wharf; };
+	CCalendarWindow& GetCalendarWindow() { return m_Calendar; };
+
+	static void SetDummyLitestep(bool Dummy) { c_DummyLitestep = Dummy; };
+	static bool GetDummyLitestep() { return c_DummyLitestep; };
+	static void SetCommandLine(LPCSTR CmdLine) { c_CmdLine = CmdLine;};
+	static LPCSTR GetCommandLine() { return c_CmdLine.c_str(); };
+
+private:
+	CCalendarWindow m_Calendar;		// The calendar window
+	bool m_Wharf;					// true, if ran in a wharf
+	static bool c_DummyLitestep;	// true, if not a Litestep plugin
+	static std::string c_CmdLine;	// The command line arguments
+};
+
+extern "C"
+{
+	DLLDECL int initWharfModule(HWND ParentWnd, HINSTANCE dllInst, void* wd);
+	DLLDECL void quitWharfModule(HINSTANCE dll);
+	DLLDECL HRGN getLSRegion(int xoffset, int yoffset);
+	DLLDECL int initModuleEx(HWND ParentWnd, HINSTANCE dllInst, LPCSTR szPath);
+	DLLDECL void quitModule(HINSTANCE dllInst);
+	DLLDECL void Initialize(bool DummyLS, LPCSTR CmdLine);
 }
+
+CRainlendar* GetRainlendar();
+
 #endif
-
-
-/////////////////////////////////////////////////////////////////////////////
-
-//{{AFX_INSERT_LOCATION}}
-// Microsoft Visual C++ will insert additional declarations immediately before the previous line.
-
-#endif // !defined(AFX_RAINLENDARDLL_H__B983FF06_2C75_425C_BEEA_7E32FDD0182A__INCLUDED_)

@@ -31,64 +31,62 @@ RSC=rc.exe
 
 !IF  "$(CFG)" == "Plugin - Win32 Release"
 
-# PROP BASE Use_MFC 6
+# PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 0
 # PROP BASE Output_Dir "Release"
 # PROP BASE Intermediate_Dir "Release"
 # PROP BASE Target_Dir ""
-# PROP Use_MFC 6
+# PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "Release"
 # PROP Intermediate_Dir "Release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "..\..\..\3rdparty\ls-b24" /I "..\..\..\3rdparty\ssobjects\\" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "_WINDLL" /D "_AFXDLL" /FD /c
-# SUBTRACT CPP /YX /Yc /Yu
+# ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_EXPORTS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "..\..\..\3rdparty\ssobjects\\" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_EXPORTS" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
-# ADD BASE RSC /l 0x40b /d "NDEBUG" /d "_AFXDLL"
-# ADD RSC /l 0x40b /d "NDEBUG" /d "_AFXDLL"
+# ADD BASE RSC /l 0x40b /d "NDEBUG"
+# ADD RSC /l 0x40b /d "NDEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
-# ADD BASE LINK32 /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 lsapi.lib ssobjects.lib Ws2_32.lib /nologo /subsystem:windows /dll /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Release/Rainlendar.dll" /libpath:"..\..\..\3rdparty\ls-b24\lsapi\Release" /libpath:"..\..\..\3rdparty\ssobjects\\"
+# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib Advapi32.lib Ws2_32.lib ssobjects.lib comdlg32.lib comctl32.lib shell32.lib /nologo /dll /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Release/Rainlendar.dll" /libpath:"..\..\..\3rdparty\ssobjects"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=Copy               Release\Rainlendar.dll               ..\TestBench\ 
+PostBuild_Cmds=Copy      Release\Rainlendar.dll      ..\TestBench\Rainlendar.dll     	Copy      Release\Rainlendar.dll           C:\Litestep\Themes\dArk\modules\ 
 # End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "Plugin - Win32 Debug"
 
-# PROP BASE Use_MFC 6
+# PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
 # PROP BASE Output_Dir "Debug"
 # PROP BASE Intermediate_Dir "Debug"
 # PROP BASE Target_Dir ""
-# PROP Use_MFC 6
+# PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
 # PROP Output_Dir "Debug"
 # PROP Intermediate_Dir "Debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "..\..\..\3rdparty\ls-b24" /I "..\..\..\3rdparty\ssobjects\\" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /FD /GZ /c
-# SUBTRACT CPP /YX /Yc /Yu
+# ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_EXPORTS" /YX /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "..\..\..\3rdparty\ssobjects\\" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_EXPORTS" /YX /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
-# ADD BASE RSC /l 0x40b /d "_DEBUG" /d "_AFXDLL"
-# ADD RSC /l 0x40b /d "_DEBUG" /d "_AFXDLL"
+# ADD BASE RSC /l 0x40b /d "_DEBUG"
+# ADD RSC /l 0x40b /d "_DEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
-# ADD BASE LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 lsapi.lib ssobjects_dbg.lib Ws2_32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /nodefaultlib:"LIBCMTD.lib" /out:"Debug/Rainlendar.dll" /pdbtype:sept /libpath:"..\..\..\3rdparty\ls-b24\lsapi\Debug" /libpath:"..\..\..\3rdparty\ssobjects\\"
+# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib Advapi32.lib Ws2_32.lib ssobjects.lib comdlg32.lib comctl32.lib shell32.lib /nologo /dll /debug /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Debug/Rainlendar.dll" /pdbtype:sept /libpath:"..\..\..\3rdparty\ssobjects"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=Copy               Debug\Rainlendar.dll               ..\TestBench\ 
+PostBuild_Cmds=Copy      Debug\Rainlendar.dll      ..\TestBench\Rainlendar.dll     	rem     Copy      Debug\Rainlendar.dll           C:\Litestep\Themes\dArk\modules\ 
 # End Special Build Tool
 
 !ENDIF 
@@ -114,43 +112,15 @@ SOURCE=.\Config.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\DialogDays.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\DialogEvent.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\DialogGeneral.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\DialogMonth.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\DialogServer.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\DialogToday.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\DialogWeekdays.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\DialogWeekNumbers.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\DialogYear.cpp
+SOURCE=.\ConfigDialog.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=.\EditEvent.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\Error.cpp
 # End Source File
 # Begin Source File
 
@@ -194,6 +164,10 @@ SOURCE=.\ItemYear.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\Litestep.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\NetworkThread.cpp
 # End Source File
 # Begin Source File
@@ -211,10 +185,6 @@ SOURCE=.\RasterizerBitmap.cpp
 # Begin Source File
 
 SOURCE=.\RasterizerFont.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\StdAfx.cpp
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -234,35 +204,7 @@ SOURCE=.\Config.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\DialogDays.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\DialogEvent.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\DialogGeneral.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\DialogMonth.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\DialogServer.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\DialogToday.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\DialogWeekdays.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\DialogYear.h
+SOURCE=.\ConfigDialog.h
 # End Source File
 # Begin Source File
 
@@ -275,10 +217,6 @@ SOURCE=.\Error.h
 # Begin Source File
 
 SOURCE=.\Event.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\Server\EventCombiner.h
 # End Source File
 # Begin Source File
 
@@ -314,6 +252,10 @@ SOURCE=.\ItemYear.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\Litestep.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\NetworkThread.h
 # End Source File
 # Begin Source File
@@ -336,10 +278,6 @@ SOURCE=.\RasterizerFont.h
 
 SOURCE=.\Resource.h
 # End Source File
-# Begin Source File
-
-SOURCE=.\StdAfx.h
-# End Source File
 # End Group
 # Begin Group "Resource Files"
 
@@ -349,6 +287,10 @@ SOURCE=.\StdAfx.h
 SOURCE=.\RainlendarDLL.rc
 # End Source File
 # End Group
+# Begin Source File
+
+SOURCE=..\Distribution.txt
+# End Source File
 # Begin Source File
 
 SOURCE=..\Manual.html

@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerBitmap.cpp,v 1.4 2002/02/27 18:49:33 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerBitmap.cpp,v 1.6 2002/05/30 18:23:56 rainy Exp $
 
   $Log: RasterizerBitmap.cpp,v $
+  Revision 1.6  2002/05/30 18:23:56  rainy
+  Image loading uses LoadLSImage always.
+
+  Revision 1.5  2002/05/23 17:33:40  rainy
+  Removed all MFC stuff
+
   Revision 1.4  2002/02/27 18:49:33  rainy
   Alignment takes now 9 different positions.
   Added support for $var$
@@ -34,17 +40,10 @@
 
 */
 
-#include "stdafx.h"
 #include "RainlendarDLL.h"
 #include "RasterizerBitmap.h"
 #include "CalendarWindow.h"
 #include "Error.h"
-
-#ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
-#endif
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -52,12 +51,16 @@ static char THIS_FILE[]=__FILE__;
 
 CRasterizerBitmap::CRasterizerBitmap()
 {
-	m_NumOfComponents=0;
-	m_Alpha=false;
+	m_NumOfComponents = 0;
+	m_Alpha = false;
+	m_Bitmap = NULL;
+	m_AlphaBitmap = NULL;
 }
 
 CRasterizerBitmap::~CRasterizerBitmap()
 {
+	if (m_Bitmap) DeleteObject(m_Bitmap);
+	if (m_AlphaBitmap) DeleteObject(m_AlphaBitmap);
 }
 
 /* 
@@ -66,56 +69,55 @@ CRasterizerBitmap::~CRasterizerBitmap()
 ** Loads the given image. 
 **
 */
-void CRasterizerBitmap::Load(CString& Filename)
+void CRasterizerBitmap::Load(std::string filename)
 {
-	HBITMAP BM;
-	HBITMAP ABM;
 	BITMAP bm;
-	CString PicName;
-	int End, Len;
+	char buffer[1024];
 
-	if (!CCalendarWindow::GetDummyLitestep())
+	if(!CRainlendar::GetDummyLitestep()) 
 	{
-		char buffer[1024];
-		VarExpansion(buffer, Filename);
-		Filename = buffer;
+		VarExpansion(buffer, filename.c_str());
+		filename = buffer;
 	}
 
-	if(-1==Filename.Find(':', 0)) {
-		PicName.Format("%s%s", CCalendarWindow::c_Config.GetPath(), Filename);
-	} else {
-		PicName=Filename;
+	// Check for absolute path
+	if(-1 == filename.find(':')) 
+	{
+		filename.insert(0, CCalendarWindow::c_Config.GetPath());
+	} 
+
+	m_Bitmap = LoadLSImage(filename.c_str(), NULL);
+
+	if(m_Bitmap == NULL) 
+	{
+		std::string err = "File not found: ";
+		err += filename;
+		throw CError(err, __LINE__, __FILE__);
 	}
-	BM=LoadLSImage(PicName, NULL);
 
-	if(BM==NULL) throw Filename;		// File not found
-
-	GetObject(BM, sizeof(BITMAP), &bm);
-	m_Width=bm.bmWidth;
-	m_Height=bm.bmHeight;
+	GetObject(m_Bitmap, sizeof(BITMAP), &bm);
+	m_Width = bm.bmWidth;
+	m_Height = bm.bmHeight;
 
 	// Check for Alpha-map
-	m_Alpha=false;
-	End=PicName.ReverseFind('.');
-	Len=PicName.GetLength();
-	if(End!=-1) {
-		CString AlphaName;
-		AlphaName.Format("%s-Alpha%s", PicName.Left(Len-(Len-End)), Filename.Right(Len-End));
-		ABM=LoadLSImage(AlphaName, NULL);
-		if(ABM!=NULL) {
-			m_Alpha=true;		// Alphamap found!
+	m_Alpha = false;
+	int pos = filename.rfind('.');
+	if (pos != -1)
+	{
+		std::string alphaName;
 
+		alphaName = filename;
+		alphaName.insert(pos, "-Alpha");
+		m_AlphaBitmap = LoadLSImage(alphaName.c_str(), NULL);
+
+		if(m_AlphaBitmap != NULL) 
+		{
 			// Check that it is correct size
-			GetObject(ABM, sizeof(BITMAP), &bm);
-			if(m_Width!=bm.bmWidth || m_Height!=bm.bmHeight) throw ERR_ALPHASIZE;
-
-			m_AlphaBitmap.DeleteObject();	// Delete the old (if there was one)
-			m_AlphaBitmap.Attach(ABM);
+			GetObject(m_AlphaBitmap, sizeof(BITMAP), &bm);
+			if (m_Width != bm.bmWidth || m_Height != bm.bmHeight) throw CError(CError::ERR_BACKGROUNDALPHASIZE, __LINE__, __FILE__);
+			m_Alpha = true;
 		}
 	}
-
-	m_Bitmap.DeleteObject();	// Delete the old (if there was one)
-	m_Bitmap.Attach(BM);
 }
 
 /* 
@@ -124,28 +126,33 @@ void CRasterizerBitmap::Load(CString& Filename)
 ** Paints the given part of the image. W & H are for align.
 **
 */
-void CRasterizerBitmap::Paint(CDC& dc, int X, int Y, int W, int H, int Index)
+void CRasterizerBitmap::Paint(HDC dc, int X, int Y, int W, int H, int Index)
 {
-	HBITMAP OldBitmap=NULL;
+	HBITMAP OldBitmap = NULL;
 	HDC tmpDC=NULL;
 	int Number, NumOfNums, ItemWidth, ItemHeight;
 
-	if(m_Height>m_Width) {
+	if(m_Height > m_Width) 
+	{
 		// The items are stacked from top to bottom
-		ItemWidth=m_Width;						
-		ItemHeight=m_Height/m_NumOfComponents;
-	} else {
+		ItemWidth = m_Width;						
+		ItemHeight = m_Height / m_NumOfComponents;
+	} 
+	else 
+	{
 		// The items are stacked from left to right
-		ItemWidth=m_Width/m_NumOfComponents;	
-		ItemHeight=m_Height;
+		ItemWidth = m_Width / m_NumOfComponents;	
+		ItemHeight = m_Height;
 	}
 
 	// We'll blit the numbers in reverse order, so lets find the number of the numbers ;-)
-	Number=Index;
-	NumOfNums=1;	// At least one number
-	if(m_NumOfComponents>1) {
-		while(Number>=m_NumOfComponents) {
-			Number=Number/m_NumOfComponents;
+	Number = Index;
+	NumOfNums = 1;	// At least one number
+	if (m_NumOfComponents > 1) 
+	{
+		while(Number >= m_NumOfComponents) 
+		{
+			Number = Number / m_NumOfComponents;
 			NumOfNums++;
 		}
 	}
@@ -187,27 +194,30 @@ void CRasterizerBitmap::Paint(CDC& dc, int X, int Y, int W, int H, int Index)
 	} 
 	else 
 	{
-		tmpDC=CreateCompatibleDC(dc);
-		if(tmpDC==NULL) return;
-		OldBitmap=(HBITMAP)SelectObject(tmpDC, m_Bitmap);
+		tmpDC = CreateCompatibleDC(dc);
+		if(tmpDC == NULL) return;
+		OldBitmap = (HBITMAP)SelectObject(tmpDC, m_Bitmap);
 
 		// Blit all necessary numbers
-		do {
-			Number=Index%m_NumOfComponents;
-			Index=Index/m_NumOfComponents;
-			X-=ItemWidth;
+		do 
+		{
+			Number = Index % m_NumOfComponents;
+			Index = Index / m_NumOfComponents;
+			X -= ItemWidth;
 
-			if(m_Height>m_Width) {
-				TransparentBltLS(dc, X, Y, ItemWidth, ItemHeight, tmpDC, 0, Number*ItemHeight, RGB(255,0,255));
-			} else {
-				TransparentBltLS(dc, X, Y, ItemWidth, ItemHeight, tmpDC, Number*ItemWidth, 0, RGB(255,0,255));
+			if (m_Height > m_Width) 
+			{
+				TransparentBltLS(dc, X, Y, ItemWidth, ItemHeight, tmpDC, 0, Number * ItemHeight, RGB(255,0,255));
+			} 
+			else 
+			{
+				TransparentBltLS(dc, X, Y, ItemWidth, ItemHeight, tmpDC, Number * ItemWidth, 0, RGB(255,0,255));
 			}
-		} while(Index>0 && m_NumOfComponents>1);
+		} while(Index > 0 && m_NumOfComponents > 1);
 
 		SelectObject(tmpDC, OldBitmap);
 		DeleteDC(tmpDC);
 	}
-
 }
 
 /* 
@@ -216,75 +226,70 @@ void CRasterizerBitmap::Paint(CDC& dc, int X, int Y, int W, int H, int Index)
 ** Paints the alphamapped bitmaps
 **
 */
-void CRasterizerBitmap::PaintAlpha(CDC& dc, int X, int Y, int NumOfNums, int Index)
+void CRasterizerBitmap::PaintAlpha(HDC dc, int X, int Y, int NumOfNums, int Index)
 {
-	CBitmap* BackgroundBM=NULL;
-	CBitmap* SourceBM=NULL;
-	CBitmap* AlphaBM=NULL;
-	HBITMAP OldBitmap=NULL;
-	HBITMAP OldBitmap2=NULL;
-	CDC tmpDC;
-	CDC tmpDC2;
+	HBITMAP BackgroundBM=NULL;
+	HBITMAP SourceBM=NULL;
+	HBITMAP AlphaBM=NULL;
+	HBITMAP OldBitmap = NULL;
+	HBITMAP OldBitmap2 = NULL;
+	HDC tmpDC;
+	HDC tmpDC2;
 	int FullWidth;	
 	int Number;
 	int tmpX, tmpIndex;
 	int ItemWidth, ItemHeight;
 
-	if(m_Height>m_Width) {
+	if (m_Height > m_Width) 
+	{
 		// The items are stacked from top to bottom
-		ItemWidth=m_Width;						
-		ItemHeight=m_Height/m_NumOfComponents;
-	} else {
+		ItemWidth = m_Width;						
+		ItemHeight = m_Height / m_NumOfComponents;
+	} 
+	else 
+	{
 		// The items are stacked from left to right
-		ItemWidth=m_Width/m_NumOfComponents;	
-		ItemHeight=m_Height;
+		ItemWidth = m_Width / m_NumOfComponents;	
+		ItemHeight = m_Height;
 	}
 
 
-	FullWidth=NumOfNums*ItemWidth;
+	FullWidth = NumOfNums * ItemWidth;
 	// Calculate the correct X
-	X=X-FullWidth;
+	X = X - FullWidth;
 
-	if(!tmpDC.CreateCompatibleDC(&dc)) return;		// Out of mem
-	OldBitmap=(HBITMAP)SelectObject(tmpDC, m_Bitmap);
+	tmpDC = CreateCompatibleDC(dc);
+	OldBitmap = (HBITMAP)SelectObject(tmpDC, m_Bitmap);
 
 	// Draw the alphablended bitmap
+	SourceBM = CreateCompatibleBitmap(tmpDC, FullWidth, ItemHeight);
+	AlphaBM = CreateCompatibleBitmap(tmpDC, FullWidth, ItemHeight);
 
-	BackgroundBM=new CBitmap;
-	SourceBM=new CBitmap;
-	AlphaBM=new CBitmap;
-
-	if(BackgroundBM==NULL || SourceBM==NULL || AlphaBM==NULL) return;		// Out of mem
-
-	if(!BackgroundBM->CreateCompatibleBitmap(&tmpDC, FullWidth, ItemHeight)) return;		// Out of mem
-	if(!SourceBM->CreateCompatibleBitmap(&tmpDC, FullWidth, ItemHeight)) return;		// Out of mem
-	if(!AlphaBM->CreateCompatibleBitmap(&tmpDC, FullWidth, ItemHeight)) return;		// Out of mem
-
-	if(!tmpDC2.CreateCompatibleDC(&dc)) return;		// Out of mem
-	OldBitmap2=(HBITMAP)SelectObject(tmpDC2, *SourceBM);
+	tmpDC2 = CreateCompatibleDC(dc);
+	OldBitmap2 = (HBITMAP)SelectObject(tmpDC2, SourceBM);
 
 
 	// Hmm... probably should free allocated memory if it ran out. But in that
 	// situation everything is fucked up anyway, so who cares.
 
-
 	// If we have real alpha, we must fetch the background first
-	GetBackground(dc, *BackgroundBM, X, Y, FullWidth, ItemHeight);
+	BackgroundBM = GetBackground(dc, X, Y, FullWidth, ItemHeight);
 
 	// Then we must get the correct component from the bitmap and alphamap
 
-	tmpX=FullWidth;
-	tmpIndex=Index;
+	tmpX = FullWidth;
+	tmpIndex = Index;
 	do {
-		Number=tmpIndex%m_NumOfComponents;
-		tmpIndex=tmpIndex/m_NumOfComponents;
-		tmpX-=ItemWidth;
+		Number = tmpIndex % m_NumOfComponents;
+		tmpIndex = tmpIndex / m_NumOfComponents;
+		tmpX -= ItemWidth;
 
 		// Fetch the normal component
 		SelectObject(tmpDC, m_Bitmap);
-		SelectObject(tmpDC2, *SourceBM);
+		SelectObject(tmpDC2, SourceBM);
 
-		if(m_Height>m_Width) {
+		if(m_Height > m_Width) 
+		{
 			BitBlt(tmpDC2, tmpX, 0, ItemWidth, ItemHeight, tmpDC, 0, Number*ItemHeight, SRCCOPY);
 		} else {
 			BitBlt(tmpDC2, tmpX, 0, ItemWidth, ItemHeight, tmpDC, Number*ItemWidth, 0, SRCCOPY);
@@ -292,9 +297,10 @@ void CRasterizerBitmap::PaintAlpha(CDC& dc, int X, int Y, int NumOfNums, int Ind
 			
 		// Fetch the alpha component
 		SelectObject(tmpDC, m_AlphaBitmap);
-		SelectObject(tmpDC2, *AlphaBM);
+		SelectObject(tmpDC2, AlphaBM);
 
-		if(m_Height>m_Width) {
+		if(m_Height > m_Width) 
+		{
 			BitBlt(tmpDC2, tmpX, 0, ItemWidth, ItemHeight, tmpDC, 0, Number*ItemHeight, SRCCOPY);
 		} else {
 			BitBlt(tmpDC2, tmpX, 0, ItemWidth, ItemHeight, tmpDC, Number*ItemWidth, 0, SRCCOPY);
@@ -304,40 +310,47 @@ void CRasterizerBitmap::PaintAlpha(CDC& dc, int X, int Y, int NumOfNums, int Ind
 	SelectObject(tmpDC2, OldBitmap2);
 
 	// None of the bitmaps mustn't be in any DC!
-	CreateAlpha(*SourceBM, *AlphaBM, *BackgroundBM);
+	CreateAlpha(SourceBM, AlphaBM, BackgroundBM);
 
-	SelectObject(tmpDC, *SourceBM);
+	SelectObject(tmpDC, SourceBM);
 	BitBlt(dc, X, Y, FullWidth, ItemHeight, tmpDC, 0, 0, SRCCOPY);
 
 	SelectObject(tmpDC, OldBitmap);
 	SelectObject(tmpDC2, OldBitmap2);
 
 	// No need for these anymore
-	delete BackgroundBM;
-	delete AlphaBM;
-	delete SourceBM;
+	DeleteObject(BackgroundBM);
+	DeleteObject(AlphaBM);
+	DeleteObject(SourceBM);
+	DeleteObject(tmpDC);
+	DeleteObject(tmpDC2);
 }
 
 /* 
 ** GetBackground
 **
-** Takes a copy of the given part of the window and blits it to the given bitmap.
-** The bitmap must be already initialized!
+** Takes a copy of the given part of the dc and creates a bitmap out of it.
+** The returned bitmap must be destroyed by the caller.
 **
 */
-void CRasterizerBitmap::GetBackground(CDC& dc, CBitmap& Bitmap, int X, int Y, int Width, int Height) 
+HBITMAP CRasterizerBitmap::GetBackground(HDC dc, int X, int Y, int Width, int Height) 
 {
 	HDC tmpDC;
 	HBITMAP OldBitmap;
+	HBITMAP Bitmap = NULL;
 
-	tmpDC=CreateCompatibleDC(dc);
-	if(tmpDC!=NULL) {
+	tmpDC = CreateCompatibleDC(dc);
+	if(tmpDC != NULL) 
+	{
 		// Fetch the background
-		OldBitmap=(HBITMAP)SelectObject(tmpDC, Bitmap);
+		Bitmap = CreateCompatibleBitmap(dc, Width, Height);
+		OldBitmap = (HBITMAP)SelectObject(tmpDC, Bitmap);
 		BitBlt(tmpDC, 0, 0, Width, Height, dc, X, Y, SRCCOPY);
 		SelectObject(tmpDC, OldBitmap);
 		DeleteDC(tmpDC);
 	}
+
+	return Bitmap;
 }
 
 /* 

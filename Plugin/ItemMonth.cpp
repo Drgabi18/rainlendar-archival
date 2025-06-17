@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemMonth.cpp,v 1.4 2002/02/27 18:52:27 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemMonth.cpp,v 1.5 2002/05/23 17:33:41 rainy Exp $
 
   $Log: ItemMonth.cpp,v $
+  Revision 1.5  2002/05/23 17:33:41  rainy
+  Removed all MFC stuff
+
   Revision 1.4  2002/02/27 18:52:27  rainy
   Added new alignments
 
@@ -33,19 +36,12 @@
 
 */
 
-#include "stdafx.h"
 #include "RainlendarDLL.h"
 #include "ItemMonth.h"
 #include "Error.h"
 #include "RasterizerBitmap.h"
 #include "RasterizerFont.h"
 #include "CalendarWindow.h"
-
-#ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
-#endif
 
 // This is always 12 (of course)
 #define NUMOFCOMPONENTS 12
@@ -154,7 +150,7 @@ void CItemMonth::Initialize()
 			CRasterizerBitmap* BMRast;
 
 			BMRast=new CRasterizerBitmap;
-			if(BMRast==NULL) throw ERR_OUTOFMEM;
+			if(BMRast==NULL) throw CError(CError::ERR_OUTOFMEM);
 
 			BMRast->Load(CCalendarWindow::c_Config.GetMonthBitmapName());
 			BMRast->SetNumOfComponents(NUMOFCOMPONENTS);
@@ -167,7 +163,7 @@ void CItemMonth::Initialize()
 			CRasterizerFont* FNRast;
 
 			FNRast=new CRasterizerFont;
-			if(FNRast==NULL) throw ERR_OUTOFMEM;
+			if(FNRast==NULL) throw CError(CError::ERR_OUTOFMEM);
 
 			FNRast->SetFont(CCalendarWindow::c_Config.GetMonthFont());
 			FNRast->CreateStringTable(CCalendarWindow::c_Config.GetMonthNames(), NUMOFCOMPONENTS);
@@ -185,7 +181,7 @@ void CItemMonth::Initialize()
 ** Paints the Month in correct place
 **
 */
-void CItemMonth::Paint(CDC& dc)
+void CItemMonth::Paint(HDC dc)
 {
 	int X, Y, W, H;
 
@@ -224,9 +220,9 @@ void CItemMonth::Paint(CDC& dc)
 			break;
 		};
 
-		dc.SetBkMode(TRANSPARENT);
-		dc.SetTextColor(CCalendarWindow::c_Config.GetMonthFontColor());
+		SetBkMode(dc, TRANSPARENT);
+		SetTextColor(dc, CCalendarWindow::c_Config.GetMonthFontColor());
 
-		m_Rasterizer->Paint(dc, X, Y, W, H, CCalendarWindow::c_CurrentDate.GetMonth()-1);
+		m_Rasterizer->Paint(dc, X, Y, W, H, CCalendarWindow::c_MonthsFirstDate.wMonth - 1);
 	}
 }

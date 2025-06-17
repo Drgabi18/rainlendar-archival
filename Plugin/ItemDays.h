@@ -16,20 +16,19 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemDays.h,v 1.1.1.1 2001/10/29 18:56:23 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemDays.h,v 1.2 2002/05/23 17:33:41 rainy Exp $
 
   $Log: ItemDays.h,v $
+  Revision 1.2  2002/05/23 17:33:41  rainy
+  Removed all MFC stuff
+
   Revision 1.1.1.1  2001/10/29 18:56:23  rainy
   Moved to CVS
 
 */
 
-#if !defined(AFX_ITEMDAYS_H__7F453363_F122_11D3_92A3_0080AD90417B__INCLUDED_)
-#define AFX_ITEMDAYS_H__7F453363_F122_11D3_92A3_0080AD90417B__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#ifndef __ITEMDAYS_H__
+#define __ITEMDAYS_H__
 
 #include "Item.h"
 
@@ -40,7 +39,7 @@ public:
 	virtual ~CItemDays();
 
 	void Initialize();
-	void Paint(CDC& dc);
+	void Paint(HDC dc);
 	int HitTest(int x, int y);
 
 	int GetX();
@@ -52,4 +51,4 @@ private:
 	int m_DaysInMonth;
 };
 
-#endif // !defined(AFX_ITEMDAYS_H__7F453363_F122_11D3_92A3_0080AD90417B__INCLUDED_)
+#endif

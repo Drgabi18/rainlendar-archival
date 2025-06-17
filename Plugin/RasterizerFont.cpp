@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.cpp,v 1.3 2002/02/27 18:41:48 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.cpp,v 1.5 2002/05/30 18:23:27 rainy Exp $
 
   $Log: RasterizerFont.cpp,v $
+  Revision 1.5  2002/05/30 18:23:27  rainy
+  Rect is now zeroed before used.
+
+  Revision 1.4  2002/05/23 17:33:40  rainy
+  Removed all MFC stuff
+
   Revision 1.3  2002/02/27 18:41:48  rainy
   Alignment takes now 9 different positions.
 
@@ -30,15 +36,10 @@
 
 */
 
-#include "stdafx.h"
+#pragma warning(disable: 4786)
+
 #include "RasterizerFont.h"
 #include "Error.h"
-
-#ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
-#endif
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -46,19 +47,12 @@ static char THIS_FILE[]=__FILE__;
 
 CRasterizerFont::CRasterizerFont()
 {
-	m_StringTable=NULL;
+	m_Font = NULL;
 }
 
 CRasterizerFont::~CRasterizerFont()
 {
-	if(m_StringTable!=NULL) {
-		int i=0;
-		while(m_StringTable[i]!=NULL) {
-			delete [] m_StringTable[i++];
-		}
-		delete [] m_StringTable;
-		m_StringTable=NULL;
-	}
+	if (m_Font) DeleteObject(m_Font);
 }
 
 /* 
@@ -67,27 +61,37 @@ CRasterizerFont::~CRasterizerFont()
 ** Tokenizes the given string for names
 **
 */
-void CRasterizerFont::CreateStringTable(CString& String, int Count)
+void CRasterizerFont::CreateStringTable(const std::string& text, int count)
 {
-	int Index, i, Start;
+	std::string items = text;
+	int pos = 0;
+	int counter = 0;
 
-	m_StringTable=new char*[Count+1];
-	if(m_StringTable==NULL) throw ERR_OUTOFMEM;
-
-	Start=0;
-	for(i=0; i<Count; i++) {
-		Index=String.Find('/', Start);
-		if(Index==-1) Index=String.GetLength();
-
-		m_StringTable[i]=new char[Index-Start+1];
-		if(m_StringTable[i]==NULL) throw ERR_OUTOFMEM;
-		strcpy(m_StringTable[i], String.Mid(Start, Index-Start));
-
-		Start=Index+1;
+	m_StringTable.clear();
+	
+	while(pos != -1)
+	{
+		pos = items.find('/');
+		if (pos != -1)
+		{
+			m_StringTable.push_back(std::string(items.begin(), items.begin() + pos));
+			items.erase(items.begin(), items.begin() + pos + 1);
+		}
+		else
+		{
+			m_StringTable.push_back(items);
+		}
+		counter++;
 	}
 
-	// Set the last one to NULL
-	m_StringTable[i]=NULL;
+	if (counter != count)
+	{
+		std::string err = "String: \"";
+		err += text;
+		err += "\" has incorrect number of items!";
+	
+		throw CError(err);
+	}
 }
 
 /* 
@@ -97,7 +101,7 @@ void CRasterizerFont::CreateStringTable(CString& String, int Count)
 ** separator for the fields.
 **
 */
-void CRasterizerFont::SetFont(CString& FontName)
+void CRasterizerFont::SetFont(const std::string& FontName)
 {
 	int nHeight;
 	int nWidth;
@@ -113,27 +117,31 @@ void CRasterizerFont::SetFont(CString& FontName)
 	BYTE nQuality;
 	BYTE nPitchAndFamily;
 
-	sscanf(FontName, "%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i", 
+	sscanf(FontName.c_str(), "%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i", 
 					&nHeight, &nWidth, &nEscapement, &nOrientation, &nWeight,
 					&bItalic, &bUnderline, &cStrikeOut, &nCharSet, &nOutPrecision, 
 					&nClipPrecision, &nQuality, &nPitchAndFamily);
 
-	if(0==m_Font.CreateFont( 
-		nHeight, 
-		nWidth, 
-		nEscapement, 
-		nOrientation, 
-		nWeight, 
-		bItalic, 
-		bUnderline, 
-		cStrikeOut, 
-		nCharSet, 
-		nOutPrecision, 
-		nClipPrecision, 
-		nQuality, 
-		nPitchAndFamily, 
-		FontName.Mid(FontName.ReverseFind('/')+1)
-		)) throw ERR_CREATEFONT;
+	int pos = FontName.rfind('/');
+	std::string name(FontName.begin() + pos, FontName.end());
+
+	m_Font = CreateFont( 
+				nHeight, 
+				nWidth, 
+				nEscapement, 
+				nOrientation, 
+				nWeight, 
+				bItalic, 
+				bUnderline, 
+				cStrikeOut, 
+				nCharSet, 
+				nOutPrecision, 
+				nClipPrecision, 
+				nQuality, 
+				nPitchAndFamily, 
+				name.c_str());
+
+	if (m_Font == NULL) throw CError(CError::ERR_CREATEFONT);
 }
 
 /* 
@@ -142,49 +150,45 @@ void CRasterizerFont::SetFont(CString& FontName)
 ** Calculates the maximum dimensions
 **
 */
-void CRasterizerFont::UpdateDimensions(char* DefaultString)
+void CRasterizerFont::UpdateDimensions(const char* defaultString)
 {
-	char* String;
-	int i=0;
 	HWND Desktop;
 	HDC DDC;
 	HDC tmpDC;
 	HFONT OldFont;
-	RECT Rect;
+	RECT Rect = {0, 0, 0, 0};
 
 	Desktop=GetDesktopWindow();
-	if(Desktop==NULL) throw ERR_TEXTDIMENSIONS;
+	if(Desktop==NULL) throw CError(CError::ERR_TEXTDIMENSIONS);
 	DDC=GetDC(Desktop);
-	if(DDC==NULL) throw ERR_TEXTDIMENSIONS;
+	if(DDC==NULL) throw CError(CError::ERR_TEXTDIMENSIONS);
 
 	tmpDC=CreateCompatibleDC(DDC);
-	if(tmpDC==NULL) throw ERR_OUTOFMEM;
+	if(tmpDC==NULL) throw CError(CError::ERR_OUTOFMEM);
 
 	ReleaseDC(Desktop, DDC);
 
-	OldFont=(HFONT)SelectObject(tmpDC, m_Font);
+	OldFont = (HFONT)SelectObject(tmpDC, m_Font);
 
-	m_Width=0;
-	m_Height=0;
+	m_Width = 0;
+	m_Height = 0;
 
-	// Loop all strings and find the largest
-
-	if(m_StringTable==NULL) {
-		String=DefaultString;
-	} else {
-		String=m_StringTable[i++];
+	if (defaultString)
+	{
+		DrawText(tmpDC, defaultString, strlen(defaultString), &Rect, DT_CALCRECT | DT_SINGLELINE);
+	
+		m_Width = Rect.right - Rect.left;
+		m_Height = Rect.bottom - Rect.top;
 	}
-
-	while(String!=NULL) {
-		DrawText(tmpDC, String, strlen(String), &Rect, DT_CALCRECT | DT_SINGLELINE);
-
-		m_Width=max(Rect.right-Rect.left, m_Width);
-		m_Height=max(Rect.bottom-Rect.top, m_Height);
-
-		if(m_StringTable==NULL) {
-			String=NULL;
-		} else {
-			String=m_StringTable[i++];
+	else
+	{
+		// Loop all strings and find the largest
+		for (int i = 0; i < m_StringTable.size(); i++)
+		{
+			DrawText(tmpDC, m_StringTable[i].c_str(), m_StringTable[i].size(), &Rect, DT_CALCRECT | DT_SINGLELINE);
+		
+			m_Width = max(Rect.right - Rect.left, m_Width);
+			m_Height = max(Rect.bottom - Rect.top, m_Height);
 		}
 	}
 
@@ -198,57 +202,57 @@ void CRasterizerFont::UpdateDimensions(char* DefaultString)
 ** Paints the given part of the image. W & H are for align.
 **
 */
-void CRasterizerFont::Paint(CDC& dc, int X, int Y, int W, int H, int Index)
+void CRasterizerFont::Paint(HDC dc, int X, int Y, int W, int H, int Index)
 {
-	CFont* OldFont;
-	UINT Format = 0;
-	CRect Rect(X, Y, X+W, Y+H);
+	HFONT oldFont;
+	UINT format = 0;
+	RECT rect = { X, Y, X + W, Y + H };
 	char tmpSz[16];
-	char* String;
 
 	// Set the alignment
 	switch (m_Align & 0x0F)
 	{
 	case CRasterizer::ALIGN_LEFT:
-		Format |= DT_LEFT;
+		format |= DT_LEFT;
 		break;
 
 	case CRasterizer::ALIGN_HCENTER:
-		Format |= DT_CENTER;
+		format |= DT_CENTER;
 		break;
 
 	case CRasterizer::ALIGN_RIGHT:
-		Format |= DT_RIGHT;
+		format |= DT_RIGHT;
 		break;
 	};
 
 	switch (m_Align & 0x0F0)
 	{
 	case CRasterizer::ALIGN_TOP:
-		Format |= DT_TOP;
+		format |= DT_TOP;
 		break;
 
 	case CRasterizer::ALIGN_VCENTER:
-		Format |= DT_VCENTER;
+		format |= DT_VCENTER;
 		break;
 
 	case CRasterizer::ALIGN_BOTTOM:
-		Format |= DT_BOTTOM;
+		format |= DT_BOTTOM;
 		break;
 	};
 
-	Format |= DT_NOCLIP | DT_SINGLELINE;
+	format |= DT_NOCLIP | DT_SINGLELINE;
 
-	if(m_StringTable==NULL) {
+	oldFont = (HFONT)SelectObject(dc, m_Font);
+
+	if(m_StringTable.empty()) 
+	{
 		sprintf(tmpSz, "%i", Index);
-		String=tmpSz;
-	} else {
-		String=m_StringTable[Index];
+		DrawText(dc, tmpSz, strlen(tmpSz), &rect, format);
+	} 
+	else 
+	{
+		DrawText(dc, m_StringTable[Index].c_str(), m_StringTable[Index].size(), &rect, format);
 	}
 
-	OldFont=dc.SelectObject(&m_Font);
-	
-	dc.DrawText( String, strlen(String), Rect, Format );
-
-	dc.SelectObject(OldFont);
+	SelectObject(dc, oldFont);
 }

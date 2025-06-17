@@ -1,0 +1,70 @@
+/*
+  Copyright (C) 2001 Kimmo Pekkola
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+/*
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Error.cpp,v 1.1 2002/05/30 18:27:33 rainy Exp $
+
+  $Log: Error.cpp,v $
+  Revision 1.1  2002/05/30 18:27:33  rainy
+  Initial version
+
+*/
+
+#include "Error.h"
+#include <stdio.h>
+
+const char* CError::c_ErrorStrings[] = 
+{
+	"No Errors!",
+	"Out of memory!",
+	"Unable to create the window class!",
+	"Unable to create the main window!",
+	"Unable to fetch the desktop's background!",
+	"Background and it's alpha-map must be same size!!",
+	"Bitmap and it's alpha-map must be same size!!",
+	"Unable to create font!",
+	"Unable to calculate text dimensions!",
+	"NULL parameter!",
+};
+
+/* 
+** GetString
+**
+** Returns the error string
+**
+*/
+const std::string& CError::GetString()
+{
+	static char Buffer[16];
+
+	if (m_Error != ERR_USER) 
+	{
+		m_String = c_ErrorStrings[m_Error];
+		if (m_File) 
+		{
+			sprintf(Buffer, "%i", m_Line);
+
+			m_String += "\n(";
+			m_String += m_File;
+			m_String += " : ";
+			m_String += Buffer;
+			m_String += ")";
+		}
+	}
+
+	return m_String; 
+}

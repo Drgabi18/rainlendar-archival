@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Host/Rainlendar.cpp,v 1.4 2002/02/27 18:14:19 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Host/Rainlendar.cpp,v 1.5 2002/05/30 18:23:03 rainy Exp $
 
   $Log: Rainlendar.cpp,v $
+  Revision 1.5  2002/05/30 18:23:03  rainy
+  Removed Litestep specific stuff
+
   Revision 1.4  2002/02/27 18:14:19  rainy
   Rainlendar !Bangs can be given as arguments.
 
@@ -35,15 +38,16 @@
 */
 
 #include "resource.h"
-#include "lsapi\lsapi.h"
+#include <windows.h>
+#include <stdio.h>
 
 BOOL InitApplication(HINSTANCE);
 HWND InitInstance(HINSTANCE, INT);
 LONG APIENTRY MainWndProc(HWND, UINT, UINT, LONG);
 void Bang(HWND hWnd, const char* command);
 
-static char* WinClass;
-static char* WinName;
+static char* WinClass = "DummyRainWClass";
+static char* WinName = "Rainlendar control window";
 
 extern "C" {
 __declspec( dllimport ) int initModuleEx(HWND ParentWnd, HINSTANCE dllInst, LPCSTR);
@@ -58,18 +62,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	char Message[2048];
 	int Length, Pos;
 	MSG msg;
-
-	// If Litestep is not running disquise this window as Litestep's so that LoadBitmap works
-	if(NULL==GetLitestepWnd()) 
-	{
-		WinClass="TApplication";
-		WinName="LiteStep";
-	} 
-	else 
-	{
-		WinClass="DummyRainWClass";
-		WinName="Rainlendar control window";
-	}
 
 	if(lpCmdLine==NULL || lpCmdLine[0]=='\0') 
 	{
@@ -117,8 +109,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	// Initialize from exe
 	Initialize(true, lpCmdLine);
-
-	LitestepAPIInit();
 
 	HMODULE module = GetModuleHandle("Rainlendar.dll");
 	if(module == NULL)

@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.h,v 1.3 2002/02/27 18:59:00 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.h,v 1.4 2002/05/23 17:33:42 rainy Exp $
 
   $Log: Background.h,v $
+  Revision 1.4  2002/05/23 17:33:42  rainy
+  Removed all MFC stuff
+
   Revision 1.3  2002/02/27 18:59:00  rainy
   Fixed multimonitor stuff.
   Added support for background stretching.
@@ -31,12 +34,8 @@
 
 */
 
-#if !defined(AFX_BACKGROUND_H__C7D0FDBE_F062_11D3_92A3_0080AD90417B__INCLUDED_)
-#define AFX_BACKGROUND_H__C7D0FDBE_F062_11D3_92A3_0080AD90417B__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#ifndef __BACKGROUND_H__
+#define __BACKGROUND_H__
 
 class CBackground
 {
@@ -51,12 +50,10 @@ public:
 	CBackground();
 	~CBackground();
 
-	void Load(CString& Filename);
-	void Create(int Width, int Height);
-	void CopyBackground(int Width, int Height);
-	void Paint(CDC& dc);
-
-	void SetWindow(CWnd* CalendarWindow) { m_CalendarWindow=CalendarWindow; };
+	void Load(std::string Filename);
+	void Create(int X, int Y, int Width, int Height);
+	void CopyBackground(int X, int Y, int Width, int Height);
+	void Paint(HDC dc);
 
 	int GetWidth() { return m_Width; };
 	int GetHeight() { return m_Height; };
@@ -66,21 +63,15 @@ public:
 	bool HasAlpha() { return m_Alpha; };
 
 private:
-	HBITMAP GetWallpaper();
+	HBITMAP GetWallpaper(int X, int Y, int Width, int Height);
 
-	CString m_Filename;
-	
+	std::string m_Filename;
 	int m_Width;
 	int m_Height;
-
-	CWnd* m_CalendarWindow;
-
 	bool m_Alpha;
-
-	CBitmap m_AlphaImage;
-	CBitmap m_Image;
-
-	CBitmap m_Background;	// The background picture
+	HBITMAP m_AlphaImage;
+	HBITMAP m_Image;
+	HBITMAP m_Background;	// The background picture
 };
 
-#endif // !defined(AFX_BACKGROUND_H__C7D0FDBE_F062_11D3_92A3_0080AD90417B__INCLUDED_)
+#endif

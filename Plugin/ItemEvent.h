@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.h,v 1.3 2002/01/27 16:03:24 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.h,v 1.4 2002/05/23 17:33:41 rainy Exp $
 
   $Log: ItemEvent.h,v $
+  Revision 1.4  2002/05/23 17:33:41  rainy
+  Removed all MFC stuff
+
   Revision 1.3  2002/01/27 16:03:24  rainy
   Changed CEvent to CEventMessage to avoid name clash
 
@@ -31,12 +34,8 @@
 
 */
 
-#if !defined(AFX_ITEMEVENT_H__C0B109F3_3CA7_4DFE_9152_69C1C479DE2B__INCLUDED_)
-#define AFX_ITEMEVENT_H__C0B109F3_3CA7_4DFE_9152_69C1C479DE2B__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#ifndef __ITEMEVENT_H__
+#define __ITEMEVENT_H__
 
 #include "Item.h"
 #include "Event.h"
@@ -50,21 +49,21 @@ public:
 	virtual ~CItemEvent();
 
 	void Initialize();
-	void Paint(CDC& dc);
+	void Paint(HDC dc);
 
 	CEventMessage* GetEvent(int Index) { return m_Events[Index]; };
 
 	void AddToolTips(CCalendarWindow* CalendarWnd);
 
 protected:
-	void SetFont(CString& FontName);
+	void SetFont(const std::string& FontName);
 	void AddToolTip(CCalendarWindow* CalendarWnd, RECT* Rect, int Day);
 	void RemoveToolTip(CCalendarWindow* CalendarWnd, int Day);
 
 	void ReadEvents();
 
-	CFont m_EventFont;
+	HFONT m_EventFont;
 	CEventMessage* m_Events[32];
 };
 
-#endif // !defined(AFX_ITEMEVENT_H__C0B109F3_3CA7_4DFE_9152_69C1C479DE2B__INCLUDED_)
+#endif

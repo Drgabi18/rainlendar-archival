@@ -16,20 +16,19 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemWeekNumbers.h,v 1.1 2002/01/10 16:40:37 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemWeekNumbers.h,v 1.2 2002/05/23 17:33:40 rainy Exp $
 
   $Log: ItemWeekNumbers.h,v $
+  Revision 1.2  2002/05/23 17:33:40  rainy
+  Removed all MFC stuff
+
   Revision 1.1  2002/01/10 16:40:37  rainy
   Initial version
 
 */
 
-#if !defined(AFX_ITEMWEEKNUMBERS_H__CC665490_4370_400D_9903_3471FD1AB032__INCLUDED_)
-#define AFX_ITEMWEEKNUMBERS_H__CC665490_4370_400D_9903_3471FD1AB032__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#ifndef __ITEMWEEKNUMBERS_H__
+#define __ITEMWEEKNUMBERS_H__
 
 #include "Item.h"
 
@@ -40,7 +39,7 @@ public:
 	virtual ~CItemWeekNumbers();
 
 	void Initialize();
-	void Paint(CDC& dc);
+	void Paint(HDC dc);
 };
 
-#endif // !defined(AFX_ITEMWEEKNUMBERS_H__CC665490_4370_400D_9903_3471FD1AB032__INCLUDED_)
+#endif

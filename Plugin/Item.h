@@ -16,20 +16,19 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Item.h,v 1.1.1.1 2001/10/29 18:56:23 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Item.h,v 1.2 2002/05/23 17:33:41 rainy Exp $
 
   $Log: Item.h,v $
+  Revision 1.2  2002/05/23 17:33:41  rainy
+  Removed all MFC stuff
+
   Revision 1.1.1.1  2001/10/29 18:56:23  rainy
   Moved to CVS
 
 */
 
-#if !defined(AFX_ITEM_H__7F453361_F122_11D3_92A3_0080AD90417B__INCLUDED_)
-#define AFX_ITEM_H__7F453361_F122_11D3_92A3_0080AD90417B__INCLUDED_
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
+#ifndef __ITEM_H__
+#define __ITEM_H__
 
 #include "Rasterizer.h"
 
@@ -45,7 +44,7 @@ public:
 	virtual ~CItem();
 
 	virtual void Initialize() = 0;
-	virtual void Paint(CDC& dc) = 0;
+	virtual void Paint(HDC dc) = 0;
 
 	CRasterizer* GetRasterizer() { return m_Rasterizer; };
 	void SetRasterizer(CRasterizer* Rasterizer);
@@ -59,9 +58,11 @@ public:
 	static void SetDayType(int Index, int DayType) { c_DayTypes[Index]|=DayType; };		// Note the OR !!
 
 protected:
+	UINT GetDaysInMonth(int year, int month);
+
 	CRasterizer* m_Rasterizer;
 
 	static int c_DayTypes[32];
 };
 
-#endif // !defined(AFX_ITEM_H__7F453361_F122_11D3_92A3_0080AD90417B__INCLUDED_)
+#endif

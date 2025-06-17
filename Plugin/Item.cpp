@@ -16,29 +16,21 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Item.cpp,v 1.1.1.1 2001/10/29 18:56:23 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Item.cpp,v 1.2 2002/05/23 17:33:41 rainy Exp $
 
   $Log: Item.cpp,v $
+  Revision 1.2  2002/05/23 17:33:41  rainy
+  Removed all MFC stuff
+
   Revision 1.1.1.1  2001/10/29 18:56:23  rainy
   Moved to CVS
 
 */
 
-#include "stdafx.h"
 #include "RainlendarDLL.h"
 #include "Item.h"
 
-#ifdef _DEBUG
-#undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
-#endif
-
 int CItem::c_DayTypes[32];
-
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
 
 CItem::CItem()
 {
@@ -56,3 +48,14 @@ void CItem::SetRasterizer(CRasterizer* Rasterizer)
 	m_Rasterizer=Rasterizer;
 }
 
+UINT CItem::GetDaysInMonth(int year, int month)
+{
+	UINT dates[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+	if (month == 2 && ((((year % 4) == 0) && ((year % 100) != 0)) || (year % 400) == 0))
+	{
+		return 29;
+	}
+
+	return dates[month - 1];
+}

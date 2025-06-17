@@ -16,26 +16,21 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/EditEvent.h,v 1.3 2002/05/23 17:33:41 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ConfigDialog.h,v 1.1 2002/05/30 18:27:25 rainy Exp $
 
-  $Log: EditEvent.h,v $
-  Revision 1.3  2002/05/23 17:33:41  rainy
-  Removed all MFC stuff
-
-  Revision 1.2  2002/01/10 16:47:15  rainy
-  Added support for bitmap/color,
-
-  Revision 1.1.1.1  2001/10/29 18:56:23  rainy
-  Moved to CVS
+  $Log: ConfigDialog.h,v $
+  Revision 1.1  2002/05/30 18:27:25  rainy
+  Initial version
 
 */
 
-#ifndef _EDITEVENT_H_
-#define _EDITEVENT_H_
+#ifndef _CONFIGDIALOG_H_
+#define _CONFIGDIALOG_H_
 
 #include "CalendarWindow.h"
 
-BOOL CALLBACK EditEventProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
+VOID OpenConfigDialog(HWND hwndOwner, HINSTANCE instance);
+void AddStatusString(const char* string);
 
 #endif
 
