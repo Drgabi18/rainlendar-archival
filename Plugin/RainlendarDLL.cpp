@@ -198,6 +198,17 @@ void RainlendarConfig(HWND, const char* arg)
 }
 
 /*
+** RainlendarSkinConfig
+**
+** Callback for the !RainlendarConfig bang
+**
+*/
+void RainlendarEditSkin(HWND, const char* arg)
+{
+	Rainlendar.ShowEditSkin();
+}
+
+/*
 ** RainlendarQuit
 **
 ** Callback for the !RainlendarQuit bang
@@ -340,6 +351,7 @@ int CRainlendar::Initialize(HWND Parent, HINSTANCE Instance, bool wd, LPCSTR szP
 		AddBangCommand("!RainlendarShow", RainlendarShow);
 		AddBangCommand("!RainlendarRefresh", RainlendarRefresh);
 		AddBangCommand("!RainlendarConfig", RainlendarConfig);
+		AddBangCommand("!RainlendarEditSkin", RainlendarEditSkin);
 		AddBangCommand("!RainlendarQuit", RainlendarQuit);
 		AddBangCommand("!RainlendarShowNext", RainlendarShowNext);
 		AddBangCommand("!RainlendarShowPrev", RainlendarShowPrev);
@@ -370,6 +382,7 @@ void CRainlendar::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainlendarShow");
 		RemoveBangCommand("!RainlendarRefresh");
 		RemoveBangCommand("!RainlendarConfig");
+		RemoveBangCommand("!RainlendarEditSkin");
 		RemoveBangCommand("!RainlendarQuit");
 		RemoveBangCommand("!RainlendarShowNext");
 		RemoveBangCommand("!RainlendarShowPrev");

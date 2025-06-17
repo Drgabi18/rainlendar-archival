@@ -51,6 +51,14 @@
 class CConfig  
 {
 public:
+	enum WRITE_FLAGS
+	{
+		WRITE_POS = 1,
+		WRITE_CONFIG = 2,
+		WRITE_FULL = 3,		// FULL is 1 + 2
+		WRITE_SKIN = 4
+	};
+
 	enum WINDOWPOS 
 	{
 		WINDOWPOS_ONBOTTOM,
@@ -65,6 +73,13 @@ public:
 	void SetPath(const std::string& Path) { m_Path=Path; };
 	const std::string& GetEventsPath() { return m_EventsPath; };
 	void SetEventsPath(const std::string& EventsPath) { m_EventsPath=EventsPath; };
+	const std::string& GetSkinsPath() { return m_SkinsPath; };
+	void SetSkinsPath(const std::string& SkinsPath) { m_SkinsPath=SkinsPath; };
+	const std::string& GetCurrentSkin() { return m_CurrentSkin; };
+	void SetCurrentSkin(const std::string& CurrentSkin) { m_CurrentSkin=CurrentSkin; };
+	const std::string& GetCurrentSkinIni() { return m_CurrentSkinIni; };
+	void SetCurrentSkinIni(const std::string& CurrentSkinIni) { m_CurrentSkinIni=CurrentSkinIni; };
+
 	const std::string GetMonthName(int index) { return m_MonthName[index]; };
 
 	// General
@@ -115,6 +130,7 @@ public:
 	COLORREF GetDaysFontColor() { return m_DaysFontColor; };
 	bool GetDaysIgnoreToday() { return m_DaysIgnoreToday; };
 	bool GetDaysIgnoreEvent() { return m_DaysIgnoreEvent; };
+	int GetDaysSeparation() { return m_DaysSeparation; };
 
 	void SetDaysEnable(bool DaysEnable ) { m_DaysEnable=DaysEnable; };
 	void SetDaysH(int DaysH ) { m_DaysH=DaysH; };
@@ -129,6 +145,7 @@ public:
 	void SetDaysFontColor(COLORREF DaysFontColor ) { m_DaysFontColor=DaysFontColor; };
 	void SetDaysIgnoreToday(bool DaysIgnoreToday ) { m_DaysIgnoreToday=DaysIgnoreToday; };
 	void SetDaysIgnoreEvent(bool DaysIgnoreEvent ) { m_DaysIgnoreEvent=DaysIgnoreEvent; };
+	void SetDaysSeparation(int separation) { m_DaysSeparation = separation; };
 
 	// Today
 	bool GetTodayEnable() { return m_TodayEnable; };
@@ -138,6 +155,7 @@ public:
 	CRasterizer::TYPE GetTodayRasterizer() { return m_TodayRasterizer; };
 	COLORREF GetTodayFontColor() { return m_TodayFontColor; };
 	std::string GetTodayFont() { return m_TodayFont; };
+	int GetTodaySeparation() { return m_TodaySeparation; };
 
 	void SetTodayEnable(bool TodayEnable ) { m_TodayEnable=TodayEnable; };
 	void SetTodayAlign(CRasterizer::ALIGN TodayAlign ) { m_TodayAlign=TodayAlign; };
@@ -146,6 +164,7 @@ public:
 	void SetTodayRasterizer(CRasterizer::TYPE TodayRasterizer ) { m_TodayRasterizer=TodayRasterizer; };
 	void SetTodayFontColor(COLORREF TodayFontColor ) { m_TodayFontColor=TodayFontColor; };
 	void SetTodayFont(std::string TodayFont ) { m_TodayFont=TodayFont; };
+	void SetTodaySeparation(int separation) { m_TodaySeparation = separation; };
 
 	// Weekdays
 	bool GetWeekdaysEnable() { return m_WeekdaysEnable; };
@@ -190,6 +209,7 @@ public:
     const std::string& GetYearFont() { return m_YearFont; };
 	CRasterizer::TYPE GetYearRasterizer() { return m_YearRasterizer; };
 	COLORREF GetYearFontColor() { return m_YearFontColor; };
+	int GetYearSeparation() { return m_YearSeparation; };
 
 	void SetYearEnable(bool YearEnable ) { m_YearEnable=YearEnable; };
 	void SetYearBitmapName(const std::string& YearBitmapName ) { m_YearBitmapName=YearBitmapName; };
@@ -199,6 +219,7 @@ public:
 	void SetYearFont(const std::string& YearFont ) { m_YearFont=YearFont; };
 	void SetYearRasterizer(CRasterizer::TYPE YearRasterizer ) { m_YearRasterizer=YearRasterizer; };
 	void SetYearFontColor(COLORREF YearFontColor ) { m_YearFontColor=YearFontColor; };
+	void SetYearSeparation(int separation) { m_YearSeparation = separation; };
 
 	// Event
 	bool GetEventEnable() { return m_EventEnable; };
@@ -214,6 +235,7 @@ public:
 	bool GetEventInCalendar() { return m_EventInCalendar; };
 	COLORREF GetEventFontColor2() { return m_EventFontColor2; };
     const std::string& GetEventFont2() { return m_EventFont2; };
+	int GetEventSeparation() { return m_EventSeparation; };
 
 	void SetEventExecute(const std::string& EventExecute ) { m_EventExecute=EventExecute; };
 	void SetEventFont(const std::string& EventFont ) { m_EventFont=EventFont; };
@@ -228,6 +250,7 @@ public:
 	void SetEventInCalendar(bool EventInCalendar) { m_EventInCalendar=EventInCalendar; };
 	void SetEventFont2(const std::string& EventFont2 ) { m_EventFont2=EventFont2; };
 	void SetEventFontColor2(COLORREF EventFontColor2 ) { m_EventFontColor2=EventFontColor2; };
+	void SetEventSeparation(int separation) { m_EventSeparation = separation; };
 
 	// Week numbers
 	bool GetWeekNumbersEnable() { return m_WeekNumbersEnable; };
@@ -237,6 +260,7 @@ public:
 	CRasterizer::TYPE GetWeekNumbersRasterizer() { return m_WeekNumbersRasterizer; };
 	COLORREF GetWeekNumbersFontColor() { return m_WeekNumbersFontColor; };
 	int GetWeekNumbersNumOfComponents() { return m_WeekNumbersNumOfComponents; };
+	int GetWeekNumbersSeparation() { return m_WeekNumbersSeparation; };
 
 	void SetWeekNumbersEnable(bool WeekNumbersEnable ) { m_WeekNumbersEnable=WeekNumbersEnable; };
 	void SetWeekNumbersBitmapName(const std::string& WeekNumbersBitmapName ) { m_WeekNumbersBitmapName=WeekNumbersBitmapName; };
@@ -245,6 +269,7 @@ public:
 	void SetWeekNumbersRasterizer(CRasterizer::TYPE WeekNumbersRasterizer ) { m_WeekNumbersRasterizer=WeekNumbersRasterizer; };
 	void SetWeekNumbersFontColor(COLORREF WeekNumbersFontColor ) { m_WeekNumbersFontColor=WeekNumbersFontColor; };
 	void SetWeekNumbersNumOfComponents(int WeekNumbersNumOfComponents ) { m_WeekNumbersNumOfComponents=WeekNumbersNumOfComponents; };
+	void SetWeekNumbersSeparation(int separation) { m_WeekNumbersSeparation = separation; };
 
 	// Server
 	UINT GetServerFrequency() { return m_ServerFrequency; };
@@ -262,17 +287,29 @@ public:
 	void SetServerEnable(bool ServerEnable ) { m_ServerEnable=ServerEnable; };
 
 	void ReadConfig();
-	void WriteConfig();
+	void WriteConfig(WRITE_FLAGS flags);
 
 private:
+	void GetIniTime(const std::string& filename);
+	bool CompareIniTime(const std::string& filename);
+
+	void ReadGeneralConfig(const char* iniFile);
+	void ReadSkinConfig(const char* iniFile);
+
 	CRasterizer::TYPE ConvertRasterizer(const char* String);
 	const char* ConvertRasterizer(CRasterizer::TYPE Type);
 	void SeparateMonths();
 
+	FILETIME m_WriteTime;	// Last write time for the events.ini
+
 	std::string m_Path;				// Path to the .ini file
 	std::string m_EventsPath;		// Path to the events.ini file
+	std::string m_SkinsPath;		// Path to the skins folder
+	std::string m_CurrentSkin;		// Name of the current skin path
+	std::string m_CurrentSkinIni;	// Name of the current skin ini-file
 	std::vector<std::string> m_MonthName;
 
+	// General settings
 	int m_X;					// Position ot the main window
 	int m_Y;
 	bool m_StartFromMonday;
@@ -282,12 +319,24 @@ private:
 	bool m_PollWallpaper;
 	bool m_Movable;
 	bool m_MouseHide;
-	std::string m_BackgroundBitmapName;	// Name of the background picture
 	std::string m_MonthNames;
 	std::string m_WeekdayNames;
 	int m_RefreshDelay;
-	CBackground::MODE m_BackgroundMode;
 	WINDOWPOS m_WindowPos;
+	std::string m_EventExecute;
+	bool m_EventToolTips;
+	bool m_EventMessageBox;
+
+	bool m_ServerEnable;
+	std::string m_ServerID;
+	std::string m_ServerAddress;
+	UINT m_ServerPort;
+	UINT m_ServerFrequency;
+	bool m_ServerStartup;
+
+	// Skinning settings
+	std::string m_BackgroundBitmapName;	// Name of the background picture
+	CBackground::MODE m_BackgroundMode;
 
 	bool m_DaysEnable;
 	std::string m_DaysBitmapName;	// Name of the day number bitmap
@@ -302,6 +351,7 @@ private:
 	COLORREF m_DaysFontColor;
 	bool m_DaysIgnoreToday;
 	bool m_DaysIgnoreEvent;
+	int m_DaysSeparation;		// Separation between components
 
 	bool m_TodayEnable;
 	std::string m_TodayBitmapName;	// Name of the today bitmap
@@ -310,6 +360,7 @@ private:
 	CRasterizer::TYPE m_TodayRasterizer;
 	std::string m_TodayFont;
 	COLORREF m_TodayFontColor;
+	int m_TodaySeparation;		// Separation between components
 
 	bool m_WeekdaysEnable;
 	std::string m_WeekdaysBitmapName;	// Name of the today bitmap
@@ -335,6 +386,7 @@ private:
 	CRasterizer::TYPE m_YearRasterizer;
 	std::string m_YearFont;
 	COLORREF m_YearFontColor;
+	int m_YearSeparation;		// Separation between components
 
 	bool m_EventEnable;
 	std::string m_EventBitmapName;	// Name of the Event bitmap
@@ -343,12 +395,10 @@ private:
 	CRasterizer::TYPE m_EventRasterizer;
 	std::string m_EventFont;
 	COLORREF m_EventFontColor;
-	std::string m_EventExecute;
-	bool m_EventToolTips;
-	bool m_EventMessageBox;
 	bool m_EventInCalendar;
 	std::string m_EventFont2;
 	COLORREF m_EventFontColor2;
+	int m_EventSeparation;		// Separation between components
 
 	bool m_WeekNumbersEnable;
 	std::string m_WeekNumbersBitmapName;	// Name of the today bitmap
@@ -357,15 +407,7 @@ private:
 	std::string m_WeekNumbersFont;
 	COLORREF m_WeekNumbersFontColor;
 	int m_WeekNumbersNumOfComponents;	// Components in the bitmap
-
-	bool m_ServerEnable;
-	std::string m_ServerID;
-	std::string m_ServerAddress;
-	UINT m_ServerPort;
-	UINT m_ServerFrequency;
-	bool m_ServerStartup;
-
-	FILETIME m_WriteTime;	// Last write time for the events.ini
+	int m_WeekNumbersSeparation;		// Separation between components
 };
 
 #endif

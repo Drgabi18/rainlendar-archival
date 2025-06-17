@@ -16,35 +16,17 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Rasterizer.cpp,v 1.3 2002/05/23 17:33:40 rainy Exp $
+  $Header: $
 
-  $Log: Rasterizer.cpp,v $
-  Revision 1.3  2002/05/23 17:33:40  rainy
-  Removed all MFC stuff
-
-  Revision 1.2  2002/02/27 18:49:52  rainy
-  Added mode alignments
-
-  Revision 1.1.1.1  2001/10/29 18:56:24  rainy
-  Moved to CVS
-
+  $Log: $
 */
 
-#include "RainlendarDLL.h"
-#include "Rasterizer.h"
+#ifndef _SKINDIALOG_H_
+#define _SKINDIALOG_H_
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
+#include "CalendarWindow.h"
 
-CRasterizer::CRasterizer()
-{
-	m_Width=0;
-	m_Height=0;
-	m_Align = (ALIGN)(ALIGN_HCENTER + ALIGN_VCENTER);
-}
+VOID OpenSkinDialog(HWND hwndOwner, HINSTANCE instance);
 
-CRasterizer::~CRasterizer()
-{
+#endif
 
-}

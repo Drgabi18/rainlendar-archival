@@ -33,8 +33,6 @@
 #ifndef __NETWORKTHREAD_H__
 #define __NETWORKTHREAD_H__
 
-#include <clientconnector.h>
-
 // requestTypes
 enum
 {

@@ -54,7 +54,7 @@
 #define END_MESSAGEPROC } return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 #define APPNAME "Rainlendar"
-#define VERSION "0.10"
+#define VERSION "0.11"
 
 #define DLLDECL __declspec( dllexport )
 
@@ -63,6 +63,7 @@ void RainlendarHide(HWND caller, const char* arg);
 void RainlendarShow(HWND caller, const char* arg);
 void RainlendarRefresh(HWND caller, const char* arg);
 void RainlendarConfig(HWND caller, const char* arg);
+void RainlendarSkinConfig(HWND caller, const char* arg);
 void RainlendarQuit(HWND caller, const char* arg);
 void RainlendarShowNext(HWND caller, const char* arg);
 void RainlendarShowPrev(HWND caller, const char* arg);
@@ -85,6 +86,7 @@ public:
 	void ToggleWindow() { m_Calendar.ToggleWindow(); };
 	void RefreshWindow() { m_Calendar.RefreshWindow(); };
 	void ShowConfig() { m_Calendar.ShowConfig(); };
+	void ShowEditSkin() { m_Calendar.ShowEditSkin(); };
 	void ShowMonth(int Month, int Year) { m_Calendar.ShowMonth(Month, Year); };
 	void ShowNextMonth() { m_Calendar.ShowNextMonth(); };
 	void ShowPrevMonth() { m_Calendar.ShowPrevMonth(); };

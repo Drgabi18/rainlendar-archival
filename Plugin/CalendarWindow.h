@@ -75,8 +75,8 @@
 #include "ItemYear.h"
 #include "Resource.h"
 #include <windows.h>
-#include <string>
 #include <commctrl.h>
+#include <string>
 
 class CRainlendar;
 
@@ -91,6 +91,7 @@ public:
 
 	void RefreshWindow() { Refresh(); };
 	void ShowConfig() { OnCommand(ID_CONFIG, NULL); };
+	void ShowEditSkin() { OnCommand(ID_EDIT_SKIN, NULL); };
 	void QuitRainlendar() { OnCommand(ID_QUIT, NULL); };
 	void HideWindow() { ::ShowWindow(m_Window, SW_HIDE); m_Hidden = true; };
 	void ShowWindow() { ::ShowWindow(m_Window, SW_SHOWNOACTIVATE); m_Hidden = false; };
@@ -135,6 +136,7 @@ protected:
 	LRESULT OnCopyData(WPARAM wParam, LPARAM lParam);
 
 private:
+	void ReadSkins();
 	void PollWallpaper(bool set);
 	void FillMenu(HMENU Menu, int x, int y);
 	void Refresh();
@@ -154,7 +156,15 @@ private:
 	HDC m_DC;									// DC used with drawing
 	HBITMAP m_DoubleBuffer;						// Double buffer for flicker free drawing
 	HWND m_Window;								// Handle to the Rainlendar window
-	HINSTANCE m_Instance;						// Handle to the DLL
+	HINSTANCE m_DllInstance;					// Handle to the DLL
+	HINSTANCE m_Instance;						// Handle to the main instance
+
+	struct CONFIG 
+	{
+		std::string path;
+		std::vector<std::string> iniFiles;
+	};
+	std::vector<CONFIG> m_ConfigStrings;	    // All configs found in the given folder
 
 	std::string m_WallpaperName;
 	int m_Width;

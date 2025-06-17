@@ -44,6 +44,7 @@
 #include "RasterizerBitmap.h"
 #include "CalendarWindow.h"
 #include "Error.h"
+#include <math.h>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -55,6 +56,7 @@ CRasterizerBitmap::CRasterizerBitmap()
 	m_Alpha = false;
 	m_Bitmap = NULL;
 	m_AlphaBitmap = NULL;
+	m_Separation = 0;
 }
 
 CRasterizerBitmap::~CRasterizerBitmap()
@@ -83,7 +85,11 @@ void CRasterizerBitmap::Load(std::string filename)
 	// Check for absolute path
 	if(-1 == filename.find(':')) 
 	{
-		filename.insert(0, CCalendarWindow::c_Config.GetPath());
+		if (!CCalendarWindow::c_Config.GetCurrentSkin().empty())
+		{
+			filename.insert(0, CCalendarWindow::c_Config.GetCurrentSkin() + "\\");
+		}
+		filename.insert(0, CCalendarWindow::c_Config.GetSkinsPath());
 	} 
 
 	m_Bitmap = LoadLSImage(filename.c_str(), NULL);
@@ -145,7 +151,7 @@ void CRasterizerBitmap::Paint(HDC dc, int X, int Y, int W, int H, int Index)
 		ItemHeight = m_Height;
 	}
 
-	// We'll blit the numbers in reverse order, so lets find the number of the numbers ;-)
+	// Lets find the number of the numbers ;-)
 	Number = Index;
 	NumOfNums = 1;	// At least one number
 	if (m_NumOfComponents > 1) 
@@ -161,15 +167,15 @@ void CRasterizerBitmap::Paint(HDC dc, int X, int Y, int W, int H, int Index)
 	switch (m_Align & 0x0F)
 	{
 	case CRasterizer::ALIGN_LEFT:
-		X = X + NumOfNums * ItemWidth;
+		X = X;
 		break;
 
 	case CRasterizer::ALIGN_HCENTER:
-		X = X + (W - NumOfNums * ItemWidth) / 2 + NumOfNums * ItemWidth;
+		X = X + (W - (NumOfNums * ItemWidth + (NumOfNums - 1) * m_Separation)) / 2;
 		break;
 
 	case CRasterizer::ALIGN_RIGHT:
-		X = X + W;
+		X = X + W - (NumOfNums * ItemWidth + (NumOfNums - 1) * m_Separation);
 		break;
 	};
 
@@ -199,11 +205,20 @@ void CRasterizerBitmap::Paint(HDC dc, int X, int Y, int W, int H, int Index)
 		OldBitmap = (HBITMAP)SelectObject(tmpDC, m_Bitmap);
 
 		// Blit all necessary numbers
+		int power = pow(10, NumOfNums - 1);
 		do 
 		{
-			Number = Index % m_NumOfComponents;
-			Index = Index / m_NumOfComponents;
-			X -= ItemWidth;
+			if (m_NumOfComponents == 1)
+			{
+				Number = 0;
+				power = 0;
+			} 
+			else
+			{
+				Number = Index / power;
+				Index -= Number * power;
+				power /= 10;
+			}
 
 			if (m_Height > m_Width) 
 			{
@@ -213,7 +228,10 @@ void CRasterizerBitmap::Paint(HDC dc, int X, int Y, int W, int H, int Index)
 			{
 				TransparentBltLS(dc, X, Y, ItemWidth, ItemHeight, tmpDC, Number * ItemWidth, 0, RGB(255,0,255));
 			}
-		} while(Index > 0 && m_NumOfComponents > 1);
+
+			X += ItemWidth + m_Separation;
+
+		} while(power > 0 && m_NumOfComponents > 1);
 
 		SelectObject(tmpDC, OldBitmap);
 		DeleteDC(tmpDC);
@@ -237,7 +255,7 @@ void CRasterizerBitmap::PaintAlpha(HDC dc, int X, int Y, int NumOfNums, int Inde
 	HDC tmpDC2;
 	int FullWidth;	
 	int Number;
-	int tmpX, tmpIndex;
+	int tmpX;
 	int ItemWidth, ItemHeight;
 
 	if (m_Height > m_Width) 
@@ -254,20 +272,17 @@ void CRasterizerBitmap::PaintAlpha(HDC dc, int X, int Y, int NumOfNums, int Inde
 	}
 
 
-	FullWidth = NumOfNums * ItemWidth;
-	// Calculate the correct X
-	X = X - FullWidth;
+	FullWidth = NumOfNums * ItemWidth + (NumOfNums - 1 )* m_Separation;
 
 	tmpDC = CreateCompatibleDC(dc);
 	OldBitmap = (HBITMAP)SelectObject(tmpDC, m_Bitmap);
 
-	// Draw the alphablended bitmap
+	// Create the alphablended bitmap (must be of the same size as the background)
 	SourceBM = CreateCompatibleBitmap(tmpDC, FullWidth, ItemHeight);
 	AlphaBM = CreateCompatibleBitmap(tmpDC, FullWidth, ItemHeight);
 
 	tmpDC2 = CreateCompatibleDC(dc);
 	OldBitmap2 = (HBITMAP)SelectObject(tmpDC2, SourceBM);
-
 
 	// Hmm... probably should free allocated memory if it ran out. But in that
 	// situation everything is fucked up anyway, so who cares.
@@ -277,12 +292,23 @@ void CRasterizerBitmap::PaintAlpha(HDC dc, int X, int Y, int NumOfNums, int Inde
 
 	// Then we must get the correct component from the bitmap and alphamap
 
-	tmpX = FullWidth;
-	tmpIndex = Index;
-	do {
-		Number = tmpIndex % m_NumOfComponents;
-		tmpIndex = tmpIndex / m_NumOfComponents;
-		tmpX -= ItemWidth;
+	HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
+	RECT rect = { X, Y, FullWidth, ItemHeight };
+	tmpX = 0;
+	int power = pow(10, NumOfNums - 1);
+	do 
+	{
+		if (m_NumOfComponents == 1)
+		{
+			Number = 0;
+			power = 0;
+		} 
+		else
+		{
+			Number = Index / power;
+			Index -= Number * power;
+			power /= 10;
+		}
 
 		// Fetch the normal component
 		SelectObject(tmpDC, m_Bitmap);
@@ -299,20 +325,28 @@ void CRasterizerBitmap::PaintAlpha(HDC dc, int X, int Y, int NumOfNums, int Inde
 		SelectObject(tmpDC, m_AlphaBitmap);
 		SelectObject(tmpDC2, AlphaBM);
 
+		// Set the alpha to full transparency first
+		FillRect(tmpDC2, &rect, brush);
+
 		if(m_Height > m_Width) 
 		{
 			BitBlt(tmpDC2, tmpX, 0, ItemWidth, ItemHeight, tmpDC, 0, Number*ItemHeight, SRCCOPY);
 		} else {
 			BitBlt(tmpDC2, tmpX, 0, ItemWidth, ItemHeight, tmpDC, Number*ItemWidth, 0, SRCCOPY);
 		}
-	} while(tmpIndex>0 && m_NumOfComponents>1);
 
-	SelectObject(tmpDC2, OldBitmap2);
+		tmpX += ItemWidth + m_Separation;
 
-	// None of the bitmaps mustn't be in any DC!
-	CreateAlpha(SourceBM, AlphaBM, BackgroundBM);
+		SelectObject(tmpDC2, OldBitmap2);
 
-	SelectObject(tmpDC, SourceBM);
+		// None of the bitmaps mustn't be in any DC!
+		CreateAlpha(SourceBM, AlphaBM, BackgroundBM);
+
+	} while(power > 0 && m_NumOfComponents > 1);
+
+	DeleteObject(brush);
+
+	SelectObject(tmpDC, BackgroundBM);
 	BitBlt(dc, X, Y, FullWidth, ItemHeight, tmpDC, 0, 0, SRCCOPY);
 
 	SelectObject(tmpDC, OldBitmap);
@@ -356,7 +390,7 @@ HBITMAP CRasterizerBitmap::GetBackground(HDC dc, int X, int Y, int Width, int He
 /* 
 ** CreateAlpha
 **
-** Fills the Source-bitmap with new pixelvalues combined from Background, Source and Alpha.
+** Fills the Background-bitmap with new pixelvalues combined from Background, Source and Alpha.
 ** All bitmaps MUST be same size and same bitdepth. Only 16, 24 and 32 bit are supported.
 ** This is a classfunction!
 */
@@ -412,7 +446,7 @@ bool CRasterizerBitmap::CreateAlpha(HBITMAP Source, HBITMAP Alpha, HBITMAP Backg
 	}
 
 	dc=GetDC(GetDesktopWindow());
-	SetDIBits(dc, Source, 0, bm.bmHeight, BBuffer, &BI, DIB_RGB_COLORS);
+	SetDIBits(dc, Background, 0, bm.bmHeight, BBuffer, &BI, DIB_RGB_COLORS);
 	ReleaseDC(GetDesktopWindow(), dc);
 
 	delete [] BBuffer;

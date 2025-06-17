@@ -79,7 +79,7 @@ VOID OpenConfigDialog(HWND hwndOwner, HINSTANCE instance)
 
     if (PropertySheet(&psh) == IDOK)
 	{
-		CCalendarWindow::c_Config.WriteConfig();
+		CCalendarWindow::c_Config.WriteConfig(CConfig::WRITE_FULL);
 		// Refresh
 		SendMessage(GetRainlendar()->GetCalendarWindow().GetWindow(), WM_COMMAND, ID_REFRESH, NULL);
 	}

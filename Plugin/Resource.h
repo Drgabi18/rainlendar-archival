@@ -2,7 +2,8 @@
 // Microsoft Developer Studio generated include file.
 // Used by RainlendarDLL.rc
 //
-#define IDD_WEEKNUMBERS                 102
+#define IDD_BACKGROUND                  102
+#define IDD_WEEKNUMBERS                 103
 #define IDD_GENERAL                     106
 #define IDD_DAYS                        107
 #define IDD_WEEKDAYS                    108
@@ -31,6 +32,8 @@
 #define IDC_DAYS_BROWSE                 1011
 #define IDD_SERVER                      1011
 #define IDC_DAYS_COMPONENTS_10          1012
+#define IDD_PROPPAGE_MEDIUM             1012
+#define IDD_PROPPAGE_SMALL              1012
 #define IDC_DAYS_COMPONENTS_32          1013
 #define IDC_DAYS_ALIGN                  1014
 #define IDC_DAYS_IGNORE_TODAY           1015
@@ -121,13 +124,67 @@
 #define IDC_POLL_WALLPAPER              1110
 #define IDC_BACKGROUND_TILE             1111
 #define IDC_BACKGROUND_STRETCH          1112
-#define IDC_BACKGROUND_COPY             1113
+#define IDC_BACKGROUND_COPYWALLPAPER    1113
 #define IDC_WINDOW_MOVABLE              1114
 #define IDC_WINDOW_ONBOTTOM             1115
 #define IDC_WINDOW_NORMAL               1116
+#define IDC_DAY                         1116
 #define IDC_WINDOW_ONTOP                1117
 #define IDC_WINDOW_MOUSEHIDE            1118
-#define ID_RELOAD                       32771
+#define IDC_DAYS_SEPARATION             1132
+#define IDC_DAYS_BITMAP_FRAME           1135
+#define IDC_DAYS_FONT_FRAME             1136
+#define IDC_DAYS_BITMAP_STATIC          1140
+#define IDC_DAYS_COMPONENTS_STATIC      1141
+#define IDC_DAYS_SEPARATION_STATIC      1142
+#define IDC_DAYS_FONTCOLOR_STATIC       1143
+#define IDC_DAYS_FONT_STATIC            1144
+#define IDC_BACKGROUND_FILENAME         1149
+#define IDC_TODAY_BITMAP_FRAME          1150
+#define IDC_TODAY_FONT_FRAME            1151
+#define IDC_TODAY_SEPARATION            1152
+#define IDC_TODAY_SEPARATION_STATIC     1153
+#define IDC_TODAY_COMPONENTS_STATIC     1154
+#define IDC_TODAY_BITMAP_STATIC         1155
+#define IDC_TODAY_FONT_STATIC           1156
+#define IDC_TODAY_FONTCOLOR_STATIC      1157
+#define IDC_EVENT_SEPARATION            1158
+#define IDC_EVENT_BITMAP_STATIC         1159
+#define IDC_EVENT_COMPONENTS_STATIC     1160
+#define IDC_EVENT_SEPARATION_STATIC     1161
+#define IDC_EVENT_BITMAP_FRAME          1162
+#define IDC_EVENT_FONT_FRAME            1163
+#define IDC_EVENT_FONTCOLOR_STATIC      1164
+#define IDC_EVENT_FONT_STATIC           1165
+#define IDC_WEEKDAYS_BITMAP_FRAME       1167
+#define IDC_WEEKDAYS_BITMAP_STATIC      1168
+#define IDC_WEEKDAYS_FONTCOLOR_STATIC   1169
+#define IDC_WEEKDAYS_FONT_STATIC        1170
+#define IDC_WEEKDAYS_FONT_FRAME         1171
+#define IDC_WEEKNUM_COMPONENTS_32       1172
+#define IDC_WEEKNUM_SEPARATION          1173
+#define IDC_WEEKNUM_SEPARATION_STATIC   1174
+#define IDC_WEEKNUM_BITMAP_FRAME        1175
+#define IDC_WEEKNUM_BITMAP_STATIC       1176
+#define IDC_WEEKNUM_FONTCOLOR_STATIC    1177
+#define IDC_WEEKNUM_FONT_STATIC         1178
+#define IDC_WEEKNUM_FONT_FRAME          1179
+#define IDC_WEEKNUM_COMPONENTS_STATIC   1180
+#define IDC_MONTH_FONTCOLOR_STATIC      1181
+#define IDC_MONTH_BITMAP_STATIC         1182
+#define IDC_MONTH_BITMAP_FRAME          1183
+#define IDC_MONTH_FONT_FRAME            1184
+#define IDC_MONTH_FONT_STATIC           1185
+#define IDC_YEAR_SEPARATION             1186
+#define IDC_YEAR_SEPARATION_STATIC      1187
+#define IDC_YEAR_BITMAP_STATIC          1188
+#define IDC_YEAR_BITMAP_FRAME           1189
+#define IDC_YEAR_FONT_FRAME             1190
+#define IDC_YEAR_FONTCOLOR_STATIC       1191
+#define IDC_YEAR_FONT_STATIC            1192
+#define ID_SKIN                         30000
+#define ID_SKIN_END                     32770
+#define ID_EDIT_SKIN                    32771
 #define ID_CONFIG                       32772
 #define ID_POPUP_SELECTMONTH_JANUARY    32774
 #define ID_POPUP_SELECTMONTH_FEBRUARY   32775
@@ -153,9 +210,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        1014
-#define _APS_NEXT_COMMAND_VALUE         32794
-#define _APS_NEXT_CONTROL_VALUE         1116
+#define _APS_NEXT_RESOURCE_VALUE        1023
+#define _APS_NEXT_COMMAND_VALUE         32795
+#define _APS_NEXT_CONTROL_VALUE         1193
 #define _APS_NEXT_SYMED_VALUE           1000
 #endif
 #endif

@@ -98,6 +98,7 @@ void CItemEvent::Initialize()
 
 			BMRast->Load(CCalendarWindow::c_Config.GetEventBitmapName());
 			BMRast->SetNumOfComponents(CCalendarWindow::c_Config.GetEventNumOfComponents());
+			BMRast->SetSeparation(CCalendarWindow::c_Config.GetEventSeparation());
 
 			BMRast->SetAlign(CCalendarWindow::c_Config.GetEventAlign());
 			SetRasterizer(BMRast);
@@ -245,6 +246,7 @@ void CItemEvent::Paint(HDC dc)
 						CRasterizerBitmap* BMRast = new CRasterizerBitmap;
 						BMRast->Load(m_Events[i + 1]->GetBitmap());
 						BMRast->SetNumOfComponents(CCalendarWindow::c_Config.GetEventNumOfComponents());
+						BMRast->SetSeparation(CCalendarWindow::c_Config.GetEventSeparation());
 						BMRast->SetAlign(CCalendarWindow::c_Config.GetEventAlign());
 						BMRast->Paint(dc, X, Y, W, H, i+1);
 						delete BMRast;

@@ -65,7 +65,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	if(lpCmdLine==NULL || lpCmdLine[0]=='\0') 
 	{
-		lpCmdLine = "Default\\";
+		GetCurrentDirectory(256, Filename);
+		lpCmdLine = Filename;
 	}
 
 	if(!hPrevInstance) 
@@ -83,10 +84,14 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	}
 
 	Length=strlen(lpCmdLine);
-	if(Length>240) {
+	if(Length>240) 
+	{
 		MessageBox(NULL, "Unable to initialize Rainlendar!\nError: Path-argument is too long!", "Rainlendar", MB_OK | MB_ICONERROR);
 		return 0;
 	}
+
+	// Initialize from exe
+	Initialize(true, lpCmdLine);
 
 	// Remove quotes from the commandline
 	Pos=0;
@@ -107,9 +112,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	}
 	fclose(File);
 
-	// Initialize from exe
-	Initialize(true, lpCmdLine);
-
 	HMODULE module = GetModuleHandle("Rainlendar.dll");
 	if(module == NULL)
 	{
@@ -119,7 +121,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	initModuleEx(hWnd, module, NULL);
 
-	while(GetMessage(&msg, NULL, 0, 0)) {
+	while(GetMessage(&msg, NULL, 0, 0)) 
+	{
 		TranslateMessage(&msg);
 		DispatchMessage(&msg); 
 	} 

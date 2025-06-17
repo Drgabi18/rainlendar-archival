@@ -40,6 +40,7 @@ public:
 
 	void Load(std::string filename);
 	void SetNumOfComponents(int Number) { m_NumOfComponents = Number; };
+	void SetSeparation(int Number) { m_Separation = Number; };
 	void Paint(HDC dc, int X, int Y, int W, int H, int Index);
 
 	static bool CreateAlpha(HBITMAP Source, HBITMAP Alpha, HBITMAP Background);
@@ -49,6 +50,7 @@ protected:
 	void PaintAlpha(HDC dc, int X, int Y, int NumOfNums, int Index);
 
 	int m_NumOfComponents;
+	int m_Separation;
 	HBITMAP m_Bitmap;
 	HBITMAP m_AlphaBitmap;
 	bool m_Alpha;

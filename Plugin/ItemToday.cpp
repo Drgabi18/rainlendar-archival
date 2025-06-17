@@ -71,6 +71,7 @@ void CItemToday::Initialize()
 
 			BMRast->Load(CCalendarWindow::c_Config.GetTodayBitmapName());
 			BMRast->SetNumOfComponents(CCalendarWindow::c_Config.GetTodayNumOfComponents());
+			BMRast->SetSeparation(CCalendarWindow::c_Config.GetTodaySeparation());
 
 			BMRast->SetAlign(CCalendarWindow::c_Config.GetTodayAlign());
 			SetRasterizer(BMRast);

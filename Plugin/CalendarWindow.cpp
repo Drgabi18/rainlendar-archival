@@ -65,6 +65,7 @@
 #include "EditEvent.h"
 #include "NetworkThread.h"
 #include "ConfigDialog.h"
+#include "SkinDialog.h"
 
 // Timers
 #define DATE_TIMER 1
@@ -121,7 +122,8 @@ CCalendarWindow::~CCalendarWindow()
 
 	BOOL Result;
 	int counter = 0;
-	do {
+	do 
+	{
 		// Wait for the window to die
 		Result = UnregisterClass("Rainlendar", m_Instance);
 		Sleep(100);
@@ -146,7 +148,8 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 		throw CError(CError::ERR_NULLPARAMETER, __LINE__, __FILE__);
 	}
 
-	m_Instance = GetModuleHandle("Rainlendar.dll");
+	m_Instance = Instance;
+	m_DllInstance = GetModuleHandle("Rainlendar.dll");
 	m_Rainlendar = &Rainlendar;
 
 	// Register the windowclass
@@ -155,7 +158,7 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.lpfnWndProc = WndProc;
-	wc.hInstance = Instance;
+	wc.hInstance = m_Instance;
 	wc.lpszClassName = "Rainlendar";
 	
 	if(!RegisterClassEx(&wc))
@@ -184,7 +187,7 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 							CW_USEDEFAULT,
 							Parent,
 							NULL,
-							Instance,
+							m_Instance,
 							this);
 
 	if(m_Window == NULL) 
@@ -194,7 +197,8 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 
 	SetWindowLong(m_Window, GWL_USERDATA, magicDWord);
 
-	std::string PixPath, EventsPath;
+	std::string PixPath, EventsPath, SkinsPath;
+	std::string skin, skinIni;
 
 	if(!CRainlendar::GetDummyLitestep()) 
 	{
@@ -212,6 +216,21 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 			EventsPath += "\\";
 		}
 		EventsPath += "Events.ini";
+
+		GetRCString("RainlendarSkinsPath", tmpName, "", MAX_LINE_LENGTH);
+		VarExpansion(tmpName, tmpName);
+		SkinsPath = tmpName;
+
+		// Check that the path ends with "\" 
+		if (!SkinsPath.empty() && *(SkinsPath.end() - 1) != '\\')
+		{
+			SkinsPath += "\\";
+		}
+
+		GetRCString("RainlendarCurrentSkin", tmpName, "", MAX_LINE_LENGTH);
+		skin = tmpName;
+		GetRCString("RainlendarCurrentSkinIni", tmpName, "", MAX_LINE_LENGTH);
+		skinIni = tmpName;
 	}
 	else 
 	{
@@ -235,7 +254,7 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 	if (EventsPath.empty())
 	{
 		// Get the DLL's directory
-		GetModuleFileName(m_Instance, tmpName, MAX_LINE_LENGTH);
+		GetModuleFileName(m_DllInstance, tmpName, MAX_LINE_LENGTH);
 
 		char* Slash = strrchr(tmpName, '\\');
 		if(Slash == NULL) 
@@ -249,10 +268,32 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 		EventsPath = tmpName;
 	}
 
+	if (SkinsPath.empty())
+	{
+		// Get the DLL's directory
+		GetModuleFileName(m_DllInstance, tmpName, MAX_LINE_LENGTH);
+		char* Slash = strrchr(tmpName, '\\');
+		*(Slash + 1) = 0;	// Cut the Rainlendar.dll from the name
+		SkinsPath = tmpName;
+	}
+
 	c_Config.SetPath(PixPath);
-	c_Config.SetEventsPath(EventsPath);
+	c_Config.SetEventsPath(EventsPath);	
+	c_Config.SetSkinsPath(SkinsPath);
 	c_Config.ReadConfig();
 
+	// If the skin was defined explicitely, let's use it
+	if (!skin.empty() && !skinIni.empty())
+	{
+		c_Config.SetCurrentSkin(skin);
+		c_Config.SetCurrentSkinIni(skinIni);
+		c_Config.WriteConfig(CConfig::WRITE_CONFIG);	// Replace the current config with the step.rc values
+	}
+
+	// Scan the skin folder for skins
+	ReadSkins();
+
+	// Initialize tooltips
     INITCOMMONCONTROLSEX iccex; 
 	iccex.dwICC = ICC_BAR_CLASSES;
     iccex.dwSize = sizeof(INITCOMMONCONTROLSEX);
@@ -263,10 +304,12 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 							TOOLTIPS_CLASS,
 							NULL,
 							WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP | TTS_BALLOON,
-							0, 0,
-							0, 0,
+							CW_USEDEFAULT,
+							CW_USEDEFAULT,
+							CW_USEDEFAULT,
+							CW_USEDEFAULT,
 							NULL, NULL,
-							Instance,
+							m_Instance,
 							NULL);
 
 	SendMessage(m_ToolTip, TTM_SETMAXTIPWIDTH, 0, 255);
@@ -338,6 +381,47 @@ void CCalendarWindow::FillMenu(HMENU subMenu, int x, int y)
 		// Disable QUIT if LiteStep's plugin 
 		EnableMenuItem( subMenu, ID_QUIT, MF_GRAYED );
 	}
+
+	int index = 0;
+
+	// Fill the menu with all the configs
+	HMENU configMenu = CreatePopupMenu();
+	if(configMenu)
+	{
+		InsertMenu(subMenu, 6, MF_BYPOSITION | MF_POPUP, (UINT_PTR)configMenu, "Skins");
+
+		for(int i = 0; i < m_ConfigStrings.size(); i++)
+		{
+			if (m_ConfigStrings[i].iniFiles.size() > 1)
+			{
+				HMENU iniMenu = CreatePopupMenu();
+				InsertMenu(configMenu, i, MF_BYPOSITION | MF_POPUP, (UINT_PTR)iniMenu, m_ConfigStrings[i].path.c_str());
+				for(int j = 0; j < m_ConfigStrings[i].iniFiles.size(); j++)
+				{
+					std::string iniName = m_ConfigStrings[i].iniFiles[j].c_str();
+					iniName.erase(iniName.end() - 4, iniName.end());
+					InsertMenu(iniMenu, j, MF_BYPOSITION, ID_SKIN + index++, iniName.c_str());
+
+					if(m_ConfigStrings[i].path == c_Config.GetCurrentSkin() && m_ConfigStrings[i].iniFiles[j] == c_Config.GetCurrentSkinIni())
+					{
+						CheckMenuItem(iniMenu, j, MF_BYPOSITION | MF_CHECKED);
+					}
+				}
+			}
+			else
+			{
+				InsertMenu(configMenu, i, MF_BYPOSITION, ID_SKIN + index++, m_ConfigStrings[i].path.c_str());
+
+				if(m_ConfigStrings[i].path == c_Config.GetCurrentSkin())
+				{
+					CheckMenuItem(configMenu, i, MF_BYPOSITION | MF_CHECKED);
+				}
+			}
+		}
+
+		InsertMenu(configMenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+		InsertMenu(configMenu, 0, MF_BYPOSITION, ID_EDIT_SKIN, "Edit Current Skin...");
+	}
 }
 
 /* 
@@ -394,8 +478,7 @@ void CCalendarWindow::Refresh()
 		RECT r;
 		int X, Y;
 
-		c_Config.WriteConfig();	// Write old config (happens only if Rainlendar.ini's not modified from outside)
-		c_Config.ReadConfig();	// Read new config
+		c_Config.ReadConfig();
 
 		// Initialize
 		delete m_Days;
@@ -405,6 +488,9 @@ void CCalendarWindow::Refresh()
 		delete m_WeekNumbers;
 		delete m_Month;
 		delete m_Year;
+
+		// Reset the region
+		SetWindowRgn(m_Window, NULL, TRUE);
 
 		m_Days = new CItemDays;
 		m_Event = new CItemEvent;
@@ -452,13 +538,21 @@ void CCalendarWindow::Refresh()
 			}
 		}
 
-		if (c_Config.GetWindowPos() == CConfig::WINDOWPOS_ONTOP)
+		if (!m_Rainlendar->IsWharf())
 		{
-			SetWindowPos(m_Window, HWND_TOPMOST, X, Y, m_Width, m_Height, SWP_NOACTIVATE);
+			if (c_Config.GetWindowPos() == CConfig::WINDOWPOS_ONTOP)
+			{
+				SetWindowPos(m_Window, HWND_TOPMOST, X, Y, m_Width, m_Height, SWP_NOACTIVATE);
+			}
+			else
+			{
+				SetWindowPos(m_Window, HWND_NOTOPMOST, X, Y, m_Width, m_Height, SWP_NOACTIVATE);
+			}
 		}
 		else
 		{
-			SetWindowPos(m_Window, HWND_NOTOPMOST, X, Y, m_Width, m_Height, SWP_NOACTIVATE);
+			// Child windows cannot change the z-order!
+			SetWindowPos(m_Window, NULL, X, Y, m_Width, m_Height, SWP_NOZORDER);
 		}
 
 		// Create the DoubleBuffer
@@ -524,6 +618,101 @@ void CCalendarWindow::Refresh()
     {
 		MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		OnCommand(WM_QUIT, NULL);	// Gotta quit
+	}
+}
+
+/*
+** ReadSkins
+**
+** Scans all the subfolders and locates the ini-files.
+**
+*/
+void CCalendarWindow::ReadSkins()
+{
+    WIN32_FIND_DATA fileData;      // Data structure describes the file found
+    WIN32_FIND_DATA fileDataIni;   // Data structure describes the file found
+    HANDLE hSearch;                // Search handle returned by FindFirstFile
+    HANDLE hSearchIni;             // Search handle returned by FindFirstFile
+
+	m_ConfigStrings.clear();
+
+    // Start searching for .ini files in the given directory.
+	std::string files = c_Config.GetSkinsPath() + "*";
+    hSearch = FindFirstFile(files.c_str(), &fileData);
+	do
+	{
+		if(hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
+
+		if(fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY && 
+			strcmp(".", fileData.cFileName) != 0 &&
+			strcmp("..", fileData.cFileName) != 0)
+		{
+			CONFIG config;
+			config.path = fileData.cFileName;
+
+			// Scan all .ini files from the subfolder
+			std::string inis = c_Config.GetSkinsPath();
+			inis += fileData.cFileName;
+			inis += "\\*.ini";
+			hSearchIni = FindFirstFile(inis.c_str(), &fileDataIni);
+
+			do
+			{
+				if(hSearchIni == INVALID_HANDLE_VALUE) break;    // No more files found
+				config.iniFiles.push_back(fileDataIni.cFileName);
+
+			} while (FindNextFile(hSearchIni, &fileDataIni));
+
+			if (!config.iniFiles.empty())
+			{
+				m_ConfigStrings.push_back(config);
+			}
+		    FindClose(hSearchIni);
+		}
+	} while(FindNextFile(hSearch, &fileData));
+
+    FindClose(hSearch);
+
+	// Scan the read ini files and make sure that the current skin is available
+	bool found = false;
+	std::vector<CONFIG>::iterator i = m_ConfigStrings.begin();
+	for( ; i != m_ConfigStrings.end() && !found; i++)
+	{
+		if ( (*i).path == c_Config.GetCurrentSkin())
+		{
+			std::vector<std::string>::iterator j = (*i).iniFiles.begin();
+			for( ; j != (*i).iniFiles.end(); j++)
+			{
+				if ( (*j) == c_Config.GetCurrentSkinIni())
+				{
+					found = true;
+					break;
+				}
+			}
+		}
+	}
+
+	if (!found)
+	{
+		if (m_ConfigStrings.empty())
+		{
+			c_Config.SetCurrentSkin("");
+			c_Config.SetCurrentSkinIni("");
+		}
+		else
+		{
+			// Just use the first available
+			std::string errMsg = "Unable to find the skin: ";
+			errMsg += c_Config.GetCurrentSkin();
+			errMsg += "\\";
+			errMsg += c_Config.GetCurrentSkinIni();
+			errMsg += "\nRainlendar will default to the first available skin.";
+			MessageBox(m_Window, errMsg.c_str(), "Rainlendar", MB_OK);
+
+			c_Config.SetCurrentSkin(m_ConfigStrings[0].path);
+			c_Config.SetCurrentSkinIni(m_ConfigStrings[0].iniFiles[0]);
+			c_Config.WriteConfig(CConfig::WRITE_CONFIG);
+		}
 	}
 }
 
@@ -691,7 +880,7 @@ LRESULT CCalendarWindow::OnContextMenu(WPARAM wParam, LPARAM lParam)
 
 	HMENU menu, subMenu = NULL;
 	
-	menu = LoadMenu(m_Instance, MAKEINTRESOURCE(IDR_MENU1));
+	menu = LoadMenu(m_DllInstance, MAKEINTRESOURCE(IDR_MENU1));
 	if (menu) subMenu = GetSubMenu(menu, 0);
 
 	if (subMenu)
@@ -707,9 +896,8 @@ LRESULT CCalendarWindow::OnContextMenu(WPARAM wParam, LPARAM lParam)
 		  m_Window,
 		  NULL
 		);		
-
-		DestroyMenu(menu);
 	}
+	DestroyMenu(menu);
 
 	return 0;
 }
@@ -721,6 +909,28 @@ LRESULT CCalendarWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 		bool Handled = false;
 		bool Selected = false;
 		int Month, Year;
+
+		if(wParam >= ID_SKIN && wParam < ID_SKIN_END)
+		{
+			// Check which config was selected
+			int index = 0;
+			
+			for (int i = 0; i < m_ConfigStrings.size(); i++)
+			{
+				for (int j = 0; j < m_ConfigStrings[i].iniFiles.size(); j++)
+				{
+					if (index == wParam - ID_SKIN)
+					{
+						c_Config.SetCurrentSkin(m_ConfigStrings[i].path);
+						c_Config.SetCurrentSkinIni(m_ConfigStrings[i].iniFiles[j]);
+						c_Config.WriteConfig(CConfig::WRITE_CONFIG);	// Write old config (happens only if Rainlendar.ini's not modified from outside)
+						Refresh();
+						return 0;
+					}
+					index++;
+				}
+			}
+		}
 
 		switch(LOWORD(wParam)) {
 
@@ -742,9 +952,13 @@ LRESULT CCalendarWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 			break;
 
 		case ID_CONFIG:
-			OpenConfigDialog(m_Window, m_Instance);
+			OpenConfigDialog(m_Window, m_DllInstance);
 			break;
-
+	
+		case ID_EDIT_SKIN:
+			OpenSkinDialog(m_Window, m_DllInstance);
+			break;
+	
 		case ID_SETEVENT:
 			// Fake doubleclick action will show the edit event dialog
 			OnLButtonDblClk(0, 0);
@@ -752,7 +966,6 @@ LRESULT CCalendarWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 			break;
 
 		case ID_QUIT:
-			c_Config.WriteConfig();
 			if(CRainlendar::GetDummyLitestep()) PostQuitMessage(0);
 			DestroyWindow(m_Window);
 			break;
@@ -908,19 +1121,11 @@ LRESULT CCalendarWindow::OnTimer(WPARAM wParam, LPARAM lParam)
 			c_TodaysDate.wDay   != today.wDay)
 		{
 			// Day changed!
-
 			GetLocalTime(&c_TodaysDate);
 			// Store current date (the month that will be shown)
-			// c_MonthsFirstDate is set always to the first day of the month
 			c_MonthsFirstDate = c_TodaysDate;
-			c_MonthsFirstDate.wHour = 0;
-			c_MonthsFirstDate.wMinute = 0;
-			c_MonthsFirstDate.wSecond = 0;
-			c_MonthsFirstDate.wMilliseconds = 0;
-			c_MonthsFirstDate.wDay = 1;
-			
-			m_FirstExecute = true;				// Act like Rainlendar was first time executed
-			Refresh();
+
+			ShowMonth(-1, -1);
 		}
 
 		if (c_Config.GetServerFrequency() > 0)
@@ -934,6 +1139,7 @@ LRESULT CCalendarWindow::OnTimer(WPARAM wParam, LPARAM lParam)
 		}
 
 		PollWallpaper(false);
+		m_Background.FlushWallpaper();		// Get rid of the wallpaper
 
 		return 0;
 	}
@@ -993,18 +1199,20 @@ LRESULT CCalendarWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam)
 
 LRESULT CCalendarWindow::OnMove(WPARAM wParam, LPARAM lParam) 
 {
-	int x = LOWORD(lParam);
-	int y = HIWORD(lParam);
+	short int x = LOWORD(lParam);
+	short int y = HIWORD(lParam);
 
 	if(c_Config.GetMovable())
 	{
-		// Store the new coordinates
-		c_Config.SetX(x);
-		c_Config.SetY(y);
+		c_Config.SetX(x<0?0:x);
+		c_Config.SetY(y<0?0:y);
+		c_Config.WriteConfig(CConfig::WRITE_POS);	// Store the new position to the ini file
 
 		if (!m_FirstExecute && (c_Config.GetBackgroundMode() == CBackground::MODE_COPY || m_Background.HasAlpha()))
 		{
-			Refresh();
+			m_Background.UpdateWallpaper(x, y);
+			DrawCalendar();
+			InvalidateRect(m_Window, NULL, false);
 		}
 	}
 
@@ -1075,7 +1283,7 @@ LRESULT CCalendarWindow::OnLButtonDblClk(WPARAM wParam, LPARAM lParam)
 
 	if(m_SelectedDay != 0) 
 	{
-		if (DialogBox(m_Instance, MAKEINTRESOURCE(IDD_EDITEVENT), m_Window, (DLGPROC)EditEventProc) == IDOK) 
+		if (DialogBox(m_DllInstance, MAKEINTRESOURCE(IDD_EDITEVENT), m_Window, (DLGPROC)EditEventProc) == IDOK) 
 		{
 			Refresh();
 			ConnectServer(REQUEST_SENDEVENTS);	// Send the events to the server

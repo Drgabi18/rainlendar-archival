@@ -152,6 +152,7 @@ void CItemYear::Initialize()
 
 			BMRast->Load(CCalendarWindow::c_Config.GetYearBitmapName());
 			BMRast->SetNumOfComponents(NUMOFCOMPONENTS);
+			BMRast->SetSeparation(CCalendarWindow::c_Config.GetYearSeparation());
 
 			BMRast->SetAlign(CCalendarWindow::c_Config.GetYearAlign());
 			SetRasterizer(BMRast);

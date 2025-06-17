@@ -123,7 +123,9 @@ void CRasterizerFont::SetFont(const std::string& FontName)
 					&nClipPrecision, &nQuality, &nPitchAndFamily);
 
 	int pos = FontName.rfind('/');
-	std::string name(FontName.begin() + pos, FontName.end());
+	std::string name(FontName.begin() + pos + 1, FontName.end());
+
+	if (m_Font) DeleteObject(m_Font);
 
 	m_Font = CreateFont( 
 				nHeight, 

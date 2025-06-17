@@ -62,8 +62,13 @@ public:
 
 	bool HasAlpha() { return m_Alpha; };
 
+	void UpdateWallpaper(int X, int Y);
+
+	static void FlushWallpaper();
+
 private:
-	HBITMAP GetWallpaper(int X, int Y, int Width, int Height);
+	static HBITMAP GetWallpaper(int X, int Y, int Width, int Height);
+	static HBITMAP c_Wallpaper;	// The current wallpaper picture
 
 	std::string m_Filename;
 	int m_Width;

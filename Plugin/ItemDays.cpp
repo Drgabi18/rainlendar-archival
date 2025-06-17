@@ -98,6 +98,7 @@ void CItemDays::Initialize()
 
 			BMRast->Load(CCalendarWindow::c_Config.GetDaysBitmapName());
 			BMRast->SetNumOfComponents(CCalendarWindow::c_Config.GetDaysNumOfComponents());
+			BMRast->SetSeparation(CCalendarWindow::c_Config.GetDaysSeparation());
 
 			BMRast->SetAlign(CCalendarWindow::c_Config.GetDaysAlign());
 			SetRasterizer(BMRast);

@@ -4,7 +4,7 @@
 
 # TARGTYPE "Win32 (x86) Dynamic-Link Library" 0x0102
 
-CFG=Plugin - Win32 Debug
+CFG=Plugin - Win32 Release
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
@@ -13,7 +13,7 @@ CFG=Plugin - Win32 Debug
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "Plugin.mak" CFG="Plugin - Win32 Debug"
+!MESSAGE NMAKE /f "Plugin.mak" CFG="Plugin - Win32 Release"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "..\..\..\3rdparty\ssobjects\\" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_EXPORTS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O1 /I "..\..\..\3rdparty\ssobjects\\" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_EXPORTS" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x40b /d "NDEBUG"
@@ -56,7 +56,7 @@ LINK32=link.exe
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib Advapi32.lib Ws2_32.lib ssobjects.lib comdlg32.lib comctl32.lib shell32.lib /nologo /dll /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Release/Rainlendar.dll" /libpath:"..\..\..\3rdparty\ssobjects"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=Copy      Release\Rainlendar.dll      ..\TestBench\Rainlendar.dll     	Copy      Release\Rainlendar.dll           C:\Litestep\Themes\dArk\modules\ 
+PostBuild_Cmds=Copy          Release\Rainlendar.dll          ..\TestBench\Rainlendar.dll         	Copy          Release\Rainlendar.dll               C:\Litestep\Themes\dArk\modules\ 
 # End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "Plugin - Win32 Debug"
@@ -86,7 +86,7 @@ LINK32=link.exe
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib Advapi32.lib Ws2_32.lib ssobjects.lib comdlg32.lib comctl32.lib shell32.lib /nologo /dll /debug /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Debug/Rainlendar.dll" /pdbtype:sept /libpath:"..\..\..\3rdparty\ssobjects"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=Copy      Debug\Rainlendar.dll      ..\TestBench\Rainlendar.dll     	rem     Copy      Debug\Rainlendar.dll           C:\Litestep\Themes\dArk\modules\ 
+PostBuild_Cmds=Copy          Debug\Rainlendar.dll          ..\TestBench\Rainlendar.dll         	Copy          Debug\Rainlendar.dll               C:\Litestep\Themes\dArk\modules\ 
 # End Special Build Tool
 
 !ENDIF 
@@ -186,6 +186,10 @@ SOURCE=.\RasterizerBitmap.cpp
 
 SOURCE=.\RasterizerFont.cpp
 # End Source File
+# Begin Source File
+
+SOURCE=.\SkinDialog.cpp
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -277,6 +281,10 @@ SOURCE=.\RasterizerFont.h
 # Begin Source File
 
 SOURCE=.\Resource.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\SkinDialog.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"

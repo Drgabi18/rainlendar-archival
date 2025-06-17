@@ -68,6 +68,7 @@ void CItemWeekNumbers::Initialize()
 
 			BMRast->Load(CCalendarWindow::c_Config.GetWeekNumbersBitmapName());
 			BMRast->SetNumOfComponents(CCalendarWindow::c_Config.GetWeekNumbersNumOfComponents());
+			BMRast->SetSeparation(CCalendarWindow::c_Config.GetWeekNumbersSeparation());
 
 			BMRast->SetAlign(CCalendarWindow::c_Config.GetWeekNumbersAlign());
 			SetRasterizer(BMRast);
@@ -134,11 +135,11 @@ void CItemWeekNumbers::Paint(HDC dc)
 
 	if(CCalendarWindow::c_Config.GetStartFromMonday()) 
 	{
-		FirstWeekday = (FirstWeekday-1);
+		FirstWeekday = (FirstWeekday - 1);
 		if(FirstWeekday == -1) FirstWeekday = 6;
 	} 
 
-	if(FirstWeekday + NumOfDays > 7 * 5 + 1)
+	if(FirstWeekday + NumOfDays > 7 * 5)
 	{
 		lines = 6;
 	}

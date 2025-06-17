@@ -46,6 +46,9 @@
 #include "Error.h"
 #include "RasterizerBitmap.h"
 
+HBITMAP CBackground::c_Wallpaper = NULL;
+
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -105,7 +108,11 @@ void CBackground::Load(std::string Filename)
 	// Check for absolute path
 	if(-1 == Filename.find(':')) 
 	{
-		Filename.insert(0, CCalendarWindow::c_Config.GetPath());
+		if (!CCalendarWindow::c_Config.GetCurrentSkin().empty())
+		{
+			Filename.insert(0, CCalendarWindow::c_Config.GetCurrentSkin() + "\\");
+		}
+		Filename.insert(0, CCalendarWindow::c_Config.GetSkinsPath());
 	} 
 
 	m_Image = LoadLSImage(Filename.c_str(), NULL);
@@ -265,15 +272,22 @@ void CBackground::Create(int X, int Y, int Width, int Height)
 		{
 			// ..and create and alphamasked version of the background bitmap
 			CRasterizerBitmap::CreateAlpha(m_Image, m_AlphaImage, m_Background);
-			DeleteObject(m_AlphaImage);		// We won't need this one anymore
-			DeleteObject(m_Background);		// Delete the old (if there was one)
-			m_Background = m_Image;
 		} 
 	}
 	else 
 	{
 		if (m_Background) DeleteObject(m_Background);			// Delete the old (if there was one)
-		m_Background = m_Image;
+
+		// Create new background image from the m_Image
+		OldBitmap = (HBITMAP)SelectObject(tmpDC, m_Image);
+		m_Background = CreateCompatibleBitmap(tmpDC, m_Width, m_Height);
+		if(m_Background == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
+		OldBitmap2 = (HBITMAP)SelectObject(BGDC, m_Background);
+
+		BitBlt(BGDC, 0, 0, m_Width, m_Height, tmpDC, 0, 0, SRCCOPY);
+		
+		SelectObject(tmpDC, OldBitmap);
+		SelectObject(BGDC, OldBitmap2);
 	}
 
 	DeleteDC(BGDC);
@@ -292,8 +306,12 @@ void CBackground::CopyBackground(int X, int Y, int Width, int Height)
 	HBITMAP OldBitmap;
 	HDC WinDC;
 
-	if (m_Background) DeleteObject(m_Background);	// Delete the old (if there was one)
-	
+	if (m_Background) 
+	{
+		DeleteObject(m_Background);	// Delete the old (if there was one)
+		m_Background = NULL;
+	}
+
 	if(GetRainlendar() && !(GetRainlendar()->IsWharf()))
 	{
 		// The new way
@@ -343,20 +361,21 @@ HBITMAP CBackground::GetWallpaper(int X, int Y, int Width, int Height)
 	bool tile = false;
 	bool stretch = false;
 	COLORREF bgColor = 0;
-	HBITMAP bitmap = NULL;
 	HBITMAP bgBitmap = NULL;
-	
     HKEY hKey = NULL;
-
+	
 	// Get the wallpaper name and options from registry
-    if(RegOpenKeyEx(HKEY_CURRENT_USER, "Control Panel\\Desktop", 0, KEY_READ, &hKey) == ERROR_SUCCESS) 
+	if(RegOpenKeyEx(HKEY_CURRENT_USER, "Control Panel\\Desktop", 0, KEY_READ, &hKey) == ERROR_SUCCESS) 
 	{
-		if(RegQueryValueEx(hKey, "Wallpaper", NULL, NULL, (LPBYTE)&str, (LPDWORD)&size) == ERROR_SUCCESS)
+		if (c_Wallpaper == NULL)
 		{
-			if(strlen(str) > 0)
+			if(RegQueryValueEx(hKey, "Wallpaper", NULL, NULL, (LPBYTE)&str, (LPDWORD)&size) == ERROR_SUCCESS)
 			{
-				bitmap = LoadLSImage(str, NULL);
-				if(bitmap == NULL) return NULL;	// Unable to load the bitmap :(
+				if(strlen(str) > 0)
+				{
+					c_Wallpaper = LoadLSImage(str, NULL);
+					if(c_Wallpaper == NULL) return NULL;	// Unable to load the bitmap :(
+				}
 			}
 		}
 		size = 256;
@@ -408,15 +427,15 @@ HBITMAP CBackground::GetWallpaper(int X, int Y, int Width, int Height)
 	FillRect(tmpDC, &r, brush);
 	DeleteObject(brush);
 
-	if(bitmap)
+	if(c_Wallpaper)
 	{
 		HDC bgDC = CreateCompatibleDC(tmpDC);
 		if(bgDC == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
-		HBITMAP oldBitmap2 = (HBITMAP)SelectObject(bgDC, bitmap);
+		HBITMAP oldBitmap2 = (HBITMAP)SelectObject(bgDC, c_Wallpaper);
 
 		// Get the size of the loaded wallpaper
 		BITMAP bm;
-		GetObject(bitmap, sizeof(BITMAP), &bm);
+		GetObject(c_Wallpaper, sizeof(BITMAP), &bm);
 
 		// We'll have to do the multimonitor stuff like this, cooz 95 or NT don't have the functions.
 		// Multimon?
@@ -508,7 +527,6 @@ HBITMAP CBackground::GetWallpaper(int X, int Y, int Width, int Height)
 
 		SelectObject(bgDC, oldBitmap2);
 		DeleteDC(bgDC);
-		DeleteObject(bitmap);	// We do not need this one anymore
 	}
 
 	SelectObject(tmpDC, oldBitmap);
@@ -535,4 +553,37 @@ void CBackground::Paint(HDC dc)
 
 	SelectObject(tmpDC, OldBitmap);
 	DeleteDC(tmpDC);
+}
+
+/* 
+** FlushWallpaper
+**
+** Removes the wallpaper from memory
+**
+*/
+void CBackground::FlushWallpaper()
+{
+	if (c_Wallpaper)
+	{
+		DeleteObject(c_Wallpaper);
+		c_Wallpaper = NULL;
+	}
+}
+
+/* 
+** UpdateWallpaper
+**
+** Updates the wallpaper from the new location and recreates the background image
+**
+*/
+void CBackground::UpdateWallpaper(int X, int Y)
+{
+	// Take a copy of the BG
+	CopyBackground(X, Y, m_Width, m_Height);
+
+	if(m_Alpha) 
+	{
+		// ..and create and alphamasked version of the background bitmap
+		CRasterizerBitmap::CreateAlpha(m_Image, m_AlphaImage, m_Background);
+	} 
 }
