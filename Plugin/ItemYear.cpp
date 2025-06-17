@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemYear.cpp,v 1.5 2002/05/23 17:33:40 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemYear.cpp,v 1.7 2002/08/24 11:10:35 rainy Exp $
 
   $Log: ItemYear.cpp,v $
+  Revision 1.7  2002/08/24 11:10:35  rainy
+  Changed the error handling.
+
+  Revision 1.6  2002/08/03 16:14:29  rainy
+  Added separation and color setting for the rasterizer.
+
   Revision 1.5  2002/05/23 17:33:40  rainy
   Removed all MFC stuff
 
@@ -148,7 +154,7 @@ void CItemYear::Initialize()
 			CRasterizerBitmap* BMRast;
 
 			BMRast=new CRasterizerBitmap;
-			if(BMRast==NULL) throw CError(CError::ERR_OUTOFMEM);
+			if(BMRast==NULL) THROW(ERR_OUTOFMEM);
 
 			BMRast->Load(CCalendarWindow::c_Config.GetYearBitmapName());
 			BMRast->SetNumOfComponents(NUMOFCOMPONENTS);
@@ -162,10 +168,11 @@ void CItemYear::Initialize()
 			CRasterizerFont* FNRast;
 
 			FNRast=new CRasterizerFont;
-			if(FNRast==NULL) throw CError(CError::ERR_OUTOFMEM);
+			if(FNRast==NULL) THROW(ERR_OUTOFMEM);
 
 			FNRast->SetFont(CCalendarWindow::c_Config.GetYearFont());
 			FNRast->SetAlign(CCalendarWindow::c_Config.GetYearAlign());
+			FNRast->SetColor(CCalendarWindow::c_Config.GetYearFontColor());
 			FNRast->UpdateDimensions("XXXX");
 			SetRasterizer(FNRast);
 			break;
@@ -217,9 +224,6 @@ void CItemYear::Paint(HDC dc)
 			Y = CCalendarWindow::c_Config.GetYearY() - H;
 			break;
 		};
-
-		SetBkMode(dc, TRANSPARENT);
-		SetTextColor(dc, CCalendarWindow::c_Config.GetYearFontColor());
 
 		m_Rasterizer->Paint(dc, X, Y, W, H, CCalendarWindow::c_MonthsFirstDate.wYear);
 	}

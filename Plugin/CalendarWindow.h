@@ -16,9 +16,21 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.h,v 1.9 2002/05/30 18:28:18 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.h,v 1.11 2002/08/24 11:14:35 rainy Exp $
 
   $Log: CalendarWindow.h,v $
+  Revision 1.11  2002/08/24 11:14:35  rainy
+  Changed the error handling.
+  Added lite refreshing.
+  Added a lot of logging information.
+
+  Revision 1.10  2002/08/03 16:21:51  rainy
+  Added showEdges.
+  Added support for skins.
+  Changed to use the new ToolTip class.
+  Changed to use separate skin config dialog.
+  + other changes that I cannot remember now :-(
+
   Revision 1.9  2002/05/30 18:28:18  rainy
   Added WIN32_LEAN_AND_MEAN
 
@@ -80,7 +92,6 @@
 
 class CRainlendar;
 
-
 class CCalendarWindow
 {
 public:
@@ -89,12 +100,12 @@ public:
 
 	int Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE Instance);
 
-	void RefreshWindow() { Refresh(); };
+	void RefreshWindow(bool lite = false) { Refresh(lite); };
 	void ShowConfig() { OnCommand(ID_CONFIG, NULL); };
 	void ShowEditSkin() { OnCommand(ID_EDIT_SKIN, NULL); };
 	void QuitRainlendar() { OnCommand(ID_QUIT, NULL); };
 	void HideWindow() { ::ShowWindow(m_Window, SW_HIDE); m_Hidden = true; };
-	void ShowWindow() { ::ShowWindow(m_Window, SW_SHOWNOACTIVATE); m_Hidden = false; };
+	void ShowWindow(bool activate = false);
 	void ToggleWindow();
 	void ShowMonth(int Month, int Year);
 	void ShowNextMonth() { OnCommand(ID_POPUP_SELECTMONTH_NEXTMONTH, NULL); };
@@ -104,7 +115,8 @@ public:
 	HDC GetDoubleBuffer() { return m_DC; };
 	HWND GetWindow() { return m_Window; };
 	int GetSelectedDay() { return m_SelectedDay; };
-	HWND GetToolTip() { return m_ToolTip; };
+
+	CEventManager* GetEventManager() { return m_Event->GetEventManager(); };
 
 	static CConfig c_Config;
 	static SYSTEMTIME c_TodaysDate;
@@ -132,14 +144,13 @@ protected:
 	LRESULT OnMouseMove(WPARAM wParam, LPARAM lParam);
 	LRESULT OnNcMouseMove(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDisplayChange(WPARAM wParam, LPARAM lParam);
-	LRESULT OnNotify(WPARAM wParam, LPARAM lParam);
 	LRESULT OnCopyData(WPARAM wParam, LPARAM lParam);
 
 private:
 	void ReadSkins();
 	void PollWallpaper(bool set);
 	void FillMenu(HMENU Menu, int x, int y);
-	void Refresh();
+	void Refresh(bool lite = false);
 	void CalcWindowSize();
 	void DrawCalendar();
 	void ShowWindowIfAppropriate();
@@ -173,12 +184,11 @@ private:
 	bool m_Hidden;
 	int m_SelectedDay;
 	unsigned int m_ConnectionCounter;
+	bool m_Refreshing;
 
 	UINT m_Message;								// The current window message
 
 	CRainlendar* m_Rainlendar;					// Pointer to the main object
-
-	HWND m_ToolTip;
 };
 
 #endif

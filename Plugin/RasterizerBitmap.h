@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerBitmap.h,v 1.2 2002/05/23 17:33:40 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerBitmap.h,v 1.3 2002/08/03 16:08:59 rainy Exp $
 
   $Log: RasterizerBitmap.h,v $
+  Revision 1.3  2002/08/03 16:08:59  rainy
+  Added support for profiles.
+
   Revision 1.2  2002/05/23 17:33:40  rainy
   Removed all MFC stuff
 
@@ -54,6 +57,17 @@ protected:
 	HBITMAP m_Bitmap;
 	HBITMAP m_AlphaBitmap;
 	bool m_Alpha;
+
+	struct BitmapData
+	{
+		int width;
+		int height;
+		HBITMAP bitmap;
+		HBITMAP alphaBitmap;
+		bool alpha;
+	};
+
+	std::map<const Profile*, BitmapData> m_ProfileBitmaps;
 };
 
 #endif

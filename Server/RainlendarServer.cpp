@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Server/RainlendarServer.cpp,v 1.2 2002/01/29 17:36:22 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Server/RainlendarServer.cpp,v 1.3 2002/08/03 16:09:31 rainy Exp $
 
   $Log: RainlendarServer.cpp,v $
+  Revision 1.3  2002/08/03 16:09:31  rainy
+  Added one new LOG string.
+
   Revision 1.2  2002/01/29 17:36:22  rainy
   Changed the LOG strings a bit.
 
@@ -121,6 +124,7 @@ void CRainlendarServer::processSingleMsg(PacketMessage* pmsg)
 					if (m_NewEventsFound)
 					{
 						m_Combiner->WriteEvents(m_IniFile);	 // Write the new events if new ones are received
+						LOG("Wrote Events to file: %s", m_IniFile.String());
 					}
 
 					// Reset members. Server is available again

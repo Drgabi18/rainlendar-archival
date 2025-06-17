@@ -16,43 +16,42 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemDays.h,v 1.3 2002/08/24 11:11:54 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/EventManager.h,v 1.1 2002/08/03 16:37:08 rainy Exp $
 
-  $Log: ItemDays.h,v $
-  Revision 1.3  2002/08/24 11:11:54  rainy
-  Added ResetDayTypes()
-
-  Revision 1.2  2002/05/23 17:33:41  rainy
-  Removed all MFC stuff
-
-  Revision 1.1.1.1  2001/10/29 18:56:23  rainy
-  Moved to CVS
+  $Log: EventManager.h,v $
+  Revision 1.1  2002/08/03 16:37:08  rainy
+  Intial version.
 
 */
 
-#ifndef __ITEMDAYS_H__
-#define __ITEMDAYS_H__
+#ifndef __EVENTMANAGER_H__
+#define __EVENTMANAGER_H__
 
-#include "Item.h"
+#pragma warning(disable: 4786)
 
-class CItemDays : public CItem  
+#include <windows.h>
+#include "Event.h"
+#include <map>
+#include <list>
+
+class CEventManager
 {
 public:
-	CItemDays();
-	virtual ~CItemDays();
+	CEventManager();
+	~CEventManager();
 
-	void Initialize();
-	void ResetDayTypes();
-	void Paint(HDC dc);
-	int HitTest(int x, int y);
-
-	int GetX();
-	int GetY();
-	int GetW();
-	int GetH();
+	void ReadEvents();
+	std::list<CEventMessage*> GetEvents(int day, int month, int year);
+	void AddEvent(CEventMessage& event);
+	void RemoveEvent(CEventMessage& event);
+	void WriteEvents(int day, int month, int year);
+	void WriteEvent(CEventMessage& event);
+	CEventMessage* GetEvent(int ID);
 
 private:
-	int m_DaysInMonth;
+
+	// Better data structure might be faster...
+	std::list<CEventMessage> m_AllEvents;
 };
 
 #endif

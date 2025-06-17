@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/SkinDialog.cpp,v 1.1 2002/08/03 16:37:08 rainy Exp $
 
-  $Log: $
+  $Log: SkinDialog.cpp,v $
+  Revision 1.1  2002/08/03 16:37:08  rainy
+  Intial version.
+
 */
 
 #pragma warning(disable: 4786)
@@ -48,6 +51,9 @@ COLORREF g_MonthFontColor = 0;
 LOGFONT g_MonthFont;
 COLORREF g_YearFontColor = 0;
 LOGFONT g_YearFont;
+COLORREF g_ToolTipFontColor = 0;
+COLORREF g_ToolTipBGColor = 0;
+LOGFONT g_ToolTipFont;
 
 BOOL CALLBACK BackgroundPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK DaysPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
@@ -382,6 +388,21 @@ void UpdateBackgroundWidgets(HWND window)
 	{
 		EnableWindow(GetDlgItem(window, IDC_BACKGROUND_FILENAME), TRUE);
 	}
+
+	// This is always disabled
+	EnableWindow(GetDlgItem(window, IDC_TOOLTIP_FONTNAME), FALSE);
+
+	// Update font name
+	char tmpSz[256];
+	HWND widget = GetDlgItem(window, IDC_TOOLTIP_FONTNAME);
+	std::string name = g_ToolTipFont.lfFaceName;
+	name += " / ";
+	HDC dc = GetWindowDC(window);
+	int size = -MulDiv(g_ToolTipFont.lfHeight, 72, GetDeviceCaps(dc, LOGPIXELSY));
+	ReleaseDC(window, dc);
+	itoa(size, tmpSz, 10);
+	name += tmpSz;
+	SetWindowText(widget, name.c_str());
 }
 
 BOOL OnInitBackgroundDialog(HWND window) 
@@ -409,6 +430,10 @@ BOOL OnInitBackgroundDialog(HWND window)
 	}
 	CheckRadioButton(window, IDC_BACKGROUND_TILE, IDC_BACKGROUND_COPYWALLPAPER, state);
 
+	g_ToolTipFontColor = CCalendarWindow::c_Config.GetToolTipFontColor();
+	g_ToolTipBGColor = CCalendarWindow::c_Config.GetToolTipBGColor();
+	InitFont(CCalendarWindow::c_Config.GetToolTipFont(), &g_ToolTipFont);
+
 	UpdateBackgroundWidgets(window);
 
 	return TRUE;
@@ -435,6 +460,11 @@ void OnOKBackgroundDialog(HWND window)
 	{
 		CCalendarWindow::c_Config.SetBackgroundMode(CBackground::MODE_COPY);
 	}
+
+	CCalendarWindow::c_Config.SetToolTipFontColor(g_ToolTipFontColor);
+	CCalendarWindow::c_Config.SetToolTipBGColor(g_ToolTipBGColor);
+	std::string fontStr = GetFontString(&g_ToolTipFont);
+	CCalendarWindow::c_Config.SetToolTipFont(fontStr);
 }
 
 BOOL CALLBACK BackgroundPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
@@ -443,6 +473,17 @@ BOOL CALLBACK BackgroundPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
     { 
         case WM_INITDIALOG:
 			return OnInitBackgroundDialog(hwndDlg);
+
+        case WM_DRAWITEM:
+			if (wParam == IDC_TOOLTIP_TEXTFONTCOLOR)
+			{
+				return DrawItemFontColor(g_ToolTipFontColor, wParam, lParam);
+			}
+			if (wParam == IDC_TOOLTIP_BGCOLOR)
+			{
+				return DrawItemFontColor(g_ToolTipBGColor, wParam, lParam);
+			}
+			return FALSE;
 
 		case WM_NOTIFY:
 			switch (((NMHDR FAR *) lParam)->code) 
@@ -472,6 +513,22 @@ BOOL CALLBACK BackgroundPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 
 			case IDC_BACKGROUND_FILENAME:
 				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
+				return TRUE;
+
+			case IDC_TOOLTIP_TEXTFONTCOLOR:
+				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
+				return SelectFontColor(hwndDlg, &g_ToolTipFontColor);
+
+			case IDC_TOOLTIP_BGCOLOR:
+				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
+				return SelectFontColor(hwndDlg, &g_ToolTipBGColor);
+
+			case IDC_TOOLTIP_SELECT:
+				SelectFont(hwndDlg, &g_ToolTipFont);
+				UpdateBackgroundWidgets(hwndDlg);
+				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
+				return TRUE;
+
 			}
 			break;
 

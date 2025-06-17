@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/SkinDialog.h,v 1.1 2002/08/03 16:37:09 rainy Exp $
 
-  $Log: $
+  $Log: SkinDialog.h,v $
+  Revision 1.1  2002/08/03 16:37:09  rainy
+  Intial version.
+
 */
 
 #ifndef _SKINDIALOG_H_

@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Rasterizer.h,v 1.5 2002/05/30 18:24:17 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Rasterizer.h,v 1.6 2002/08/03 16:09:10 rainy Exp $
 
   $Log: Rasterizer.h,v $
+  Revision 1.6  2002/08/03 16:09:10  rainy
+  Added support for profiles.
+
   Revision 1.5  2002/05/30 18:24:17  rainy
   Added WIN32_LEAN_AND_MEAN
 
@@ -44,6 +47,8 @@
 #endif
 
 #include <windows.h>
+
+struct Profile;
 
 class CRasterizer  
 {
@@ -77,10 +82,14 @@ public:
 	int GetHeight() { return m_Height; };
 	int GetWidth() { return m_Width; };
 
+	void SetProfile(const Profile* profile) { m_Profile = profile; };
+	const Profile* GetProfile() { return m_Profile; };
+	
 protected:
 	int m_Align;
 	int m_Width;
 	int m_Height;
+	const Profile* m_Profile;
 };
 
 #endif

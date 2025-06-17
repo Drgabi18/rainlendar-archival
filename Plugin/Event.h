@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Event.h,v 1.4 2002/05/23 17:33:41 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Event.h,v 1.6 2002/08/24 11:12:19 rainy Exp $
 
   $Log: Event.h,v $
+  Revision 1.6  2002/08/24 11:12:19  rainy
+  Added some trimming support.
+
+  Revision 1.5  2002/08/03 16:17:44  rainy
+  Added new variables to support repeating events.
+
   Revision 1.4  2002/05/23 17:33:41  rainy
   Removed all MFC stuff
 
@@ -36,25 +42,63 @@
 #ifndef __EVENT_H__
 #define __EVENT_H__
 
+#include <string>
+
+enum EVENT_TYPE 
+{
+	EVENT_SINGLE,
+	EVENT_DAILY,
+	EVENT_WEEKLY,
+	EVENT_MONTHLY,
+	EVENT_ANNUALLY,
+};
+
 class CEventMessage  
 {
 public:
 	CEventMessage();
+	CEventMessage(const CEventMessage& event);
 	~CEventMessage();
 
 	const std::string& GetMessage() { return m_Message; };
-	const std::string& GetBitmap() { return m_Bitmap; };
-	COLORREF GetColor() { return m_Color; };
+	void SetMessage(const std::string& Message );
 
-	void SetMessage(const std::string& Message ) { m_Message=Message; };
-	void SetMessage(char* Message ) { m_Message=Message; };
-	void SetBitmap(const std::string& Bitmap ) { m_Bitmap=Bitmap; };
-	void SetColor(COLORREF Color ) { m_Color=Color; };
+	const std::string& GetProfile() { return m_Profile; };
+	void SetProfile(const std::string& Profile ) { m_Profile=Profile; };
+	EVENT_TYPE GetType() { return m_Type; };
+	void SetType(EVENT_TYPE Type ) { m_Type=Type; };
+	int GetEveryNth() { return m_EveryNth; };
+	void SetEveryNth(int EveryNth ) { m_EveryNth=EveryNth; };
+	int GetValidUntil() { return m_ValidUntil; };
+	void SetValidUntil(int ValidUntil ) { m_ValidUntil=ValidUntil; };
+	int GetDate() { return m_Date; };
+	void SetDate(int Date ) { m_Date=Date; };
+	int GetCount() { return m_Count; };
+	void SetCount(int Count ) { m_Count=Count; };
+	bool IsDeleted() { return m_Deleted; };
+	void SetDeleted() { m_Deleted=true; };
+
+	int GetID() { return m_ID; };
+	const char* GetTypeText();
+
+	CEventMessage& operator=(const CEventMessage& event);
+
+	static int DateToValue(int day, int month, int year);
+	static void ValueToDate(int value, int* day, int* month, int* year);
+	static int CalculateNumOfDays(int startValue, int endValue);
 
 private:
 	std::string m_Message;
-	COLORREF m_Color;
-	std::string m_Bitmap;
+	std::string m_Profile;
+	int m_ValidUntil;
+	int m_EveryNth;
+	int m_Date;
+	int m_Count;
+	int m_ID;
+	EVENT_TYPE m_Type;
+	bool m_Deleted;
+
+	static int c_CurrentID;
 };
 
 #endif

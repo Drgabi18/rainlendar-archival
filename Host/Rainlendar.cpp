@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Host/Rainlendar.cpp,v 1.5 2002/05/30 18:23:03 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Host/Rainlendar.cpp,v 1.6 2002/08/03 16:11:25 rainy Exp $
 
   $Log: Rainlendar.cpp,v $
+  Revision 1.6  2002/08/03 16:11:25  rainy
+  Minor modifications.
+
   Revision 1.5  2002/05/30 18:23:03  rainy
   Removed Litestep specific stuff
 

@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Error.h,v 1.3 2002/05/30 18:26:26 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Error.h,v 1.4 2002/08/24 11:12:32 rainy Exp $
 
   $Log: Error.h,v $
+  Revision 1.4  2002/08/24 11:12:32  rainy
+  Errors are also written to the log file.
+
   Revision 1.3  2002/05/30 18:26:26  rainy
   Added WIN32_LEAN_AND_MEAN
 
@@ -39,24 +42,33 @@
 
 #include <windows.h>
 #include <string>
+#include "Litestep.h"
+
+#define THROW(err) \
+	{ \
+		CError error(err); \
+		LSLog(LOG_ERROR, "Rainlendar", error.GetString().c_str()); \
+		throw CError(err, __LINE__, __FILE__); \
+	}
+
+// Few predefined errors
+enum RAINERROR 
+{
+	ERR_USER,
+	ERR_OUTOFMEM,
+	ERR_WINDOWCLASS,
+	ERR_WINDOW,
+	ERR_BACKGROUND,
+	ERR_BACKGROUNDALPHASIZE,
+	ERR_ALPHASIZE,
+	ERR_CREATEFONT,
+	ERR_TEXTDIMENSIONS,
+	ERR_NULLPARAMETER
+};
 
 class CError
 {
 public:
-	// Few predefined errors
-	enum RAINERROR 
-	{
-		ERR_USER,
-		ERR_OUTOFMEM,
-		ERR_WINDOWCLASS,
-		ERR_WINDOW,
-		ERR_BACKGROUND,
-		ERR_BACKGROUNDALPHASIZE,
-		ERR_ALPHASIZE,
-		ERR_CREATEFONT,
-		ERR_TEXTDIMENSIONS,
-		ERR_NULLPARAMETER
-	};
 
     CError(const std::string& String) { m_Error = ERR_USER; m_String = String; m_File = NULL; };
     CError(const char* String ) { m_Error = ERR_USER; m_String = String; m_File = NULL; };

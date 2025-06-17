@@ -16,9 +16,13 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.h,v 1.4 2002/05/23 17:33:42 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.h,v 1.5 2002/08/03 16:22:37 rainy Exp $
 
   $Log: Background.h,v $
+  Revision 1.5  2002/08/03 16:22:37  rainy
+  Changed the background handling to cache the wallpaper when
+  the window is moved.
+
   Revision 1.4  2002/05/23 17:33:42  rainy
   Removed all MFC stuff
 

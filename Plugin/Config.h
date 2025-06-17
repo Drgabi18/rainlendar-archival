@@ -16,9 +16,13 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.h,v 1.6 2002/05/23 17:33:41 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.h,v 1.7 2002/08/03 16:19:06 rainy Exp $
 
   $Log: Config.h,v $
+  Revision 1.7  2002/08/03 16:19:06  rainy
+  Added some new configs.
+  Added support for profiles.
+
   Revision 1.6  2002/05/23 17:33:41  rainy
   Removed all MFC stuff
 
@@ -47,6 +51,16 @@
 #include "Background.h"
 #include <string>
 #include <vector>
+#include <list>
+
+struct Profile
+{
+	std::string name;
+	COLORREF toolTipColor;
+	COLORREF fontColor;
+	COLORREF fontColor2;
+	std::string bitmapName;
+};
 
 class CConfig  
 {
@@ -66,6 +80,13 @@ public:
 		WINDOWPOS_ONTOP
 	};
 
+	enum BG_COPY_MODE
+	{
+		BG_NORMAL,
+		BG_COPY_ALWAYS,
+		BG_WALLPAPER_ALWAYS
+	};
+
 	CConfig();
 	~CConfig();
 
@@ -82,6 +103,9 @@ public:
 
 	const std::string GetMonthName(int index) { return m_MonthName[index]; };
 
+	const std::string& GetCurrentProfile() { return m_CurrentProfile; };
+	void SetCurrentProfile(const std::string& CurrentProfile) { m_CurrentProfile=CurrentProfile; };
+
 	// General
 	int GetX() { return m_X; };
 	int GetY() { return m_Y; };
@@ -94,9 +118,11 @@ public:
 	bool GetUseWindowName() { return m_UseWindowName; };
 	bool GetPollWallpaper() { return m_PollWallpaper; };
 	bool GetMovable() { return m_Movable; };
+	bool GetSnapEdges() { return m_SnapEdges; };
 	bool GetMouseHide() { return m_MouseHide; };
 	CBackground::MODE GetBackgroundMode() { return m_BackgroundMode; };
 	WINDOWPOS GetWindowPos() { return m_WindowPos; };
+	BG_COPY_MODE GetBGCopyMode() { return m_BGCopyMode; };
 
 	void SetX(int X ) { m_X=X; };
 	void SetY(int Y ) { m_Y=Y; };
@@ -109,9 +135,11 @@ public:
 	void SetUseWindowName(bool UseWindowName ) { m_UseWindowName=UseWindowName; };
 	void SetPollWallpaper(bool PollWallpaper ) { m_PollWallpaper=PollWallpaper; };
 	void SetMovable(bool Movable) { m_Movable=Movable; };
+	void SetSnapEdges(bool SnapEdges) { m_SnapEdges=SnapEdges; };
 	void SetMouseHide(bool MouseHide) { m_MouseHide=MouseHide; };
 	void SetBackgroundMode(CBackground::MODE BackgroundMode ) { m_BackgroundMode=BackgroundMode; };
 	void SetWindowPos(WINDOWPOS WindowPos) { m_WindowPos=WindowPos; };
+	void SetBGCopyMode(BG_COPY_MODE bgMode) { m_BGCopyMode=bgMode; };
 
     const std::string& GetBackgroundBitmapName() { return m_BackgroundBitmapName; };
 	void SetBackgroundBitmapName(const std::string& BackgroundBitmapName ) { m_BackgroundBitmapName=BackgroundBitmapName; };
@@ -286,8 +314,18 @@ public:
 	void SetServerID(const std::string& ServerID ) { m_ServerID=ServerID; };
 	void SetServerEnable(bool ServerEnable ) { m_ServerEnable=ServerEnable; };
 
+	void SetToolTipFontColor(COLORREF ToolTipFontColor ) { m_ToolTipFontColor=ToolTipFontColor; };
+	COLORREF GetToolTipFontColor() { return m_ToolTipFontColor; };
+	void SetToolTipBGColor(COLORREF ToolTipBGColor ) { m_ToolTipBGColor=ToolTipBGColor; };
+	COLORREF GetToolTipBGColor() { return m_ToolTipBGColor; };
+	void SetToolTipFont(const std::string& ToolTipFont ) { m_ToolTipFont=ToolTipFont; };
+    const std::string& GetToolTipFont() { return m_ToolTipFont; };
+
 	void ReadConfig();
 	void WriteConfig(WRITE_FLAGS flags);
+
+	const Profile* GetProfile(const char* name);
+	const std::list<Profile>& GetAllProfiles();
 
 private:
 	void GetIniTime(const std::string& filename);
@@ -295,10 +333,13 @@ private:
 
 	void ReadGeneralConfig(const char* iniFile);
 	void ReadSkinConfig(const char* iniFile);
+	void ReadProfiles(const char* iniFile);
 
 	CRasterizer::TYPE ConvertRasterizer(const char* String);
 	const char* ConvertRasterizer(CRasterizer::TYPE Type);
 	void SeparateMonths();
+
+	std::list<Profile> m_Profiles;
 
 	FILETIME m_WriteTime;	// Last write time for the events.ini
 
@@ -319,6 +360,7 @@ private:
 	bool m_PollWallpaper;
 	bool m_Movable;
 	bool m_MouseHide;
+	bool m_SnapEdges;
 	std::string m_MonthNames;
 	std::string m_WeekdayNames;
 	int m_RefreshDelay;
@@ -326,6 +368,8 @@ private:
 	std::string m_EventExecute;
 	bool m_EventToolTips;
 	bool m_EventMessageBox;
+	BG_COPY_MODE m_BGCopyMode;
+	std::string m_CurrentProfile;
 
 	bool m_ServerEnable;
 	std::string m_ServerID;
@@ -408,6 +452,10 @@ private:
 	COLORREF m_WeekNumbersFontColor;
 	int m_WeekNumbersNumOfComponents;	// Components in the bitmap
 	int m_WeekNumbersSeparation;		// Separation between components
+
+	COLORREF m_ToolTipFontColor;
+	COLORREF m_ToolTipBGColor;
+	std::string m_ToolTipFont;
 };
 
 #endif

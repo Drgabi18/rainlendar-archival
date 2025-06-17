@@ -16,9 +16,16 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RainlendarDLL.cpp,v 1.5 2002/05/30 18:25:44 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RainlendarDLL.cpp,v 1.7 2002/08/24 11:09:40 rainy Exp $
 
   $Log: RainlendarDLL.cpp,v $
+  Revision 1.7  2002/08/24 11:09:40  rainy
+  Changed the error handling.
+
+  Revision 1.6  2002/08/03 16:10:47  rainy
+  Added interfaces for new bang commands.
+  SetWharf is now just a boolean.
+
   Revision 1.5  2002/05/30 18:25:44  rainy
   Removed some Litestep related stuff.
   Rainlendar is now a static object.
@@ -41,6 +48,7 @@
 #include "RainlendarDLL.h"
 #include "CalendarWindow.h"
 #include "Error.h"
+#include "Tooltip.h"
 
 CRainlendar Rainlendar; // The module
 bool CRainlendar::c_DummyLitestep=false;
@@ -67,7 +75,7 @@ int initWharfModule(HWND ParentWnd, HINSTANCE dllInst, void* wd)
 	} 
     catch(CError& error) 
     {
-		MessageBox(ParentWnd, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+		MessageBox(NULL, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 	}
 
 	return Result;
@@ -93,8 +101,6 @@ void quitWharfModule(HINSTANCE dllInst)
 HRGN getLSRegion(int xOffset, int yOffset)
 {
 	return Rainlendar.GetRegion(xOffset, yOffset);
-
-	return NULL;
 }
 
 /*
@@ -109,11 +115,13 @@ int initModuleEx(HWND ParentWnd, HINSTANCE dllInst, LPCSTR szPath)
 	
 	try 
 	{
+		LSLog(LOG_DEBUG, "Rainlendar", "The initialization started.");
 		Result = Rainlendar.Initialize(ParentWnd, dllInst, NULL, szPath);
+		LSLog(LOG_NOTICE, "Rainlendar", "The initialization finished.");
 	} 
     catch(CError& error) 
     {
-		MessageBox(ParentWnd, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+		MessageBox(NULL, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 	}
 
 	return Result;
@@ -172,7 +180,16 @@ void RainlendarHide(HWND, const char* arg)
 */
 void RainlendarShow(HWND, const char* arg)
 {
-	Rainlendar.ShowWindow();
+	bool activate = false;
+
+	if(arg!=NULL && arg[0]!='\0') 
+	{
+		if (0 == stricmp(arg, "activate"))
+		{
+			activate = true;
+		}
+	} 
+	Rainlendar.ShowWindow(activate);
 }
 
 /*
@@ -264,33 +281,56 @@ void RainlendarShowMonth(HWND, const char* arg)
 	char* Token;
 	int Month=0, Year=0;
 	
-	
+	if(arg!=NULL && arg[0]!='\0') 
 	{
-		if(arg!=NULL && arg[0]!='\0') 
+		strncpy(Buffer, arg, 255);
+		Buffer[255] = '\0';
+		Token = strtok(Buffer, " ");
+		
+		if(Token!=NULL) 
 		{
-			strncpy(Buffer, arg, 255);
-			Buffer[255] = '\0';
-			Token = strtok(Buffer, " ");
+			Month = atoi(Token);
+			Token = strtok(NULL, " ");
 			
-			if(Token!=NULL) 
+			if(Token != NULL) 
 			{
-				Month = atoi(Token);
-				Token = strtok(NULL, " ");
-				
-				if(Token != NULL) 
-				{
-					Year = atoi(Token);
-					Rainlendar.ShowMonth(Month, Year);
-				}
-				else 
-				{
-					Rainlendar.ShowMonth(Month, -1);
-				}
+				Year = atoi(Token);
+				Rainlendar.ShowMonth(Month, Year);
+				Rainlendar.RefreshWindow(true);
 			}
-		} 
-		else 
+			else 
+			{
+				Rainlendar.ShowMonth(Month, -1);
+				Rainlendar.RefreshWindow(true);
+			}
+		}
+	} 
+	else 
+	{
+		Rainlendar.ShowMonth(-1, -1);
+		Rainlendar.RefreshWindow(true);
+	}
+}
+
+/*
+** RainlendarLsBoxHook
+**
+** Callback for the !RainlendarLsBoxHook bang
+**
+*/
+void RainlendarLsBoxHook(HWND, const char* arg)
+{
+	char* handle = strrchr(arg,' ');
+
+	if (handle) 
+	{
+		HWND hWnd = (HWND)atoi(handle+1);
+		HWND hWndCal = GetRainlendar()->GetCalendarWindow().GetWindow();
+		if (hWnd && hWndCal) 
 		{
-			Rainlendar.ShowMonth(-1, -1);
+			SetWindowLong(hWndCal, GWL_STYLE, (GetWindowLong(hWndCal, GWL_STYLE) &~ WS_POPUP) | WS_CHILD);
+			SetParent(hWndCal, hWnd);
+			GetRainlendar()->SetWharf();
 		}
 	}
 }
@@ -329,7 +369,7 @@ int CRainlendar::Initialize(HWND Parent, HINSTANCE Instance, bool wd, LPCSTR szP
 
 	if(Parent==NULL || Instance==NULL) 
 	{
-		throw CError(CError::ERR_NULLPARAMETER, __LINE__, __FILE__);
+		THROW(ERR_NULLPARAMETER);
 	}	
 
 	m_Wharf = wd;
@@ -357,6 +397,7 @@ int CRainlendar::Initialize(HWND Parent, HINSTANCE Instance, bool wd, LPCSTR szP
 		AddBangCommand("!RainlendarShowPrev", RainlendarShowPrev);
 		AddBangCommand("!RainlendarShowCurrent", RainlendarShowCurrent);
 		AddBangCommand("!RainlendarShowMonth", RainlendarShowMonth);
+		AddBangCommand("!RainlendarLsBoxHook", RainlendarLsBoxHook);
 	}
 
 	return Result;	// Alles OK
@@ -370,6 +411,8 @@ int CRainlendar::Initialize(HWND Parent, HINSTANCE Instance, bool wd, LPCSTR szP
 */
 void CRainlendar::Quit(HINSTANCE dllInst)
 {
+	CToolTip::Instance().Finalize();
+
 	// If we're running as Litestep's plugin, unregister the !bangs
 	if(!c_DummyLitestep) 
 	{
@@ -388,6 +431,7 @@ void CRainlendar::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainlendarShowPrev");
 		RemoveBangCommand("!RainlendarShowCurrent");
 		RemoveBangCommand("!RainlendarShowMonth");
+		RemoveBangCommand("!RainlendarLsBoxHook");
 	}
 }
 

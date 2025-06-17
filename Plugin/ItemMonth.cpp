@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemMonth.cpp,v 1.5 2002/05/23 17:33:41 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemMonth.cpp,v 1.7 2002/08/24 11:10:36 rainy Exp $
 
   $Log: ItemMonth.cpp,v $
+  Revision 1.7  2002/08/24 11:10:36  rainy
+  Changed the error handling.
+
+  Revision 1.6  2002/08/03 16:15:18  rainy
+  Added separation and color setting for the rasterizer.
+
   Revision 1.5  2002/05/23 17:33:41  rainy
   Removed all MFC stuff
 
@@ -150,11 +156,10 @@ void CItemMonth::Initialize()
 			CRasterizerBitmap* BMRast;
 
 			BMRast=new CRasterizerBitmap;
-			if(BMRast==NULL) throw CError(CError::ERR_OUTOFMEM);
+			if(BMRast==NULL) THROW(ERR_OUTOFMEM);
 
 			BMRast->Load(CCalendarWindow::c_Config.GetMonthBitmapName());
 			BMRast->SetNumOfComponents(NUMOFCOMPONENTS);
-
 			BMRast->SetAlign(CCalendarWindow::c_Config.GetMonthAlign());
 			SetRasterizer(BMRast);
 			break;
@@ -163,11 +168,12 @@ void CItemMonth::Initialize()
 			CRasterizerFont* FNRast;
 
 			FNRast=new CRasterizerFont;
-			if(FNRast==NULL) throw CError(CError::ERR_OUTOFMEM);
+			if(FNRast==NULL) THROW(ERR_OUTOFMEM);
 
 			FNRast->SetFont(CCalendarWindow::c_Config.GetMonthFont());
 			FNRast->CreateStringTable(CCalendarWindow::c_Config.GetMonthNames(), NUMOFCOMPONENTS);
 			FNRast->SetAlign(CCalendarWindow::c_Config.GetMonthAlign());
+			FNRast->SetColor(CCalendarWindow::c_Config.GetMonthFontColor());
 			FNRast->UpdateDimensions();
 			SetRasterizer(FNRast);
 			break;
@@ -219,9 +225,6 @@ void CItemMonth::Paint(HDC dc)
 			Y = CCalendarWindow::c_Config.GetMonthY() - H;
 			break;
 		};
-
-		SetBkMode(dc, TRANSPARENT);
-		SetTextColor(dc, CCalendarWindow::c_Config.GetMonthFontColor());
 
 		m_Rasterizer->Paint(dc, X, Y, W, H, CCalendarWindow::c_MonthsFirstDate.wMonth - 1);
 	}

@@ -16,9 +16,13 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Server/main.cpp,v 1.1 2002/01/27 16:21:04 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Server/main.cpp,v 1.2 2002/08/03 16:13:48 rainy Exp $
 
   $Log: main.cpp,v $
+  Revision 1.2  2002/08/03 16:13:48  rainy
+  Added possiblity to log to a file.
+  Added mutex to check if the server is already running.
+
   Revision 1.1  2002/01/27 16:21:04  rainy
   Initial version
 
@@ -36,7 +40,7 @@
 
 using namespace ssobjects;
 
-#define VERSION "0.1"
+#define VERSION "0.2"
 
 void initDaemon();
 
@@ -44,9 +48,30 @@ int main(int argc, char* argv[])
 {
 	int port = 9999;
 	bool daemonize = false;
+	CStr logFile;
 
 	printf("Rainlendar Server version %s\n", VERSION);
-	
+
+#ifdef _WIN32
+	// Check if RainlendarServer is already running
+	HANDLE h = CreateMutex(NULL, TRUE, "RAINLENDARSERVER_IS_RUNNING_MUTEX" );
+	if (!h)
+	{
+		printf("Unable to create mutex.\n");
+		// We'll continue anyway
+    }
+    else
+    {
+	    if ( GetLastError() == ERROR_ALREADY_EXISTS )
+		{
+			// already an instance running.
+            CloseHandle(h);
+			printf("RainlendarServer is already running. Exiting.\n");
+            return 0;
+        }
+	}
+#endif
+
 	// Parse command line
 	for(int i = 1; i < argc; i++)
 	{
@@ -58,6 +83,7 @@ int main(int argc, char* argv[])
 			puts  (" -h,--help              = this message");
 			puts  (" -p,--port <port>       = run server on port <port>");
 			puts  (" -d,--daemonize         = daemonize server (not available in win32)");
+			puts  (" -l,--log <folder>      = write log to a file instead to console");
 
 			return 0;
 		}
@@ -74,6 +100,20 @@ int main(int argc, char* argv[])
 		{
 			daemonize = true;
 		}
+		else if(!strcmp(a, "-l") || !strcmp(a, "--log"))
+		{
+			if(++i >= argc) 
+			{
+				printf("\n\"%s\" is invalid.\n", a);
+				return 0;
+			}
+			logFile = argv[i];
+
+			if(logFile.isNotEmpty() && (logFile.right(1) != "\\" || logFile.right(1) != "/"))
+			{
+				logFile += "/";
+			}
+		}
 	}
 	
 	// Note that this SockAddr is okay here, as we are not specifying an ip address.
@@ -85,15 +125,15 @@ int main(int argc, char* argv[])
 		// All server output is routed through logs object. That way we can have output
 		// sent to a file, console or both. Especially useful when you are running
 		// in daemon mode, when you don't want any output on the console.
-#ifndef _WIN32      
-		if(daemonize)
+		if(logFile.isNotEmpty())
 		{
 			// Enable log file if we are running as a daemon.
 			// Output goes to a file and to console by default.
-			logs::init("RainlendarServer");
+			logFile += "Rainlendar";
+			logs::init(logFile);
 			logs::enable(true);
+			logs::set(logs::L_FILE, logs::L_ALL);  // output only log to a file now
 		}
-#endif
 		
 		// In win32 it's important to construct the server BEFORE calling canBind, or any
 		// other socket operation, as the server constructor contains a call to WSAStartup,
@@ -113,7 +153,6 @@ int main(int argc, char* argv[])
 			if(daemonize)
 			{
 				logs::logln("Switching to daemon process...");
-				logs::set(logs::L_FILE, logs::L_ALL);  // output only log to a file now
 				initDaemon();
 			}
 #endif            
@@ -127,6 +166,10 @@ int main(int argc, char* argv[])
 		// all errors use exceptions instead of return codes
 		LOG("caught exception [%s]",e.getErrorMsg());
 	}
+
+#ifdef _WIN32
+     if(h) CloseHandle(h);
+#endif
 
 	return 0;
 }

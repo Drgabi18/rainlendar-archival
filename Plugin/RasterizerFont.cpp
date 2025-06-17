@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.cpp,v 1.5 2002/05/30 18:23:27 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.cpp,v 1.7 2002/08/24 11:09:00 rainy Exp $
 
   $Log: RasterizerFont.cpp,v $
+  Revision 1.7  2002/08/24 11:09:00  rainy
+  Changed the error handling.
+
+  Revision 1.6  2002/08/03 16:07:54  rainy
+  Added CreateFont and modified SetFont to use that.
+
   Revision 1.5  2002/05/30 18:23:27  rainy
   Rect is now zeroed before used.
 
@@ -40,6 +46,7 @@
 
 #include "RasterizerFont.h"
 #include "Error.h"
+#include "Config.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -90,19 +97,26 @@ void CRasterizerFont::CreateStringTable(const std::string& text, int count)
 		err += text;
 		err += "\" has incorrect number of items!";
 	
-		throw CError(err);
+		THROW(err);
 	}
 }
 
+void CRasterizerFont::SetFont(const std::string& FontName)
+{
+	if (m_Font) DeleteObject(m_Font);
+	m_Font = CreateFont(FontName);
+}
+
 /* 
-** SetFont
+** CreateFont
 **
 ** Creates the font from given string. The string must have '/'-char as 
 ** separator for the fields.
 **
 */
-void CRasterizerFont::SetFont(const std::string& FontName)
+HFONT CRasterizerFont::CreateFont(const std::string& FontName)
 {
+	HFONT font;
 	int nHeight;
 	int nWidth;
 	int nEscapement;
@@ -125,9 +139,7 @@ void CRasterizerFont::SetFont(const std::string& FontName)
 	int pos = FontName.rfind('/');
 	std::string name(FontName.begin() + pos + 1, FontName.end());
 
-	if (m_Font) DeleteObject(m_Font);
-
-	m_Font = CreateFont( 
+	font = ::CreateFont( 
 				nHeight, 
 				nWidth, 
 				nEscapement, 
@@ -143,7 +155,9 @@ void CRasterizerFont::SetFont(const std::string& FontName)
 				nPitchAndFamily, 
 				name.c_str());
 
-	if (m_Font == NULL) throw CError(CError::ERR_CREATEFONT);
+	if (font == NULL) THROW(ERR_CREATEFONT);
+
+	return font;
 }
 
 /* 
@@ -161,12 +175,12 @@ void CRasterizerFont::UpdateDimensions(const char* defaultString)
 	RECT Rect = {0, 0, 0, 0};
 
 	Desktop=GetDesktopWindow();
-	if(Desktop==NULL) throw CError(CError::ERR_TEXTDIMENSIONS);
+	if(Desktop==NULL) THROW(ERR_TEXTDIMENSIONS);
 	DDC=GetDC(Desktop);
-	if(DDC==NULL) throw CError(CError::ERR_TEXTDIMENSIONS);
+	if(DDC==NULL) THROW(ERR_TEXTDIMENSIONS);
 
 	tmpDC=CreateCompatibleDC(DDC);
-	if(tmpDC==NULL) throw CError(CError::ERR_OUTOFMEM);
+	if(tmpDC==NULL) THROW(ERR_OUTOFMEM);
 
 	ReleaseDC(Desktop, DDC);
 
@@ -245,6 +259,16 @@ void CRasterizerFont::Paint(HDC dc, int X, int Y, int W, int H, int Index)
 	format |= DT_NOCLIP | DT_SINGLELINE;
 
 	oldFont = (HFONT)SelectObject(dc, m_Font);
+
+	SetBkMode(dc, TRANSPARENT);
+	if (m_Profile)
+	{
+		SetTextColor(dc, m_Profile->fontColor);
+	}
+	else
+	{
+		SetTextColor(dc, m_Color);
+	}
 
 	if(m_StringTable.empty()) 
 	{

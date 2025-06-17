@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Litestep.cpp,v 1.1 2002/05/30 18:27:42 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Litestep.cpp,v 1.2 2002/08/24 11:10:07 rainy Exp $
 
   $Log: Litestep.cpp,v $
+  Revision 1.2  2002/08/24 11:10:07  rainy
+  Added support for logging.
+
   Revision 1.1  2002/05/30 18:27:42  rainy
   Initial version
 
@@ -54,40 +57,26 @@ FPTRANSPARENTBLTLS fpTransparentBltLS = NULL;
 
 typedef void (*FPVAREXPANSION)(LPSTR buffer, LPCSTR value);
 FPVAREXPANSION fpVarExpansion = NULL;
- 
 
+typedef BOOL (WINAPI *FPLSLOG)(int nLevel, LPCSTR pszModule, LPCSTR pszMessage);
+FPLSLOG fpLSLog = NULL;
+ 
 void InitalizeLitestep()
 {
 	// Use lsapi's methods instead of the stubs
 	HINSTANCE h = LoadLibrary("lsapi.dll");
-	if (h == NULL) throw CError("Unable to find lsapi.dll", __LINE__, __FILE__);
+	if (h == NULL) THROW("Unable to find lsapi.dll");
 
 	fpAddBangCommand = (FPADDBANGCOMMAND)GetProcAddress(h, "AddBangCommand");
-	if (fpAddBangCommand == NULL) throw CError("Unable to find AddBangCommand in lsapi.dll", __LINE__, __FILE__); 
-
 	fpBitmapToRegion = (FPBITMAPTOREGION)GetProcAddress(h, "BitmapToRegion");
-	if (fpBitmapToRegion == NULL) throw CError("Unable to find BitmapToRegion in lsapi.dll", __LINE__, __FILE__); 
-
 	fpGetLitestepWnd = (FPGETLITESTEPWND)GetProcAddress(h, "GetLitestepWnd");
-	if (fpGetLitestepWnd == NULL) throw CError("Unable to find GetLitestepWnd in lsapi.dll", __LINE__, __FILE__); 
-
 	fpGetRCString = (FPGETRCSTRING)GetProcAddress(h, "GetRCString");
-	if (fpGetRCString == NULL) throw CError("Unable to find GetRCString in lsapi.dll", __LINE__, __FILE__); 
-
 	fpLSExecute = (FPLSEXECUTE)GetProcAddress(h, "LSExecute");
-	if (fpLSExecute == NULL) throw CError("Unable to find LSExecute in lsapi.dll", __LINE__, __FILE__); 
-
 	fpLoadLSImage = (FPLOADLSIMAGE)GetProcAddress(h, "LoadLSImage");
-	if (fpLoadLSImage == NULL) throw CError("Unable to find LoadLSImage in lsapi.dll", __LINE__, __FILE__); 
-
 	fpRemoveBangCommand = (FPREMOVEBANGCOMMAND)GetProcAddress(h, "RemoveBangCommand");
-	if (fpRemoveBangCommand == NULL) throw CError("Unable to find RemoveBangCommand in lsapi.dll", __LINE__, __FILE__); 
-
 	fpTransparentBltLS = (FPTRANSPARENTBLTLS)GetProcAddress(h, "TransparentBltLS");
-	if (fpTransparentBltLS == NULL) throw CError("Unable to find TransparentBltLS in lsapi.dll", __LINE__, __FILE__); 
-
 	fpVarExpansion = (FPVAREXPANSION)GetProcAddress(h, "VarExpansion");
-	if (fpVarExpansion == NULL) throw CError("Unable to find VarExpansion in lsapi.dll", __LINE__, __FILE__); 
+	fpLSLog = (FPLSLOG)GetProcAddress(h, "_LSLog@12");
 }
 
 BOOL AddBangCommand(LPCSTR command, BangCommand f)
@@ -410,3 +399,59 @@ void TransparentBltLS(HDC hdcDst, int nXDest, int nYDest, int nWidth, int nHeigh
 	}
 }
 
+BOOL LSLog(int nLevel, LPCSTR pszModule, LPCSTR pszMessage)
+{
+	// Use the lsapi.dll version of the method if possible
+	if (fpLSLog) return fpLSLog(nLevel, pszModule, pszMessage);
+
+	// The stub implementation
+	static int logFound = 0;
+	FILE* logFile;
+
+	if (logFound == 0)
+	{
+		// Check if the file exists
+		logFile = fopen("Rainlendar.log", "r");
+		if (logFile)
+		{
+			logFound = 1;
+			fclose(logFile);
+
+			// Clear the file
+			logFile = fopen("Rainlendar.log", "w");
+			fclose(logFile);
+		}
+		else
+		{
+			logFound = 2;
+		}
+	}
+
+	if (logFound == 1)
+	{
+		logFile = fopen("Rainlendar.log", "a+");
+		if (logFile)
+		{
+			switch(nLevel)
+			{
+			case 1:
+				fputs("ERROR: ", logFile);
+				break;
+			case 2:
+				fputs("WARNING: ", logFile);
+				break;
+			case 3:
+				fputs("NOTICE: ", logFile);
+				break;
+			case 4:
+				fputs("DEBUG: ", logFile);
+				break;
+			}
+			fputs(pszMessage, logFile);
+			fputs("\n", logFile);
+			fclose(logFile);
+		}
+	}
+
+	return TRUE;
+}

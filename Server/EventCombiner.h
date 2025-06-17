@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Server/EventCombiner.h,v 1.3 2002/02/27 18:14:43 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Server/EventCombiner.h,v 1.4 2002/08/03 16:17:23 rainy Exp $
 
   $Log: EventCombiner.h,v $
+  Revision 1.4  2002/08/03 16:17:23  rainy
+  Changed to support repeating events.
+
   Revision 1.3  2002/02/27 18:14:43  rainy
   Removed size from the packages
 
@@ -30,8 +33,8 @@
 
 */
 
-#if !defined(AFX_EVENTCOMBINER_H__FDF66128_EE8F_44B9_A37D_66DCF518B98C__INCLUDED_)
-#define AFX_EVENTCOMBINER_H__FDF66128_EE8F_44B9_A37D_66DCF518B98C__INCLUDED_
+#ifndef __EVENTCOMBINER_H__
+#define __EVENTCOMBINER_H__
 
 #ifdef _WIN32
 #pragma warning(disable: 4786)
@@ -42,7 +45,7 @@
 #include <list>
 #include <clientconnector.h>
 
-const unsigned32 PROTOCOL_VERSION = 100;
+const unsigned32 PROTOCOL_VERSION = 200;
 
 enum
 {
@@ -68,12 +71,17 @@ public:
 	unsigned32 GetEventCount() { return m_Events.size(); };
 
 private:
-	// We are not using the CEventMessage class here, cooz we are re-using this class
+	// We are not using the CEventMessage class here, cooz we are re-using this class in the server/client
 	// in the server
 	struct EventInfo
 	{
 		unsigned32 stamp;
 		std::string message;
+		std::string profile;
+		unsigned32 validUntil;
+		unsigned32 everyNth;
+		unsigned32 type;
+		unsigned32 deleted;
 	};
 
 	bool AddEvent(std::string& date, EventInfo* newEvent);
@@ -82,4 +90,4 @@ private:
 	std::list<ssobjects::PacketBuffer*> m_Packets;
 };
 
-#endif // !defined(AFX_EVENTCOMBINER_H__FDF66128_EE8F_44B9_A37D_66DCF518B98C__INCLUDED_)
+#endif

@@ -16,9 +16,18 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.cpp,v 1.7 2002/05/30 18:26:17 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.cpp,v 1.10 2002/08/24 11:11:10 rainy Exp $
 
   $Log: ItemEvent.cpp,v $
+  Revision 1.10  2002/08/24 11:11:10  rainy
+  Few changes to prevent showing the deleted events.
+
+  Revision 1.9  2002/08/10 08:38:59  rainy
+  Removed prefixes from the event texts.
+
+  Revision 1.8  2002/08/03 16:16:19  rainy
+  Changed to use EventManager and customToolTip class.
+
   Revision 1.7  2002/05/30 18:26:17  rainy
   Small change
 
@@ -49,6 +58,7 @@
 #include "RasterizerBitmap.h"
 #include "RasterizerFont.h"
 #include "CalendarWindow.h"
+#include "Tooltip.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -56,25 +66,11 @@
 
 CItemEvent::CItemEvent()
 {
-	int i;
-
-	for(i = 0; i < 32; i++) 
-	{
-		m_Events[i]=NULL;
-	}
-	
 	m_EventFont = NULL;
 }
 
 CItemEvent::~CItemEvent()
 {
-	int i;
-
-	for(i = 0; i < 32; i++) 
-	{
-		if(m_Events[i]) delete m_Events[i];		// Kill the events
-	}
-
 	if (m_EventFont) DeleteObject(m_EventFont);
 }
 
@@ -94,12 +90,11 @@ void CItemEvent::Initialize()
 			CRasterizerBitmap* BMRast;
 
 			BMRast=new CRasterizerBitmap;
-			if(BMRast==NULL) throw CError(CError::ERR_OUTOFMEM);
+			if(BMRast==NULL) THROW(ERR_OUTOFMEM);
 
 			BMRast->Load(CCalendarWindow::c_Config.GetEventBitmapName());
 			BMRast->SetNumOfComponents(CCalendarWindow::c_Config.GetEventNumOfComponents());
 			BMRast->SetSeparation(CCalendarWindow::c_Config.GetEventSeparation());
-
 			BMRast->SetAlign(CCalendarWindow::c_Config.GetEventAlign());
 			SetRasterizer(BMRast);
 			break;
@@ -108,94 +103,52 @@ void CItemEvent::Initialize()
 			CRasterizerFont* FNRast;
 
 			FNRast=new CRasterizerFont;
-			if(FNRast==NULL) throw CError(CError::ERR_OUTOFMEM);
+			if(FNRast==NULL) THROW(ERR_OUTOFMEM);
 
 			FNRast->SetFont(CCalendarWindow::c_Config.GetEventFont());
 			FNRast->SetAlign(CCalendarWindow::c_Config.GetEventAlign());
+			FNRast->SetColor(CCalendarWindow::c_Config.GetEventFontColor());
 			FNRast->UpdateDimensions("XX");
 			SetRasterizer(FNRast);
 			break;
 		}
-	}
 
-	if(CCalendarWindow::c_Config.GetEventInCalendar())
-	{
-		SetFont(CCalendarWindow::c_Config.GetEventFont2());
-	}
+		if(CCalendarWindow::c_Config.GetEventInCalendar())
+		{
+			SetFont(CCalendarWindow::c_Config.GetEventFont2());
+		}
 
-	// Check for the events
-	ReadEvents();
+		// Check for the events
+		m_EventManager.ReadEvents();
+	}
 }
 
 /* 
-** ReadEvents
+** ResetDayTypes
 **
-** Reads the Events for current month
+** Resets the day types for the displayed month
 **
 */
-void CItemEvent::ReadEvents()
+void CItemEvent::ResetDayTypes()
 {
-	char tmpSz[MAX_LINE_LENGTH];
-	SYSTEMTIME& Current = CCalendarWindow::c_MonthsFirstDate;
-	std::string Date;
-	int i;
-
-	const char* IniPath = CCalendarWindow::c_Config.GetEventsPath().c_str();
-
-	for(i = 1; i < 32; i++) 
+	// Fill the day types for current month
+	int NumOfDays = GetDaysInMonth(CCalendarWindow::c_MonthsFirstDate.wYear, CCalendarWindow::c_MonthsFirstDate.wMonth);
+	for (int i = 1; i <= NumOfDays; i++)
 	{
-		sprintf(tmpSz, "%i-%i-%i", i, Current.wMonth, Current.wYear);
-		Date = tmpSz;
+		std::list<CEventMessage*> eventList = m_EventManager.GetEvents(i, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 
-		if(m_Events[i]) delete m_Events[i];		// Kill the old ones
-		m_Events[i] = NULL;
-
-		if(GetPrivateProfileString( Date.c_str(), "Message", "", tmpSz, 255, IniPath) > 0) 
+		// Make sure that the events are not deleted
+		std::list<CEventMessage*>::iterator iter = eventList.begin();
+		for( ;  iter != eventList.end(); iter++)
 		{
-			m_Events[i] = new CEventMessage;
-
-			if(m_Events[i]) 
+			if (!((*iter)->IsDeleted()))
 			{
-				COLORREF color;
-				std::string bitmap;
-				CItem::SetDayType(i, EVENT);
-
-				// Replace \n's
-				std::string tmpString = tmpSz;
-				
-				int pos = tmpString.find("\\n");
-				while (pos != -1)
-				{
-					tmpString.replace(tmpString.begin() + pos, tmpString.begin() + pos + 2, "\n");
-					pos = tmpString.find("\\n");
-				}
-
-				m_Events[i]->SetMessage(tmpString);
-
-				if(GetPrivateProfileString( Date.c_str(), "FontColor", "", tmpSz, 255, IniPath) > 0) 
-				{
-					sscanf(tmpSz, "%X", &color);
-				}
-				else
-				{
-					color = CCalendarWindow::c_Config.GetEventFontColor();
-				}
-
-				if(GetPrivateProfileString( Date.c_str(), "Bitmap", "", tmpSz, 255, IniPath) > 0) 
-				{
-					bitmap = tmpSz;
-				}
-				else
-				{
-					bitmap = CCalendarWindow::c_Config.GetEventBitmapName();
-				}
-
-				m_Events[i]->SetColor(color);
-				m_Events[i]->SetBitmap(bitmap);
+				SetDayType(i, EVENT);
+				break;
 			}
 		}
 	}
-} 
+}
 
 /* 
 ** Paint
@@ -221,8 +174,6 @@ void CItemEvent::Paint(HDC dc)
 	W = CCalendarWindow::c_Config.GetDaysW() / 7;	// 7 Columns
 	H = CCalendarWindow::c_Config.GetDaysH() / 6;	// 6 Rows
 
-	SetBkMode(dc, TRANSPARENT);
-
 	if(m_Rasterizer!=NULL) 
 	{
 		for(i = 0; i < NumOfDays; i++) 
@@ -236,55 +187,65 @@ void CItemEvent::Paint(HDC dc)
 			{	
 				X = CCalendarWindow::c_Config.GetDaysX() + (Index % 7) * W;
 				Y = CCalendarWindow::c_Config.GetDaysY() + (Index / 7) * H;
-	
-				if(CCalendarWindow::c_Config.GetEventRasterizer() == CRasterizer::TYPE_BITMAP &&
-					CCalendarWindow::c_Config.GetEventBitmapName() != m_Events[i + 1]->GetBitmap())
-				{
-					try
-					{
-						// Damn this is inefficient way to switch the bitmap
-						CRasterizerBitmap* BMRast = new CRasterizerBitmap;
-						BMRast->Load(m_Events[i + 1]->GetBitmap());
-						BMRast->SetNumOfComponents(CCalendarWindow::c_Config.GetEventNumOfComponents());
-						BMRast->SetSeparation(CCalendarWindow::c_Config.GetEventSeparation());
-						BMRast->SetAlign(CCalendarWindow::c_Config.GetEventAlign());
-						BMRast->Paint(dc, X, Y, W, H, i+1);
-						delete BMRast;
-					}
-					catch(...)
-					{
-						// Do nothing, just fail
-					}
-				}
-				else
-				{
-					SetTextColor(dc, m_Events[i + 1]->GetColor());
-					m_Rasterizer->Paint(dc, X, Y, W, H, i+1);
-				}
+
+				// Set the correct profile
+				m_Rasterizer->SetProfile(GetEventProfile(i + 1));
+
+				m_Rasterizer->Paint(dc, X, Y, W, H, i + 1);
+
 
 				// Draw the event texts
 				if(CCalendarWindow::c_Config.GetEventInCalendar()) 
 				{
 					HFONT OldFont;
-					RECT rect = {X, Y, X + W, Y + H};
+					int count = 0, width = 0, height = 0;
+					RECT rect;
+					std::vector<int> heights;
+					std::list<CEventMessage*>::iterator eventIter;
+					std::list<CEventMessage*> eventList = m_EventManager.GetEvents(i + 1, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 
 					OldFont = (HFONT)SelectObject(dc, m_EventFont);
-					DrawText(dc, m_Events[i + 1]->GetMessage().c_str(), m_Events[i + 1]->GetMessage().size(), &rect, DT_CENTER | DT_NOPREFIX | DT_CALCRECT);
 
-					if(rect.bottom - rect.top >= H)
+					// First calculate the size of the texts
+					for(eventIter = eventList.begin();  eventIter != eventList.end(); eventIter++)
 					{
-						rect.top = Y;
-						rect.bottom = Y + H;
+						if (!((*eventIter)->GetMessage().empty()) && !((*eventIter)->IsDeleted()))
+						{
+							DrawText(dc, (*eventIter)->GetMessage().c_str(), (*eventIter)->GetMessage().size(), &rect, DT_CENTER | DT_NOPREFIX | DT_CALCRECT);
+							height += rect.bottom - rect.top;
+							width = max (width, rect.right - rect.left);
+							heights.push_back(rect.bottom - rect.top);
+						}
 					}
-					else
+
+					SetBkMode(dc, TRANSPARENT);
+
+					rect.top = Y + H / 2 - height / 2;
+					rect.bottom = rect.top + height;
+					rect.left = X + W / 2 - width / 2;
+					rect.right = rect.left + width;
+
+					// Then draw them to the window
+					for(eventIter = eventList.begin();  eventIter != eventList.end(); eventIter++)
 					{
-						rect.top = Y + (H - (rect.bottom - Y)) / 2;
-						rect.bottom = rect.top + (rect.top - Y) + H;
+						if (!((*eventIter)->GetMessage().empty()))
+						{
+							const Profile* profile = CCalendarWindow::c_Config.GetProfile((*eventIter)->GetProfile().c_str());
+
+							if (profile)
+							{
+								SetTextColor(dc, profile->fontColor2);
+							}
+							else
+							{
+								SetTextColor(dc, CCalendarWindow::c_Config.GetEventFontColor2());
+							}
+							DrawText(dc, (*eventIter)->GetMessage().c_str(), (*eventIter)->GetMessage().size(), &rect, DT_CENTER | DT_NOPREFIX);
+
+							rect.top += heights[count];
+							count++;
+						}
 					}
-					rect.left = X;
-					rect.right = X + W;
-					SetTextColor(dc, CCalendarWindow::c_Config.GetEventFontColor2());
-					DrawText(dc, m_Events[i + 1]->GetMessage().c_str(), m_Events[i + 1]->GetMessage().size(), &rect, DT_CENTER | DT_NOPREFIX);
 					SelectObject(dc, OldFont);
 				}
 			}
@@ -317,6 +278,8 @@ void CItemEvent::AddToolTips(CCalendarWindow* CalendarWnd)
 		if(FirstWeekday == -1) FirstWeekday = 6;
 	} 
 
+	CToolTip::Instance().DeleteAllToolTips();
+
 	Rect.top = Y;
 	Rect.bottom = Y + H;
 	for(j = 0; j < 6; j++) 
@@ -328,10 +291,37 @@ void CItemEvent::AddToolTips(CCalendarWindow* CalendarWnd)
 			Day = j * 7 + i + 1 - FirstWeekday;
 			if(Day > 0 && Day < 32) 
 			{
-				RemoveToolTip(CalendarWnd, Day);	// Remove old toltips
 				if(CCalendarWindow::c_Config.GetEventEnable() && CCalendarWindow::c_Config.GetEventToolTips()) 
 				{
-					if(m_Events[Day]) AddToolTip(CalendarWnd, &Rect, Day);
+					if(GetDayType(Day) & EVENT) 
+					{
+						std::list<CEventMessage*> eventList = m_EventManager.GetEvents(Day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
+
+						int ID = CToolTip::Instance().CreateToolTip(Rect);
+
+						std::list<CEventMessage*>::iterator eventIter = eventList.begin();
+						for( ;  eventIter != eventList.end(); eventIter++)
+						{
+							if (!((*eventIter)->GetMessage().empty()) && !((*eventIter)->IsDeleted()))
+							{
+								const Profile* profile = CCalendarWindow::c_Config.GetProfile((*eventIter)->GetProfile().c_str());
+
+								CToolTip::ToolTipData ttd;
+
+								if (profile)
+								{
+									ttd.color = profile->toolTipColor;
+								}
+								else
+								{
+									ttd.color = CCalendarWindow::c_Config.GetToolTipFontColor();
+								}
+
+								ttd.text = (*eventIter)->GetMessage();
+								CToolTip::Instance().AddData(ID, ttd);
+							}
+						}
+					}
 				}
 			}
 			Rect.right += W;
@@ -343,44 +333,106 @@ void CItemEvent::AddToolTips(CCalendarWindow* CalendarWnd)
 }
 
 /* 
-** AddToolTip
+** GetEventProfile
 **
-** Adds the Tooltip-message for  a window
+** Returns the event profile for the given day in current month
 **
 */
-void CItemEvent::AddToolTip(CCalendarWindow* CalendarWnd, RECT* Rect, int Day) 
+const Profile* CItemEvent::GetEventProfile(int day)
 {
-	if (CalendarWnd->GetToolTip())
+	const char* currentProfile = NULL;
+	int currentType = 0;
+
+	std::list<CEventMessage*> eventList = m_EventManager.GetEvents(day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
+	
+	if (!eventList.empty())
 	{
-		TOOLINFO ti;    // tool information
+		std::list<CEventMessage*>::iterator i = eventList.begin();
+		for( ;  i != eventList.end(); i++)
+		{
+			// Events that occur more rarely override frequent events
 
-		ti.cbSize = sizeof(TOOLINFO);
-		ti.uFlags = TTF_SUBCLASS | TTF_TRANSPARENT;
-		ti.hwnd = CalendarWnd->GetWindow();
-		ti.hinst = NULL;
-		ti.uId = Day;
-		ti.lpszText = LPSTR_TEXTCALLBACK;
-		ti.rect = *Rect;
+			if (!((*i)->GetProfile().empty()) && !((*i)->IsDeleted()))
+			{
+				switch((*i)->GetType())
+				{
+				case EVENT_SINGLE:
+					currentProfile = (*i)->GetProfile().c_str();
+					currentType = 5;
+					break;
 
-		SendMessage(CalendarWnd->GetToolTip(), TTM_ADDTOOL, 0, (LPARAM) (LPTOOLINFO) &ti);
+				case EVENT_DAILY:
+					if (currentType <= 1)
+					{
+						currentProfile = (*i)->GetProfile().c_str();
+						currentType = 1;
+					}
+					break;
+
+				case EVENT_WEEKLY:
+					if (currentType <= 2)
+					{
+						currentProfile = (*i)->GetProfile().c_str();
+						currentType = 2;
+					}
+					break;
+
+				case EVENT_MONTHLY:
+					if (currentType <= 3)
+					{
+						currentProfile = (*i)->GetProfile().c_str();
+						currentType = 3;
+					}
+					break;
+
+				case EVENT_ANNUALLY:
+					if (currentType <= 4)
+					{
+						currentProfile = (*i)->GetProfile().c_str();
+						currentType = 4;
+					}
+					break;
+				}
+			}
+		}
+
+		return CCalendarWindow::c_Config.GetProfile(currentProfile);
 	}
+
+	return NULL;
 }
 
 /* 
-** RemoveToolTip
+** GetEventText
 **
-** Removes the Tooltip-message for  a window
+** Returns the event text(s) for the given day in current month
 **
 */
-void CItemEvent::RemoveToolTip(CCalendarWindow* CalendarWnd, int Day) 
+bool CItemEvent::GetEventText(int day, std::string& text)
 {
-	TOOLINFO ti;    // tool information
+	std::list<CEventMessage*> eventList = m_EventManager.GetEvents(day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
+	
+	if (!eventList.empty())
+	{
+		std::list<CEventMessage*>::iterator i = eventList.begin();
+		for( ;  i != eventList.end(); i++)
+		{
+			if (!((*i)->GetMessage().empty()))
+			{
+				text += (*i)->GetMessage();
+				text += "\n";
+			}
+		}
 
-	ti.cbSize = sizeof(TOOLINFO);
-	ti.hwnd = CalendarWnd->GetWindow();
-	ti.uId = Day;
+		if(!text.empty())
+		{
+			// Remove the last \n
+			text.erase(text.end() - 1, text.end());
+		}
+		return true;
+	}
 
-	SendMessage(CalendarWnd->GetToolTip(), TTM_DELTOOL, 0, (LPARAM) (LPTOOLINFO) &ti);
+	return false;
 }
 
 /* 
@@ -392,43 +444,6 @@ void CItemEvent::RemoveToolTip(CCalendarWindow* CalendarWnd, int Day)
 */
 void CItemEvent::SetFont(const std::string& FontName)
 {
-	int nHeight;
-	int nWidth;
-	int nEscapement;
-	int nOrientation; 
-	int nWeight;
-	BYTE bItalic; 
-	BYTE bUnderline;
-	BYTE cStrikeOut; 
-	BYTE nCharSet;
-	BYTE nOutPrecision;
-	BYTE nClipPrecision; 
-	BYTE nQuality;
-	BYTE nPitchAndFamily;
-
-	sscanf(FontName.c_str(), "%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i", 
-					&nHeight, &nWidth, &nEscapement, &nOrientation, &nWeight,
-					&bItalic, &bUnderline, &cStrikeOut, &nCharSet, &nOutPrecision, 
-					&nClipPrecision, &nQuality, &nPitchAndFamily);
-
-	int pos = FontName.rfind('/');
-	std::string name(FontName.begin() + pos, FontName.end());
-
-	m_EventFont = CreateFont( 
-				nHeight, 
-				nWidth, 
-				nEscapement, 
-				nOrientation, 
-				nWeight, 
-				bItalic, 
-				bUnderline, 
-				cStrikeOut, 
-				nCharSet, 
-				nOutPrecision, 
-				nClipPrecision, 
-				nQuality, 
-				nPitchAndFamily, 
-				name.c_str());
-
-	if (m_EventFont == NULL) throw CError(CError::ERR_CREATEFONT);
+	if (m_EventFont) DeleteObject(m_EventFont);
+	m_EventFont = CRasterizerFont::CreateFont(FontName);
 }

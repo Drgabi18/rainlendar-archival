@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.h,v 1.2 2002/05/23 17:33:40 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.h,v 1.3 2002/08/03 16:07:54 rainy Exp $
 
   $Log: RasterizerFont.h,v $
+  Revision 1.3  2002/08/03 16:07:54  rainy
+  Added CreateFont and modified SetFont to use that.
+
   Revision 1.2  2002/05/23 17:33:40  rainy
   Removed all MFC stuff
 
@@ -41,15 +44,19 @@ public:
 	virtual ~CRasterizerFont();
 
 	void SetFont(const std::string& FontName);
+	void SetColor(COLORREF color) { m_Color = color; };
 	void CreateStringTable(const std::string& text, int count);
 
 	void UpdateDimensions(const char* defaultString = NULL);
 
 	void Paint(HDC dc, int X, int Y, int W, int H, int Index);
 
+	static HFONT CreateFont(const std::string& FontName);
+
 protected:
 	std::vector<std::string> m_StringTable;
 	HFONT m_Font;
+	COLORREF m_Color;
 };
 
 #endif

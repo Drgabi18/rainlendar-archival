@@ -16,9 +16,16 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RainlendarDLL.h,v 1.4 2002/05/30 18:25:23 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RainlendarDLL.h,v 1.6 2002/08/24 11:09:40 rainy Exp $
 
   $Log: RainlendarDLL.h,v $
+  Revision 1.6  2002/08/24 11:09:40  rainy
+  Changed the error handling.
+
+  Revision 1.5  2002/08/03 16:10:46  rainy
+  Added interfaces for new bang commands.
+  SetWharf is now just a boolean.
+
   Revision 1.4  2002/05/30 18:25:23  rainy
   Removed some Litestep related stuff.
 
@@ -54,7 +61,7 @@
 #define END_MESSAGEPROC } return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 #define APPNAME "Rainlendar"
-#define VERSION "0.11"
+#define VERSION "0.13"
 
 #define DLLDECL __declspec( dllexport )
 
@@ -69,6 +76,7 @@ void RainlendarShowNext(HWND caller, const char* arg);
 void RainlendarShowPrev(HWND caller, const char* arg);
 void RainlendarShowCurrent(HWND caller, const char* arg);
 void RainlendarShowMonth(HWND caller, const char* arg);
+void RainlendarLsBoxHook(HWND caller, const char* arg);
 
 class CRainlendar
 {
@@ -82,9 +90,9 @@ public:
 
 	void QuitRainlendar() { m_Calendar.QuitRainlendar(); };
 	void HideWindow() { m_Calendar.HideWindow(); };
-	void ShowWindow() { m_Calendar.ShowWindow(); };
+	void ShowWindow(bool activate) { m_Calendar.ShowWindow(activate); };
 	void ToggleWindow() { m_Calendar.ToggleWindow(); };
-	void RefreshWindow() { m_Calendar.RefreshWindow(); };
+	void RefreshWindow(bool lite = false) { m_Calendar.RefreshWindow(lite); };
 	void ShowConfig() { m_Calendar.ShowConfig(); };
 	void ShowEditSkin() { m_Calendar.ShowEditSkin(); };
 	void ShowMonth(int Month, int Year) { m_Calendar.ShowMonth(Month, Year); };
@@ -93,6 +101,7 @@ public:
 	void ShowCurrentMonth() { m_Calendar.ShowCurrentMonth(); };
 
 	bool IsWharf() { return m_Wharf; };
+	void SetWharf() { m_Wharf = true; };
 	CCalendarWindow& GetCalendarWindow() { return m_Calendar; };
 
 	static void SetDummyLitestep(bool Dummy) { c_DummyLitestep = Dummy; };

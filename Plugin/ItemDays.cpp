@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemDays.cpp,v 1.3 2002/05/23 17:33:41 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemDays.cpp,v 1.5 2002/08/24 11:11:54 rainy Exp $
 
   $Log: ItemDays.cpp,v $
+  Revision 1.5  2002/08/24 11:11:54  rainy
+  Added ResetDayTypes()
+
+  Revision 1.4  2002/08/03 16:16:37  rainy
+  Added separation and color setting for the rasterizer.
+
   Revision 1.3  2002/05/23 17:33:41  rainy
   Removed all MFC stuff
 
@@ -94,7 +100,7 @@ void CItemDays::Initialize()
 			CRasterizerBitmap* BMRast;
 
 			BMRast=new CRasterizerBitmap;
-			if(BMRast==NULL) throw CError(CError::ERR_OUTOFMEM);
+			if(BMRast==NULL) THROW(ERR_OUTOFMEM);
 
 			BMRast->Load(CCalendarWindow::c_Config.GetDaysBitmapName());
 			BMRast->SetNumOfComponents(CCalendarWindow::c_Config.GetDaysNumOfComponents());
@@ -108,27 +114,37 @@ void CItemDays::Initialize()
 			CRasterizerFont* FNRast;
 
 			FNRast=new CRasterizerFont;
-			if(FNRast==NULL) throw CError(CError::ERR_OUTOFMEM);
+			if(FNRast==NULL) THROW(ERR_OUTOFMEM);
 
 			FNRast->SetFont(CCalendarWindow::c_Config.GetDaysFont());
 			FNRast->SetAlign(CCalendarWindow::c_Config.GetDaysAlign());
+			FNRast->SetColor(CCalendarWindow::c_Config.GetDaysFontColor());
 			FNRast->UpdateDimensions("XX");
 			SetRasterizer(FNRast);
 			break;
 		}
-	
-		// Set all days to NORMAL
-		for(int i = 0; i < 32; i++) 
-		{
-			c_DayTypes[i] = NORMAL;
-		}
+	}
+}
 
-		// If this month is shown, mark today
-		if(CCalendarWindow::c_MonthsFirstDate.wMonth == CCalendarWindow::c_TodaysDate.wMonth &&
-			CCalendarWindow::c_MonthsFirstDate.wYear == CCalendarWindow::c_TodaysDate.wYear) 
-		{
-			SetDayType(CCalendarWindow::c_TodaysDate.wDay, TODAY);
-		}
+/* 
+** ResetDayTypes
+**
+** Resets the day types for the displayed month
+**
+*/
+void CItemDays::ResetDayTypes()
+{
+	// Set all days to NORMAL
+	for(int i = 0; i < 32; i++) 
+	{
+		c_DayTypes[i] = NORMAL;
+	}
+
+	// If this month is shown, mark today
+	if(CCalendarWindow::c_MonthsFirstDate.wMonth == CCalendarWindow::c_TodaysDate.wMonth &&
+		CCalendarWindow::c_MonthsFirstDate.wYear == CCalendarWindow::c_TodaysDate.wYear) 
+	{
+		SetDayType(CCalendarWindow::c_TodaysDate.wDay, TODAY);
 	}
 }
 
@@ -155,9 +171,6 @@ void CItemDays::Paint(HDC dc)
 
 	W = CCalendarWindow::c_Config.GetDaysW() / 7;	// 7 Columns
 	H = CCalendarWindow::c_Config.GetDaysH() / 6;	// 6 Rows
-
-	SetBkMode(dc, TRANSPARENT);
-	SetTextColor(dc, CCalendarWindow::c_Config.GetDaysFontColor());
 
 	if(m_Rasterizer != NULL) 
 	{
@@ -221,6 +234,10 @@ int CItemDays::HitTest(int x, int y)
 	{
 		if(Day < 1 || Day > m_DaysInMonth) return 0;	// No hit
 	}
+
+	char buffer[256];
+	sprintf(buffer, "HitTest %i in (%i, %i), %i, %i, (%i, %i), (%i, %i)", Day, x, y, m_DaysInMonth, FirstWeekday, W, H, X, Y);
+	LSLog(LOG_DEBUG, "Rainlendar", buffer);
 
 	return Day;
 }

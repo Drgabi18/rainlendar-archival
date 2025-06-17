@@ -16,9 +16,19 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.cpp,v 1.7 2002/05/23 17:33:41 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.cpp,v 1.10 2002/08/24 11:14:01 rainy Exp $
 
   $Log: Config.cpp,v $
+  Revision 1.10  2002/08/24 11:14:01  rainy
+  Changed the error handling.
+
+  Revision 1.9  2002/08/10 08:39:51  rainy
+  Loading the sections from the ini does not crash anymore if the file is missing.
+
+  Revision 1.8  2002/08/03 16:19:07  rainy
+  Added some new configs.
+  Added support for profiles.
+
   Revision 1.7  2002/05/23 17:33:41  rainy
   Removed all MFC stuff
 
@@ -61,9 +71,12 @@ CConfig::CConfig()
 	m_PollWallpaper=false;
 	m_Movable=false;
 	m_MouseHide=false;
+	m_SnapEdges=false;
 	m_RefreshDelay=100;
 	m_BackgroundMode=CBackground::MODE_TILE;
 	m_WindowPos=WINDOWPOS_ONBOTTOM;
+	m_BGCopyMode=BG_NORMAL;
+	m_CurrentProfile="Default";
 
 	m_DaysEnable=false;
 	m_DaysX=0;
@@ -137,6 +150,10 @@ CConfig::CConfig()
 	m_ServerPort = 0;
 	m_ServerFrequency = 60;		// every hour
 	m_ServerStartup = false;
+
+	m_ToolTipFontColor = GetSysColor(COLOR_INFOTEXT);
+	m_ToolTipBGColor = GetSysColor(COLOR_INFOBK);
+	m_ToolTipFont = "-11/0/0/0/400/0/0/0/0/3/2/1/34/Arial";
 }
 
 
@@ -158,7 +175,7 @@ void CConfig::GetIniTime(const std::string& filename)
 	{
 		std::string err = "The ini-file not found: ";
 		err += filename;
-		throw CError(err, __LINE__, __FILE__);
+		THROW(err);
 	}
 }
 
@@ -199,6 +216,7 @@ void CConfig::ReadConfig()
 		INIPath = m_SkinsPath + m_CurrentSkin + "/" + m_CurrentSkinIni;
 		ReadGeneralConfig(INIPath.c_str());
 		ReadSkinConfig(INIPath.c_str());
+		ReadProfiles(INIPath.c_str());
 	}
 }
 
@@ -216,8 +234,15 @@ void CConfig::ReadGeneralConfig(const char* iniFile)
 	m_PollWallpaper=(1==GetPrivateProfileInt( "Rainlendar", "PollWallpaper", m_PollWallpaper?1:0, iniFile))?true:false;
 	m_Movable=(1==GetPrivateProfileInt( "Rainlendar", "Movable", m_Movable?1:0, iniFile))?true:false;
 	m_MouseHide=(1==GetPrivateProfileInt( "Rainlendar", "MouseHide", m_MouseHide?1:0, iniFile))?true:false;
+	m_SnapEdges=(1==GetPrivateProfileInt( "Rainlendar", "SnapEdges", m_SnapEdges?1:0, iniFile))?true:false;
 	m_RefreshDelay=GetPrivateProfileInt( "Rainlendar", "RefreshDelay", m_RefreshDelay, iniFile);
 	m_WindowPos=(WINDOWPOS)GetPrivateProfileInt( "Rainlendar", "WindowPos", m_WindowPos, iniFile);
+	m_BGCopyMode=(BG_COPY_MODE)GetPrivateProfileInt( "Rainlendar", "BGCopyMode", m_BGCopyMode, iniFile);
+
+	if(GetPrivateProfileString( "Rainlendar", "CurrentProfile", m_CurrentProfile.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_CurrentProfile=tmpSz;
+	}
 
 	if(GetPrivateProfileString( "Rainlendar", "EventExecute", m_EventExecute.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
@@ -467,7 +492,120 @@ void CConfig::ReadSkinConfig(const char* iniFile)
 	}
 	m_WeekNumbersSeparation=GetPrivateProfileInt( "Rainlendar", "WeekNumbersSeparation", m_WeekNumbersSeparation, iniFile);
 
+	// ToolTip stuff
+	if(GetPrivateProfileString( "Rainlendar", "ToolTipFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		sscanf(tmpSz, "%X", &m_ToolTipFontColor);
+	}
+	if(GetPrivateProfileString( "Rainlendar", "ToolTipBGColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		sscanf(tmpSz, "%X", &m_ToolTipBGColor);
+	}
+	if(GetPrivateProfileString( "Rainlendar", "ToolTipFont", m_ToolTipFont.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_ToolTipFont=tmpSz;
+	}
+
 	SeparateMonths();
+}
+
+void CConfig::ReadProfiles(const char* iniFile)
+{
+	char tmpSz[MAX_LINE_LENGTH];
+	char* profiles = new char[MAX_LINE_LENGTH];
+	int size = MAX_LINE_LENGTH;
+
+	// Get all the sections
+	while(true)
+	{
+		int res = GetPrivateProfileString( NULL, NULL, NULL, profiles, size, iniFile);
+		if (res == 0) return;		// File not found
+		if (res != size - 2) break;		// Fits in the buffer
+
+		delete [] profiles;
+		size *= 2;
+		profiles = new char[size];
+	};
+
+	m_Profiles.clear();
+
+	char* pos = profiles;
+	while(strlen(pos) > 0)
+	{
+		if (0 == strncmp(pos, "Profile", 7))
+		{
+			Profile profile;
+
+			if(GetPrivateProfileString(pos, "Name", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+			{
+				profile.name = tmpSz;
+			}
+
+			if(GetPrivateProfileString(pos, "EventFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+			{
+				sscanf(tmpSz, "%X", &profile.fontColor);
+			}
+			else
+			{
+				profile.fontColor = m_EventFontColor;
+			}
+
+			if(GetPrivateProfileString(pos, "EventFontColor2", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+			{
+				sscanf(tmpSz, "%X", &profile.fontColor2);
+			}
+			else
+			{
+				profile.fontColor2 = m_EventFontColor2;
+			}
+
+			if(GetPrivateProfileString(pos, "ToolTipFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+			{
+				sscanf(tmpSz, "%X", &profile.toolTipColor);
+			}
+			else
+			{
+				profile.toolTipColor = m_ToolTipFontColor;
+			}
+
+			if(GetPrivateProfileString(pos, "EventBitmapName", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+			{
+				profile.bitmapName = tmpSz;
+			}
+			else
+			{
+				profile.bitmapName = m_EventBitmapName;
+			}
+			
+			if (!profile.name.empty())
+			{
+				m_Profiles.push_back(profile);
+			}
+		}
+		pos = pos + strlen(pos) + 1;
+	}
+
+	delete [] profiles;
+}
+
+const std::list<Profile>& CConfig::GetAllProfiles()
+{
+	return m_Profiles;
+}
+
+const Profile* CConfig::GetProfile(const char* name)
+{
+	if (name == NULL) return NULL;
+
+	std::list<Profile>::iterator i = m_Profiles.begin();
+	for( ; i != m_Profiles.end(); i++)
+	{
+		if ((*i).name == name)
+		{
+			return &(*i);
+		}
+	}
+	return NULL;
 }
 
 /* 
@@ -512,6 +650,8 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			WritePrivateProfileString( "Rainlendar", "UseWindowName", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_Movable);
 			WritePrivateProfileString( "Rainlendar", "Movable", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_SnapEdges);
+			WritePrivateProfileString( "Rainlendar", "SnapEdges", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_MouseHide);
 			WritePrivateProfileString( "Rainlendar", "MouseHide", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_RefreshDelay);
@@ -523,6 +663,9 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			WritePrivateProfileString( "Rainlendar", "EventToolTips", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_EventMessageBox);
 			WritePrivateProfileString( "Rainlendar", "EventMessageBox", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_BGCopyMode);
+			WritePrivateProfileString( "Rainlendar", "BGCopyMode", tmpSz, INIPath.c_str() );
+			WritePrivateProfileString( "Rainlendar", "CurrentProfile", m_CurrentProfile.c_str(), INIPath.c_str() );
 
 			sprintf(tmpSz, "%i", m_ServerEnable);
 			WritePrivateProfileString( "Rainlendar", "ServerEnable", tmpSz, INIPath.c_str() );
@@ -666,6 +809,12 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 		WritePrivateProfileString( "Rainlendar", "WeekNumbersNumOfComponents", tmpSz, INIPath.c_str() );
 		sprintf(tmpSz, "%i", m_WeekNumbersSeparation);
 		WritePrivateProfileString( "Rainlendar", "WeekNumbersSeparation", tmpSz, INIPath.c_str() );
+
+		sprintf(tmpSz, "%X", m_ToolTipFontColor);
+		WritePrivateProfileString( "Rainlendar", "ToolTipFontColor", tmpSz, INIPath.c_str() );
+		sprintf(tmpSz, "%X", m_ToolTipBGColor);
+		WritePrivateProfileString( "Rainlendar", "ToolTipBGColor", tmpSz, INIPath.c_str() );
+		WritePrivateProfileString( "Rainlendar", "ToolTipFont", m_ToolTipFont.c_str(), INIPath.c_str() );
 	}
 
 	WritePrivateProfileString( NULL, NULL, NULL, INIPath.c_str() );	// FLUSH

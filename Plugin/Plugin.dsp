@@ -56,7 +56,7 @@ LINK32=link.exe
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib Advapi32.lib Ws2_32.lib ssobjects.lib comdlg32.lib comctl32.lib shell32.lib /nologo /dll /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Release/Rainlendar.dll" /libpath:"..\..\..\3rdparty\ssobjects"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=Copy          Release\Rainlendar.dll          ..\TestBench\Rainlendar.dll         	Copy          Release\Rainlendar.dll               C:\Litestep\Themes\dArk\modules\ 
+PostBuild_Cmds=Copy                      Release\Rainlendar.dll                      ..\TestBench\Rainlendar.dll                     	Copy                      Release\Rainlendar.dll                           C:\Litestep\modules\ 
 # End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "Plugin - Win32 Debug"
@@ -83,10 +83,10 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib Advapi32.lib Ws2_32.lib ssobjects.lib comdlg32.lib comctl32.lib shell32.lib /nologo /dll /debug /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Debug/Rainlendar.dll" /pdbtype:sept /libpath:"..\..\..\3rdparty\ssobjects"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib Advapi32.lib Ws2_32.lib ssobjects.lib comdlg32.lib shell32.lib comctl32.lib /nologo /dll /debug /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Debug/Rainlendar.dll" /pdbtype:sept /libpath:"..\..\..\3rdparty\ssobjects"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=Copy          Debug\Rainlendar.dll          ..\TestBench\Rainlendar.dll         	Copy          Debug\Rainlendar.dll               C:\Litestep\Themes\dArk\modules\ 
+PostBuild_Cmds=Copy                      Debug\Rainlendar.dll                      ..\TestBench\Rainlendar.dll                     	Copy                      Debug\Rainlendar.dll                           C:\Litestep\modules\ 
 # End Special Build Tool
 
 !ENDIF 
@@ -129,6 +129,10 @@ SOURCE=.\Event.cpp
 # Begin Source File
 
 SOURCE=..\Server\EventCombiner.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\EventManager.cpp
 # End Source File
 # Begin Source File
 
@@ -190,6 +194,10 @@ SOURCE=.\RasterizerFont.cpp
 
 SOURCE=.\SkinDialog.cpp
 # End Source File
+# Begin Source File
+
+SOURCE=.\Tooltip.cpp
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -221,6 +229,10 @@ SOURCE=.\Error.h
 # Begin Source File
 
 SOURCE=.\Event.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\EventManager.h
 # End Source File
 # Begin Source File
 
@@ -286,6 +298,10 @@ SOURCE=.\Resource.h
 
 SOURCE=.\SkinDialog.h
 # End Source File
+# Begin Source File
+
+SOURCE=.\Tooltip.h
+# End Source File
 # End Group
 # Begin Group "Resource Files"
 
@@ -297,11 +313,15 @@ SOURCE=.\RainlendarDLL.rc
 # End Group
 # Begin Source File
 
-SOURCE=..\Distribution.txt
+SOURCE=..\Manual.html
 # End Source File
 # Begin Source File
 
-SOURCE=..\Manual.html
+SOURCE="..\Rainlendar Install Script.nsi"
+# End Source File
+# Begin Source File
+
+SOURCE=..\Skinning.txt
 # End Source File
 # Begin Source File
 

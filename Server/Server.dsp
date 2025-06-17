@@ -50,7 +50,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 ssobjects.lib pthreadVCE.lib Ws2_32.lib Winmm.lib /nologo /subsystem:console /machine:I386 /nodefaultlib:"LIBCMTD.lib" /libpath:"..\..\..\3rdparty\ssobjects\\" /libpath:"..\..\..\3rdParty\pthreads-snap-2001-06-06"
+# ADD LINK32 ssobjects.lib pthreadVCE.lib Ws2_32.lib Winmm.lib /nologo /subsystem:console /machine:I386 /nodefaultlib:"LIBCMTD.lib LIBCMT.lib" /libpath:"..\..\..\3rdparty\ssobjects\\" /libpath:"..\..\..\3rdParty\pthreads-snap-2001-06-06"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
 PostBuild_Cmds=Copy            Release\Server.exe            ..\TestBench\RainlendarServer.exe
@@ -78,7 +78,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 ssobjects_dbg.lib pthreadVCE.lib Ws2_32.lib Winmm.lib /nologo /subsystem:console /debug /machine:I386 /nodefaultlib:"LIBCMTD.lib" /pdbtype:sept /libpath:"..\..\..\3rdparty\ssobjects\\" /libpath:"..\..\..\3rdParty\pthreads-snap-2001-06-06"
+# ADD LINK32 ssobjects.lib pthreadVCE.lib Ws2_32.lib Winmm.lib /nologo /subsystem:console /debug /machine:I386 /nodefaultlib:"LIBCMTD.lib" /pdbtype:sept /libpath:"..\..\..\3rdparty\ssobjects\\" /libpath:"..\..\..\3rdParty\pthreads-snap-2001-06-06"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
 PostBuild_Cmds=Copy            Debug\Server.exe            ..\TestBench\RainlendarServer.exe
@@ -122,6 +122,10 @@ SOURCE=.\RainlendarServer.h
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # End Group
+# Begin Source File
+
+SOURCE=.\Makefile
+# End Source File
 # Begin Source File
 
 SOURCE=.\ReadMe.txt

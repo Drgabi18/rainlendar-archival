@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.h,v 1.4 2002/05/23 17:33:41 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.h,v 1.6 2002/08/24 11:11:10 rainy Exp $
 
   $Log: ItemEvent.h,v $
+  Revision 1.6  2002/08/24 11:11:10  rainy
+  Few changes to prevent showing the deleted events.
+
+  Revision 1.5  2002/08/03 16:16:19  rainy
+  Changed to use EventManager and customToolTip class.
+
   Revision 1.4  2002/05/23 17:33:41  rainy
   Removed all MFC stuff
 
@@ -39,6 +45,7 @@
 
 #include "Item.h"
 #include "Event.h"
+#include "EventManager.h"
 
 class CCalendarWindow;
 
@@ -49,21 +56,21 @@ public:
 	virtual ~CItemEvent();
 
 	void Initialize();
+	void ResetDayTypes();
 	void Paint(HDC dc);
 
-	CEventMessage* GetEvent(int Index) { return m_Events[Index]; };
-
 	void AddToolTips(CCalendarWindow* CalendarWnd);
+	bool GetEventText(int day, std::string& text);
+
+	CEventManager* GetEventManager() { return &m_EventManager; };
 
 protected:
 	void SetFont(const std::string& FontName);
-	void AddToolTip(CCalendarWindow* CalendarWnd, RECT* Rect, int Day);
-	void RemoveToolTip(CCalendarWindow* CalendarWnd, int Day);
-
-	void ReadEvents();
+	const Profile* GetEventProfile(int day);
 
 	HFONT m_EventFont;
-	CEventMessage* m_Events[32];
+
+	CEventManager m_EventManager;
 };
 
 #endif

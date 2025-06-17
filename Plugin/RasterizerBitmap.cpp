@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerBitmap.cpp,v 1.6 2002/05/30 18:23:56 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerBitmap.cpp,v 1.8 2002/08/24 11:09:00 rainy Exp $
 
   $Log: RasterizerBitmap.cpp,v $
+  Revision 1.8  2002/08/24 11:09:00  rainy
+  Changed the error handling.
+
+  Revision 1.7  2002/08/03 16:08:59  rainy
+  Added support for profiles.
+
   Revision 1.6  2002/05/30 18:23:56  rainy
   Image loading uses LoadLSImage always.
 
@@ -61,8 +67,12 @@ CRasterizerBitmap::CRasterizerBitmap()
 
 CRasterizerBitmap::~CRasterizerBitmap()
 {
-	if (m_Bitmap) DeleteObject(m_Bitmap);
-	if (m_AlphaBitmap) DeleteObject(m_AlphaBitmap);
+	std::map<const Profile*, BitmapData>::iterator i = m_ProfileBitmaps.begin();
+	for ( ; i != m_ProfileBitmaps.end(); i++)
+	{
+		if (((*i).second).bitmap) DeleteObject(((*i).second).bitmap);
+		if (((*i).second).alphaBitmap) DeleteObject(((*i).second).alphaBitmap);
+	}
 }
 
 /* 
@@ -98,7 +108,7 @@ void CRasterizerBitmap::Load(std::string filename)
 	{
 		std::string err = "File not found: ";
 		err += filename;
-		throw CError(err, __LINE__, __FILE__);
+		THROW(err);
 	}
 
 	GetObject(m_Bitmap, sizeof(BITMAP), &bm);
@@ -120,9 +130,22 @@ void CRasterizerBitmap::Load(std::string filename)
 		{
 			// Check that it is correct size
 			GetObject(m_AlphaBitmap, sizeof(BITMAP), &bm);
-			if (m_Width != bm.bmWidth || m_Height != bm.bmHeight) throw CError(CError::ERR_BACKGROUNDALPHASIZE, __LINE__, __FILE__);
+			if (m_Width != bm.bmWidth || m_Height != bm.bmHeight) THROW(ERR_BACKGROUNDALPHASIZE);
 			m_Alpha = true;
 		}
+	}
+
+	// If the default profile is not in the map, put it there
+	std::map<const Profile*, BitmapData>::iterator i = m_ProfileBitmaps.find(m_Profile);
+	if (i == m_ProfileBitmaps.end())
+	{
+		BitmapData data;
+		data.height = m_Height;
+		data.width = m_Width;
+		data.bitmap = m_Bitmap;
+		data.alpha = m_Alpha;
+		data.alphaBitmap = m_AlphaBitmap;
+		m_ProfileBitmaps[m_Profile] = data;
 	}
 }
 
@@ -137,6 +160,42 @@ void CRasterizerBitmap::Paint(HDC dc, int X, int Y, int W, int H, int Index)
 	HBITMAP OldBitmap = NULL;
 	HDC tmpDC=NULL;
 	int Number, NumOfNums, ItemWidth, ItemHeight;
+
+	// Check the current profile and load the bitmap if necessary
+	std::map<const Profile*, BitmapData>::iterator i = m_ProfileBitmaps.find(m_Profile);
+	if (i == m_ProfileBitmaps.end())
+	{
+		try 
+		{
+			Load(m_Profile->bitmapName);
+		}
+		catch(CError& error) 
+		{
+			MessageBox(NULL, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+
+			// Create a dummy profile, so that the error won't come again
+			i = m_ProfileBitmaps.find(NULL);
+			if (i != m_ProfileBitmaps.end())
+			{
+				m_ProfileBitmaps[m_Profile] = (*i).second;
+				BitmapData& data = (*i).second;
+				m_Height = data.height;
+				m_Width = data.width;
+				m_Bitmap = data.bitmap;
+				m_Alpha = data.alpha;
+				m_AlphaBitmap = data.alphaBitmap;
+			}
+		}
+	}
+	else
+	{
+		BitmapData& data = (*i).second;
+		m_Height = data.height;
+		m_Width = data.width;
+		m_Bitmap = data.bitmap;
+		m_Alpha = data.alpha;
+		m_AlphaBitmap = data.alphaBitmap;
+	}
 
 	if(m_Height > m_Width) 
 	{
@@ -194,7 +253,7 @@ void CRasterizerBitmap::Paint(HDC dc, int X, int Y, int W, int H, int Index)
 		break;
 	};
 
-	if(m_Alpha) 
+	if(m_Alpha)
 	{
 		PaintAlpha(dc, X, Y, NumOfNums, Index);
 	} 

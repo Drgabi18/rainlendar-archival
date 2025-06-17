@@ -16,9 +16,16 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemWeekNumbers.cpp,v 1.2 2002/05/23 17:33:40 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemWeekNumbers.cpp,v 1.4 2002/08/24 11:10:35 rainy Exp $
 
   $Log: ItemWeekNumbers.cpp,v $
+  Revision 1.4  2002/08/24 11:10:35  rainy
+  Changed the error handling.
+
+  Revision 1.3  2002/08/03 16:14:47  rainy
+  Added separation and color setting for the rasterizer.
+  Fixed the way weeknumbers are calculated.
+
   Revision 1.2  2002/05/23 17:33:40  rainy
   Removed all MFC stuff
 
@@ -64,7 +71,7 @@ void CItemWeekNumbers::Initialize()
 			CRasterizerBitmap* BMRast;
 
 			BMRast=new CRasterizerBitmap;
-			if(BMRast==NULL) throw CError(CError::ERR_OUTOFMEM);
+			if(BMRast==NULL) THROW(ERR_OUTOFMEM);
 
 			BMRast->Load(CCalendarWindow::c_Config.GetWeekNumbersBitmapName());
 			BMRast->SetNumOfComponents(CCalendarWindow::c_Config.GetWeekNumbersNumOfComponents());
@@ -78,10 +85,11 @@ void CItemWeekNumbers::Initialize()
 			CRasterizerFont* FNRast;
 
 			FNRast=new CRasterizerFont;
-			if(FNRast==NULL) throw CError(CError::ERR_OUTOFMEM);
+			if(FNRast==NULL) THROW(ERR_OUTOFMEM);
 
 			FNRast->SetFont(CCalendarWindow::c_Config.GetWeekNumbersFont());
 			FNRast->SetAlign(CCalendarWindow::c_Config.GetWeekNumbersAlign());
+			FNRast->SetColor(CCalendarWindow::c_Config.GetWeekNumbersFontColor());
 			FNRast->UpdateDimensions();
 			SetRasterizer(FNRast);
 			break;
@@ -125,9 +133,6 @@ void CItemWeekNumbers::Paint(HDC dc)
 
 	W = CCalendarWindow::c_Config.GetDaysW() / 7;	// 7 Columns
 	H = CCalendarWindow::c_Config.GetDaysH() / 6;	// 6 Rows
-
-	SetBkMode(dc, TRANSPARENT);
-	SetTextColor(dc, CCalendarWindow::c_Config.GetWeekNumbersFontColor());
 
 	// Calculate if the last line (=6) contains days or not
 	NumOfDays = GetDaysInMonth(CCalendarWindow::c_MonthsFirstDate.wYear, CCalendarWindow::c_MonthsFirstDate.wMonth);

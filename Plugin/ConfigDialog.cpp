@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ConfigDialog.cpp,v 1.1 2002/05/30 18:27:26 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ConfigDialog.cpp,v 1.3 2002/08/24 11:12:58 rainy Exp $
 
   $Log: ConfigDialog.cpp,v $
+  Revision 1.3  2002/08/24 11:12:58  rainy
+  Added Copy to clipboard.
+
+  Revision 1.2  2002/08/03 16:18:29  rainy
+  Added snap edges.
+
   Revision 1.1  2002/05/30 18:27:26  rainy
   Initial version
 
@@ -140,6 +146,8 @@ BOOL OnInitGeneralDialog(HWND window)
 	CheckDlgButton(window, IDC_USE_WINDOW_NAME, state);
 	state = CCalendarWindow::c_Config.GetPollWallpaper() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_POLL_WALLPAPER, state);
+	state = CCalendarWindow::c_Config.GetSnapEdges() ? BST_CHECKED : BST_UNCHECKED;
+	CheckDlgButton(window, IDC_SNAP_EDGES, state);
 
 	return TRUE;
 }
@@ -194,6 +202,8 @@ BOOL OnOKGeneralDialog(HWND window)
 	CCalendarWindow::c_Config.SetUseWindowName(state);
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_POLL_WALLPAPER));
 	CCalendarWindow::c_Config.SetPollWallpaper(state);
+	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_SNAP_EDGES));
+	CCalendarWindow::c_Config.SetSnapEdges(state);
 
 	return TRUE;
 }
@@ -229,6 +239,7 @@ void UpdateServerWidgets(HWND window)
 		EnableWindow(GetDlgItem(window, IDC_SERVER_FREQUENCY), TRUE);
 		EnableWindow(GetDlgItem(window, IDC_SERVER_SYNC), TRUE);
 		EnableWindow(GetDlgItem(window, IDC_SERVER_STATUS), TRUE);
+		EnableWindow(GetDlgItem(window, IDC_SERVER_COPY), TRUE);
 	}
 	else
 	{
@@ -240,6 +251,7 @@ void UpdateServerWidgets(HWND window)
 		EnableWindow(GetDlgItem(window, IDC_SERVER_FREQUENCY), FALSE);
 		EnableWindow(GetDlgItem(window, IDC_SERVER_SYNC), FALSE);
 		EnableWindow(GetDlgItem(window, IDC_SERVER_STATUS), FALSE);
+		EnableWindow(GetDlgItem(window, IDC_SERVER_COPY), FALSE);
 	}
 }
 
@@ -365,12 +377,45 @@ BOOL CALLBACK ServerPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM l
 			{
 			case IDC_SERVER_SYNC:
 				// Resync all events
+				OnOKServerDialog(hwndDlg);
 				GetRainlendar()->GetCalendarWindow().ConnectServer(REQUEST_SYNCRONIZATION);
 				return TRUE;
 
 			case IDC_SERVER_ENABLE:
 				UpdateServerWidgets(hwndDlg);
 				return TRUE;
+
+			case IDC_SERVER_COPY:
+				if(OpenClipboard(hwndDlg))
+				{
+					HGLOBAL clipbuffer;
+					char * buffer;
+					EmptyClipboard();
+					std::string text;
+					if (g_Mutex)
+					{
+						DWORD result = WaitForSingleObject(g_Mutex, 1000L);
+						if (result == WAIT_OBJECT_0)
+						{
+							// Add the string to the widget
+							std::list<std::string>::iterator i = g_StatusStrings.begin();
+							for( ; i != g_StatusStrings.end(); i++)
+							{
+								text += (*i);
+								text += "\n";
+							}
+
+							ReleaseMutex(g_Mutex);
+						}
+					}
+
+					clipbuffer = GlobalAlloc(GMEM_DDESHARE, text.size() + 1);
+					buffer = (char*)GlobalLock(clipbuffer);
+					strcpy(buffer, text.c_str());
+					GlobalUnlock(clipbuffer);
+					SetClipboardData(CF_TEXT, clipbuffer);
+					CloseClipboard();
+				}
 			}
 			break;
 	}
@@ -394,6 +439,8 @@ void AddStatusString(const char* string)
 	
 	std::string str = tmpSz;
 	str += string;
+
+	LSLog(LOG_DEBUG, "Rainlendar", str.c_str());
 
 	result = WaitForSingleObject(g_Mutex, 1000L);
 	if (result == WAIT_OBJECT_0)

@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Item.h,v 1.2 2002/05/23 17:33:41 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Item.h,v 1.4 2002/08/24 11:11:58 rainy Exp $
 
   $Log: Item.h,v $
+  Revision 1.4  2002/08/24 11:11:58  rainy
+  Added ResetDayTypes()
+
+  Revision 1.3  2002/08/03 16:16:59  rainy
+  GetDaysInMonth is now static.
+
   Revision 1.2  2002/05/23 17:33:41  rainy
   Removed all MFC stuff
 
@@ -44,6 +50,7 @@ public:
 	virtual ~CItem();
 
 	virtual void Initialize() = 0;
+	virtual void ResetDayTypes() { /* Nothing */ };
 	virtual void Paint(HDC dc) = 0;
 
 	CRasterizer* GetRasterizer() { return m_Rasterizer; };
@@ -57,9 +64,9 @@ public:
 	static int GetDayType(int Index) { return c_DayTypes[Index]; };
 	static void SetDayType(int Index, int DayType) { c_DayTypes[Index]|=DayType; };		// Note the OR !!
 
-protected:
-	UINT GetDaysInMonth(int year, int month);
+	static UINT GetDaysInMonth(int year, int month);
 
+protected:
 	CRasterizer* m_Rasterizer;
 
 	static int c_DayTypes[32];

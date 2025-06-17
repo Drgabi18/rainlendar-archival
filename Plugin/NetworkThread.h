@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/NetworkThread.h,v 1.4 2002/05/30 18:26:03 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/NetworkThread.h,v 1.5 2002/08/03 16:11:55 rainy Exp $
 
   $Log: NetworkThread.h,v $
+  Revision 1.5  2002/08/03 16:11:55  rainy
+  Removed one unnecessary include.
+
   Revision 1.4  2002/05/30 18:26:03  rainy
   The logging stuff is back.
 

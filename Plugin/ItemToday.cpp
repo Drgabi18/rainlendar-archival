@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemToday.cpp,v 1.3 2002/05/23 17:33:41 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemToday.cpp,v 1.5 2002/08/24 11:10:36 rainy Exp $
 
   $Log: ItemToday.cpp,v $
+  Revision 1.5  2002/08/24 11:10:36  rainy
+  Changed the error handling.
+
+  Revision 1.4  2002/08/03 16:15:17  rainy
+  Added separation and color setting for the rasterizer.
+
   Revision 1.3  2002/05/23 17:33:41  rainy
   Removed all MFC stuff
 
@@ -67,12 +73,11 @@ void CItemToday::Initialize()
 			CRasterizerBitmap* BMRast;
 
 			BMRast=new CRasterizerBitmap;
-			if(BMRast==NULL) throw CError(CError::ERR_OUTOFMEM);
+			if(BMRast==NULL) THROW(ERR_OUTOFMEM);
 
 			BMRast->Load(CCalendarWindow::c_Config.GetTodayBitmapName());
 			BMRast->SetNumOfComponents(CCalendarWindow::c_Config.GetTodayNumOfComponents());
 			BMRast->SetSeparation(CCalendarWindow::c_Config.GetTodaySeparation());
-
 			BMRast->SetAlign(CCalendarWindow::c_Config.GetTodayAlign());
 			SetRasterizer(BMRast);
 			break;
@@ -81,10 +86,11 @@ void CItemToday::Initialize()
 			CRasterizerFont* FNRast;
 
 			FNRast=new CRasterizerFont;
-			if(FNRast==NULL) throw CError(CError::ERR_OUTOFMEM);
+			if(FNRast==NULL) THROW(ERR_OUTOFMEM);
 
 			FNRast->SetFont(CCalendarWindow::c_Config.GetTodayFont());
 			FNRast->SetAlign(CCalendarWindow::c_Config.GetTodayAlign());
+			FNRast->SetColor(CCalendarWindow::c_Config.GetTodayFontColor());
 			FNRast->UpdateDimensions("XX");
 			SetRasterizer(FNRast);
 			break;
@@ -117,9 +123,6 @@ void CItemToday::Paint(HDC dc)
 
 		W = CCalendarWindow::c_Config.GetDaysW() / 7;	// 7 Columns
 		H = CCalendarWindow::c_Config.GetDaysH() / 6;	// 6 Rows
-
-		SetBkMode(dc, TRANSPARENT);
-		SetTextColor(dc, CCalendarWindow::c_Config.GetTodayFontColor());
 
 		if(m_Rasterizer != NULL) 
 		{

@@ -16,9 +16,16 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.cpp,v 1.6 2002/05/30 18:28:05 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.cpp,v 1.8 2002/08/24 11:14:44 rainy Exp $
 
   $Log: Background.cpp,v $
+  Revision 1.8  2002/08/24 11:14:44  rainy
+  Changed the error handling.
+
+  Revision 1.7  2002/08/03 16:22:37  rainy
+  Changed the background handling to cache the wallpaper when
+  the window is moved.
+
   Revision 1.6  2002/05/30 18:28:05  rainy
   Removed some Litestep related stuff.
 
@@ -121,7 +128,7 @@ void CBackground::Load(std::string Filename)
 	{
 		std::string err = "File not found: ";
 		err += Filename;
-		throw CError(err, __LINE__, __FILE__);
+		THROW(err);
 	}
 
 	GetObject(m_Image, sizeof(BITMAP), &bm);
@@ -144,7 +151,7 @@ void CBackground::Load(std::string Filename)
 		{
 			// Check that it is correct size
 			GetObject(m_AlphaImage, sizeof(BITMAP), &bm);
-			if (m_Width != bm.bmWidth || m_Height != bm.bmHeight) throw CError(CError::ERR_BACKGROUNDALPHASIZE, __LINE__, __FILE__);
+			if (m_Width != bm.bmWidth || m_Height != bm.bmHeight) THROW(ERR_BACKGROUNDALPHASIZE);
 			m_Alpha = true;
 		}
 	}
@@ -172,16 +179,16 @@ void CBackground::Create(int X, int Y, int Width, int Height)
 	int RealWidth, RealHeight;
 
 	Desktop = GetDesktopWindow();
-	if(Desktop == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
+	if(Desktop == NULL) THROW(ERR_BACKGROUND);
 
 	DDC = GetDC(Desktop);
-	if(DDC == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
+	if(DDC == NULL) THROW(ERR_BACKGROUND);
 		
 	tmpDC = CreateCompatibleDC(DDC);
-	if(tmpDC == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
+	if(tmpDC == NULL) THROW(ERR_BACKGROUND);
 
 	BGDC = CreateCompatibleDC(DDC);
-	if(BGDC == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
+	if(BGDC == NULL) THROW(ERR_BACKGROUND);
 
 	ReleaseDC(Desktop, DDC);
 
@@ -195,12 +202,12 @@ void CBackground::Create(int X, int Y, int Width, int Height)
 		OldBitmap2 = (HBITMAP)SelectObject(BGDC, m_Image);
 
 		tmpBitmap = CreateCompatibleBitmap(BGDC, RealWidth, RealHeight);
-		if(tmpBitmap == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
+		if(tmpBitmap == NULL) THROW(ERR_BACKGROUND);
 
 		if(m_Alpha) 
 		{
 			tmpBitmapA = CreateCompatibleBitmap(BGDC, RealWidth, RealHeight);
-			if(tmpBitmapA == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
+			if(tmpBitmapA == NULL) THROW(ERR_BACKGROUND);
 		}
 
 		OldBitmap = (HBITMAP)SelectObject(tmpDC, tmpBitmap);
@@ -281,7 +288,7 @@ void CBackground::Create(int X, int Y, int Width, int Height)
 		// Create new background image from the m_Image
 		OldBitmap = (HBITMAP)SelectObject(tmpDC, m_Image);
 		m_Background = CreateCompatibleBitmap(tmpDC, m_Width, m_Height);
-		if(m_Background == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
+		if(m_Background == NULL) THROW(ERR_BACKGROUND);
 		OldBitmap2 = (HBITMAP)SelectObject(BGDC, m_Background);
 
 		BitBlt(BGDC, 0, 0, m_Width, m_Height, tmpDC, 0, 0, SRCCOPY);
@@ -312,7 +319,8 @@ void CBackground::CopyBackground(int X, int Y, int Width, int Height)
 		m_Background = NULL;
 	}
 
-	if(GetRainlendar() && !(GetRainlendar()->IsWharf()))
+	if(GetRainlendar() && (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_WALLPAPER_ALWAYS ||
+						  (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_NORMAL && !(GetRainlendar()->IsWharf()))))
 	{
 		// The new way
 		m_Background = GetWallpaper(X, Y, Width, Height);
@@ -322,17 +330,17 @@ void CBackground::CopyBackground(int X, int Y, int Width, int Height)
 	{
 		// If the new way fails, use the old way
 		WinDC = GetWindowDC(GetRainlendar()->GetCalendarWindow().GetWindow());
-		if(WinDC == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
+		if(WinDC == NULL) THROW(ERR_BACKGROUND);
 
 		// These are initialized only if grapping is successful
 		m_Width=0;
 		m_Height=0;
 
 		tmpDC = CreateCompatibleDC(WinDC);
-		if(tmpDC==NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
+		if(tmpDC==NULL) THROW(ERR_BACKGROUND);
 
 		m_Background = CreateCompatibleBitmap(WinDC, Width, Height);
-		if(m_Background==NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
+		if(m_Background==NULL) THROW(ERR_BACKGROUND);
 
 		// Fetch the background
 		OldBitmap = (HBITMAP)SelectObject(tmpDC, m_Background);
@@ -374,7 +382,6 @@ HBITMAP CBackground::GetWallpaper(int X, int Y, int Width, int Height)
 				if(strlen(str) > 0)
 				{
 					c_Wallpaper = LoadLSImage(str, NULL);
-					if(c_Wallpaper == NULL) return NULL;	// Unable to load the bitmap :(
 				}
 			}
 		}
@@ -409,13 +416,13 @@ HBITMAP CBackground::GetWallpaper(int X, int Y, int Width, int Height)
 	GetClientRect(GetDesktopWindow(), &screenRect); 
 	
 	HDC winDC = GetDC(GetDesktopWindow());
-	if(winDC == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
+	if(winDC == NULL) THROW(ERR_BACKGROUND);
 
 	HDC tmpDC = CreateCompatibleDC(winDC);
-	if(tmpDC == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
+	if(tmpDC == NULL) THROW(ERR_BACKGROUND);
 
 	bgBitmap = CreateCompatibleBitmap(winDC, Width, Height);
-	if(bgBitmap==NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
+	if(bgBitmap==NULL) THROW(ERR_BACKGROUND);
 
 	ReleaseDC(GetDesktopWindow(), winDC);
 
@@ -430,7 +437,7 @@ HBITMAP CBackground::GetWallpaper(int X, int Y, int Width, int Height)
 	if(c_Wallpaper)
 	{
 		HDC bgDC = CreateCompatibleDC(tmpDC);
-		if(bgDC == NULL) throw CError(CError::ERR_BACKGROUND, __LINE__, __FILE__);
+		if(bgDC == NULL) THROW(ERR_BACKGROUND);
 		HBITMAP oldBitmap2 = (HBITMAP)SelectObject(bgDC, c_Wallpaper);
 
 		// Get the size of the loaded wallpaper

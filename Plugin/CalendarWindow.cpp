@@ -16,9 +16,25 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.cpp,v 1.9 2002/05/30 18:29:35 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.cpp,v 1.12 2002/08/24 11:14:35 rainy Exp $
 
   $Log: CalendarWindow.cpp,v $
+  Revision 1.12  2002/08/24 11:14:35  rainy
+  Changed the error handling.
+  Added lite refreshing.
+  Added a lot of logging information.
+
+  Revision 1.11  2002/08/10 08:40:38  rainy
+  Need to init common controls.
+  Uncommented startup notification stuff.
+
+  Revision 1.10  2002/08/03 16:21:52  rainy
+  Added showEdges.
+  Added support for skins.
+  Changed to use the new ToolTip class.
+  Changed to use separate skin config dialog.
+  + other changes that I cannot remember now :-(
+
   Revision 1.9  2002/05/30 18:29:35  rainy
   Added the config stuff.
   Other small fixes.
@@ -66,10 +82,16 @@
 #include "NetworkThread.h"
 #include "ConfigDialog.h"
 #include "SkinDialog.h"
+#include "Tooltip.h"
+#include <crtdbg.h>
 
 // Timers
 #define DATE_TIMER 1
 
+// Defines
+#define SNAPDISTANCE 5
+
+// Class variables
 CConfig CCalendarWindow::c_Config;
 SYSTEMTIME CCalendarWindow::c_TodaysDate;
 SYSTEMTIME CCalendarWindow::c_MonthsFirstDate;
@@ -97,10 +119,11 @@ CCalendarWindow::CCalendarWindow()
 	m_Year = NULL;
 	m_ConnectionCounter = 0;
 	m_Hidden = false;
+	m_Refreshing = false;
 }
 
 /* 
-** ~CMeterWindow
+** ~CCalendarWindow
 **
 ** Destructor
 **
@@ -120,15 +143,10 @@ CCalendarWindow::~CCalendarWindow()
 
 	if(m_Window) DestroyWindow(m_Window);
 
-	BOOL Result;
-	int counter = 0;
-	do 
-	{
-		// Wait for the window to die
-		Result = UnregisterClass("Rainlendar", m_Instance);
-		Sleep(100);
-		counter += 1;
-	} while(!Result && counter < 10);
+	// Unregister the window class
+	UnregisterClass("Rainlendar", m_Instance);
+
+	LSLog(LOG_DEBUG, "Rainlendar", "The calendar window is destroyed.");
 }
 
 /* 
@@ -145,7 +163,7 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 
 	if(Parent==NULL || Instance==NULL) 
 	{
-		throw CError(CError::ERR_NULLPARAMETER, __LINE__, __FILE__);
+		THROW(ERR_NULLPARAMETER);
 	}
 
 	m_Instance = Instance;
@@ -163,18 +181,32 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 	
 	if(!RegisterClassEx(&wc))
 	{
-		throw CError(CError::ERR_WINDOWCLASS, __LINE__, __FILE__);
+		if (ERROR_CLASS_ALREADY_EXISTS != GetLastError())
+		{
+			THROW(ERR_WINDOWCLASS);
+		}
+	}
+	
+	if (Rainlendar.GetDummyLitestep())
+	{
+		LSLog(LOG_DEBUG, "Rainlendar", "Running as stand-alone.");
+	}
+	else
+	{
+		LSLog(LOG_DEBUG, "Rainlendar", "Running as Litestep plugin.");
 	}
 
 	if(Rainlendar.IsWharf())
 	{
 		// If we're in lsBox or in wharf, this is a childwindow
 		flags = WS_CHILD;
+		LSLog(LOG_DEBUG, "Rainlendar", "Running as wharf module.");
 	}
 	else
 	{
 		// ... otherwise this is normal popup window
 		flags = WS_POPUP;
+		Parent = NULL;
 	}
 
 	m_Window = CreateWindowEx(WS_EX_TOOLWINDOW, 
@@ -192,8 +224,15 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 
 	if(m_Window == NULL) 
 	{ 
-		throw CError(CError::ERR_WINDOW, __LINE__, __FILE__);
+		THROW(ERR_WINDOW);
 	}
+
+	INITCOMMONCONTROLSEX cce;
+	cce.dwSize = sizeof(INITCOMMONCONTROLSEX);
+	cce.dwICC = ICC_DATE_CLASSES;
+	InitCommonControlsEx(&cce);
+
+	CToolTip::Instance().Initialize(m_Window, m_Instance);
 
 	SetWindowLong(m_Window, GWL_USERDATA, magicDWord);
 
@@ -210,12 +249,15 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 		VarExpansion(tmpName, tmpName);
 		EventsPath = tmpName;
 
-		// Check that the path ends with "\" 
-		if (!EventsPath.empty() && *(EventsPath.end() - 1) != '\\')
+		if (!EventsPath.empty())
 		{
-			EventsPath += "\\";
+			// Check that the path ends with "\" 
+			if (*(EventsPath.end() - 1) != '\\')
+			{
+				EventsPath += "\\";
+			}
+			EventsPath += "Events.ini";
 		}
-		EventsPath += "Events.ini";
 
 		GetRCString("RainlendarSkinsPath", tmpName, "", MAX_LINE_LENGTH);
 		VarExpansion(tmpName, tmpName);
@@ -277,6 +319,11 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 		SkinsPath = tmpName;
 	}
 
+	LSLog(LOG_DEBUG, "Rainlendar", "Rainlendar paths:");
+	LSLog(LOG_DEBUG, "Rainlendar", PixPath.c_str());
+	LSLog(LOG_DEBUG, "Rainlendar", EventsPath.c_str());
+	LSLog(LOG_DEBUG, "Rainlendar", SkinsPath.c_str());
+
 	c_Config.SetPath(PixPath);
 	c_Config.SetEventsPath(EventsPath);	
 	c_Config.SetSkinsPath(SkinsPath);
@@ -293,27 +340,6 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 	// Scan the skin folder for skins
 	ReadSkins();
 
-	// Initialize tooltips
-    INITCOMMONCONTROLSEX iccex; 
-	iccex.dwICC = ICC_BAR_CLASSES;
-    iccex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-    InitCommonControlsEx(&iccex);
-
-	// Create the tooltip window
-	m_ToolTip = CreateWindowEx(WS_EX_TOPMOST,
-							TOOLTIPS_CLASS,
-							NULL,
-							WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP | TTS_BALLOON,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							NULL, NULL,
-							m_Instance,
-							NULL);
-
-	SendMessage(m_ToolTip, TTM_SETMAXTIPWIDTH, 0, 255);
-
 	GetLocalTime(&c_TodaysDate);
 	// Store current date (the month that will be shown)
 	c_MonthsFirstDate = c_TodaysDate;
@@ -321,6 +347,7 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 	if(!c_Config.GetStartHidden()) ShowWindow();
 	
 	ShowMonth(-1, -1);
+	Refresh();
 	
 	SetTimer(m_Window, DATE_TIMER, 1000, NULL);	// Date is checked once per second
 
@@ -471,88 +498,124 @@ void CCalendarWindow::CalcWindowSize()
 ** Refresh the window
 **
 */
-void CCalendarWindow::Refresh()
+void CCalendarWindow::Refresh(bool lite)
 {
+	char buffer[1024];
+
+	DWORD time = GetTickCount();
+	if (lite)
+	{
+		LSLog(LOG_DEBUG, "Rainlendar", "Refresh started (lite).");
+	}
+	else
+	{
+		LSLog(LOG_DEBUG, "Rainlendar", "Refresh started.");
+	}
+
 	try 
 	{
-		RECT r;
-		int X, Y;
+		m_Refreshing = true;
 
-		c_Config.ReadConfig();
-
-		// Initialize
-		delete m_Days;
-		delete m_Event;
-		delete m_Today;
-		delete m_Weekdays;
-		delete m_WeekNumbers;
-		delete m_Month;
-		delete m_Year;
-
-		// Reset the region
-		SetWindowRgn(m_Window, NULL, TRUE);
-
-		m_Days = new CItemDays;
-		m_Event = new CItemEvent;
-		m_Today = new CItemToday;
-		m_Weekdays = new CItemWeekdays;
-		m_WeekNumbers = new CItemWeekNumbers;
-		m_Month = new CItemMonth;
-		m_Year = new CItemYear;
-
-		if(!m_Rainlendar->IsWharf() || m_FirstExecute)
+		if (!lite)
 		{
-			m_Background.Initialize();
-		}
-		m_Days->Initialize();
-		m_Event->Initialize();
-		m_Today->Initialize();
-		m_Weekdays->Initialize();
-		m_WeekNumbers->Initialize();
-		m_Month->Initialize();
-		m_Year->Initialize();
+			c_Config.ReadConfig();
 
+			sprintf(buffer, "Skin: %s, Ini: %s", c_Config.GetCurrentSkin().c_str(), c_Config.GetCurrentSkinIni().c_str());
+			LSLog(LOG_DEBUG, "Rainlendar", buffer);
+
+			// Initialize
+			delete m_Days;
+			delete m_Event;
+			delete m_Today;
+			delete m_Weekdays;
+			delete m_WeekNumbers;
+			delete m_Month;
+			delete m_Year;
+
+			// Reset the region
+			SetWindowRgn(m_Window, NULL, TRUE);
+
+			m_Days = new CItemDays;
+			m_Event = new CItemEvent;
+			m_Today = new CItemToday;
+			m_Weekdays = new CItemWeekdays;
+			m_WeekNumbers = new CItemWeekNumbers;
+			m_Month = new CItemMonth;
+			m_Year = new CItemYear;
+
+			if(m_FirstExecute || (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_WALLPAPER_ALWAYS ||
+								 (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_NORMAL && !(m_Rainlendar->IsWharf()))))
+			{
+				m_Background.Initialize();
+			}
+			m_Days->Initialize();
+			m_Event->Initialize();
+			m_Today->Initialize();
+			m_Weekdays->Initialize();
+			m_WeekNumbers->Initialize();
+			m_Month->Initialize();
+			m_Year->Initialize();
+
+			CToolTip::Instance().SetBackgroundColor(c_Config.GetToolTipBGColor());
+			CToolTip::Instance().SetFont(c_Config.GetToolTipFont());
+		}
+
+		// Only days and event days change the day types
+		m_Days->ResetDayTypes();
+		m_Event->ResetDayTypes();
+
+		// Reset the tooltips for the new month (this also removes the old tips)
 		m_Event->AddToolTips(this);
 
-		CalcWindowSize();
-
-		// Handle negative coordinates
-		GetClientRect(GetDesktopWindow(), &r); 
-		X = c_Config.GetX();
-		Y = c_Config.GetY();
-		if (X < 0) X += r.right - r.left;
-		if (Y < 0) Y += r.bottom - r.top;
-
-		if(!m_Rainlendar->IsWharf() || m_FirstExecute)
+		if (!lite)
 		{
-			if(c_Config.GetBackgroundMode() == CBackground::MODE_COPY ||
-			   c_Config.GetBackgroundBitmapName().empty()) 
-			{
-				m_Background.CopyBackground(X, Y, m_Width, m_Height);
-			}
-			else 
-			{
-				m_Background.Load(c_Config.GetBackgroundBitmapName());
-				CalcWindowSize();	// Must be recalced if BG is bigger than current window
-				m_Background.Create(X, Y, m_Width, m_Height);
-			}
-		}
+			int X, Y;
+			RECT r;
 
-		if (!m_Rainlendar->IsWharf())
-		{
-			if (c_Config.GetWindowPos() == CConfig::WINDOWPOS_ONTOP)
+			CalcWindowSize();
+
+			// Handle negative coordinates
+			GetClientRect(GetDesktopWindow(), &r); 
+			X = c_Config.GetX();
+			Y = c_Config.GetY();
+			if (X < 0) X += r.right - r.left;
+			if (Y < 0) Y += r.bottom - r.top;
+
+			if(m_FirstExecute || (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_WALLPAPER_ALWAYS ||
+								 (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_NORMAL && !(m_Rainlendar->IsWharf()))))
 			{
-				SetWindowPos(m_Window, HWND_TOPMOST, X, Y, m_Width, m_Height, SWP_NOACTIVATE);
+				if(c_Config.GetBackgroundMode() == CBackground::MODE_COPY ||
+				   c_Config.GetBackgroundBitmapName().empty()) 
+				{
+					m_Background.CopyBackground(X, Y, m_Width, m_Height);
+				}
+				else 
+				{
+					m_Background.Load(c_Config.GetBackgroundBitmapName());
+					CalcWindowSize();	// Must be recalced if BG is bigger than current window
+					m_Background.Create(X, Y, m_Width, m_Height);
+				}
 			}
-			else
+
+			HWND winPos;
+			UINT flags = SWP_NOACTIVATE;
+			switch (c_Config.GetWindowPos())
 			{
-				SetWindowPos(m_Window, HWND_NOTOPMOST, X, Y, m_Width, m_Height, SWP_NOACTIVATE);
+			case CConfig::WINDOWPOS_ONTOP:
+				 winPos = HWND_TOPMOST;
+				break;
+
+			case CConfig::WINDOWPOS_ONBOTTOM:
+				 winPos = HWND_BOTTOM;
+				 break;
+
+			default:
+				 winPos = HWND_NOTOPMOST;
 			}
-		}
-		else
-		{
-			// Child windows cannot change the z-order!
-			SetWindowPos(m_Window, NULL, X, Y, m_Width, m_Height, SWP_NOZORDER);
+
+			if(m_Rainlendar->IsWharf()) flags |= SWP_NOZORDER;		// Children shouldn't change z-position
+
+			SetWindowPos(m_Window, winPos, X, Y, m_Width, m_Height, flags);
 		}
 
 		// Create the DoubleBuffer
@@ -564,61 +627,73 @@ void CCalendarWindow::Refresh()
 
 		DrawCalendar();
 
-		if(c_Config.GetBackgroundMode() != CBackground::MODE_COPY && !m_Background.HasAlpha())
+		if (!lite)
 		{
-			// Set window region
-			HRGN region = BitmapToRegion(m_DoubleBuffer, RGB(255,0,255), 0x101010, 0, 0);
-			SetWindowRgn(m_Window, region, TRUE);
-		}
-
-		// Execute on event if this was first refresh (meaning that Rainlendar was started)
-		if(m_FirstExecute) 
-		{ 
-			m_FirstExecute=false;
-			
-			// Only Check if this months events are initalized
-			if(CCalendarWindow::c_MonthsFirstDate.wMonth == CCalendarWindow::c_TodaysDate.wMonth &&
-				CCalendarWindow::c_MonthsFirstDate.wYear == CCalendarWindow::c_TodaysDate.wYear) 
+			if(c_Config.GetBackgroundMode() != CBackground::MODE_COPY && !m_Background.HasAlpha())
 			{
-				CEventMessage* TodaysEvent = m_Event->GetEvent(c_TodaysDate.wDay);
-				if(c_Config.GetEventEnable() && TodaysEvent!=NULL) 
-				{
-					if(c_Config.GetEventMessageBox()) 
-					{
-						MessageBox(m_Window, TodaysEvent->GetMessage().c_str(), "Rainlendar", MB_OK | MB_TOPMOST);
-					}
-					
-					std::string execute = c_Config.GetEventExecute();
-
-					if(!execute.empty()) 
-					{
-						// Do not run bangs if litestep is not enabled
-						if(!m_Rainlendar->GetDummyLitestep() || execute[0] != '!')
-						{
-							char buffer[1024];
-							VarExpansion(buffer, execute.c_str());
-							execute = buffer;
-							int pos = execute.find("%m");
-							if (pos != -1)
-							{
-								execute.replace(execute.begin() + pos, execute.begin() + pos + 1, TodaysEvent->GetMessage());
-							}
-							LSExecute(NULL, execute.c_str(), SW_SHOWNORMAL);
-						}
-					}
-				} 
+				// Set window region
+				HRGN region = BitmapToRegion(m_DoubleBuffer, RGB(255,0,255), 0x101010, 0, 0);
+				SetWindowRgn(m_Window, region, TRUE);
 			}
-		}
 
-		PollWallpaper(true);
+			// Execute on event if this was first refresh (meaning that Rainlendar was started)
+			if(m_FirstExecute) 
+			{ 
+				m_FirstExecute=false;
+				
+				// Only Check if this months events are initalized
+				if(CCalendarWindow::c_MonthsFirstDate.wMonth == CCalendarWindow::c_TodaysDate.wMonth &&
+					CCalendarWindow::c_MonthsFirstDate.wYear == CCalendarWindow::c_TodaysDate.wYear) 
+				{
+					if(c_Config.GetEventEnable()) 
+					{
+						std::string text;
+						m_Event->GetEventText(c_TodaysDate.wDay, text);
+
+						if (!text.empty())
+						{
+							if(c_Config.GetEventMessageBox()) 
+							{
+								MessageBox(m_Window, text.c_str(), "Rainlendar", MB_OK | MB_TOPMOST);
+							}
+							
+							std::string execute = c_Config.GetEventExecute();
+
+							if(!execute.empty()) 
+							{
+								// Do not run bangs if litestep is not enabled
+								if(!m_Rainlendar->GetDummyLitestep() || execute[0] != '!')
+								{
+									VarExpansion(buffer, execute.c_str());
+									execute = buffer;
+									int pos = execute.find("%m");
+									if (pos != -1)
+									{
+										execute.replace(execute.begin() + pos, execute.begin() + pos + 2, text);
+									}
+									LSExecute(NULL, execute.c_str(), SW_SHOWNORMAL);
+								}
+							}
+						} 
+					} 
+				}
+			}
+			
+			PollWallpaper(true);
+		}
 
 		InvalidateRect(m_Window, NULL, false);
+
+		m_Refreshing = false;
 	} 
     catch(CError& error) 
     {
 		MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		OnCommand(WM_QUIT, NULL);	// Gotta quit
 	}
+
+	sprintf(buffer, "Refresh ended (took: %i ms).", GetTickCount() - time);
+	LSLog(LOG_DEBUG, "Rainlendar", buffer);
 }
 
 /*
@@ -810,7 +885,9 @@ void CCalendarWindow::ShowMonth(int Month, int Year)
 	if (day < 0) day += 7;
 	c_MonthsFirstDate.wDayOfWeek = day;
 
-	Refresh();
+	char buffer[256];
+	sprintf(buffer, "New month %i-%i. First weekday: %i.", Month, Year, day);
+	LSLog(LOG_DEBUG, "Rainlendar", buffer);
 }
 
 /* 
@@ -952,11 +1029,15 @@ LRESULT CCalendarWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 			break;
 
 		case ID_CONFIG:
+			LSLog(LOG_DEBUG, "Rainlendar", "Opening Config dialog.");
 			OpenConfigDialog(m_Window, m_DllInstance);
+			LSLog(LOG_DEBUG, "Rainlendar", "Config dialog closed.");
 			break;
 	
 		case ID_EDIT_SKIN:
+			LSLog(LOG_DEBUG, "Rainlendar", "Opening Edit Skin dialog.");
 			OpenSkinDialog(m_Window, m_DllInstance);
+			LSLog(LOG_DEBUG, "Rainlendar", "Edit Skin dialog closed.");
 			break;
 	
 		case ID_SETEVENT:
@@ -966,6 +1047,7 @@ LRESULT CCalendarWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 			break;
 
 		case ID_QUIT:
+			CToolTip::Instance().Finalize();
 			if(CRainlendar::GetDummyLitestep()) PostQuitMessage(0);
 			DestroyWindow(m_Window);
 			break;
@@ -1075,6 +1157,7 @@ LRESULT CCalendarWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 		if(Handled || Selected) 
 		{
 			ShowMonth(Month, Year);
+			Refresh(true);
 		}
 	} 
     catch(CError& error) 
@@ -1126,6 +1209,7 @@ LRESULT CCalendarWindow::OnTimer(WPARAM wParam, LPARAM lParam)
 			c_MonthsFirstDate = c_TodaysDate;
 
 			ShowMonth(-1, -1);
+			Refresh(true);
 		}
 
 		if (c_Config.GetServerFrequency() > 0)
@@ -1187,14 +1271,28 @@ LRESULT CCalendarWindow::OnGetRevID(WPARAM wParam, LPARAM lParam)
 */
 LRESULT CCalendarWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam) 
 {
-	if(c_Config.GetWindowPos() == CConfig::WINDOWPOS_ONBOTTOM)
+	LPWINDOWPOS wp=(LPWINDOWPOS)lParam;
+
+	if(c_Config.GetWindowPos() == CConfig::WINDOWPOS_ONBOTTOM && !m_Refreshing)
 	{
 		// do not change the z-order. This keeps the window on bottom.
-		LPWINDOWPOS wp=(LPWINDOWPOS)lParam;
 		wp->flags|=SWP_NOZORDER;
 	}
 
-	return 0;
+	if (c_Config.GetSnapEdges())
+	{
+		RECT r;
+		GetClientRect(GetDesktopWindow(), &r);
+		int w = r.right - m_Width;
+		int h = r.bottom - m_Height;
+
+		if ((wp->x < SNAPDISTANCE) && (wp->x > -SNAPDISTANCE)) wp->x = 0;
+		if ((wp->y < SNAPDISTANCE) && (wp->y > -SNAPDISTANCE)) wp->y = 0;
+		if ((wp->x < SNAPDISTANCE + w) && (wp->x > -SNAPDISTANCE + w)) wp->x = w;
+		if ((wp->y < SNAPDISTANCE + h) && (wp->y > -SNAPDISTANCE + h)) wp->y = h;
+	}
+
+	return DefWindowProc(m_Window, m_Message, wParam, lParam);
 }
 
 LRESULT CCalendarWindow::OnMove(WPARAM wParam, LPARAM lParam) 
@@ -1239,29 +1337,6 @@ LRESULT CCalendarWindow::OnDisplayChange(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-LRESULT CCalendarWindow::OnNotify(WPARAM wParam, LPARAM lParam) 
-{
-	LPNMHDR pNMHDR = (LPNMHDR)lParam;
-
-	if(pNMHDR->code == TTN_NEEDTEXT)
-	{
-		static char ToolTipText[MAX_LINE_LENGTH];
-
-		CEventMessage* Event = m_Event->GetEvent(pNMHDR->idFrom);
-		if (Event) 
-		{
-			strncpy(ToolTipText, Event->GetMessage().c_str(), MAX_LINE_LENGTH - 1);
-			ToolTipText[MAX_LINE_LENGTH - 1] = 0;
-			TOOLTIPTEXT* pTTT = (TOOLTIPTEXT*)pNMHDR;
-			pTTT->lpszText = ToolTipText;
-			return TRUE;
-		}
-	}
-
-	return FALSE;
-}
-
-
 LRESULT CCalendarWindow::OnLButtonDblClk(WPARAM wParam, LPARAM lParam) 
 {
 	int x = LOWORD(lParam);
@@ -1281,14 +1356,23 @@ LRESULT CCalendarWindow::OnLButtonDblClk(WPARAM wParam, LPARAM lParam)
 		m_SelectedDay = m_Days->HitTest(x, y);
 	}
 
+	char buffer[256];
+	sprintf(buffer, "Selected day %i in (%i, %i)", m_SelectedDay, x, y);
+	LSLog(LOG_DEBUG, "Rainlendar", buffer);
+
 	if(m_SelectedDay != 0) 
 	{
+		LSLog(LOG_DEBUG, "Rainlendar", "Opening Edit Event dialog.");
 		if (DialogBox(m_DllInstance, MAKEINTRESOURCE(IDD_EDITEVENT), m_Window, (DLGPROC)EditEventProc) == IDOK) 
 		{
-			Refresh();
+			LSLog(LOG_DEBUG, "Rainlendar", "OK pressed. Sending Events to the server.");
+
 			ConnectServer(REQUEST_SENDEVENTS);	// Send the events to the server
+			Refresh(true);
 		}
 		m_SelectedDay = 0;
+
+		LSLog(LOG_DEBUG, "Rainlendar", "Edit Event dialog closed.");
 	}
 
 	return 0;
@@ -1437,6 +1521,10 @@ LRESULT CCalendarWindow::OnCopyData(WPARAM wParam, LPARAM lParam)
 		{
 			RainlendarShowCurrent(m_Window, NULL);
 		}
+		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarLsBoxHook") == 0)
+		{
+			// Do nothing
+		}
 		else
 		{
 			std::string error = "Unknown !bang: ";
@@ -1479,6 +1567,21 @@ LRESULT CCalendarWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 	}	
 
 	return 0;
+}
+
+void CCalendarWindow::ShowWindow(bool activate)
+{
+	if (activate)
+	{
+		BringWindowToTop (m_Window);
+		::ShowWindow (m_Window, SW_SHOWNORMAL);
+		SetForegroundWindow (m_Window);
+	}
+	else
+	{
+		::ShowWindow(m_Window, SW_SHOWNOACTIVATE); 
+	}
+	m_Hidden = false;
 }
 
 void CCalendarWindow::ShowWindowIfAppropriate()
@@ -1526,6 +1629,9 @@ LRESULT CALLBACK CCalendarWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
 		Window=(CCalendarWindow*)((LPCREATESTRUCT)lParam)->lpCreateParams;
 	}
 
+	// Run the tooltip's mouse proc
+	CToolTip::MouseProc(hWnd, uMsg, wParam, lParam);
+
 	BEGIN_MESSAGEPROC
 	MESSAGE(OnPaint, WM_PAINT)
 	MESSAGE(OnContextMenu, WM_CONTEXTMENU)
@@ -1545,7 +1651,6 @@ LRESULT CALLBACK CCalendarWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
 	MESSAGE(OnMouseMove, WM_MOUSEMOVE)
 	MESSAGE(OnMouseMove, WM_NCMOUSEMOVE)
 	MESSAGE(OnDisplayChange, WM_DISPLAYCHANGE)
-	MESSAGE(OnNotify, WM_NOTIFY)
 	MESSAGE(OnCopyData, WM_COPYDATA)
 	END_MESSAGEPROC
 }
