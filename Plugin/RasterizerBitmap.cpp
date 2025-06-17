@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerBitmap.cpp,v 1.9 2002/11/12 18:10:24 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerBitmap.cpp,v 1.10 2002/11/25 17:02:07 rainy Exp $
 
   $Log: RasterizerBitmap.cpp,v $
+  Revision 1.10  2002/11/25 17:02:07  rainy
+  Cleaned up the code.
+
   Revision 1.9  2002/11/12 18:10:24  rainy
   Added support for real alpha.
 
@@ -103,6 +106,9 @@ void CRasterizerBitmap::Load(const std::string& filename)
 		err += name;
 		THROW(err);
 	}
+
+	m_Height = m_Image.GetHeight();
+	m_Width = m_Image.GetWidth();
 }
 
 /* 

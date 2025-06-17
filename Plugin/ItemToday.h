@@ -43,6 +43,11 @@ public:
 
 	void Initialize();
 	void Paint(CImage& background);
+
+	virtual int GetX();
+	virtual int GetY();
+	virtual int GetW();
+	virtual int GetH();
 };
 
 #endif

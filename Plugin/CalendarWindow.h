@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.h,v 1.12 2002/11/12 18:12:03 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.h,v 1.13 2002/11/25 17:11:57 rainy Exp $
 
   $Log: CalendarWindow.h,v $
+  Revision 1.13  2002/11/25 17:11:57  rainy
+  Wallpaper polling checks the timestamp too.
+
   Revision 1.12  2002/11/12 18:12:03  rainy
   Added support for native transparency.
 
@@ -114,6 +117,8 @@ public:
 	void ShowNextMonth() { OnCommand(ID_POPUP_SELECTMONTH_NEXTMONTH, NULL); };
 	void ShowPrevMonth() { OnCommand(ID_POPUP_SELECTMONTH_PREVMONTH, NULL); };
 	void ShowCurrentMonth() { OnCommand(ID_POPUP_SELECTMONTH_CURRENTMONTH, NULL); };
+	void MoveWindow(int x, int y);
+	void SetWindowZPos(CConfig::WINDOWPOS pos);
 
 	HDC GetDoubleBuffer() { return m_DC; };
 	HWND GetWindow() { return m_Window; };
@@ -186,6 +191,8 @@ private:
 	std::string m_WallpaperName;
 	FILETIME m_WallpaperTime;
 
+	int m_X;
+	int m_Y;
 	int m_Width;
 	int m_Height;
 	bool m_FirstExecute;

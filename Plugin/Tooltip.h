@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Tooltip.h,v 1.2 2002/08/24 11:08:34 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Tooltip.h,v 1.3 2002/11/25 17:00:29 rainy Exp $
 
   $Log: Tooltip.h,v $
+  Revision 1.3  2002/11/25 17:00:29  rainy
+  Tooltip timer is only restarted if the mouse position changes.
+
   Revision 1.2  2002/08/24 11:08:34  rainy
   Removed hooking code.
 

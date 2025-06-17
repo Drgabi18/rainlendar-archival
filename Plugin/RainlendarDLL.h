@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RainlendarDLL.h,v 1.6 2002/08/24 11:09:40 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RainlendarDLL.h,v 1.7 2002/11/25 17:02:23 rainy Exp $
 
   $Log: RainlendarDLL.h,v $
+  Revision 1.7  2002/11/25 17:02:23  rainy
+  version 0.14
+
   Revision 1.6  2002/08/24 11:09:40  rainy
   Changed the error handling.
 
@@ -61,7 +64,7 @@
 #define END_MESSAGEPROC } return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 #define APPNAME "Rainlendar"
-#define VERSION "0.14"
+#define VERSION "0.15"
 
 #define DLLDECL __declspec( dllexport )
 
@@ -77,6 +80,8 @@ void RainlendarShowPrev(HWND caller, const char* arg);
 void RainlendarShowCurrent(HWND caller, const char* arg);
 void RainlendarShowMonth(HWND caller, const char* arg);
 void RainlendarLsBoxHook(HWND caller, const char* arg);
+void RainlendarMove(HWND caller, const char* arg);
+void RainlendarZPos(HWND caller, const char* arg);
 
 class CRainlendar
 {
@@ -99,6 +104,8 @@ public:
 	void ShowNextMonth() { m_Calendar.ShowNextMonth(); };
 	void ShowPrevMonth() { m_Calendar.ShowPrevMonth(); };
 	void ShowCurrentMonth() { m_Calendar.ShowCurrentMonth(); };
+	void MoveWindow(int x, int y) { m_Calendar.MoveWindow(x, y); };
+	void SetWindowZPos(CConfig::WINDOWPOS pos) { m_Calendar.SetWindowZPos(pos); };
 
 	bool IsWharf() { return m_Wharf; };
 	void SetWharf() { m_Wharf = true; };

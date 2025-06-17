@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/EditEvent.cpp,v 1.8 2002/08/10 08:39:20 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/EditEvent.cpp,v 1.9 2002/11/25 17:10:47 rainy Exp $
 
   $Log: EditEvent.cpp,v $
+  Revision 1.9  2002/11/25 17:10:47  rainy
+  Fixed the bug with duplicating events.
+
   Revision 1.8  2002/08/10 08:39:20  rainy
   Added one include
 

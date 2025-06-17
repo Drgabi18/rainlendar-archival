@@ -335,6 +335,37 @@ void RainlendarLsBoxHook(HWND, const char* arg)
 	}
 }
 
+/*
+** RainlendarMove
+**
+** Callback for the !RainlendarMove bang
+**
+*/
+void RainlendarMove(HWND, const char* arg)
+{
+	if(arg!=NULL && arg[0]!='\0') 
+	{
+		int x = 0, y = 0;
+		sscanf(arg, "%i %i", &x, &y);
+		Rainlendar.MoveWindow(x, y);
+	} 
+}
+
+/*
+** RainlendarZPos
+**
+** Callback for the !RainlendarZPos bang
+**
+*/
+void RainlendarZPos(HWND, const char* arg)
+{
+	if(arg!=NULL && arg[0]!='\0') 
+	{
+		CConfig::WINDOWPOS pos = (CConfig::WINDOWPOS)atoi(arg);
+		Rainlendar.SetWindowZPos(pos);
+	} 
+}
+
 /* 
 ** CRainlendar
 **
@@ -398,6 +429,8 @@ int CRainlendar::Initialize(HWND Parent, HINSTANCE Instance, bool wd, LPCSTR szP
 		AddBangCommand("!RainlendarShowCurrent", RainlendarShowCurrent);
 		AddBangCommand("!RainlendarShowMonth", RainlendarShowMonth);
 		AddBangCommand("!RainlendarLsBoxHook", RainlendarLsBoxHook);
+		AddBangCommand("!RainlendarMove", RainlendarMove);
+		AddBangCommand("!RainlendarZPos", RainlendarZPos);
 	}
 
 	return Result;	// Alles OK
@@ -432,6 +465,8 @@ void CRainlendar::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainlendarShowCurrent");
 		RemoveBangCommand("!RainlendarShowMonth");
 		RemoveBangCommand("!RainlendarLsBoxHook");
+		RemoveBangCommand("!RainlendarMove");
+		RemoveBangCommand("!RainlendarZPos");
 	}
 }
 

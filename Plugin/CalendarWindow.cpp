@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.cpp,v 1.14 2002/11/12 18:05:46 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.cpp,v 1.15 2002/11/25 17:11:58 rainy Exp $
 
   $Log: CalendarWindow.cpp,v $
+  Revision 1.15  2002/11/25 17:11:58  rainy
+  Wallpaper polling checks the timestamp too.
+
   Revision 1.14  2002/11/12 18:05:46  rainy
   Added support for native transparency.
   The window is created after configs are loaded.
@@ -117,6 +120,8 @@ SYSTEMTIME CCalendarWindow::c_MonthsFirstDate;
 */
 CCalendarWindow::CCalendarWindow() 
 {
+	m_X=0;
+	m_Y=0;
 	m_Width=0;
 	m_Height=0;
 	m_FirstExecute=true;
@@ -464,7 +469,7 @@ void CCalendarWindow::FillMenu(HMENU subMenu, int x, int y)
 }
 
 /* 
-** CalcWindowPos
+** CalcWindowSize
 **
 ** Calculates the windows correct size.
 **
@@ -498,6 +503,11 @@ void CCalendarWindow::CalcWindowSize()
 	{
 		m_Width = max(m_Width, m_Year->GetX() + m_Year->GetW());
 		m_Height = max(m_Height, m_Year->GetY() + m_Year->GetH());
+	}
+	if(c_Config.GetTodayEnable()) 
+	{
+		m_Width = max(m_Width, m_Today->GetX() + m_Today->GetW());
+		m_Height = max(m_Height, m_Today->GetY() + m_Today->GetH());
 	}
 
 	if(m_Background.GetWidth() > m_Width) m_Width = m_Background.GetWidth();
@@ -583,60 +593,21 @@ void CCalendarWindow::Refresh(bool lite)
 
 		if (!lite)
 		{
-			int X, Y;
-			RECT r;
-
 			CalcWindowSize();
 
-			// Handle negative coordinates
-			GetClientRect(GetDesktopWindow(), &r); 
-			X = c_Config.GetX();
-			Y = c_Config.GetY();
-			if (X < 0) X += r.right - r.left;
-			if (Y < 0) Y += r.bottom - r.top;
+			MoveWindow(c_Config.GetX(), c_Config.GetY());
 
 			if(m_FirstExecute || (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_WALLPAPER_ALWAYS ||
 								 (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_NORMAL && !(m_Rainlendar->IsWharf()))))
 			{
 				CalcWindowSize();
-				if (m_Background.Create(X, Y, m_Width, m_Height))
+				if (m_Background.Create(m_X, m_Y, m_Width, m_Height))
 				{
 					CalcWindowSize();	// Must be recalced if BG is bigger than current window
 				}
 			}
 
-			HWND winPos = HWND_NOTOPMOST;
-			UINT flags = SWP_NOACTIVATE;
-			LONG style = GetWindowLong(m_Window, GWL_STYLE);
-
-			switch (c_Config.GetWindowPos())
-			{
-			case CConfig::WINDOWPOS_ONTOP:
-				winPos = HWND_TOPMOST;
-				if (!m_Rainlendar->IsWharf())
-				{
-					style = (style & ~WS_CHILD) | WS_POPUP;		// Change from child to popup
-					SetWindowLong(m_Window, GWL_STYLE, style);
-					SetParent(m_Window, NULL);
-				}
-				break;
-
-			case CConfig::WINDOWPOS_ONBOTTOM:
-				winPos = HWND_BOTTOM;
-				if (!m_Rainlendar->IsWharf())
-				{
-					style = (style & ~WS_CHILD) | WS_POPUP;		// Change from child to popup
-					SetWindowLong(m_Window, GWL_STYLE, style);
-					SetParent(m_Window, NULL);
-				}
-				break;
-
-			// CConfig::WINDOWPOS_ONDESKTOP: is handled below
-			}
-
-			if(m_Rainlendar->IsWharf()) flags |= SWP_NOZORDER;		// Children shouldn't change z-position
-
-			SetWindowPos(m_Window, winPos, X, Y, m_Width, m_Height, flags);
+			SetWindowZPos(c_Config.GetWindowPos());
 		}
 
 		// Create the DoubleBuffer
@@ -703,25 +674,6 @@ void CCalendarWindow::Refresh(bool lite)
 
 		InvalidateRect(m_Window, NULL, false);
 
-		if (!lite)
-		{
-			if (c_Config.GetWindowPos() == CConfig::WINDOWPOS_ONDESKTOP)
-			{
-				if (!m_Rainlendar->IsWharf())
-				{
-					// Set the window's parent to progman, so it stays always on desktop
-					HWND ProgmanHwnd = FindWindow("Progman", "Program Manager");
-					if (ProgmanHwnd && GetParent(m_Window) != ProgmanHwnd)
-					{
-						LONG style = GetWindowLong(m_Window, GWL_STYLE);
-						style = (style & ~WS_POPUP) | WS_CHILD;
-						SetWindowLong(m_Window, GWL_STYLE, style);
-						SetParent(m_Window, ProgmanHwnd);
-					}
-				}
-			}
-		}
-
 		m_Refreshing = false;
 	} 
     catch(CError& error) 
@@ -732,6 +684,80 @@ void CCalendarWindow::Refresh(bool lite)
 
 	sprintf(buffer, "Refresh ended (took: %i ms).", GetTickCount() - time);
 	LSLog(LOG_DEBUG, "Rainlendar", buffer);
+}
+
+/*
+** MoveWindow
+**
+** Moves the window to a new location
+*/
+void CCalendarWindow::MoveWindow(int x, int y)
+{
+	RECT r;
+
+	// Handle negative coordinates
+	GetClientRect(GetDesktopWindow(), &r); 
+	if (x < 0) x += r.right - r.left;
+	if (x < 0) x += r.bottom - r.top;
+
+	m_X = x;
+	m_Y = y;
+
+	SetWindowPos(m_Window, NULL, m_X, m_Y, m_Width, m_Height, SWP_NOACTIVATE | SWP_NOZORDER);
+}
+
+/*
+** SetWindowZPos
+**
+** Sets the window's z-position (OnTop, Normal, OnBottom, OnDesktop)
+*/
+void CCalendarWindow::SetWindowZPos(CConfig::WINDOWPOS pos)
+{
+	if(m_Rainlendar->IsWharf()) return;		// Children shouldn't change z-position
+
+	HWND winPos = HWND_NOTOPMOST;
+	UINT flags = SWP_NOACTIVATE;
+	LONG style = GetWindowLong(m_Window, GWL_STYLE);
+
+	switch (pos)
+	{
+	case CConfig::WINDOWPOS_ONTOP:
+		winPos = HWND_TOPMOST;
+		if (!m_Rainlendar->IsWharf())
+		{
+			style = (style & ~WS_CHILD) | WS_POPUP;		// Change from child to popup
+			SetWindowLong(m_Window, GWL_STYLE, style);
+			SetParent(m_Window, NULL);
+		}
+		break;
+
+	case CConfig::WINDOWPOS_ONBOTTOM:
+		winPos = HWND_BOTTOM;
+		if (!m_Rainlendar->IsWharf())
+		{
+			style = (style & ~WS_CHILD) | WS_POPUP;		// Change from child to popup
+			SetWindowLong(m_Window, GWL_STYLE, style);
+			SetParent(m_Window, NULL);
+		}
+		break;
+
+	case CConfig::WINDOWPOS_ONDESKTOP:
+		if (!m_Rainlendar->IsWharf())
+		{
+			// Set the window's parent to progman, so it stays always on desktop
+			HWND ProgmanHwnd = FindWindow("Progman", "Program Manager");
+			if (ProgmanHwnd && GetParent(m_Window) != ProgmanHwnd)
+			{
+				style = (style & ~WS_POPUP) | WS_CHILD;
+				SetWindowLong(m_Window, GWL_STYLE, style);
+				SetParent(m_Window, ProgmanHwnd);
+			}
+		}
+	}
+
+	SetWindowPos(m_Window, winPos, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOMOVE);
+
+	c_Config.SetWindowPos(pos);	// Set the config to match the chosen value
 }
 
 /*
@@ -1061,41 +1087,7 @@ LRESULT CCalendarWindow::OnPaint(WPARAM wParam, LPARAM lParam)
 		HDC tmpDC = CreateCompatibleDC(NULL);
 		HBITMAP oldBitmap = (HBITMAP)SelectObject(tmpDC, m_DoubleBuffer.GetBitmap());
 
-		// TEST
-//		m_DoubleBuffer.MultiplyAlpha();
-//		HBITMAP bm = CreateBitmap(m_Width, m_Height, 1, 16, NULL);
-//		HBITMAP bm = CreateCompatibleBitmap(tmpDC, m_Width, m_Height);
-
-//		VOID *pvBits;
-//		BITMAPINFO bmi;
-//		ZeroMemory(&bmi, sizeof(BITMAPINFO));
-//		bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-//		bmi.bmiHeader.biWidth = 200;
-//		bmi.bmiHeader.biHeight = 200;
-//		bmi.bmiHeader.biPlanes = 1;
-//		bmi.bmiHeader.biBitCount = 32;         // four 8-bit components
-//		bmi.bmiHeader.biCompression = BI_RGB;
-//		bmi.bmiHeader.biSizeImage = 200 * 200 * 4;
-//		
-//		// create our DIB section and select the bitmap into the dc
-//		HBITMAP bm = CreateDIBSection(winDC, &bmi, DIB_RGB_COLORS, &pvBits, NULL, 0x0);
-//    		SelectObject(tmpDC, bm);
-//
-//		HBRUSH br = CreateSolidBrush(RGB(255,0,0));
-//		RECT r = {0, 0, 100, 100 };
-//		FillRect(tmpDC, &r, br);
-//		DeleteObject(br);
-		
-		// ~TEST
-
 		BitBlt(winDC, 0, 0, m_Width, m_Height, tmpDC, 0, 0, SRCCOPY);
-
-		// TEST
-		//HBRUSH br = CreateSolidBrush(RGB(255,0,0));
-		//RECT r = {0, 0, 100, 100 };
-		//FillRect(winDC, &r, br);
-		//DeleteObject(br);
-		// ~TEST
 
 		SelectObject(tmpDC, oldBitmap);
 		DeleteDC(tmpDC);
@@ -1334,7 +1326,7 @@ void CCalendarWindow::ConnectServer(int type)
 {
 	static NetworkParams param;
 
-	if (c_Config.GetServerEnable())
+	if (c_Config.GetServerEnable() && !c_Config.GetServerAddress().empty())
 	{
 		// Here is a slight possibility of unsafe thread access
 		// If the OnServerSync() is started multiple times before the
@@ -1468,14 +1460,17 @@ LRESULT CCalendarWindow::OnMove(WPARAM wParam, LPARAM lParam)
 		c_Config.SetX(x<0?0:x);
 		c_Config.SetY(y<0?0:y);
 		c_Config.WriteConfig(CConfig::WRITE_POS);	// Store the new position to the ini file
-
-		if (!m_FirstExecute && (c_Config.GetBackgroundMode() == CBackground::MODE_COPY || m_Background.HasAlpha()))
-		{
-			m_Background.UpdateWallpaper(x, y);
-			DrawCalendar();
-			InvalidateRect(m_Window, NULL, false);
-		}
 	}
+
+	if (!m_FirstExecute && (c_Config.GetBackgroundMode() == CBackground::MODE_COPY || m_Background.HasAlpha()))
+	{
+		m_Background.UpdateWallpaper(x, y);
+		DrawCalendar();
+		InvalidateRect(m_Window, NULL, false);
+	}
+
+	m_X = x;
+	m_Y = y;
 
 	return 0;
 }
@@ -1495,9 +1490,11 @@ LRESULT CCalendarWindow::OnSettingsChange(WPARAM wParam, LPARAM lParam)
 LRESULT CCalendarWindow::OnDisplayChange(WPARAM wParam, LPARAM lParam) 
 {
 	// Refresh when the resolution changes
-	Refresh();
-
-	return 0;
+	if (c_Config.GetRefreshOnResolutionChange())
+	{
+		Refresh();
+	}
+	return DefWindowProc(m_Window, m_Message, wParam, lParam);
 }
 
 LRESULT CCalendarWindow::OnLButtonDblClk(WPARAM wParam, LPARAM lParam) 
@@ -1683,6 +1680,22 @@ LRESULT CCalendarWindow::OnCopyData(WPARAM wParam, LPARAM lParam)
 		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarLsBoxHook") == 0)
 		{
 			// Do nothing
+		}
+		else if (strnicmp((const char*)pCopyDataStruct->lpData, "!RainlendarMove", 15) == 0)
+		{
+			// This one takes arguments
+			if (strlen((const char*)pCopyDataStruct->lpData) > 16)
+			{
+				RainlendarMove(m_Window, (const char*)pCopyDataStruct->lpData + 16);
+			}
+		}
+		else if (strnicmp((const char*)pCopyDataStruct->lpData, "!RainlendarZPos", 15) == 0)
+		{
+			// This one takes arguments
+			if (strlen((const char*)pCopyDataStruct->lpData) > 16)
+			{
+				RainlendarZPos(m_Window, (const char*)pCopyDataStruct->lpData + 16);
+			}
 		}
 		else
 		{

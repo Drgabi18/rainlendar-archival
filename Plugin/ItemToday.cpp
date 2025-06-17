@@ -137,3 +137,46 @@ void CItemToday::Paint(CImage& background)
 		}
 	}
 }
+
+// Put the today to the lowright corner, so we know if the window must be 
+// enlarged.
+
+int CItemToday::GetX()
+{
+	int W = CCalendarWindow::c_Config.GetDaysW() / 7;	// 7 Columns
+	int X = CCalendarWindow::c_Config.GetDaysX();
+
+	return W * 6 + X;
+}
+
+int CItemToday::GetY()
+{
+	int H = CCalendarWindow::c_Config.GetDaysH() / 6;	// 6 Rows
+	int Y = CCalendarWindow::c_Config.GetDaysY();
+
+	return H * 5 + Y;
+}
+
+int CItemToday::GetW()
+{
+	int numOfComponents = CCalendarWindow::c_Config.GetTodayNumOfComponents();
+
+	if (m_Rasterizer->GetWidth() > m_Rasterizer->GetHeight())
+	{
+		return m_Rasterizer->GetWidth() / numOfComponents;
+	}
+
+	return m_Rasterizer->GetWidth();
+}
+
+int CItemToday::GetH()
+{
+	int numOfComponents = CCalendarWindow::c_Config.GetTodayNumOfComponents();
+
+	if (m_Rasterizer->GetHeight() > m_Rasterizer->GetWidth())
+	{
+		return m_Rasterizer->GetHeight() / numOfComponents;
+	}
+
+	return m_Rasterizer->GetHeight();
+}

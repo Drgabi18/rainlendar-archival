@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerBitmap.h,v 1.4 2002/11/12 18:10:23 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerBitmap.h,v 1.5 2002/11/25 17:02:07 rainy Exp $
 
   $Log: RasterizerBitmap.h,v $
+  Revision 1.5  2002/11/25 17:02:07  rainy
+  Cleaned up the code.
+
   Revision 1.4  2002/11/12 18:10:23  rainy
   Added support for real alpha.
 

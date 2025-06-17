@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.h,v 1.7 2002/11/12 18:13:32 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.h,v 1.8 2002/11/25 17:03:24 rainy Exp $
 
   $Log: ItemEvent.h,v $
+  Revision 1.8  2002/11/25 17:03:24  rainy
+  Added DrawIcon method.
+
   Revision 1.7  2002/11/12 18:13:32  rainy
   The interface of Paint changed a little.
   Calendar text can be painted on RasterizerFont's alpha buffer.

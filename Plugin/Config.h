@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.h,v 1.8 2002/11/12 18:02:33 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.h,v 1.9 2002/11/25 17:11:34 rainy Exp $
 
   $Log: Config.h,v $
+  Revision 1.9  2002/11/25 17:11:34  rainy
+  Added some stuff to the profiles.
+
   Revision 1.8  2002/11/12 18:02:33  rainy
   Added Native Transparency and solid background (with bevel).
 
@@ -129,6 +132,7 @@ public:
 	bool GetSnapEdges() { return m_SnapEdges; };
 	bool GetMouseHide() { return m_MouseHide; };
 	bool GetNativeTransparency() { return m_NativeTransparency; };
+	bool GetRefreshOnResolutionChange() { return m_RefreshOnResolutionChange; };
 	WINDOWPOS GetWindowPos() { return m_WindowPos; };
 	BG_COPY_MODE GetBGCopyMode() { return m_BGCopyMode; };
 
@@ -146,6 +150,7 @@ public:
 	void SetSnapEdges(bool SnapEdges) { m_SnapEdges=SnapEdges; };
 	void SetMouseHide(bool MouseHide) { m_MouseHide=MouseHide; };
 	void SetNativeTransparency(bool NativeTransparency) { m_NativeTransparency=NativeTransparency; };
+	void SetRefreshOnResolutionChange(bool RefreshOnResolutionChange) { m_RefreshOnResolutionChange=RefreshOnResolutionChange; };
 	void SetWindowPos(WINDOWPOS WindowPos) { m_WindowPos=WindowPos; };
 	void SetBGCopyMode(BG_COPY_MODE bgMode) { m_BGCopyMode=bgMode; };
 
@@ -378,6 +383,7 @@ private:
 	bool m_MouseHide;
 	bool m_SnapEdges;
 	bool m_NativeTransparency;
+	bool m_RefreshOnResolutionChange;
 	std::string m_MonthNames;
 	std::string m_WeekdayNames;
 	int m_RefreshDelay;

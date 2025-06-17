@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.cpp,v 1.10 2002/11/12 18:01:41 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.cpp,v 1.11 2002/11/25 17:12:24 rainy Exp $
 
   $Log: Background.cpp,v $
+  Revision 1.11  2002/11/25 17:12:24  rainy
+  Now uses the AddPath method
+
   Revision 1.10  2002/11/12 18:01:41  rainy
   Modified to use the CImage class.
 

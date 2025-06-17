@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemWeekNumbers.cpp,v 1.5 2002/11/12 18:11:34 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemWeekNumbers.cpp,v 1.6 2002/11/25 17:02:45 rainy Exp $
 
   $Log: ItemWeekNumbers.cpp,v $
+  Revision 1.6  2002/11/25 17:02:45  rainy
+  Fixed a bug
+
   Revision 1.5  2002/11/12 18:11:34  rainy
   The interface of Paint changed a little.
 

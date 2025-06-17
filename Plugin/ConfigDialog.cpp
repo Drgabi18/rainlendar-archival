@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ConfigDialog.cpp,v 1.4 2002/11/12 18:03:27 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ConfigDialog.cpp,v 1.5 2002/11/25 17:11:13 rainy Exp $
 
   $Log: ConfigDialog.cpp,v $
+  Revision 1.5  2002/11/25 17:11:13  rainy
+  Removed a space :-)
+
   Revision 1.4  2002/11/12 18:03:27  rainy
   Added widgets for the native transparency
 
@@ -157,6 +160,8 @@ BOOL OnInitGeneralDialog(HWND window)
 	CheckDlgButton(window, IDC_SNAP_EDGES, state);
 	state = CCalendarWindow::c_Config.GetNativeTransparency() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_NATIVE_TRANSPARENCY, state);
+	state = CCalendarWindow::c_Config.GetRefreshOnResolutionChange() ? BST_CHECKED : BST_UNCHECKED;
+	CheckDlgButton(window, IDC_REFRESH_ON_RESOLUTION_CHANGE, state);
 
 	if (!CCalendarWindow::Is2k())
 	{
@@ -225,6 +230,8 @@ BOOL OnOKGeneralDialog(HWND window)
 	CCalendarWindow::c_Config.SetSnapEdges(state);
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_NATIVE_TRANSPARENCY));
 	CCalendarWindow::c_Config.SetNativeTransparency(state);
+	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_REFRESH_ON_RESOLUTION_CHANGE));
+	CCalendarWindow::c_Config.SetRefreshOnResolutionChange(state);
 
 	return TRUE;
 }

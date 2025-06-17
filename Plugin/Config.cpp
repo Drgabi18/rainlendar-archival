@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.cpp,v 1.11 2002/11/12 18:02:33 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.cpp,v 1.12 2002/11/25 17:11:35 rainy Exp $
 
   $Log: Config.cpp,v $
+  Revision 1.12  2002/11/25 17:11:35  rainy
+  Added some stuff to the profiles.
+
   Revision 1.11  2002/11/12 18:02:33  rainy
   Added Native Transparency and solid background (with bevel).
 
@@ -76,6 +79,7 @@ CConfig::CConfig()
 	m_MouseHide=false;
 	m_SnapEdges=false;
 	m_NativeTransparency=true;
+	m_RefreshOnResolutionChange=false;
 	m_RefreshDelay=100;
 	m_WindowPos=WINDOWPOS_ONBOTTOM;
 	m_CurrentProfile="Default";
@@ -246,6 +250,7 @@ void CConfig::ReadGeneralConfig(const char* iniFile)
 	m_MouseHide=(1==GetPrivateProfileInt( "Rainlendar", "MouseHide", m_MouseHide?1:0, iniFile))?true:false;
 	m_SnapEdges=(1==GetPrivateProfileInt( "Rainlendar", "SnapEdges", m_SnapEdges?1:0, iniFile))?true:false;
 	m_NativeTransparency=(1==GetPrivateProfileInt( "Rainlendar", "NativeTransparency", m_NativeTransparency?1:0, iniFile))?true:false;
+	m_RefreshOnResolutionChange=(1==GetPrivateProfileInt( "Rainlendar", "RefreshOnResolutionChange", m_RefreshOnResolutionChange?1:0, iniFile))?true:false;
 	m_RefreshDelay=GetPrivateProfileInt( "Rainlendar", "RefreshDelay", m_RefreshDelay, iniFile);
 	m_WindowPos=(WINDOWPOS)GetPrivateProfileInt( "Rainlendar", "WindowPos", m_WindowPos, iniFile);
 	m_BGCopyMode=(BG_COPY_MODE)GetPrivateProfileInt( "Rainlendar", "BGCopyMode", m_BGCopyMode, iniFile);
@@ -717,6 +722,8 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			WritePrivateProfileString( "Rainlendar", "MouseHide", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_NativeTransparency);
 			WritePrivateProfileString( "Rainlendar", "NativeTransparency", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_RefreshOnResolutionChange);
+			WritePrivateProfileString( "Rainlendar", "RefreshOnResolutionChange", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_RefreshDelay);
 			WritePrivateProfileString( "Rainlendar", "RefreshDelay", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_WindowPos);

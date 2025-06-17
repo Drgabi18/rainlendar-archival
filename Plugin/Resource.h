@@ -95,7 +95,6 @@
 #define IDC_EVENT_MESSAGEBOX            1080
 #define IDC_EVENT_EXECUTE               1081
 #define IDC_EDITEVENT_MESSAGE           1082
-#define IDC_EVENT_EXECUTE2              1082
 #define IDC_WEEKNUM_ENABLE              1083
 #define IDC_WEEKNUM_RASTERIZER          1084
 #define IDC_WEEKNUM_ALIGN               1085
@@ -128,6 +127,7 @@
 #define IDC_BACKGROUND_TILE             1111
 #define IDC_NATIVE_TRANSPARENCY         1111
 #define IDC_BACKGROUND_STRETCH          1112
+#define IDC_REFRESH_ON_RESOLUTION_CHANGE 1112
 #define IDC_BACKGROUND_COPYWALLPAPER    1113
 #define IDC_BACKGROUND_SOLID            1114
 #define IDC_WINDOW_ONBOTTOM             1115

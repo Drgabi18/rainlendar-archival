@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.cpp,v 1.8 2002/11/12 18:10:18 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.cpp,v 1.9 2002/11/25 17:01:29 rainy Exp $
 
   $Log: RasterizerFont.cpp,v $
+  Revision 1.9  2002/11/25 17:01:29  rainy
+  The buffers are now CImages instead of HBITMAPs.
+
   Revision 1.8  2002/11/12 18:10:18  rainy
   Added support for real alpha.
 
