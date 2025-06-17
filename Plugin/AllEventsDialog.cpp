@@ -16,9 +16,13 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/AllEventsDialog.cpp,v 1.2 2003/06/15 09:39:35 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/AllEventsDialog.cpp,v 1.3 2003/08/09 16:39:27 Rainy Exp $
 
   $Log: AllEventsDialog.cpp,v $
+  Revision 1.3  2003/08/09 16:39:27  Rainy
+  Added support for "Remember dialog position"-feature.
+  Event can be edited by doubclicking it.
+
   Revision 1.2  2003/06/15 09:39:35  Rainy
   Strings are read from CLanguage class.
   The today's event is selected automatically.
@@ -35,12 +39,61 @@
 #include "RainlendarDLL.h"
 #include <Commdlg.h>
 #include <time.h>
+#include "EditEvent.h"
 
 int CALLBACK CompareCallback(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
 	if(((CEventMessage*)lParam1)->GetDate() < ((CEventMessage*)lParam2)->GetDate()) return -1;
 	if(((CEventMessage*)lParam1)->GetDate() > ((CEventMessage*)lParam2)->GetDate()) return 1;
 	return 0;
+}
+
+void UpdateWidgets(HWND window)
+{
+	HWND widget = GetDlgItem(window, IDC_ALLEVENTS_LIST);
+
+	ListView_DeleteAllItems(widget);
+
+	// Add Items
+	LVITEM lvI; 
+	
+	lvI.mask = LVIF_TEXT | LVIF_STATE | LVIF_PARAM;
+	lvI.state = 0; 
+	lvI.stateMask = 0; 
+	
+	const std::list<CEventMessage>& allEvents = GetRainlendar()->GetCalendarWindow().GetEventManager()->GetAllEvents();
+
+	std::list<CEventMessage>::const_iterator iter = allEvents.begin();
+	int i = 0;
+	for (; iter != allEvents.end(); iter++)
+	{
+		if ((*iter).IsDeleted()) continue;
+
+		lvI.iItem = i;
+		lvI.iSubItem = 0;
+		lvI.pszText = (char*)(*iter).GetDateText();
+		lvI.lParam = (LPARAM)&(*iter);
+		ListView_InsertItem(widget, &lvI);
+		
+		ListView_SetItemText(widget, i, 1, (char*)(*iter).GetTypeText());
+
+		const char* profile = (*iter).GetProfile().c_str();
+		ListView_SetItemText(widget, i, 2, (char*)CCalendarWindow::c_Language.GetTranslatedProfile(profile));
+
+		// Remove newlines from the string
+		std::string message = (*iter).GetMessage();
+		int pos = message.find("\r\n");
+		while (pos != -1)
+		{
+			message.replace(message.begin() + pos, message.begin() + pos + 2, " ");
+			pos = message.find("\r\n");
+		}
+		ListView_SetItemText(widget, i, 3, (char*)message.c_str());
+
+		i++;
+	}
+	ListView_SetExtendedListViewStyle(widget, LVS_EX_FULLROWSELECT);
+	ListView_SortItems(widget, CompareCallback, (LPARAM)0);
 }
 
 BOOL OnInitAllEventsDialog(HWND window) 
@@ -76,40 +129,13 @@ BOOL OnInitAllEventsDialog(HWND window)
 		lvc.fmt = LVCFMT_LEFT;
 		ListView_InsertColumn(widget, 3, &lvc);
 		
-		// Add Items
-		LVITEM lvI; 
-		
-		lvI.mask = LVIF_TEXT | LVIF_STATE | LVIF_PARAM;
-		lvI.state = 0; 
-		lvI.stateMask = 0; 
-		
-		const std::list<CEventMessage>& allEvents = GetRainlendar()->GetCalendarWindow().GetEventManager()->GetAllEvents();
-
-		std::list<CEventMessage>::const_iterator iter = allEvents.begin();
-		int i = 0;
-		for (; iter != allEvents.end(); iter++)
-		{
-			if ((*iter).IsDeleted()) continue;
-
-			lvI.iItem = i;
-			lvI.iSubItem = 0;
-			lvI.pszText = (char*)(*iter).GetDateText();
-			lvI.lParam = (LPARAM)&(*iter);
-			ListView_InsertItem(widget, &lvI);
-			
-			ListView_SetItemText(widget, i, 1, (char*)(*iter).GetTypeText());
-			ListView_SetItemText(widget, i, 2, (char*)(*iter).GetProfile().c_str());
-			ListView_SetItemText(widget, i, 3, (char*)(*iter).GetMessage().c_str());
-			i++;
-		}
-		ListView_SetExtendedListViewStyle(widget, LVS_EX_FULLROWSELECT);
-		ListView_SortItems(widget, CompareCallback, (LPARAM)0);
+		UpdateWidgets(window);
 
 		// Activate today (or next event from today)
 		int today = CEventMessage::DateToValue(CCalendarWindow::c_TodaysDate.wDay, CCalendarWindow::c_TodaysDate.wMonth, CCalendarWindow::c_TodaysDate.wYear);
 		int current = 0;
 		int count = ListView_GetItemCount(widget);
-		for (i = 0; i < count; i++)
+		for (int i = 0; i < count; i++)
 		{
 			LVITEM item;
 			item.iItem = i;
@@ -128,7 +154,16 @@ BOOL OnInitAllEventsDialog(HWND window)
 	widget = GetDlgItem(window, IDOK);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("General", 0));
 
-	SetWindowPos(window, NULL, 0, 0, 500, 400, SWP_NOMOVE | SWP_NOZORDER);
+	if (CCalendarWindow::c_Config.GetRememberDialogPositions())
+	{
+		POINT pos = CCalendarWindow::c_Config.GetDialogPosition(CConfig::DIALOG_ALLEVENTS);
+		POINT size = CCalendarWindow::c_Config.GetDialogPosition(CConfig::DIALOG_ALLEVENTS_SIZE);
+		SetWindowPos(window, NULL, pos.x, pos.y, size.x, size.y, SWP_NOZORDER);
+	}
+	else
+	{
+		SetWindowPos(window, NULL, 0, 0, 500, 400, SWP_NOMOVE | SWP_NOZORDER);
+	}
     return TRUE;
 }
 
@@ -186,32 +221,66 @@ BOOL CALLBACK AllEventsProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lP
 
 							if (((CEventMessage*)item.lParam)->IsPermanent())
 							{
-								if (IDYES == MessageBox(hwndDlg, CCalendarWindow::c_Language.GetString("Message", 0), "Rainlendar", MB_YESNO))
+								// "Are you sure you want to delete this event?",
+								if (IDYES == MessageBox(hwndDlg, CCalendarWindow::c_Language.GetString("Message", 0), "Rainlendar", MB_YESNO | MB_ICONQUESTION))
 								{
 									GetRainlendar()->GetCalendarWindow().GetEventManager()->RemoveEvent(*((CEventMessage*)item.lParam));
+									GetRainlendar()->GetCalendarWindow().GetEventManager()->WriteEvent(*((CEventMessage*)item.lParam));
 									ListView_DeleteItem(widget, index);
 									changed = true;
 								}
 							}
 							else
 							{
-								MessageBox(hwndDlg, CCalendarWindow::c_Language.GetString("Message", 1), "Rainlendar", MB_OK);
+								//	"The event is read-only and cannot be deleted!",
+								MessageBox(hwndDlg, CCalendarWindow::c_Language.GetString("Message", 1), "Rainlendar", MB_OK | MB_ICONINFORMATION);
 							}
+							ListView_SetItemState(widget, index, LVIS_SELECTED, LVIS_SELECTED);
 						}
 					}
 				}
+				else if (pNMHDR->code == NM_DBLCLK)
+			    {
+					HWND widget; 
+					widget = GetDlgItem(hwndDlg, IDC_ALLEVENTS_LIST);
+					int index = ListView_GetNextItem(widget, -1, LVNI_SELECTED);
+					if (index != -1)
+					{
+						LVITEM item;
+						item.iItem = index;
+						item.iSubItem = 0;
+						item.mask = LVIF_PARAM;
+						ListView_GetItem(widget, &item);
+
+						LSLog(LOG_DEBUG, "Rainlendar", "Opening Edit Event dialog.");
+						OpenEditEventDialog(hwndDlg, CRainlendar::GetInstance(), ((CEventMessage*)item.lParam)->GetDate(), ((CEventMessage*)item.lParam)->GetID());
+						changed = true;
+						LSLog(LOG_DEBUG, "Rainlendar", "Edit Event dialog closed.");
+
+						UpdateWidgets(hwndDlg);
+					}
+    			}
 			}
 			return FALSE;
 
-        case WM_CLOSE: 
-            EndDialog(hwndDlg, changed ? IDOK : IDCANCEL); 
+		case WM_DESTROY:
+			{
+				RECT rc;
+				GetWindowRect(hwndDlg, &rc);
+				CCalendarWindow::c_Config.SetDialogPosition(CConfig::DIALOG_ALLEVENTS, rc.left, rc.top);
+				CCalendarWindow::c_Config.SetDialogPosition(CConfig::DIALOG_ALLEVENTS_SIZE, rc.right - rc.left, rc.bottom - rc.top);
+			}
+			break;
+
+        case WM_CLOSE:
+			EndDialog(hwndDlg, changed ? IDOK : IDCANCEL); 
             return TRUE; 
 			
         case WM_COMMAND: 
             switch (LOWORD(wParam)) 
             {
                 case IDOK:
-		            EndDialog(hwndDlg, changed ? IDOK : IDCANCEL); 
+					EndDialog(hwndDlg, changed ? IDOK : IDCANCEL); 
                     return TRUE; 
             }
             break;

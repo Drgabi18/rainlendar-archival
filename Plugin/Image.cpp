@@ -1,4 +1,4 @@
-/*
+  /*
   Copyright (C) 2002 Kimmo Pekkola
 
   This program is free software; you can redistribute it and/or
@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Image.cpp,v 1.3 2003/06/15 09:48:45 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Image.cpp,v 1.4 2003/08/09 16:36:25 Rainy Exp $
 
   $Log: Image.cpp,v $
+  Revision 1.4  2003/08/09 16:36:25  Rainy
+  Added a check if the file exists.
+
   Revision 1.3  2003/06/15 09:48:45  Rainy
   Uses AlphaBlend for all stretching.
 
@@ -136,6 +139,8 @@ bool CImage::LoadPNG(const std::string& filename)
 	int           i;
 	
 	FILE* png_file = fopen(filename.c_str(), "rb");
+
+	if (png_file == NULL) return false;
 
 	/* read and check signature in PNG file */
 	ret = fread (buf, 1, 8, png_file);

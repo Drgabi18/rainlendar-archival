@@ -1,4 +1,4 @@
-/*
+ /*
   Copyright (C) 2000 Kimmo Pekkola
 
   This program is free software; you can redistribute it and/or
@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/EventManager.cpp,v 1.5 2003/05/25 18:10:11 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/EventManager.cpp,v 1.6 2003/08/09 16:36:42 Rainy Exp $
 
   $Log: EventManager.cpp,v $
+  Revision 1.6  2003/08/09 16:36:42  Rainy
+  Removed event's timestamp is updated.
+
   Revision 1.5  2003/05/25 18:10:11  Rainy
   The GetEvent() returns now a sorted vector.
 
@@ -256,6 +259,7 @@ void CEventManager::RemoveEvent(CEventMessage& event)
 
 	if (oldEvent)
 	{
+		oldEvent->SetTimeStamp(event.GetTimeStamp());
 		oldEvent->SetDeleted();
 	}
 }

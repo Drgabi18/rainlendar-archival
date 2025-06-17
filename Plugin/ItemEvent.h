@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemEvent.h,v 1.9 2003/06/15 09:49:12 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemEvent.h,v 1.10 2003/08/09 16:36:05 Rainy Exp $
 
   $Log: ItemEvent.h,v $
+  Revision 1.10  2003/08/09 16:36:05  Rainy
+  Removed GetEventText()
+
   Revision 1.9  2003/06/15 09:49:12  Rainy
   Added support for multiple calendars.
 
@@ -70,7 +73,6 @@ public:
 	void Paint(CImage& background, POINT offset);
 
 	void AddToolTips(CCalendarWindow* CalendarWnd, POINT offset);
-	bool GetEventText(int day, std::string& text);
 
 	CEventManager* GetEventManager() { return &m_EventManager; };
 

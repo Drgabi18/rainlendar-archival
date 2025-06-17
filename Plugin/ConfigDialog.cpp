@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ConfigDialog.cpp,v 1.9 2003/06/15 09:44:33 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ConfigDialog.cpp,v 1.10 2003/08/09 16:38:27 Rainy Exp $
 
   $Log: ConfigDialog.cpp,v $
+  Revision 1.10  2003/08/09 16:38:27  Rainy
+  Added hotkeys.
+
   Revision 1.9  2003/06/15 09:44:33  Rainy
   Added Layout tab.
 
@@ -61,18 +64,24 @@ std::list<std::string> g_StatusStrings;
 HANDLE  g_Mutex = NULL;
 HWND g_StatusWidget = NULL;
 
-
 BOOL CALLBACK LayoutPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam); 
 BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam); 
+BOOL CALLBACK HotkeysPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK ServerPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
+
+enum CONFIG_MESSAGE
+{
+	CONFIG_MESSAGE_ONDESKTOP = 1,
+	CONFIG_MESSAGE_TRANSPARENCY
+};
 
 VOID OpenConfigDialog(HWND hwndOwner, HINSTANCE instance)
 {
-    PROPSHEETPAGE psp[3];
+    PROPSHEETPAGE psp[4];
     PROPSHEETHEADER psh;
 
     psp[0].dwSize = sizeof(PROPSHEETPAGE);
-    psp[0].dwFlags = PSP_USETITLE;
+    psp[0].dwFlags = PSP_USETITLE | PSP_PREMATURE;
     psp[0].hInstance = instance;
     psp[0].pszTemplate = MAKEINTRESOURCE(IDD_GENERAL);
     psp[0].pszIcon = NULL;
@@ -82,7 +91,7 @@ VOID OpenConfigDialog(HWND hwndOwner, HINSTANCE instance)
     psp[0].pfnCallback = NULL;
 
     psp[1].dwSize = sizeof(PROPSHEETPAGE);
-    psp[1].dwFlags = PSP_USETITLE;
+    psp[1].dwFlags = PSP_USETITLE | PSP_PREMATURE;
     psp[1].hInstance = instance;
     psp[1].pszTemplate = MAKEINTRESOURCE(IDD_LAYOUT);
     psp[1].pszIcon = NULL;
@@ -92,14 +101,24 @@ VOID OpenConfigDialog(HWND hwndOwner, HINSTANCE instance)
     psp[1].pfnCallback = NULL;
 
     psp[2].dwSize = sizeof(PROPSHEETPAGE);
-    psp[2].dwFlags = PSP_USETITLE;
+    psp[2].dwFlags = PSP_USETITLE | PSP_PREMATURE;
     psp[2].hInstance = instance;
-    psp[2].pszTemplate = MAKEINTRESOURCE(IDD_SERVER);
+    psp[2].pszTemplate = MAKEINTRESOURCE(IDD_HOTKEYS);
     psp[2].pszIcon = NULL;
-    psp[2].pfnDlgProc = ServerPageProc;
-    psp[2].pszTitle = CCalendarWindow::c_Language.GetString("General", 5);
+    psp[2].pfnDlgProc = HotkeysPageProc;
+    psp[2].pszTitle = CCalendarWindow::c_Language.GetString("General", 15);
     psp[2].lParam = 0;
     psp[2].pfnCallback = NULL;
+
+    psp[3].dwSize = sizeof(PROPSHEETPAGE);
+    psp[3].dwFlags = PSP_USETITLE | PSP_PREMATURE;
+    psp[3].hInstance = instance;
+    psp[3].pszTemplate = MAKEINTRESOURCE(IDD_SERVER);
+    psp[3].pszIcon = NULL;
+    psp[3].pfnDlgProc = ServerPageProc;
+    psp[3].pszTitle = CCalendarWindow::c_Language.GetString("General", 5);
+    psp[3].lParam = 0;
+    psp[3].pfnCallback = NULL;
 
     psh.dwSize = sizeof(PROPSHEETHEADER);
     psh.dwFlags = PSH_PROPSHEETPAGE | PSH_NOAPPLYNOW | PSH_NOCONTEXTHELP ;
@@ -122,8 +141,23 @@ VOID OpenConfigDialog(HWND hwndOwner, HINSTANCE instance)
     return;
 }
 
+void UpdateGeneralWidgets(HWND window)
+{
+	if (IsDlgButtonChecked(window, IDC_SHOW_OUTLOOK_APPOINTMENTS) == BST_CHECKED)
+	{
+		// Enable all
+		EnableWindow(GetDlgItem(window, IDC_OUTLOOK_UPDATE), TRUE);
+	}
+	else
+	{
+		// Disable all
+		EnableWindow(GetDlgItem(window, IDC_OUTLOOK_UPDATE), FALSE);
+	}
+}
+
 BOOL OnInitGeneralDialog(HWND window) 
 {
+	char tmpSz[256];
 	UINT state;
 	HWND widget;
 
@@ -150,12 +184,16 @@ BOOL OnInitGeneralDialog(HWND window)
 	CheckDlgButton(window, IDC_NATIVE_TRANSPARENCY, state);
 	state = CCalendarWindow::c_Config.GetRefreshOnResolutionChange() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_REFRESH_ON_RESOLUTION_CHANGE, state);
-	state = CCalendarWindow::c_Config.GetShowOutlookAppointments() ? BST_CHECKED : BST_UNCHECKED;
-	CheckDlgButton(window, IDC_SHOW_OUTLOOK_APPOINTMENTS, state);
 	state = CCalendarWindow::c_Config.GetWeek1HasJanuary1st() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_WEEK_1_JANUARY_1, state);
 	state = CCalendarWindow::c_Config.GetTooltipSeparator() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_TOOLTIP_SEPARATOR, state);
+
+	state = CCalendarWindow::c_Config.GetShowOutlookAppointments() ? BST_CHECKED : BST_UNCHECKED;
+	CheckDlgButton(window, IDC_SHOW_OUTLOOK_APPOINTMENTS, state);
+	widget = GetDlgItem(window, IDC_OUTLOOK_UPDATE);
+	itoa(CCalendarWindow::c_Config.GetOutlookUpdate(), tmpSz, 10);
+	SetWindowText(widget, tmpSz);
 
 	// Set localized strings
 	widget = GetDlgItem(GetParent(window), IDOK);
@@ -188,17 +226,32 @@ BOOL OnInitGeneralDialog(HWND window)
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("GeneralConfigGUI", 11));
 	widget = GetDlgItem(window, IDC_REFRESH_ON_RESOLUTION_CHANGE);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("GeneralConfigGUI", 12));
-	widget = GetDlgItem(window, IDC_SHOW_OUTLOOK_APPOINTMENTS);
-	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("GeneralConfigGUI", 13));
 	widget = GetDlgItem(window, IDC_WEEK_1_JANUARY_1);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("GeneralConfigGUI", 14));
 	widget = GetDlgItem(window, IDC_TOOLTIP_SEPARATOR);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("GeneralConfigGUI", 15));
 
+	widget = GetDlgItem(window, IDC_SHOW_OUTLOOK_APPOINTMENTS);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("GeneralConfigGUI", 13));
+	widget = GetDlgItem(window, IDC_OUTLOOK_GROUP);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("GeneralConfigGUI", 16));
+	widget = GetDlgItem(window, IDC_OUTLOOK_UPDATE_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("GeneralConfigGUI", 17));
+	widget = GetDlgItem(window, IDC_OUTLOOK_MINUTES_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("GeneralConfigGUI", 18));
+
 	if (!CCalendarWindow::Is2k())
 	{
 		// Disable the button if we're running wintendo
 		EnableWindow(GetDlgItem(window, IDC_NATIVE_TRANSPARENCY), FALSE);
+	}
+
+	UpdateGeneralWidgets(window);
+
+	if (CCalendarWindow::c_Config.GetRememberDialogPositions())
+	{
+		POINT pos = CCalendarWindow::c_Config.GetDialogPosition(CConfig::DIALOG_CONFIG);
+		SetWindowPos(GetParent(window), NULL, pos.x, pos.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
 	}
 
 	return TRUE;
@@ -234,12 +287,16 @@ BOOL OnOKGeneralDialog(HWND window)
 	CCalendarWindow::c_Config.SetNativeTransparency(state);
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_REFRESH_ON_RESOLUTION_CHANGE));
 	CCalendarWindow::c_Config.SetRefreshOnResolutionChange(state);
-	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_SHOW_OUTLOOK_APPOINTMENTS));
-	CCalendarWindow::c_Config.SetShowOutlookAppointments(state);
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_WEEK_1_JANUARY_1));
 	CCalendarWindow::c_Config.SetWeek1HasJanuary1st(state);
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_TOOLTIP_SEPARATOR));
 	CCalendarWindow::c_Config.SetTooltipSeparator(state);
+
+	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_SHOW_OUTLOOK_APPOINTMENTS));
+	CCalendarWindow::c_Config.SetShowOutlookAppointments(state);
+	widget = GetDlgItem(window, IDC_OUTLOOK_UPDATE);
+	GetWindowText(widget, tmpSz, 256);
+	CCalendarWindow::c_Config.SetOutlookUpdate(atoi(tmpSz));
 
 	return TRUE;
 }
@@ -259,6 +316,46 @@ BOOL CALLBACK GeneralPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM 
 					return OnOKGeneralDialog(hwndDlg);
 				}
 			}
+			break;
+
+		case WM_DESTROY:
+			{
+				RECT rc;
+				GetWindowRect(GetParent(hwndDlg), &rc);	// Get the sheet position (i.e. parent)
+				CCalendarWindow::c_Config.SetDialogPosition(CConfig::DIALOG_CONFIG, rc.left, rc.top);
+			}
+			break;
+
+		case WM_COMMAND:
+			switch (LOWORD(wParam))
+			{
+			case IDC_SHOW_OUTLOOK_APPOINTMENTS:
+				UpdateGeneralWidgets(hwndDlg);
+				return TRUE;
+
+			case IDC_NATIVE_TRANSPARENCY:
+				if (BST_CHECKED == IsDlgButtonChecked(hwndDlg, IDC_NATIVE_TRANSPARENCY))
+				{
+					// Notify the other sheets that native transparency was selected
+					PropSheet_QuerySiblings(GetParent(hwndDlg), CONFIG_MESSAGE_TRANSPARENCY, 0);
+				}
+				return TRUE;
+			}
+			break;
+
+		case PSM_QUERYSIBLINGS:
+			if (wParam == CONFIG_MESSAGE_ONDESKTOP)
+			{
+				if (BST_CHECKED == IsDlgButtonChecked(hwndDlg, IDC_NATIVE_TRANSPARENCY))
+				{
+					// Disable native transparency and inform the user about it
+					MessageBox(hwndDlg, CCalendarWindow::c_Language.GetString("GeneralConfigGUI", 19), "Rainlendar", MB_OK | MB_ICONWARNING);
+					CheckDlgButton(hwndDlg, IDC_NATIVE_TRANSPARENCY, BST_UNCHECKED);
+					return TRUE;	// No need to send this any further
+				}
+			}
+			break;
+
 	}
     return FALSE; 
 } 
@@ -310,6 +407,10 @@ BOOL OnInitLayoutDialog(HWND window)
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("LayoutConfigGUI", 9));
 	widget = GetDlgItem(window, IDC_LAYOUT_JANUARY);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("LayoutConfigGUI", 13));
+	widget = GetDlgItem(window, IDC_REMEMBER_DIALOG_POSITIONS);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("LayoutConfigGUI", 14));
+	widget = GetDlgItem(window, IDC_NEGATIVE_COORDS);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("LayoutConfigGUI", 15));
 
 	widget = GetDlgItem(window, IDC_X);
 	itoa(CCalendarWindow::c_Config.GetX(), tmpSz, 10);
@@ -338,12 +439,16 @@ BOOL OnInitLayoutDialog(HWND window)
 		check = IDC_WINDOW_NORMAL;
 		break;
 	}
-	CheckRadioButton(window, IDC_WINDOW_ONBOTTOM, IDC_WINDOW_ONTOP, check);
+	CheckRadioButton(window, IDC_WINDOW_ONDESKTOP, IDC_WINDOW_ONTOP, check);
 
 	state = CCalendarWindow::c_Config.GetMovable() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_WINDOW_MOVABLE, state);
 	state = CCalendarWindow::c_Config.GetMouseHide() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_WINDOW_MOUSEHIDE, state);
+	state = CCalendarWindow::c_Config.GetRememberDialogPositions() ? BST_CHECKED : BST_UNCHECKED;
+	CheckDlgButton(window, IDC_REMEMBER_DIALOG_POSITIONS, state);
+	state = CCalendarWindow::c_Config.GetNegativeCoords() ? BST_CHECKED : BST_UNCHECKED;
+	CheckDlgButton(window, IDC_NEGATIVE_COORDS, state);
 
 	widget = GetDlgItem(window, IDC_VERTICAL_COUNT);
 	itoa(CCalendarWindow::c_Config.GetVerticalCount(), tmpSz, 10);
@@ -400,20 +505,26 @@ BOOL OnOKLayoutDialog(HWND window)
 	CCalendarWindow::c_Config.SetMovable(state);
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_WINDOW_MOUSEHIDE));
 	CCalendarWindow::c_Config.SetMouseHide(state);
+	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_REMEMBER_DIALOG_POSITIONS));
+	CCalendarWindow::c_Config.SetRememberDialogPositions(state);
+	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_NEGATIVE_COORDS));
+	CCalendarWindow::c_Config.SetNegativeCoords(state);
 
 	widget = GetDlgItem(window, IDC_VERTICAL_COUNT);
 	GetWindowText(widget, tmpSz, 256);
 	int value = atoi(tmpSz);
 	if (value < 1)
 	{
-		MessageBox(window, CCalendarWindow::c_Language.GetString("Message", 3), "Rainlendar", MB_OK);
+		//	"You can use only values positive starting from 1 values in the vertical and horizontal count fields.",
+		MessageBox(window, CCalendarWindow::c_Language.GetString("Message", 3), "Rainlendar", MB_OK | MB_ICONEXCLAMATION);
 		value = 1;
 	}
 	else if (value > 30)
 	{
 		char buffer[256];
+		//	"%i? Are you mad? Please try to use some more reasonable value in the vertical and horizontal count fields.",
 		sprintf(buffer, CCalendarWindow::c_Language.GetString("Message", 4), value);
-		MessageBox(window, buffer, "Rainlendar", MB_OK);
+		MessageBox(window, buffer, "Rainlendar", MB_OK | MB_ICONEXCLAMATION);
 		value = 1;
 	}
 	CCalendarWindow::c_Config.SetVerticalCount(value);
@@ -423,14 +534,16 @@ BOOL OnOKLayoutDialog(HWND window)
 	value = atoi(tmpSz);
 	if (value < 1)
 	{
-		MessageBox(window, CCalendarWindow::c_Language.GetString("Message", 3), "Rainlendar", MB_OK);
+		//	"You can use only values positive starting from 1 values in the vertical and horizontal count fields.",
+		MessageBox(window, CCalendarWindow::c_Language.GetString("Message", 3), "Rainlendar", MB_OK | MB_ICONEXCLAMATION);
 		value = 1;
 	}
 	else if (value > 30)
 	{
 		char buffer[256];
+		//	"%i? Are you mad? Please try to use some more reasonable value in the vertical and horizontal count fields.",
 		sprintf(buffer, CCalendarWindow::c_Language.GetString("Message", 4), value);
-		MessageBox(window, buffer, "Rainlendar", MB_OK);
+		MessageBox(window, buffer, "Rainlendar", MB_OK | MB_ICONEXCLAMATION);
 		value = 1;
 	}
 	CCalendarWindow::c_Config.SetHorizontalCount(value);
@@ -468,6 +581,242 @@ BOOL CALLBACK LayoutPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM l
 			case IDC_LAYOUT_JANUARY:
 				UpdateLayoutWidgets(hwndDlg);
 				return TRUE;
+
+			case IDC_WINDOW_ONDESKTOP:
+				if (BST_CHECKED == IsDlgButtonChecked(hwndDlg, IDC_WINDOW_ONDESKTOP))
+				{
+					// Notify the other sheets that native transparency was selected
+					PropSheet_QuerySiblings(GetParent(hwndDlg), CONFIG_MESSAGE_ONDESKTOP, 0);
+				}
+				return TRUE;
+			}
+			break;
+
+		case PSM_QUERYSIBLINGS:
+			if (wParam == CONFIG_MESSAGE_TRANSPARENCY)
+			{
+				if (BST_CHECKED == IsDlgButtonChecked(hwndDlg, IDC_WINDOW_ONDESKTOP))
+				{
+					// Disable OnDesktop and inform the user about it
+					MessageBox(hwndDlg, CCalendarWindow::c_Language.GetString("LayoutConfigGUI", 16), "Rainlendar", MB_OK | MB_ICONWARNING);
+					CheckRadioButton(hwndDlg, IDC_WINDOW_ONDESKTOP, IDC_WINDOW_ONTOP, IDC_WINDOW_NORMAL);
+					return TRUE;	// No need to send this any further
+				}
+			}
+			break;
+	}
+    return FALSE; 
+} 
+
+BOOL OnInitHotkeysDialog(HWND window) 
+{
+	HWND widget;
+	DWORD hotkey;
+	DWORD modifiers;
+
+	// Set localized strings
+	widget = GetDlgItem(window, IDC_HOTKEYS_HIDE_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("HotkeysConfigGUI", 0));
+	widget = GetDlgItem(window, IDC_HOTKEYS_SHOW_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("HotkeysConfigGUI", 1));
+	widget = GetDlgItem(window, IDC_HOTKEYS_TOGGLE_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("HotkeysConfigGUI", 2));
+	widget = GetDlgItem(window, IDC_HOTKEYS_ACTIVATE_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("HotkeysConfigGUI", 3));
+	widget = GetDlgItem(window, IDC_HOTKEYS_REFRESH_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("HotkeysConfigGUI", 4));
+	widget = GetDlgItem(window, IDC_HOTKEYS_CONFIG_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("HotkeysConfigGUI", 5));
+	widget = GetDlgItem(window, IDC_HOTKEYS_SKIN_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("HotkeysConfigGUI", 6));
+	widget = GetDlgItem(window, IDC_HOTKEYS_NEXT_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("HotkeysConfigGUI", 7));
+	widget = GetDlgItem(window, IDC_HOTKEYS_PREVIOUS_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("HotkeysConfigGUI", 8));
+	widget = GetDlgItem(window, IDC_HOTKEYS_NEXT_YEAR_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("HotkeysConfigGUI", 11));
+	widget = GetDlgItem(window, IDC_HOTKEYS_PREVIOUS_YEAR_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("HotkeysConfigGUI", 12));
+	widget = GetDlgItem(window, IDC_HOTKEYS_CURRENT_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("HotkeysConfigGUI", 9));
+	widget = GetDlgItem(window, IDC_HOTKEYS_ALL_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("HotkeysConfigGUI", 10));
+
+
+	// Set hotkeys
+	for (int i = 0; i < CConfig::HOTKEY_LAST; i++)
+	{
+		widget = GetDlgItem(window, IDC_HOTKEYS_HIDE + i);
+
+		switch(i)
+		{
+		case CConfig::HOTKEY_HIDE:
+			hotkey = CCalendarWindow::c_Config.GetHideHotkey();
+			break;
+
+		case CConfig::HOTKEY_SHOW:
+            hotkey = CCalendarWindow::c_Config.GetShowHotkey();
+			break;
+
+		case CConfig::HOTKEY_TOGGLE:
+            hotkey = CCalendarWindow::c_Config.GetToggleHotkey();
+			break;
+
+		case CConfig::HOTKEY_ACTIVATE:
+            hotkey =  CCalendarWindow::c_Config.GetActivateHotkey();
+			break;
+
+		case CConfig::HOTKEY_REFRESH:
+            hotkey = CCalendarWindow::c_Config.GetRefreshHotkey();
+			break;
+
+		case CConfig::HOTKEY_CONFIG:
+            hotkey = CCalendarWindow::c_Config.GetConfigHotkey();
+			break;
+
+		case CConfig::HOTKEY_SKIN:
+            hotkey = CCalendarWindow::c_Config.GetSkinHotkey();
+			break;
+
+		case CConfig::HOTKEY_NEXT:
+            hotkey = CCalendarWindow::c_Config.GetNextHotkey();
+			break;
+
+		case CConfig::HOTKEY_PREVIOUS:
+            hotkey = CCalendarWindow::c_Config.GetPreviousHotkey();
+			break;
+
+		case CConfig::HOTKEY_NEXT_YEAR:
+            hotkey = CCalendarWindow::c_Config.GetNextYearHotkey();
+			break;
+
+		case CConfig::HOTKEY_PREVIOUS_YEAR:
+            hotkey = CCalendarWindow::c_Config.GetPreviousYearHotkey();
+			break;
+
+		case CConfig::HOTKEY_CURRENT:
+            hotkey = CCalendarWindow::c_Config.GetCurrentHotkey();
+			break;
+
+		case CConfig::HOTKEY_ALL:
+            hotkey = CCalendarWindow::c_Config.GetAllHotkey();
+			break;
+
+		case CConfig::HOTKEY_OUTLOOK:
+            hotkey = CCalendarWindow::c_Config.GetOutlookHotkey();
+			break;
+		}
+
+		modifiers = hotkey >> 8;
+		modifiers = ((modifiers & MOD_ALT) ? HOTKEYF_ALT : 0) |
+					((modifiers & MOD_CONTROL) ? HOTKEYF_CONTROL : 0) |
+					((modifiers & MOD_SHIFT) ? HOTKEYF_SHIFT : 0);
+		hotkey &= 0xFF;
+		hotkey |= (modifiers << 8);
+
+		if (widget) SendMessage(widget, HKM_SETHOTKEY, hotkey, 0);
+	}
+
+
+	return TRUE;
+}
+
+BOOL OnOKHotkeysDialog(HWND window) 
+{
+	HWND widget;
+	DWORD hotkey;
+	DWORD modifiers;
+
+	// Get hotkeys
+	for (int i = 0; i < CConfig::HOTKEY_LAST; i++)
+	{
+		widget = GetDlgItem(window, IDC_HOTKEYS_HIDE + i);
+
+		hotkey = SendMessage(widget, HKM_GETHOTKEY, 0, 0);
+		modifiers = hotkey >> 8;
+		modifiers = ((modifiers & HOTKEYF_ALT) ? MOD_ALT : 0) |
+					((modifiers & HOTKEYF_CONTROL) ? MOD_CONTROL : 0) |
+					((modifiers & HOTKEYF_SHIFT) ? MOD_SHIFT : 0);
+		hotkey &= 0xFF;
+		hotkey |= (modifiers << 8);
+
+		switch(i)
+		{
+		case CConfig::HOTKEY_HIDE:
+			if (widget) CCalendarWindow::c_Config.SetHideHotkey(hotkey);
+			break;
+
+		case CConfig::HOTKEY_SHOW:
+			if (widget) CCalendarWindow::c_Config.SetShowHotkey(hotkey);
+			break;
+
+		case CConfig::HOTKEY_TOGGLE:
+			if (widget) CCalendarWindow::c_Config.SetToggleHotkey(hotkey);
+			break;
+
+		case CConfig::HOTKEY_ACTIVATE:
+			if (widget) CCalendarWindow::c_Config.SetActivateHotkey(hotkey);
+			break;
+
+		case CConfig::HOTKEY_REFRESH:
+			if (widget) CCalendarWindow::c_Config.SetRefreshHotkey(hotkey);
+			break;
+
+		case CConfig::HOTKEY_CONFIG:
+			if (widget) CCalendarWindow::c_Config.SetConfigHotkey(hotkey);
+			break;
+
+		case CConfig::HOTKEY_SKIN:
+			if (widget) CCalendarWindow::c_Config.SetSkinHotkey(hotkey);
+			break;
+
+		case CConfig::HOTKEY_NEXT:
+			if (widget) CCalendarWindow::c_Config.SetNextHotkey(hotkey);
+			break;
+
+		case CConfig::HOTKEY_PREVIOUS:
+			if (widget) CCalendarWindow::c_Config.SetPreviousHotkey(hotkey);
+			break;
+
+		case CConfig::HOTKEY_NEXT_YEAR:
+			if (widget) CCalendarWindow::c_Config.SetNextYearHotkey(hotkey);
+			break;
+
+		case CConfig::HOTKEY_PREVIOUS_YEAR:
+			if (widget) CCalendarWindow::c_Config.SetPreviousYearHotkey(hotkey);
+			break;
+
+		case CConfig::HOTKEY_CURRENT:
+			if (widget) CCalendarWindow::c_Config.SetCurrentHotkey(hotkey);
+			break;
+
+		case CConfig::HOTKEY_ALL:
+			if (widget) CCalendarWindow::c_Config.SetAllHotkey(hotkey);
+			break;
+
+		case CConfig::HOTKEY_OUTLOOK:
+			if (widget) CCalendarWindow::c_Config.SetOutlookHotkey(hotkey);
+			break;
+		}
+	}
+
+	return TRUE;
+}
+
+BOOL CALLBACK HotkeysPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
+{
+    switch (message) 
+    { 
+        case WM_INITDIALOG:
+			return OnInitHotkeysDialog(hwndDlg);
+
+		case WM_NOTIFY:
+			switch (((NMHDR FAR *) lParam)->code) 
+			{
+			case PSN_APPLY:
+				{
+					return OnOKHotkeysDialog(hwndDlg);
+				}
 			}
 			break;
 	}
@@ -623,7 +972,8 @@ BOOL OnOKServerDialog(HWND window)
 
 	if (changed)
 	{
-		MessageBox(NULL, CCalendarWindow::c_Language.GetString("Message", 5), "Rainlendar", MB_OK);
+		//	"Please use only numbers (0-9)\nand letters (A-Z, a-z) in the ID.\nThe illegal chars are automatically changed to '_'",
+		MessageBox(NULL, CCalendarWindow::c_Language.GetString("Message", 5), "Rainlendar", MB_OK | MB_ICONEXCLAMATION);
 	}
 
 	CCalendarWindow::c_Config.SetServerID(tmpSz);

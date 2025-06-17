@@ -1,4 +1,4 @@
-/*
+  /*
   Copyright (C) 2000 Kimmo Pekkola
 
   This program is free software; you can redistribute it and/or
@@ -16,9 +16,18 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/EditEvent.cpp,v 1.12 2003/06/15 09:46:06 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/EditEvent.cpp,v 1.15 2003/08/10 08:44:38 Rainy Exp $
 
   $Log: EditEvent.cpp,v $
+  Revision 1.15  2003/08/10 08:44:38  Rainy
+  Changed the way message text is get from the edit control (the old way didn't work in 98)
+
+  Revision 1.14  2003/08/09 16:36:59  Rainy
+  Complete rewrite.
+
+  Revision 1.13  2003/06/15 20:04:44  Rainy
+  Server must be enabled or syncing doesn't happen.
+
   Revision 1.12  2003/06/15 09:46:06  Rainy
   Strings are read from CLanguage class.
 
@@ -66,58 +75,298 @@
 #include "../Server/EventCombiner.h"
 #include <Commdlg.h>
 #include <time.h>
+#include <richedit.h>
 
 // These need to be global (even though globals are evil)
-static COLORREF g_FontColor = 0;
-static std::vector<CEventMessage> g_Events;
-int g_ActiveEvent = 0;
+static std::vector<CEventMessage*> g_DeletedEvents;
 time_t g_TimeStamp = 0;
+HINSTANCE g_Instance;
 
 // Prototypes
-void UpdateWidgets(HWND window, bool recreateTabs);
-void ShowWidgets(HWND window);
+BOOL CALLBACK EditEventProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
+int CALLBACK PropSheetProc(HWND hwndDlg, UINT uMsg, LPARAM lParam);
+void UpdateWidgets(HWND window, CEventMessage& event);
+BOOL CALLBACK SyncProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 
-BOOL OnInitDialog(HWND window) 
+VOID OpenEditEventDialog(HWND hwndOwner, HINSTANCE instance, UINT date, UINT id)
 {
-    HWND widget;
+	char caption[256];
+	int day, month, year;
+    PROPSHEETPAGE* psp;
+    PROPSHEETHEADER psh;
+	int i;
+
+	g_Instance = instance;
 
     time(&g_TimeStamp);     // This stamp will be used for the modified events
 
-	// Hide all windows
-	ShowWindow(GetDlgItem(window, IDC_EDITEVENT_MESSAGE), SW_HIDE);
-	ShowWindow(GetDlgItem(window, IDC_EDITEVENT_SINGLE), SW_HIDE);
-	ShowWindow(GetDlgItem(window, IDC_EDITEVENT_DAILY), SW_HIDE);
-	ShowWindow(GetDlgItem(window, IDC_EDITEVENT_WEEKLY), SW_HIDE);
-	ShowWindow(GetDlgItem(window, IDC_EDITEVENT_MONTHLY), SW_HIDE);
-	ShowWindow(GetDlgItem(window, IDC_EDITEVENT_ANNUALLY), SW_HIDE);
-	ShowWindow(GetDlgItem(window, IDC_EDITEVENT_VALID_DATE), SW_HIDE);
-	ShowWindow(GetDlgItem(window, IDC_EDITEVENT_VALID), SW_HIDE);
-	ShowWindow(GetDlgItem(window, IDC_EDITEVENT_EVERY), SW_HIDE);
-	ShowWindow(GetDlgItem(window, IDC_EDITEVENT_PROFILE), SW_HIDE);
-	ShowWindow(GetDlgItem(window, IDC_EDITEVENT_EVERY_STATIC), SW_HIDE);
-	ShowWindow(GetDlgItem(window, IDC_EDITEVENT_PROFILE_STATIC), SW_HIDE);
-	ShowWindow(GetDlgItem(window, IDC_EDITEVENT_REPEAT_STATIC), SW_HIDE);
+    if (CCalendarWindow::c_Config.GetServerEnable() && CCalendarWindow::c_Config.GetServerSyncOnEdit() && !CCalendarWindow::c_Config.GetServerAddress().empty())
+    {
+		// Open a dialog "Please wait..."
+		DialogBox(instance, MAKEINTRESOURCE(IDD_SYNC_DIALOG), hwndOwner, (DLGPROC)SyncProc); 
+    }
 
-    // Show this one
-    ShowWindow(GetDlgItem(window, IDC_EDITEVENT_SYNC_TEXT), SW_SHOW);
+	CEventMessage::ValueToDate(date, &day, &month, &year);
+	const std::string monthStr = CCalendarWindow::c_Language.GetString("Menu", 5 + month - 1);
+	sprintf(caption, "%i-%s-%i", day, monthStr.c_str(), year);
 
-    // Disable everything else but the Cancel
-	widget = GetDlgItem(window, IDC_EDITEVENT_DELETE);
-	EnableWindow(widget, FALSE);		// Disable the widget
-	widget = GetDlgItem(window, IDC_EDITEVENT_NEW);
-	EnableWindow(widget, FALSE);		// Disable the widget
-	widget = GetDlgItem(window, IDOK);
-	EnableWindow(widget, FALSE);		// Disable the widget
+	// Get the events from event manager
+	std::vector<CEventMessage*> eventList = GetRainlendar()->GetCalendarWindow().GetEventManager()->GetEvents(day, month, year);
+
+	// Remove unnecessary events
+	std::vector<CEventMessage*> events;
+	std::vector<CEventMessage*>::iterator iter = eventList.begin();
+	for( ; iter != eventList.end(); iter++)
+	{
+		CEventMessage* event = new CEventMessage(*(*iter));
+		if (!(event->IsDeleted()) && event->IsPermanent())	// No deleted messages and only permanent can be edited
+		{
+			events.push_back(event);
+		}
+	}
+
+	if (events.empty())
+	{
+		// Create a empty event if there are no events on this day
+		CEventMessage* event = new CEventMessage;
+		event->SetDate(CEventMessage::DateToValue(day, month, year));
+		event->SetProfile(CCalendarWindow::c_Config.GetCurrentProfile());
+		events.push_back(event);
+	}
+
+	psp = new PROPSHEETPAGE[events.size()];
+
+	int startPage = 0;
+	for (i = 0; i < events.size(); i++)
+	{
+		const char* profile = CCalendarWindow::c_Language.GetTranslatedProfile(events[i]->GetProfile().c_str());
+
+		if (id != 0 && events[i]->GetID() == id)
+		{
+			startPage = i;
+		}
+
+		psp[i].dwSize = sizeof(PROPSHEETPAGE);
+		psp[i].dwFlags = PSP_USETITLE;
+		psp[i].hInstance = instance;
+		psp[i].pszTemplate = MAKEINTRESOURCE(IDD_EDITEVENT_PAGE);
+		psp[i].pszIcon = NULL;
+		psp[i].pfnDlgProc = EditEventProc;
+		psp[i].pszTitle = profile;
+		psp[i].lParam = (LPARAM)events[i];
+		psp[i].pfnCallback = NULL;
+	}
+
+    psh.dwSize = sizeof(PROPSHEETHEADER);
+    psh.dwFlags = PSH_PROPSHEETPAGE | PSH_NOAPPLYNOW | PSH_NOCONTEXTHELP | PSH_USECALLBACK;
+    psh.hwndParent = hwndOwner;
+    psh.hInstance = instance;
+    psh.pszIcon = NULL;
+    psh.pszCaption = caption;
+    psh.nPages = events.size();
+    psh.nStartPage = startPage;
+    psh.ppsp = (LPCPROPSHEETPAGE)psp;
+    psh.pfnCallback = PropSheetProc;
+
+	HMODULE richDLL = LoadLibrary("RichEd32.dll");
+
+	if (PropertySheet(&psh) == IDOK)
+	{
+		GetRainlendar()->GetCalendarWindow().GetEventManager()->WriteEvents(day, month, year);
+		
+		LSLog(LOG_DEBUG, "Rainlendar", "OK pressed. Sending Events to the server.");		
+		// Send the events to the server
+		GetRainlendar()->GetCalendarWindow().ConnectServer(REQUEST_SENDEVENTS);
+
+		// Refresh
+		SendMessage(GetRainlendar()->GetCalendarWindow().GetWindow(), WM_COMMAND, ID_REFRESH, NULL);
+	}
+
+	FreeLibrary(richDLL);
+
+	delete [] psp;
+
+	for (i = 0; i < g_DeletedEvents.size(); i++)
+	{
+		delete g_DeletedEvents[i];
+	}
+	g_DeletedEvents.clear();
+}
+
+BOOL SetPageTitle(HWND propSheet, HWND page, const char* title)
+{
+	int index = SendMessage(propSheet, PSM_HWNDTOINDEX, (WPARAM)page, 0);
+	if (index != -1)
+	{
+		HWND tab = (HWND)SendMessage(propSheet, PSM_GETTABCONTROL, 0, 0);
+
+		TC_ITEM ti;
+		ti.mask = TCIF_TEXT;
+		ti.pszText = (char*)title;
+		SendMessage(tab, TCM_SETITEM, (WPARAM)index, (LPARAM)&ti);
+	    return TRUE;
+	}
+	return FALSE;
+}
+
+/////////////////////////// The Property Sheet /////////////////////////////////
+typedef LONG (CALLBACK *DialogProc)(HWND, UINT, WPARAM, LPARAM);
+
+DialogProc g_DefaultDlgProc;
+
+INT_PTR CALLBACK PropSheetDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (uMsg == WM_SIZE)
+	{
+		// Reposition the custom buttons
+		RECT rc, btnRc;
+		HWND widget;
+		GetClientRect(hwndDlg, &rc);
+		widget = GetDlgItem(hwndDlg, IDC_EDITEVENT_NEW);
+		GetClientRect(widget, &btnRc);
+		SetWindowPos(widget, NULL, 6, rc.bottom - btnRc.bottom - 7, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
+		widget = GetDlgItem(hwndDlg, IDC_EDITEVENT_DELETE);
+		SetWindowPos(widget, NULL, 12 + btnRc.right, rc.bottom - btnRc.bottom - 7, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
+	}
+	else if (uMsg == WM_DESTROY)
+	{
+		RECT rc;
+		GetWindowRect(hwndDlg, &rc);
+		CCalendarWindow::c_Config.SetDialogPosition(CConfig::DIALOG_EDITEVENT, rc.left, rc.top);
+	}
+	else if (uMsg == WM_COMMAND)
+	{
+		if (wParam == IDC_EDITEVENT_NEW)
+		{
+			CEventMessage* newEvent = new CEventMessage;
+			int day, month, year;
+			HWND curPage = (HWND)SendMessage(hwndDlg, PSM_GETCURRENTPAGEHWND, 0, 0);
+			CEventMessage* event = (CEventMessage*)GetWindowLong(curPage, GWL_USERDATA);
+			int date = event->GetDate();
+			CEventMessage::ValueToDate(date, &day, &month, &year);
+			newEvent->SetDate(CEventMessage::DateToValue(day, month, year));
+			newEvent->SetProfile(CCalendarWindow::c_Config.GetCurrentProfile());
+			const char* profile = CCalendarWindow::c_Language.GetTranslatedProfile(newEvent->GetProfile().c_str());
+
+			if (!IsWindowEnabled(GetDlgItem(hwndDlg, IDC_EDITEVENT_DELETE)))
+			{
+				// Delete is disabled -> No events
+				// Just enable the hidden tab
+				HWND curPage = (HWND)SendMessage(hwndDlg, PSM_GETCURRENTPAGEHWND, 0, 0);
+				SetPageTitle(hwndDlg, curPage, profile);
+				ShowWindow(curPage, SW_SHOW);		// Show the hidden page
+				EnableWindow(GetDlgItem(hwndDlg, IDC_EDITEVENT_DELETE), TRUE);	// Enable delete
+
+				// Fill the page from the newEvent
+				UpdateWidgets(curPage, *newEvent);
+
+				SetWindowLong(curPage, GWL_USERDATA, (LONG)newEvent);
+			}
+			else
+			{
+				// Gotta create a new tab
+				PROPSHEETPAGE psp;
+
+				psp.dwSize = sizeof(PROPSHEETPAGE);
+				psp.dwFlags = PSP_USETITLE;
+				psp.hInstance = g_Instance;
+				psp.pszTemplate = MAKEINTRESOURCE(IDD_EDITEVENT_PAGE);
+				psp.pszIcon = NULL;
+				psp.pfnDlgProc = EditEventProc;
+				psp.pszTitle = profile;
+				psp.lParam = (LPARAM)newEvent;
+				psp.pfnCallback = NULL;
+
+				// Add new page
+				HPROPSHEETPAGE newPage = CreatePropertySheetPage(&psp);
+				SendMessage(hwndDlg, PSM_ADDPAGE, 0, (LPARAM)newPage);
+				SendMessage(hwndDlg, PSM_RECALCPAGESIZES, 0, 0);
+				// Post the activate message since the page is not actually created yet
+				PostMessage(hwndDlg, PSM_SETCURSEL, 0, (WPARAM)newPage);
+			}
+
+			return TRUE;
+		}
+		else if (wParam == IDC_EDITEVENT_DELETE)
+		{
+			// Delete current page
+			HWND curPage = (HWND)SendMessage(hwndDlg, PSM_GETCURRENTPAGEHWND, 0, 0);
+			CEventMessage* event = (CEventMessage*)GetWindowLong(curPage, GWL_USERDATA);
+
+			HWND tab = (HWND)SendMessage(hwndDlg, PSM_GETTABCONTROL, 0, 0);
+			if (SendMessage(tab, TCM_GETITEMCOUNT, 0, 0) == 1)
+			{
+				// This was the last page
+				ShowWindow(curPage, SW_HIDE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_EDITEVENT_DELETE), FALSE);	// Disable delete
+				SetPageTitle(hwndDlg, 0, "");
+				SetWindowLong(curPage, GWL_USERDATA, NULL);
+			}
+			else
+			{
+				int i = SendMessage(hwndDlg, PSM_HWNDTOINDEX, (WPARAM)curPage, 0);
+				SendMessage(hwndDlg, PSM_REMOVEPAGE, i, 0);
+			}
+			event->SetDeleted();
+			event->SetTimeStamp(g_TimeStamp);
+			g_DeletedEvents.push_back(event);
+
+			SendMessage(hwndDlg, PSM_RECALCPAGESIZES, 0, 0);
+
+			return TRUE;
+		}
+	}
+
+	return CallWindowProc(g_DefaultDlgProc, hwndDlg, uMsg, wParam, lParam);	// Call the base implementation
+}
+
+int CALLBACK PropSheetProc(HWND hwndDlg, UINT uMsg, LPARAM lParam)
+{
+	if (uMsg == PSCB_INITIALIZED)
+	{
+		// Override the WndProc so that we can catch the custom button WM_COMMANDs
+		g_DefaultDlgProc = (DialogProc)GetWindowLong(hwndDlg, DWL_DLGPROC);
+		SetWindowLong(hwndDlg, DWL_DLGPROC, (LONG)PropSheetDialogProc);
+
+		// Create Add and Delete buttons
+		RECT rc;
+		HWND okButton = GetDlgItem(hwndDlg, IDOK);
+		HWND cancelButton = GetDlgItem(hwndDlg, IDCANCEL);
+		GetClientRect(okButton, &rc);
+		HWND newButton = CreateWindow("BUTTON", "New", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, 0, 0, rc.right - rc.left, rc.bottom - rc.top, hwndDlg, (HMENU)IDC_EDITEVENT_NEW, NULL, NULL);
+		HWND deleteButton = CreateWindow("BUTTON", "Delete", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, 0, 0, rc.right - rc.left, rc.bottom - rc.top, hwndDlg, (HMENU)IDC_EDITEVENT_DELETE, NULL, NULL);
+
+		// Set the localized texts
+		SetWindowText(okButton, CCalendarWindow::c_Language.GetString("General", 0));
+		SetWindowText(cancelButton, CCalendarWindow::c_Language.GetString("General", 1));
+		SetWindowText(newButton, CCalendarWindow::c_Language.GetString("EventGUI", 0));
+		SetWindowText(deleteButton, CCalendarWindow::c_Language.GetString("EventGUI", 1));
+
+		// Set the same font as in Ok-button
+		HFONT font = (HFONT)SendMessage(okButton, WM_GETFONT, 0, 0);
+		SendMessage(newButton, WM_SETFONT, (WPARAM)font, NULL);
+		SendMessage(deleteButton, WM_SETFONT, (WPARAM)font, NULL);
+
+		if (CCalendarWindow::c_Config.GetRememberDialogPositions())
+		{
+			POINT pos = CCalendarWindow::c_Config.GetDialogPosition(CConfig::DIALOG_EDITEVENT);
+			SetWindowPos(hwndDlg, NULL, pos.x, pos.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+		}
+	}
+
+	return 0;
+}
+
+/////////////////////////// The Property Page(s) /////////////////////////////////
+
+BOOL OnInitDialog(HWND window, PROPSHEETPAGE* psp)
+{
+    HWND widget;
+	CEventMessage* event = (CEventMessage*)psp->lParam;
+
+	SetWindowLong(window, GWL_USERDATA, (LONG)event);	// Store the index to the g_Events-vector
 
 	// Set localized strings
-	widget = GetDlgItem(window, IDOK);
-	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("General", 0));
-	widget = GetDlgItem(window, IDC_EDITEVENT_NEW);
-	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("EventGUI", 0));
-	widget = GetDlgItem(window, IDC_EDITEVENT_DELETE);
-	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("EventGUI", 1));
-	widget = GetDlgItem(window, IDCANCEL);
-	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("General", 1));
 	widget = GetDlgItem(window, IDC_EDITEVENT_SINGLE);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("EventGUI", 2));
 	widget = GetDlgItem(window, IDC_EDITEVENT_DAILY);
@@ -136,98 +385,31 @@ BOOL OnInitDialog(HWND window)
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("EventGUI", 9));
 	widget = GetDlgItem(window, IDC_EDITEVENT_REPEAT_STATIC);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("EventGUI", 10));
-	widget = GetDlgItem(window, IDC_EDITEVENT_SYNC_TEXT);
-	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("EventGUI", 11));
 
-    if (CCalendarWindow::c_Config.GetServerEnable() && CCalendarWindow::c_Config.GetServerSyncOnEdit() && !CCalendarWindow::c_Config.GetServerAddress().empty())
-    {
-	    static NetworkParams param;
-
-		// Here is a slight possibility of unsafe thread access
-		// If the OnServerSync() is started multiple times before the
-		// thread has a chance to copy the information, the data might
-		// corrupt. Hopefully this doesn't occur too often :-)
-		param.serverPort = CCalendarWindow::c_Config.GetServerPort();
-		param.serverAddress = CCalendarWindow::c_Config.GetServerAddress();
-		param.userID = CCalendarWindow::c_Config.GetServerID();
-		param.requestType = REQUEST_GETEVENTS;
-		param.window = window;
-
-		// Launch the network communication thread
-		DWORD id;
-		HANDLE thread = CreateThread(NULL, 0, NetworkThreadProc, &param, 0, &id);
-		CloseHandle(thread);
-    }
-    else
-    {
-        // We can show the widgets right away
-        ShowWidgets(window);
-    }
-
-    return TRUE;
-}
-
-void ShowWidgets(HWND window)
-{
-	char caption[256];
-	HWND widget = NULL;
-
-    // Hide this one
-    ShowWindow(GetDlgItem(window, IDC_EDITEVENT_SYNC_TEXT), SW_HIDE);
-
-	int day, month, year;
-	int date = GetRainlendar()->GetCalendarWindow().GetSelectedDate();
-	CEventMessage::ValueToDate(date, &day, &month, &year);
-
-	const std::string monthStr = CCalendarWindow::c_Language.GetString("Menu", 5 + month - 1);
-
-	sprintf(caption, "%i-%s-%i", day, monthStr.c_str(), year);
-	SetWindowText(window, caption);
-
-	// Get the events from event manager
-	std::vector<CEventMessage*> eventList = GetRainlendar()->GetCalendarWindow().GetEventManager()->GetEvents(day, month, year);
-
-	// Copy the events to a temporary place so that they can be edited
-	g_Events.clear();
-	std::vector<CEventMessage*>::iterator i = eventList.begin();
-	for( ; i != eventList.end(); i++)
+	for (int j = 0; j < 12 ; j++)
 	{
-		CEventMessage* event = *i;
-		if (!(event->IsDeleted()) && event->IsPermanent())	// No deleted messages and only permanent can be edited
-		{
-			g_Events.push_back(*event);
-		}
-	}
-
-	if (g_Events.empty())
-	{
-		// Create a empty event if there are no events on this day
-		CEventMessage event;
-		event.SetDate(CEventMessage::DateToValue(day, month, year));
-		event.SetProfile(CCalendarWindow::c_Config.GetCurrentProfile());
-		g_Events.push_back(event);
-	}
-
-	// The last one is active
-	g_ActiveEvent = g_Events.size() - 1;
-
-	const char* items[] = { "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th" };
-	for( int j = 0; j < 12 ; j++)
-	{
-		SendDlgItemMessage(window, IDC_EDITEVENT_EVERY, CB_ADDSTRING, NULL, (LPARAM)items[j]);
+		SendDlgItemMessage(window, IDC_EDITEVENT_EVERY, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("Numbers", j));
 	}
 
 	// Fill in the profiles from skin
-	SendDlgItemMessage(window, IDC_EDITEVENT_PROFILE, CB_ADDSTRING, NULL, (LPARAM)"Default");
+	SendDlgItemMessage(window, IDC_EDITEVENT_PROFILE, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetTranslatedProfile("Default"));
 
 	const std::list<Profile*>& allProfiles = CCalendarWindow::c_Config.GetAllProfiles();
 	std::list<Profile*>::const_iterator profileIter = allProfiles.begin();
 	for( ; profileIter != allProfiles.end(); profileIter++)
 	{
-		SendDlgItemMessage(window, IDC_EDITEVENT_PROFILE, CB_ADDSTRING, NULL, (LPARAM)(*profileIter)->name.c_str());
+		const char* profile = (*profileIter)->name.c_str();
+		SendDlgItemMessage(window, IDC_EDITEVENT_PROFILE, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetTranslatedProfile(profile));
 	}
 
-	UpdateWidgets(window, true);
+	UpdateWidgets(window, *event);
+
+	widget = GetDlgItem(window, IDC_EDITEVENT_MESSAGE);
+	SetFocus(widget);
+	SendMessage(widget, EM_SETSEL, 0, 0);
+	SendMessage(widget, EM_SETEVENTMASK, 0, ENM_CHANGE);
+
+	return TRUE;
 }
 
 /*
@@ -236,89 +418,14 @@ void ShowWidgets(HWND window)
 ** Reads the data from the active event and puts it in the widgets.
 **
 */
-void UpdateWidgets(HWND window, bool recreateTabs)
+void UpdateWidgets(HWND window, CEventMessage& event)
 {
 	HWND widget;
 	int day, month, year;
-	int date = GetRainlendar()->GetCalendarWindow().GetSelectedDate();
-	CEventMessage::ValueToDate(date, &day, &month, &year);
-
-	// Tabbed
-	int i = 0;
-	widget = GetDlgItem(window, IDC_EDITEVENT_TAB);
-	if (recreateTabs)
-	{
-		TabCtrl_DeleteAllItems(widget);
-
-		TCITEM item;
-		item.mask = TCIF_TEXT;
-		std::vector<CEventMessage>::iterator eventIter = g_Events.begin();
-		for( ; eventIter != g_Events.end(); eventIter++)
-		{
-			item.pszText = (char*)(*eventIter).GetTypeText();
-			TabCtrl_InsertItem(widget, i++, &item);
-		}
-	}
-
-	// Set the active tab
-	if (g_ActiveEvent >= g_Events.size())
-	{
-		g_ActiveEvent = g_Events.size() - 1;
-	}
-
-	widget = GetDlgItem(window, IDC_EDITEVENT_NEW);
-	EnableWindow(widget, TRUE);
-	widget = GetDlgItem(window, IDOK);
-	EnableWindow(widget, TRUE);
-
-	if (g_ActiveEvent < 0) 
-	{
-		// Hide all windows
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_MESSAGE), SW_HIDE);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_SINGLE), SW_HIDE);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_DAILY), SW_HIDE);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_WEEKLY), SW_HIDE);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_MONTHLY), SW_HIDE);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_ANNUALLY), SW_HIDE);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_VALID_DATE), SW_HIDE);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_VALID), SW_HIDE);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_EVERY), SW_HIDE);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_PROFILE), SW_HIDE);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_EVERY_STATIC), SW_HIDE);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_PROFILE_STATIC), SW_HIDE);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_REPEAT_STATIC), SW_HIDE);
-
-		widget = GetDlgItem(window, IDC_EDITEVENT_DELETE);
-		EnableWindow(widget, FALSE);		// Disable the widget
-		return;
-	}
-	else
-	{
-		// Show all windows
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_MESSAGE), SW_SHOW);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_SINGLE), SW_SHOW);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_DAILY), SW_SHOW);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_WEEKLY), SW_SHOW);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_MONTHLY), SW_SHOW);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_ANNUALLY), SW_SHOW);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_VALID_DATE), SW_SHOW);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_VALID), SW_SHOW);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_EVERY), SW_SHOW);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_PROFILE), SW_SHOW);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_EVERY_STATIC), SW_SHOW);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_PROFILE_STATIC), SW_SHOW);
-		ShowWindow(GetDlgItem(window, IDC_EDITEVENT_REPEAT_STATIC), SW_SHOW);
-
-		widget = GetDlgItem(window, IDC_EDITEVENT_DELETE);
-		EnableWindow(widget, TRUE);		// Enable the widget
-	}
-
-	widget = GetDlgItem(window, IDC_EDITEVENT_TAB);
-	TabCtrl_SetCurSel(widget, g_ActiveEvent);
 
 	// Type
 	int check;
-	switch(g_Events[g_ActiveEvent].GetType())
+	switch(event.GetType())
 	{
 	case EVENT_SINGLE:
 		check = IDC_EDITEVENT_SINGLE;
@@ -343,11 +450,11 @@ void UpdateWidgets(HWND window, bool recreateTabs)
 	CheckRadioButton(window, IDC_EDITEVENT_SINGLE, IDC_EDITEVENT_ANNUALLY, check);
 
 	// Every Nth
-	int index = g_Events[g_ActiveEvent].GetEveryNth();
-	SendDlgItemMessage(window, IDC_EDITEVENT_EVERY, CB_SETCURSEL, (LPARAM)index - 1, NULL);
+	int nth = event.GetEveryNth();
+	SendDlgItemMessage(window, IDC_EDITEVENT_EVERY, CB_SETCURSEL, (LPARAM)nth - 1, NULL);
 
 	// Valid Until
-	int state = g_Events[g_ActiveEvent].GetValidUntil() != 0 ? BST_CHECKED : BST_UNCHECKED;
+	int state = event.GetValidUntil() != 0 ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_EDITEVENT_VALID, state);
 
 	widget = GetDlgItem(window, IDC_EDITEVENT_VALID_DATE);
@@ -362,32 +469,33 @@ void UpdateWidgets(HWND window, bool recreateTabs)
 
 	SYSTEMTIME time;
 	memset(&time, 0, sizeof(SYSTEMTIME));
-	if (g_Events[g_ActiveEvent].GetValidUntil() != 0)
+	if (event.GetValidUntil() != 0)
 	{
-		CEventMessage::ValueToDate(g_Events[g_ActiveEvent].GetValidUntil(), &day, &month, &year);
+		CEventMessage::ValueToDate(event.GetValidUntil(), &day, &month, &year);
+		time.wDay = day;
+		time.wMonth = month;
+		time.wYear = year;
+		DateTime_SetSystemtime(widget, GDT_VALID, &time);
 	}
-	time.wDay = day;
-	time.wMonth = month;
-	time.wYear = year;
-	DateTime_SetSystemtime(widget, GDT_VALID, &time);
 
 	// Message
 	widget = GetDlgItem(window, IDC_EDITEVENT_MESSAGE);
-	const std::string& str = g_Events[g_ActiveEvent].GetMessage();
-	SetWindowText(widget, str.c_str());
+	const std::string& str = event.GetMessage();
+	SendMessage(widget, WM_SETTEXT, 0, (LPARAM)str.c_str());
 
 	// Profile
 	widget = GetDlgItem(window, IDC_EDITEVENT_PROFILE);
-	SetWindowText(widget, g_Events[g_ActiveEvent].GetProfile().c_str());
+	const char* profile = event.GetProfile().c_str();
+	SetWindowText(widget, CCalendarWindow::c_Language.GetTranslatedProfile(profile));
 }
 
 /*
 ** UpdateEvent
 **
-** Reads the data from the widgets and puts it in the active event.
+** Reads the data from the widgets and puts it in the event.
 **
 */
-void UpdateEvent(HWND window)
+void UpdateEvent(HWND window, CEventMessage& event)
 {
 	HWND widget;
 	bool state;
@@ -395,35 +503,28 @@ void UpdateEvent(HWND window)
 	// Type
 	if (BST_CHECKED == IsDlgButtonChecked(window, IDC_EDITEVENT_DAILY))
 	{
-		g_Events[g_ActiveEvent].SetType(EVENT_DAILY);
+		event.SetType(EVENT_DAILY);
 	}
 	else if (BST_CHECKED == IsDlgButtonChecked(window, IDC_EDITEVENT_WEEKLY))
 	{
-		g_Events[g_ActiveEvent].SetType(EVENT_WEEKLY);
+		event.SetType(EVENT_WEEKLY);
 	}
 	else if (BST_CHECKED == IsDlgButtonChecked(window, IDC_EDITEVENT_MONTHLY))
 	{
-		g_Events[g_ActiveEvent].SetType(EVENT_MONTHLY);
+		event.SetType(EVENT_MONTHLY);
 	}
 	else if (BST_CHECKED == IsDlgButtonChecked(window, IDC_EDITEVENT_ANNUALLY))
 	{
-		g_Events[g_ActiveEvent].SetType(EVENT_ANNUALLY);
+		event.SetType(EVENT_ANNUALLY);
 	}
 	else
 	{
-		g_Events[g_ActiveEvent].SetType(EVENT_SINGLE);
+		event.SetType(EVENT_SINGLE);
 	}
-
-	// Set the tab text
-	widget = GetDlgItem(window, IDC_EDITEVENT_TAB);
-	TCITEM item;
-	item.mask = TCIF_TEXT;
-	item.pszText = (char*)g_Events[g_ActiveEvent].GetTypeText();
-	TabCtrl_SetItem(widget, g_ActiveEvent, &item);
 
 	// Every Nth
 	int index = SendDlgItemMessage(window, IDC_EDITEVENT_EVERY, CB_GETCURSEL, NULL, NULL);
-	g_Events[g_ActiveEvent].SetEveryNth(index + 1);
+	event.SetEveryNth(index + 1);
 
 	// Valid Until
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_EDITEVENT_VALID));
@@ -432,27 +533,32 @@ void UpdateEvent(HWND window)
 	{
 		SYSTEMTIME time;
 		DateTime_GetSystemtime(widget, &time);
-		g_Events[g_ActiveEvent].SetValidUntil(CEventMessage::DateToValue(time.wDay, time.wMonth, time.wYear));
+		event.SetValidUntil(CEventMessage::DateToValue(time.wDay, time.wMonth, time.wYear));
 		EnableWindow(widget, TRUE);		// Enable the widget
 	}
 	else
 	{
-		g_Events[g_ActiveEvent].SetValidUntil(0);
+		event.SetValidUntil(0);
 		EnableWindow(widget, FALSE);		// Disable the widget
 	}
 
 	// Message
 	char buffer[MAX_LINE_LENGTH];
+	buffer[0] = 0;
 	widget = GetDlgItem(window, IDC_EDITEVENT_MESSAGE);
-	GetWindowText(widget, buffer, MAX_LINE_LENGTH);
-	g_Events[g_ActiveEvent].SetMessage(buffer);
+	SendMessage(widget, EM_SETSEL, (WPARAM)0, (LPARAM)(MAX_LINE_LENGTH - 1));
+	SendMessage(widget, EM_GETSELTEXT, 0, (LPARAM)buffer);
+	event.SetMessage(buffer);
 
 	// Profile
 	index = SendDlgItemMessage(window, IDC_EDITEVENT_PROFILE, CB_GETCURSEL, NULL, NULL);
 	if (index >= 0)
 	{
 		SendDlgItemMessage(window, IDC_EDITEVENT_PROFILE, CB_GETLBTEXT, (WPARAM)index, (LPARAM)buffer);
-		g_Events[g_ActiveEvent].SetProfile(buffer);
+		if (strlen(buffer) > 0)
+		{
+			event.SetProfile(CCalendarWindow::c_Language.GetOriginalProfile(buffer));
+		}
 	}
 	else
 	{
@@ -460,10 +566,9 @@ void UpdateEvent(HWND window)
 		GetWindowText(widget, buffer, MAX_LINE_LENGTH);
 		if (strlen(buffer) > 0)
 		{
-			g_Events[g_ActiveEvent].SetProfile(buffer);
+			event.SetProfile(CCalendarWindow::c_Language.GetOriginalProfile(buffer));
 		}
 	}
-	CCalendarWindow::c_Config.SetCurrentProfile(buffer);
 }
 
 BOOL CALLBACK EditEventProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
@@ -471,113 +576,141 @@ BOOL CALLBACK EditEventProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lP
     switch (message) 
     { 
         case WM_INITDIALOG:
-			return OnInitDialog(hwndDlg);
+			return OnInitDialog(hwndDlg, (LPPROPSHEETPAGE)lParam);
 
         case WM_NOTIFY:
 			{
 				LPNMHDR pNMHDR = (LPNMHDR)lParam;
 
-				if(pNMHDR->code == TCN_SELCHANGE)
+				if(pNMHDR->code == PSN_APPLY)
 				{
-					HWND widget;
-					widget = GetDlgItem(hwndDlg, IDC_EDITEVENT_TAB);
-					g_ActiveEvent = TabCtrl_GetCurSel(pNMHDR->hwndFrom);
-					UpdateWidgets(hwndDlg, false);
-				}
-				else if(pNMHDR->code == DTN_DATETIMECHANGE)
-				{
-					UpdateEvent(hwndDlg);
+					CEventMessage* event = (CEventMessage*)GetWindowLong(hwndDlg, GWL_USERDATA);
+					if (event)	// Event can be NULL if the last one was deleted
+					{
+						UpdateEvent(hwndDlg, *event);
+
+						event->SetTimeStamp(g_TimeStamp);    // The modification time was when the dialog was opened
+						GetRainlendar()->GetCalendarWindow().GetEventManager()->AddEvent(*event);
+						delete event;	// This is not needed anymore, since AddEvent creates a copy
+					}
+
+					// Remove all deleted messages (this is done only by the first page)
+					for (int i = 0; i < g_DeletedEvents.size(); i++)
+					{
+						// The newly created and deleted events are just ignored since they're not in the EventManager
+						GetRainlendar()->GetCalendarWindow().GetEventManager()->RemoveEvent(*g_DeletedEvents[i]);
+						delete g_DeletedEvents[i];
+					}
+					g_DeletedEvents.clear();
+
+					SetWindowLong(hwndDlg, DWL_MSGRESULT, PSNRET_NOERROR);
+					return TRUE;
 				}
 			}
-			return FALSE;
+			break;
 
         case WM_COMMAND: 
             switch (LOWORD(wParam)) 
             {
-				case IDC_EDITEVENT_SINGLE:
-				case IDC_EDITEVENT_DAILY:
-				case IDC_EDITEVENT_WEEKLY:
-				case IDC_EDITEVENT_MONTHLY:
-				case IDC_EDITEVENT_ANNUALLY:
 				case IDC_EDITEVENT_VALID:
-					UpdateEvent(hwndDlg);
+					{
+						int state = (BST_CHECKED == IsDlgButtonChecked(hwndDlg, IDC_EDITEVENT_VALID));
+						HWND widget = GetDlgItem(hwndDlg, IDC_EDITEVENT_VALID_DATE);
+						if (state == BST_CHECKED)
+						{
+							EnableWindow(widget, TRUE);		// Enable the widget
+						}
+						else
+						{
+							EnableWindow(widget, FALSE);		// Disable the widget
+						}
+					}
 					break;
 
-				case IDC_EDITEVENT_EVERY:
 				case IDC_EDITEVENT_PROFILE:
 					if (HIWORD(wParam) == CBN_SELCHANGE || HIWORD(wParam) == CBN_EDITUPDATE)
 					{
-						UpdateEvent(hwndDlg);
-					}
-					break;
-
-				case IDC_EDITEVENT_MESSAGE:
-					if (HIWORD(wParam) == EN_CHANGE)
-					{
-						UpdateEvent(hwndDlg);
-					}
-					break;
-
-				case IDC_EDITEVENT_NEW:
-					{
-						CEventMessage event;
-						int date = GetRainlendar()->GetCalendarWindow().GetSelectedDate();
-						event.SetDate(date);
-						event.SetProfile(CCalendarWindow::c_Config.GetCurrentProfile());
-						g_Events.push_back(event);
-						g_ActiveEvent = g_Events.size() - 1;
-						UpdateWidgets(hwndDlg, true);
-					}
-					break;
-
-				case IDC_EDITEVENT_DELETE:
-					// Kill the event from eventmanager as well 
-					GetRainlendar()->GetCalendarWindow().GetEventManager()->RemoveEvent(g_Events[g_ActiveEvent]);
-					g_Events.erase(g_Events.begin() + g_ActiveEvent);
-					UpdateWidgets(hwndDlg, true);
-					break;
-
-                case IDOK:
-					{
-						int day, month, year;
-						int date = GetRainlendar()->GetCalendarWindow().GetSelectedDate();
-						CEventMessage::ValueToDate(date, &day, &month, &year);
-
-						std::vector<CEventMessage>::iterator eventIter = g_Events.begin();
-						for( ; eventIter != g_Events.end(); eventIter++)
+						// When profile changes update the caption
+						CEventMessage* event = (CEventMessage*)GetWindowLong(hwndDlg, GWL_USERDATA);
+						if (event)
 						{
-							// If the event has different type, we'll remove the old one and set this to new date
-							CEventMessage& event = *eventIter;
-							CEventMessage* oldEvent = GetRainlendar()->GetCalendarWindow().GetEventManager()->GetEvent(event.GetID());
-							if (oldEvent && oldEvent->GetType() != event.GetType())
+							char buffer[MAX_LINE_LENGTH];
+							int index = SendDlgItemMessage(hwndDlg, IDC_EDITEVENT_PROFILE, CB_GETCURSEL, NULL, NULL);
+							if (index >= 0)
 							{
-								GetRainlendar()->GetCalendarWindow().GetEventManager()->RemoveEvent(event);
-								event.SetDate(date);
-
-								// We'll forge a new event so that previously deleted events do not confuse the logic
-								CEventMessage newEvent;
-								event.SetID(newEvent.GetID());
+								SendDlgItemMessage(hwndDlg, IDC_EDITEVENT_PROFILE, CB_GETLBTEXT, (WPARAM)index, (LPARAM)buffer);
 							}
-
-                            event.SetTimeStamp(g_TimeStamp);    // The modification time was when the dialog was opened
-							GetRainlendar()->GetCalendarWindow().GetEventManager()->AddEvent(event);
+							else
+							{
+								GetWindowText(GetDlgItem(hwndDlg, IDC_EDITEVENT_PROFILE), buffer, MAX_LINE_LENGTH);
+							}
+							SetPageTitle(GetParent(hwndDlg), hwndDlg, buffer);
+							CCalendarWindow::c_Config.SetCurrentProfile(CCalendarWindow::c_Language.GetOriginalProfile(buffer));
+							CCalendarWindow::c_Config.WriteConfig(CConfig::WRITE_PROFILE);
 						}
-						GetRainlendar()->GetCalendarWindow().GetEventManager()->WriteEvents(day, month, year);
 					}
-                    // Fall through. 
- 
-                case IDCANCEL: 
-                    EndDialog(hwndDlg, wParam); 
-                    return TRUE; 
+					break;
             }
             break;
+    } 
+    return FALSE; 
+} 
 
+
+/////////////////////////// Please wait dialog /////////////////////////////////
+#define PBS_MARQUEE 0x08
+#define PBM_SETMARQUEE (WM_USER+10)
+
+BOOL CALLBACK SyncProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
+{ 
+    switch (message) 
+    { 
+        case WM_INITDIALOG:
+			{
+				static NetworkParams param;
+
+				// Here is a slight possibility of unsafe thread access
+				// If the OnServerSync() is started multiple times before the
+				// thread has a chance to copy the information, the data might
+				// corrupt. Hopefully this doesn't occur too often :-)
+				param.serverPort = CCalendarWindow::c_Config.GetServerPort();
+				param.serverAddress = CCalendarWindow::c_Config.GetServerAddress();
+				param.userID = CCalendarWindow::c_Config.GetServerID();
+				param.requestType = REQUEST_GETEVENTS;
+				param.window = hwndDlg;
+
+				// Launch the network communication thread
+				DWORD id;
+				HANDLE thread = CreateThread(NULL, 0, NetworkThreadProc, &param, 0, &id);
+				CloseHandle(thread);
+
+				HWND widget = GetDlgItem(hwndDlg, IDC_EDITEVENT_SYNC_TEXT);
+				if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("EventGUI", 11));			
+				SetWindowText(hwndDlg, CCalendarWindow::c_Language.GetString("ServerConfigGUI", 1));			
+
+				// Make the progress bar marquee (XP only)
+				widget = GetDlgItem(hwndDlg, IDC_SYNC_PROGRESS);
+				DWORD style = GetWindowLong(widget, GWL_STYLE);
+				SetWindowLong(widget, GWL_STYLE, style | PBS_MARQUEE);
+				SendMessage(widget, PBM_SETMARQUEE, TRUE, 50);
+			}
+			break;
+	
         case WM_SERVER_SYNC_FINISHED:
             if (wParam == ERROR_CODE_NEWEVENTS)
             {
                 GetRainlendar()->GetCalendarWindow().RefreshWindow();
             }
-            ShowWidgets(hwndDlg);
+		    EndDialog(hwndDlg, IDCANCEL); 
+            return TRUE; 
+			
+        case WM_COMMAND: 
+            switch (LOWORD(wParam)) 
+            {
+                case IDCANCEL:
+		            EndDialog(hwndDlg, IDCANCEL); 
+                    return TRUE; 
+            }
             break;
     } 
     return FALSE; 

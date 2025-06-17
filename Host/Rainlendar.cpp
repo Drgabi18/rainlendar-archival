@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Host/Rainlendar.cpp,v 1.7 2003/06/15 09:48:13 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Host/Rainlendar.cpp,v 1.8 2003/08/09 16:39:46 Rainy Exp $
 
   $Log: Rainlendar.cpp,v $
+  Revision 1.8  2003/08/09 16:39:46  Rainy
+  Added icons to messageboxes.
+
   Revision 1.7  2003/06/15 09:48:13  Rainy
   Comment changed.
 
@@ -121,7 +124,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	HMODULE module = GetModuleHandle("Rainlendar.dll");
 	if(module == NULL)
 	{
-		MessageBox(NULL, "Unable to load Rainlendar.dll", "Rainlendar", MB_OK);
+		MessageBox(NULL, "Unable to load Rainlendar.dll", "Rainlendar", MB_OK | MB_ICONERROR);
 		return 0;
 	}
 
@@ -195,7 +198,7 @@ void Bang(HWND hWnd, const char* command)
 	}
 	else
 	{
-		MessageBox(hWnd, "Rainlendar is not running.\nUnable to send the !bang to it.", "Rainlendar", MB_OK);
+		MessageBox(hWnd, "Rainlendar is not running.\nUnable to send the !bang to it.", "Rainlendar", MB_OK | MB_ICONERROR);
 	}
 }
 

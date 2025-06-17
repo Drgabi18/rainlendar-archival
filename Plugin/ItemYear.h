@@ -16,29 +16,41 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/EditEvent.h,v 1.4 2003/08/09 16:36:59 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemYear.h,v 1.4 2003/06/15 09:49:13 Rainy Exp $
 
-  $Log: EditEvent.h,v $
-  Revision 1.4  2003/08/09 16:36:59  Rainy
-  Complete rewrite.
+  $Log: ItemYear.h,v $
+  Revision 1.4  2003/06/15 09:49:13  Rainy
+  Added support for multiple calendars.
 
-  Revision 1.3  2002/05/23 17:33:41  rainy
+  Revision 1.3  2002/11/12 18:11:33  rainy
+  The interface of Paint changed a little.
+
+  Revision 1.2  2002/05/23 17:33:40  rainy
   Removed all MFC stuff
 
-  Revision 1.2  2002/01/10 16:47:15  rainy
-  Added support for bitmap/color,
-
-  Revision 1.1.1.1  2001/10/29 18:56:23  rainy
+  Revision 1.1.1.1  2001/10/29 18:56:24  rainy
   Moved to CVS
 
 */
 
-#ifndef _EDITEVENT_H_
-#define _EDITEVENT_H_
+#ifndef __ITEMYEAR_H__
+#define __ITEMYEAR_H__
 
-#include "CalendarWindow.h"
+#include "Item.h"
 
-VOID OpenEditEventDialog(HWND hwndOwner, HINSTANCE instance, UINT date, UINT id);
+class CItemYear : public CItem  
+{
+public:
+	CItemYear();
+	virtual ~CItemYear();
+
+	void Initialize();
+	void Paint(CImage& background, POINT offset);
+
+	int GetX();
+	int GetY();
+	int GetW();
+	int GetH();
+};
 
 #endif
-

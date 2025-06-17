@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Image.h,v 1.2 2002/11/25 17:03:55 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Image.h,v 1.3 2003/08/09 16:36:25 Rainy Exp $
 
   $Log: Image.h,v $
+  Revision 1.3  2003/08/09 16:36:25  Rainy
+  Added a check if the file exists.
+
   Revision 1.2  2002/11/25 17:03:55  rainy
   Small fixes.
 

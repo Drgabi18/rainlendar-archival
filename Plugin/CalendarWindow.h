@@ -16,9 +16,14 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/CalendarWindow.h,v 1.17 2003/06/15 09:50:55 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/CalendarWindow.h,v 1.18 2003/08/09 16:40:32 Rainy Exp $
 
   $Log: CalendarWindow.h,v $
+  Revision 1.18  2003/08/09 16:40:32  Rainy
+  Added icons to messageboxes.
+  Added hotkeys.
+  Removed powerbroadcast (timer should do the same thing)
+
   Revision 1.17  2003/06/15 09:50:55  Rainy
   Strings are read from CLanguage class.
   Added support for multiple calendars.
@@ -176,11 +181,12 @@ protected:
 	LRESULT OnMouseMove(WPARAM wParam, LPARAM lParam);
 	LRESULT OnNcMouseMove(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDisplayChange(WPARAM wParam, LPARAM lParam);
-	LRESULT OnPowerBroadcast(WPARAM wParam, LPARAM lParam);
 	LRESULT OnCopyData(WPARAM wParam, LPARAM lParam);
 	LRESULT OnServerSyncFinished(WPARAM wParam, LPARAM lParam);
+	LRESULT OnHotkey(WPARAM wParam, LPARAM lParam);
 
 private:
+	void RegisterHotkeys();
 	void UpdateTransparency();
 	void ReadSkins();
 	void PollWallpaper(bool set);
@@ -189,6 +195,7 @@ private:
 	void CalcWindowSize();
 	void DrawCalendar();
 	void ShowWindowIfAppropriate();
+	void ShowEventMessage();
 
 	CItemDays* m_Days;
 	CItemEvent* m_Event;
@@ -202,7 +209,6 @@ private:
 	HDC m_DC;									// DC used with drawing
 	CImage m_DoubleBuffer;						// Double buffer for flicker free drawing
 	HWND m_Window;								// Handle to the Rainlendar window
-	HINSTANCE m_DllInstance;					// Handle to the DLL
 	HINSTANCE m_Instance;						// Handle to the main instance
 
 	struct CONFIG 

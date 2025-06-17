@@ -1,4 +1,4 @@
-     /*
+                 /*
   Copyright (C) 2000 Kimmo Pekkola
 
   This program is free software; you can redistribute it and/or
@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Config.cpp,v 1.16 2003/06/15 09:43:01 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Config.cpp,v 1.17 2003/08/09 16:38:43 Rainy Exp $
 
   $Log: Config.cpp,v $
+  Revision 1.17  2003/08/09 16:38:43  Rainy
+  Added hotkeys and few other settings.
+
   Revision 1.16  2003/06/15 09:43:01  Rainy
   Added Layout stuff.
 
@@ -99,11 +102,14 @@ CConfig::CConfig()
     m_ShowOutlookAppointments=false;
     m_Week1HasJanuary1st=false;
     m_TooltipSeparator=true;
+    m_NegativeCoords=true;
+	m_OutlookUpdate=0;
 	
 	m_VerticalCount = 1;
 	m_HorizontalCount = 1;
 	m_PreviousMonths = 0;
 	m_StartFromJanuary = false;
+	m_RememberDialogPositions=false;
 
 	m_BackgroundMode=CBackground::MODE_TILE;
 	m_BackgroundSolidColor=GetSysColor(COLOR_3DFACE);
@@ -186,6 +192,27 @@ CConfig::CConfig()
 	m_ToolTipFontColor = GetSysColor(COLOR_INFOTEXT);
 	m_ToolTipBGColor = GetSysColor(COLOR_INFOBK);
 	m_ToolTipFont = "-11/0/0/0/400/0/0/0/0/3/2/1/34/Arial";
+
+	m_HideHotkey = 0;
+	m_ShowHotkey = 0;
+	m_ToggleHotkey = 0;
+	m_ActivateHotkey = 0;
+	m_RefreshHotkey = 0;
+	m_ConfigHotkey = 0;
+	m_SkinHotkey = 0;
+	m_NextHotkey = 0;
+	m_PreviousHotkey = 0;
+	m_NextYearHotkey = 0;
+	m_PreviousYearHotkey = 0;
+	m_CurrentHotkey = 0;
+	m_AllHotkey = 0;
+	m_OutlookHotkey = 0;
+
+	for (int i = 0; i < DIALOG_LAST; i++)
+	{
+		m_DialogPos[i].x = 0;
+		m_DialogPos[i].y = 0;
+	}
 }
 
 CConfig::~CConfig()
@@ -195,6 +222,17 @@ CConfig::~CConfig()
 	{
 		delete (*i);
 	}
+}
+
+POINT CConfig::GetDialogPosition(DIALOG_TYPE type)
+{
+	return m_DialogPos[type];
+}
+
+void CConfig::SetDialogPosition(DIALOG_TYPE type, int x, int y)
+{
+	m_DialogPos[type].x = x;
+	m_DialogPos[type].y = y;
 }
 
 UINT CConfig::GetPreviousMonths()
@@ -289,11 +327,29 @@ void CConfig::ReadGeneralConfig(const char* iniFile)
 	m_RefreshDelay=GetPrivateProfileInt( "Rainlendar", "RefreshDelay", m_RefreshDelay, iniFile);
 	m_WindowPos=(WINDOWPOS)GetPrivateProfileInt( "Rainlendar", "WindowPos", m_WindowPos, iniFile);
 	m_BGCopyMode=(BG_COPY_MODE)GetPrivateProfileInt( "Rainlendar", "BGCopyMode", m_BGCopyMode, iniFile);
+	m_OutlookUpdate=GetPrivateProfileInt( "Rainlendar", "OutlookUpdate", m_OutlookUpdate, iniFile);
+	m_RememberDialogPositions=(1==GetPrivateProfileInt( "Rainlendar", "RememberDialogPositions", m_RememberDialogPositions?1:0, iniFile))?true:false;
+	m_NegativeCoords=(1==GetPrivateProfileInt( "Rainlendar", "NegativeCoords", m_NegativeCoords?1:0, iniFile))?true:false;
 
 	m_VerticalCount=GetPrivateProfileInt( "Rainlendar", "VerticalCount", m_VerticalCount, iniFile);
 	m_HorizontalCount=GetPrivateProfileInt( "Rainlendar", "HorizontalCount", m_HorizontalCount, iniFile);
 	m_PreviousMonths=GetPrivateProfileInt( "Rainlendar", "PreviousMonths", m_PreviousMonths, iniFile);
 	m_StartFromJanuary=(1==GetPrivateProfileInt( "Rainlendar", "StartFromJanuary", m_StartFromJanuary?1:0, iniFile))?true:false;
+
+	m_HideHotkey=GetPrivateProfileInt( "Rainlendar", "HideHotkey", m_HideHotkey, iniFile);
+	m_ShowHotkey=GetPrivateProfileInt( "Rainlendar", "ShowHotkey", m_ShowHotkey, iniFile);
+	m_ToggleHotkey=GetPrivateProfileInt( "Rainlendar", "ToggleHotkey", m_ToggleHotkey, iniFile);
+	m_ActivateHotkey=GetPrivateProfileInt( "Rainlendar", "ActivateHotkey", m_ActivateHotkey, iniFile);
+	m_RefreshHotkey=GetPrivateProfileInt( "Rainlendar", "RefreshHotkey", m_RefreshHotkey, iniFile);
+	m_ConfigHotkey=GetPrivateProfileInt( "Rainlendar", "ConfigHotkey", m_ConfigHotkey, iniFile);
+	m_SkinHotkey=GetPrivateProfileInt( "Rainlendar", "SkinHotkey", m_SkinHotkey, iniFile);
+	m_NextHotkey=GetPrivateProfileInt( "Rainlendar", "NextHotkey", m_NextHotkey, iniFile);
+	m_PreviousHotkey=GetPrivateProfileInt( "Rainlendar", "PreviousHotkey", m_PreviousHotkey, iniFile);
+	m_NextYearHotkey=GetPrivateProfileInt( "Rainlendar", "NextYearHotkey", m_NextYearHotkey, iniFile);
+	m_PreviousYearHotkey=GetPrivateProfileInt( "Rainlendar", "PreviousYearHotkey", m_PreviousYearHotkey, iniFile);
+	m_CurrentHotkey=GetPrivateProfileInt( "Rainlendar", "CurrentHotkey", m_CurrentHotkey, iniFile);
+	m_AllHotkey=GetPrivateProfileInt( "Rainlendar", "AllHotkey", m_AllHotkey, iniFile);
+	m_OutlookHotkey=GetPrivateProfileInt( "Rainlendar", "OutlookHotkey", m_OutlookHotkey, iniFile);
 
 	if(GetPrivateProfileString( "Rainlendar", "CurrentProfile", m_CurrentProfile.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
@@ -332,6 +388,17 @@ void CConfig::ReadGeneralConfig(const char* iniFile)
 	if(GetPrivateProfileString( "Rainlendar", "CurrentLanguage", m_CurrentLanguage.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
 		m_CurrentLanguage=tmpSz;
+	}
+
+	// Read dialog positions
+	for (int i = 0; i < DIALOG_LAST; i++)
+	{
+		char title[256];
+		sprintf(title, "DialogPos%i", i);
+		if(GetPrivateProfileString( "Rainlendar", title, NULL, tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+		{
+			sscanf(tmpSz, "%i,%i", &(m_DialogPos[i].x), &(m_DialogPos[i].y));
+		}
 	}
 }
 
@@ -654,13 +721,21 @@ void CConfig::ReadProfiles(const char* iniFile)
 			if (!profile->bitmapName.empty())
 			{
 				AddPath(profile->bitmapName);
-				profile->bitmap.Load(profile->bitmapName);
+				if (!profile->bitmap.Load(profile->bitmapName))
+				{
+					sprintf(tmpSz, CCalendarWindow::c_Language.GetString("Error", 8), profile->bitmapName.c_str());
+					MessageBox(NULL, tmpSz, "Rainlendar", MB_OK | MB_ICONERROR);
+				}
 			}
 
 			if (!profile->iconName.empty())
 			{
 				AddPath(profile->iconName);
-				profile->icon.Load(profile->iconName);
+				if (!profile->icon.Load(profile->iconName))
+				{
+					sprintf(tmpSz, CCalendarWindow::c_Language.GetString("Error", 8), profile->iconName.c_str());
+					MessageBox(NULL, tmpSz, "Rainlendar", MB_OK | MB_ICONERROR);
+				}
 			}
 
 			if (!profile->name.empty())
@@ -748,6 +823,10 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			sprintf(tmpSz, "%i", m_Y);
 			WritePrivateProfileString( "Rainlendar", "Y", tmpSz, INIPath.c_str() );
 		}
+		if (flags & WRITE_PROFILE)
+		{
+			WritePrivateProfileString( "Rainlendar", "CurrentProfile", m_CurrentProfile.c_str(), INIPath.c_str() );
+		}
 		if ((flags & WRITE_FULL) == WRITE_FULL)
 		{
 			sprintf(tmpSz, "%i", m_StartFromMonday);
@@ -770,6 +849,8 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			WritePrivateProfileString( "Rainlendar", "NativeTransparency", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_RefreshOnResolutionChange);
 			WritePrivateProfileString( "Rainlendar", "RefreshOnResolutionChange", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_NegativeCoords);
+			WritePrivateProfileString( "Rainlendar", "NegativeCoords", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_ShowOutlookAppointments);
 			WritePrivateProfileString( "Rainlendar", "ShowOutlookAppointments", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_Week1HasJanuary1st);
@@ -787,7 +868,8 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			WritePrivateProfileString( "Rainlendar", "EventMessageBox", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_BGCopyMode);
 			WritePrivateProfileString( "Rainlendar", "BGCopyMode", tmpSz, INIPath.c_str() );
-			WritePrivateProfileString( "Rainlendar", "CurrentProfile", m_CurrentProfile.c_str(), INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_OutlookUpdate);
+			WritePrivateProfileString( "Rainlendar", "OutlookUpdate", tmpSz, INIPath.c_str() );
 
 			sprintf(tmpSz, "%i", m_VerticalCount);
 			WritePrivateProfileString( "Rainlendar", "VerticalCount", tmpSz, INIPath.c_str() );
@@ -797,6 +879,8 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			WritePrivateProfileString( "Rainlendar", "PreviousMonths", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_StartFromJanuary);
 			WritePrivateProfileString( "Rainlendar", "StartFromJanuary", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_RememberDialogPositions);
+			WritePrivateProfileString( "Rainlendar", "RememberDialogPositions", tmpSz, INIPath.c_str() );
 
 			sprintf(tmpSz, "%i", m_ServerEnable);
 			WritePrivateProfileString( "Rainlendar", "ServerEnable", tmpSz, INIPath.c_str() );
@@ -810,6 +894,44 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			WritePrivateProfileString( "Rainlendar", "ServerStartup", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_ServerSyncOnEdit);
 			WritePrivateProfileString( "Rainlendar", "ServerSyncOnEdit", tmpSz, INIPath.c_str() );
+
+			sprintf(tmpSz, "%i", m_HideHotkey);
+			WritePrivateProfileString( "Rainlendar", "HideHotkey", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_ShowHotkey);
+			WritePrivateProfileString( "Rainlendar", "ShowHotkey", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_ToggleHotkey);
+			WritePrivateProfileString( "Rainlendar", "ToggleHotkey", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_ActivateHotkey);
+			WritePrivateProfileString( "Rainlendar", "ActivateHotkey", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_RefreshHotkey);
+			WritePrivateProfileString( "Rainlendar", "RefreshHotkey", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_ConfigHotkey);
+			WritePrivateProfileString( "Rainlendar", "ConfigHotkey", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_SkinHotkey);
+			WritePrivateProfileString( "Rainlendar", "SkinHotkey", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_NextHotkey);
+			WritePrivateProfileString( "Rainlendar", "NextHotkey", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_PreviousHotkey);
+			WritePrivateProfileString( "Rainlendar", "PreviousHotkey", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_NextYearHotkey);
+			WritePrivateProfileString( "Rainlendar", "NextYearHotkey", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_PreviousYearHotkey);
+			WritePrivateProfileString( "Rainlendar", "PreviousYearHotkey", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_CurrentHotkey);
+			WritePrivateProfileString( "Rainlendar", "CurrentHotkey", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_AllHotkey);
+			WritePrivateProfileString( "Rainlendar", "AllHotkey", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_OutlookHotkey);
+			WritePrivateProfileString( "Rainlendar", "OutlookHotkey", tmpSz, INIPath.c_str() );
+
+			// Write dialog positions
+			for (int i = 0; i < DIALOG_LAST; i++)
+			{
+				char title[256];
+				sprintf(title, "DialogPos%i", i);
+				sprintf(tmpSz, "%i,%i", m_DialogPos[i].x, m_DialogPos[i].y);
+				WritePrivateProfileString( "Rainlendar", title, tmpSz, INIPath.c_str() );
+			}
 		}
 	}
 

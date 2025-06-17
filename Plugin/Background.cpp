@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Background.cpp,v 1.13 2003/06/15 09:42:41 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Background.cpp,v 1.15 2003/08/09 16:38:55 Rainy Exp $
 
   $Log: Background.cpp,v $
+  Revision 1.15  2003/08/09 16:38:55  Rainy
+  Added a check if the file exists.
+
+  Revision 1.14  2003/06/15 20:05:11  Rainy
+  The correct width and height is set if there is background.
+
   Revision 1.13  2003/06/15 09:42:41  Rainy
   Added support for multiple calendars.
 
@@ -116,9 +122,9 @@ void CBackground::Load(const std::string& filename)
 	CConfig::AddPath(name);
 	if (!m_BGImage.Load(name.c_str()))
 	{
-		std::string err = "Unable to load file: ";
-		err += name;
-		THROW(err);
+		char tmpSz[MAX_LINE_LENGTH];
+		sprintf(tmpSz, CCalendarWindow::c_Language.GetString("Error", 8), filename.c_str());
+		MessageBox(NULL, tmpSz, "Rainlendar", MB_OK | MB_ICONERROR);
 	}
 }
 

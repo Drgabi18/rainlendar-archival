@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemEvent.cpp,v 1.14 2003/06/15 09:49:12 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemEvent.cpp,v 1.15 2003/08/09 16:36:05 Rainy Exp $
 
   $Log: ItemEvent.cpp,v $
+  Revision 1.15  2003/08/09 16:36:05  Rainy
+  Removed GetEventText()
+
   Revision 1.14  2003/06/15 09:49:12  Rainy
   Added support for multiple calendars.
 
@@ -471,39 +474,6 @@ const Profile* CItemEvent::GetEventProfile(int day)
 	}
 
 	return NULL;
-}
-
-/* 
-** GetEventText
-**
-** Returns the event text(s) for the given day in current month
-**
-*/
-bool CItemEvent::GetEventText(int day, std::string& text)
-{
-	std::vector<CEventMessage*> eventList = m_EventManager.GetEvents(day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
-	
-	if (!eventList.empty())
-	{
-		std::vector<CEventMessage*>::iterator i = eventList.begin();
-		for( ;  i != eventList.end(); i++)
-		{
-			if (!((*i)->GetMessage().empty()))
-			{
-				text += (*i)->GetMessage();
-				text += "\n";
-			}
-		}
-
-		if(!text.empty())
-		{
-			// Remove the last \n
-			text.erase(text.end() - 1, text.end());
-		}
-		return true;
-	}
-
-	return false;
 }
 
 /* 

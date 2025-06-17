@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Config.h,v 1.13 2003/06/15 09:43:01 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Config.h,v 1.14 2003/08/09 16:38:43 Rainy Exp $
 
   $Log: Config.h,v $
+  Revision 1.14  2003/08/09 16:38:43  Rainy
+  Added hotkeys and few other settings.
+
   Revision 1.13  2003/06/15 09:43:01  Rainy
   Added Layout stuff.
 
@@ -91,8 +94,9 @@ public:
 	{
 		WRITE_POS = 1,
 		WRITE_CONFIG = 2,
-		WRITE_FULL = 3,		// FULL is 1 + 2
-		WRITE_SKIN = 4
+		WRITE_PROFILE = 4,
+		WRITE_FULL = 7,		// FULL is 1 + 2 + 4
+		WRITE_SKIN = 8
 	};
 
 	enum WINDOWPOS 
@@ -108,6 +112,35 @@ public:
 		BG_NORMAL,
 		BG_COPY_ALWAYS,
 		BG_WALLPAPER_ALWAYS
+	};
+
+	enum DIALOG_TYPE
+	{
+		DIALOG_EDITSKIN,
+		DIALOG_CONFIG,
+		DIALOG_EDITEVENT,
+		DIALOG_ALLEVENTS,
+		DIALOG_ALLEVENTS_SIZE,
+		DIALOG_LAST		// This must be last
+	};
+
+	enum HOTKEY
+	{
+		HOTKEY_HIDE,
+		HOTKEY_SHOW,
+		HOTKEY_TOGGLE,
+		HOTKEY_ACTIVATE,
+		HOTKEY_REFRESH,
+		HOTKEY_CONFIG,
+		HOTKEY_SKIN,
+		HOTKEY_NEXT,
+		HOTKEY_PREVIOUS,
+		HOTKEY_NEXT_YEAR,
+		HOTKEY_PREVIOUS_YEAR,
+		HOTKEY_CURRENT,
+		HOTKEY_ALL,
+		HOTKEY_OUTLOOK,
+		HOTKEY_LAST		// This must be last
 	};
 
 	CConfig();
@@ -130,6 +163,9 @@ public:
 
 	const std::string& GetCurrentProfile() { return m_CurrentProfile; };
 	void SetCurrentProfile(const std::string& CurrentProfile) { m_CurrentProfile=CurrentProfile; };
+
+	POINT GetDialogPosition(DIALOG_TYPE type);
+	void SetDialogPosition(DIALOG_TYPE type, int x, int y);
 
 	// Layout
 	int GetX() { return m_X; };
@@ -157,6 +193,7 @@ public:
     const std::string& GetWeekdayNames() { return m_WeekdayNames; };
     const std::string& GetMonthNames() { return m_MonthNames; };
 	int GetRefreshDelay() { return m_RefreshDelay; };
+	int GetOutlookUpdate() { return m_OutlookUpdate; };
 	bool GetStartHidden() { return m_StartHidden; };
 	bool GetDisableHotkeys() { return m_DisableHotkeys; };
 	bool GetUseWindowName() { return m_UseWindowName; };
@@ -166,12 +203,15 @@ public:
 	bool GetRefreshOnResolutionChange() { return m_RefreshOnResolutionChange; };
 	bool GetShowOutlookAppointments() { return m_ShowOutlookAppointments; };
 	bool GetWeek1HasJanuary1st() { return m_Week1HasJanuary1st; };
+	bool GetNegativeCoords() { return m_NegativeCoords; };
+	bool GetRememberDialogPositions() { return m_RememberDialogPositions; };
 	BG_COPY_MODE GetBGCopyMode() { return m_BGCopyMode; };
 
 	void SetStartFromMonday(bool StartFromMonday ) { m_StartFromMonday=StartFromMonday; };
 	void SetWeekdayNames(const std::string& WeekdayNames ) { m_WeekdayNames=WeekdayNames; };
 	void SetMonthNames(const std::string& MonthNames ) { m_MonthNames=MonthNames; };
 	void SetRefreshDelay(int RefreshDelay ) { m_RefreshDelay=RefreshDelay; };
+	void SetOutlookUpdate(int OutlookUpdate ) { m_OutlookUpdate=OutlookUpdate; };
 	void SetStartHidden(bool StartHidden ) { m_StartHidden=StartHidden; };
 	void SetDisableHotkeys(bool DisableHotkeys ) { m_DisableHotkeys=DisableHotkeys; };
 	void SetUseWindowName(bool UseWindowName ) { m_UseWindowName=UseWindowName; };
@@ -181,6 +221,8 @@ public:
 	void SetRefreshOnResolutionChange(bool RefreshOnResolutionChange) { m_RefreshOnResolutionChange=RefreshOnResolutionChange; };
 	void SetShowOutlookAppointments(bool ShowOutlookAppointments) { m_ShowOutlookAppointments=ShowOutlookAppointments; };
 	void SetWeek1HasJanuary1st(bool Week1HasJanuary1st) { m_Week1HasJanuary1st=Week1HasJanuary1st; };
+	void SetRememberDialogPositions(bool RememberDialogPositions) { m_RememberDialogPositions=RememberDialogPositions; };
+	void SetNegativeCoords(bool NegativeCoords) { m_NegativeCoords=NegativeCoords; };
 	void SetBGCopyMode(BG_COPY_MODE bgMode) { m_BGCopyMode=bgMode; };
 
 	CBackground::MODE GetBackgroundMode() { return m_BackgroundMode; };
@@ -192,6 +234,36 @@ public:
 	void SetBackgroundBitmapName(const std::string& BackgroundBitmapName ) { m_BackgroundBitmapName=BackgroundBitmapName; };
 	void SetBackgroundBevel(bool BackgroundBevel ) { m_BackgroundBevel=BackgroundBevel; };
 	void SetBackgroundSolidColor(COLORREF BackgroundSolidColor ) { m_BackgroundSolidColor=BackgroundSolidColor; };
+
+	// Hotkeys
+	DWORD GetHideHotkey() { return m_HideHotkey; };
+	void SetHideHotkey(DWORD HideHotkey) { m_HideHotkey=HideHotkey; };
+	DWORD GetShowHotkey() { return m_ShowHotkey; };
+	void SetShowHotkey(DWORD ShowHotkey) { m_ShowHotkey=ShowHotkey; };
+	DWORD GetToggleHotkey() { return m_ToggleHotkey; };
+	void SetToggleHotkey(DWORD ToggleHotkey) { m_ToggleHotkey=ToggleHotkey; };
+	DWORD GetActivateHotkey() { return m_ActivateHotkey; };
+	void SetActivateHotkey(DWORD ActivateHotkey) { m_ActivateHotkey=ActivateHotkey; };
+	DWORD GetRefreshHotkey() { return m_RefreshHotkey; };
+	void SetRefreshHotkey(DWORD RefreshHotkey) { m_RefreshHotkey=RefreshHotkey; };
+	DWORD GetConfigHotkey() { return m_ConfigHotkey; };
+	void SetConfigHotkey(DWORD ConfigHotkey) { m_ConfigHotkey=ConfigHotkey; };
+	DWORD GetSkinHotkey() { return m_SkinHotkey; };
+	void SetSkinHotkey(DWORD SkinHotkey) { m_SkinHotkey=SkinHotkey; };
+	DWORD GetNextHotkey() { return m_NextHotkey; };
+	void SetNextHotkey(DWORD NextHotkey) { m_NextHotkey=NextHotkey; };
+	DWORD GetPreviousHotkey() { return m_PreviousHotkey; };
+	void SetPreviousHotkey(DWORD PreviousHotkey) { m_PreviousHotkey=PreviousHotkey; };
+	DWORD GetNextYearHotkey() { return m_NextYearHotkey; };
+	void SetNextYearHotkey(DWORD NextHotkey) { m_NextYearHotkey=NextHotkey; };
+	DWORD GetPreviousYearHotkey() { return m_PreviousYearHotkey; };
+	void SetPreviousYearHotkey(DWORD PreviousHotkey) { m_PreviousYearHotkey=PreviousHotkey; };
+	DWORD GetCurrentHotkey() { return m_CurrentHotkey; };
+	void SetCurrentHotkey(DWORD CurrentHotkey) { m_CurrentHotkey=CurrentHotkey; };
+	DWORD GetAllHotkey() { return m_AllHotkey; };
+	void SetAllHotkey(DWORD AllHotkey) { m_AllHotkey=AllHotkey; };
+	DWORD GetOutlookHotkey() { return m_OutlookHotkey; };
+	void SetOutlookHotkey(DWORD OutlookHotkey) { m_OutlookHotkey=OutlookHotkey; };
 
 	// Days
 	bool GetDaysEnable() { return m_DaysEnable; };
@@ -405,6 +477,9 @@ private:
 	std::string m_CurrentSkinIni;	// Name of the current skin ini-file
 	std::vector<std::string> m_MonthName;
 
+	// Dialog positions
+	POINT m_DialogPos[DIALOG_LAST];
+
 	// Layout settings
 	int m_X;					// Position ot the main window
 	int m_Y;
@@ -415,6 +490,8 @@ private:
 	UINT m_HorizontalCount;
 	UINT m_PreviousMonths;
 	bool m_StartFromJanuary;
+	bool m_RememberDialogPositions;
+	bool m_NegativeCoords;
 
 	// General settings
 	bool m_StartFromMonday;
@@ -426,6 +503,7 @@ private:
 	bool m_NativeTransparency;
 	bool m_RefreshOnResolutionChange;
 	bool m_ShowOutlookAppointments;
+	int m_OutlookUpdate;
 	bool m_Week1HasJanuary1st;
 	std::string m_MonthNames;
 	std::string m_WeekdayNames;
@@ -435,6 +513,22 @@ private:
 	bool m_EventMessageBox;
 	BG_COPY_MODE m_BGCopyMode;
 	std::string m_CurrentProfile;
+
+	// Hotkey settings
+	DWORD m_HideHotkey;
+	DWORD m_ShowHotkey;
+	DWORD m_ToggleHotkey;
+	DWORD m_ActivateHotkey;
+	DWORD m_RefreshHotkey;
+	DWORD m_ConfigHotkey;
+	DWORD m_SkinHotkey;
+	DWORD m_NextHotkey;
+	DWORD m_PreviousHotkey;
+	DWORD m_NextYearHotkey;
+	DWORD m_PreviousYearHotkey;
+	DWORD m_CurrentHotkey;
+	DWORD m_AllHotkey;
+	DWORD m_OutlookHotkey;
 
 	// Server settings
 	bool m_ServerEnable;
