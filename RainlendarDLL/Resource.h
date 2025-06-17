@@ -1,0 +1,122 @@
+//{{NO_DEPENDENCIES}}
+// Microsoft Developer Studio generated include file.
+// Used by RainlendarDLL.rc
+//
+#define IDD_GENERAL                     106
+#define IDD_DAYS                        107
+#define IDD_WEEKDAYS                    108
+#define IDD_TODAY                       109
+#define IDD_MONTH                       110
+#define IDD_YEAR                        111
+#define IDD_EVENT                       112
+#define IDR_MENU1                       1000
+#define IDC_X                           1000
+#define IDC_Y                           1001
+#define IDC_DAYS_Y                      1001
+#define IDC_START_FROM_MONDAY           1002
+#define IDC_DAYS_W                      1002
+#define IDC_START_DELAY                 1003
+#define IDC_DAYS_H                      1003
+#define IDC_BACKGROUND_BROWSE           1004
+#define IDC_BACKGROUND                  1005
+#define IDC_DAYS_RASTERIZER             1006
+#define IDC_START_HIDDEN                1006
+#define IDC_DAYS_ENABLE                 1007
+#define IDC_DISABLE_HOTKEYS             1007
+#define IDC_DAYS_SELECT                 1009
+#define IDC_DAYS_FONTNAME               1010
+#define IDD_EDITEVENT                   1010
+#define IDC_DAYS_BROWSE                 1011
+#define IDC_DAYS_COMPONENTS_10          1012
+#define IDC_DAYS_COMPONENTS_32          1013
+#define IDC_DAYS_ALIGN                  1014
+#define IDC_DAYS_IGNORE_TODAY           1015
+#define IDC_TODAY_ENABLE                1015
+#define IDC_DAYS_BITMAP                 1016
+#define IDC_DAYS_X                      1017
+#define IDC_WEEKDAYS_ENABLE             1018
+#define IDC_DAYS_FONTCOLOR              1018
+#define IDC_WEEKDAYS_RASTERIZER         1019
+#define IDC_DAYS_IGNORE_EVENT           1019
+#define IDC_WEEKDAYS_ALIGN              1020
+#define IDC_WEEKDAYS_BITMAP             1023
+#define IDC_WEEKDAYS_BROWSE             1024
+#define IDC_WEEKDAYS_FONTCOLOR          1025
+#define IDC_TODAY_COMPONENTS_1          1025
+#define IDC_TODAY_COMPONENTS_10         1026
+#define IDC_TODAY_COMPONENTS_32         1027
+#define IDC_TODAY_BITMAP                1028
+#define IDC_TODAY_BROWSE                1029
+#define IDC_TODAY_RASTERIZER            1032
+#define IDC_TODAY_ALIGN                 1033
+#define IDC_MONTH_ENABLE                1034
+#define IDC_MONTH_X                     1035
+#define IDC_MONTH_Y                     1036
+#define IDC_MONTH_RASTERIZER            1037
+#define IDC_MONTH_ALIGN                 1038
+#define IDC_MONTH_BROWSE                1041
+#define IDC_MONTH_BITMAP                1042
+#define IDC_YEAR_ENABLE                 1043
+#define IDC_YEAR_X                      1044
+#define IDC_YEAR_Y                      1045
+#define IDC_YEAR_RASTERIZER             1046
+#define IDC_YEAR_ALIGN                  1048
+#define IDC_YEAR_BROWSE                 1050
+#define IDC_YEAR_BITMAP                 1051
+#define IDC_WEEKDAYS_FONTNAME           1052
+#define IDC_WEEKDAYS_SELECT             1053
+#define IDC_MONTH_FONTNAME              1054
+#define IDC_MONTH_SELECT                1055
+#define IDC_MONTH_FONTCOLOR             1056
+#define IDC_TODAY_FONTNAME              1057
+#define IDC_TODAY_SELECT                1058
+#define IDC_TODAY_FONTCOLOR             1059
+#define IDC_YEAR_FONTNAME               1060
+#define IDC_YEAR_SELECT                 1061
+#define IDC_YEAR_FONTCOLOR              1062
+#define IDC_EVENT_ENABLE                1063
+#define IDC_EVENT_RASTERIZER            1064
+#define IDC_EVENT_ALIGN                 1065
+#define IDC_EVENT_FONTNAME              1066
+#define IDC_EVENT_SELECT                1067
+#define IDC_EVENT_FONTCOLOR             1068
+#define IDC_EVENT_BITMAP                1069
+#define IDC_EVENT_BROWSE                1070
+#define IDC_EVENT_COMPONENTS_1          1071
+#define IDC_EVENT_COMPONENTS_10         1072
+#define IDC_EVENT_COMPONENTS_32         1073
+#define IDC_EVENT_TOOLTIP               1074
+#define IDC_EVENT_MESSAGEBOX            1075
+#define IDC_EVENT_EXECUTE               1076
+#define IDC_EDITEVENT_MESSAGE           1077
+#define ID_RELOAD                       32771
+#define ID_CONFIG                       32772
+#define ID_POPUP_SELECTMONTH_JANUARY    32774
+#define ID_POPUP_SELECTMONTH_FEBRUARY   32775
+#define ID_REFRESH                      32776
+#define ID_POPUP_SELECTMONTH_MARCH      32777
+#define ID_QUIT                         32778
+#define ID_POPUP_SELECTMONTH_APRIL      32779
+#define ID_POPUP_SELECTMONTH_MAY        32780
+#define ID_POPUP_SELECTMONTH_JUNE       32781
+#define ID_POPUP_SELECTMONTH_JULY       32782
+#define ID_POPUP_SELECTMONTH_AUGUST     32783
+#define ID_POPUP_SELECTMONTH_SEPTEMBER  32784
+#define ID_POPUP_SELECTMONTH_OCTOBER    32785
+#define ID_POPUP_SELECTMONTH_NOVEMBER   32786
+#define ID_POPUP_SELECTMONTH_DECEMBER   32787
+#define ID_POPUP_SELECTMONTH_NEXTMONTH  32788
+#define ID_POPUP_SELECTMONTH_PREVMONTH  32789
+#define ID_SETEVENT                     32790
+#define ID_POPUP_SELECTMONTH_CURRENTMONTH 32791
+
+// Next default values for new objects
+// 
+#ifdef APSTUDIO_INVOKED
+#ifndef APSTUDIO_READONLY_SYMBOLS
+#define _APS_NEXT_RESOURCE_VALUE        1013
+#define _APS_NEXT_COMMAND_VALUE         32793
+#define _APS_NEXT_CONTROL_VALUE         1078
+#define _APS_NEXT_SYMED_VALUE           1000
+#endif
+#endif

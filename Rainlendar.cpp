@@ -1,0 +1,163 @@
+/*
+  Copyright (C) 2000 Kimmo Pekkola
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+
+// Rainlendar.cpp : Defines the entry point for the application.
+//
+
+#include "stdafx.h"
+#include "resource.h"
+#include "..\..\3rdparty\ls-b24\lsapi\lsapi.h"
+
+BOOL InitApplication(HINSTANCE);
+BOOL InitInstance(HINSTANCE, INT);
+LONG APIENTRY MainWndProc(HWND, UINT, UINT, LONG);
+
+static char* WinClass;
+static char* WinName;
+
+extern "C" {
+__declspec( dllimport ) int initModuleEx2(HWND ParentWnd, HINSTANCE dllInst, LPCSTR szPath, LPCSTR szIniPath);
+__declspec( dllimport ) void quitModule(HINSTANCE dllInst);
+}
+
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+	char Path[256];
+	char Filename[256];
+	char Message[2048];
+	int Length, Pos;
+	MSG msg;
+
+	// If Litestep is not running disquise this window as Litestep's so that LoadBitmap works
+	if(NULL==GetLitestepWnd()) {
+		WinClass="TApplication";
+		WinName="LiteStep";
+	} else {
+		WinClass="DummyRainWClass";
+		WinName="Rainlendar control window";
+	}
+
+	UNREFERENCED_PARAMETER(lpCmdLine);
+
+	if(lpCmdLine==NULL || lpCmdLine[0]=='\0') {
+		MessageBox(NULL, "Unable to initialize Rainlendar!\nError: You must give the ini-file path as an argument!", "Rainlendar", MB_OK | MB_ICONERROR);
+		return 0;
+	}
+
+	Length=strlen(lpCmdLine);
+	if(Length>240) {
+		MessageBox(NULL, "Unable to initialize Rainlendar!\nError: Path-argument is too long!", "Rainlendar", MB_OK | MB_ICONERROR);
+		return 0;
+	}
+
+	// Remove quotes from the commandline
+	Pos=0;
+	for(int i=0; i<=Length; i++) {
+		if(lpCmdLine[i]!='\"') Path[Pos++]=lpCmdLine[i];
+	}
+
+	// Check that Rainlendar.ini is found
+	strcpy(Filename, Path);
+	strcat(Filename, "Rainlendar.ini");
+	Filename[255]='\0';
+	FILE* File=fopen(Filename, "r");
+	if(NULL==File) {
+		sprintf(Message, "Unable to initialize Rainlendar!\nError: Rainlendar.ini-file was not found!\n(%s)", Filename);
+		MessageBox(NULL, Message, "Rainlendar", MB_OK | MB_ICONERROR);
+		return 0;
+	}
+	fclose(File);
+
+	if(!hPrevInstance) {
+		if (!InitApplication(hInstance)) return FALSE;
+	}
+
+	if(!InitInstance(hInstance, nCmdShow)) return FALSE;
+
+	LitestepAPIInit();
+
+	initModuleEx2(NULL, NULL, NULL, Path);
+
+	while(GetMessage(&msg, NULL, 0, 0)) {
+		TranslateMessage(&msg);
+		DispatchMessage(&msg); 
+	} 
+
+	return msg.wParam; 
+} 
+
+BOOL InitApplication(HINSTANCE hInstance)
+{
+	WNDCLASS  wc;
+
+	wc.style = 0;
+	wc.lpfnWndProc = (WNDPROC) MainWndProc;
+	wc.cbClsExtra = 0;
+	wc.cbWndExtra = 0;
+	wc.hInstance = hInstance;
+	wc.hIcon = LoadIcon(NULL, MAKEINTRESOURCE(IDI_RAINLENDAR));
+	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH); 
+	wc.lpszMenuName =  NULL;
+	wc.lpszClassName = WinClass;
+
+	return RegisterClass(&wc);
+}
+
+
+BOOL InitInstance(HINSTANCE hInstance, INT nCmdShow)
+{
+	HWND hwnd;
+
+	hwnd = CreateWindowEx(
+		WS_EX_TOOLWINDOW,
+		WinClass,
+		WinName,
+		WS_POPUP,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		NULL,
+		NULL,
+		hInstance,
+		NULL
+	);
+
+	if(!hwnd) return FALSE;
+	
+	return TRUE;
+}
+
+LONG APIENTRY MainWndProc(HWND hWnd, UINT message, UINT wParam, LONG lParam)
+{
+	switch(message) {
+
+	case WM_DESTROY:
+		quitModule(NULL);
+		PostQuitMessage(0);
+		break;
+
+	default:
+		return DefWindowProc(hWnd, message, wParam, lParam);
+	}
+
+	return 0;
+}
+
+
