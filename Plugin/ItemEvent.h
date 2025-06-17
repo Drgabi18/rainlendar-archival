@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.h,v 1.2 2002/01/10 16:46:35 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.h,v 1.3 2002/01/27 16:03:24 rainy Exp $
 
   $Log: ItemEvent.h,v $
+  Revision 1.3  2002/01/27 16:03:24  rainy
+  Changed CEvent to CEventMessage to avoid name clash
+
   Revision 1.2  2002/01/10 16:46:35  rainy
   Added possibility to show the events in the calendar window.
   Added support for event specific colors/bitmaps.
@@ -49,7 +52,7 @@ public:
 	void Initialize();
 	void Paint(CDC& dc);
 
-	CEvent* GetEvent(int Index) { return m_Events[Index]; };
+	CEventMessage* GetEvent(int Index) { return m_Events[Index]; };
 
 	void AddToolTips(CCalendarWindow* CalendarWnd);
 
@@ -61,7 +64,7 @@ protected:
 	void ReadEvents();
 
 	CFont m_EventFont;
-	CEvent* m_Events[32];
+	CEventMessage* m_Events[32];
 };
 
 #endif // !defined(AFX_ITEMEVENT_H__C0B109F3_3CA7_4DFE_9152_69C1C479DE2B__INCLUDED_)

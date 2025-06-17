@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Event.h,v 1.2 2002/01/10 16:46:56 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Event.h,v 1.3 2002/01/27 16:03:53 rainy Exp $
 
   $Log: Event.h,v $
+  Revision 1.3  2002/01/27 16:03:53  rainy
+  Changed CEvent to CEventMessage to avoid name clash
+
   Revision 1.2  2002/01/10 16:46:56  rainy
   Now holds the bitmap and color too.
 
@@ -34,11 +37,11 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-class CEvent  
+class CEventMessage  
 {
 public:
-	CEvent();
-	~CEvent();
+	CEventMessage();
+	~CEventMessage();
 
 	CString& GetMessage() { return m_Message; };
 	CString& GetBitmap() { return m_Bitmap; };

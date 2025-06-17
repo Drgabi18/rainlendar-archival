@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Event.cpp,v 1.2 2002/01/10 16:46:56 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Event.cpp,v 1.3 2002/01/27 16:03:53 rainy Exp $
 
   $Log: Event.cpp,v $
+  Revision 1.3  2002/01/27 16:03:53  rainy
+  Changed CEvent to CEventMessage to avoid name clash
+
   Revision 1.2  2002/01/10 16:46:56  rainy
   Now holds the bitmap and color too.
 
@@ -41,12 +44,12 @@ static char THIS_FILE[]=__FILE__;
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CEvent::CEvent()
+CEventMessage::CEventMessage()
 {
 	m_Color = 0;
 }
 
-CEvent::~CEvent()
+CEventMessage::~CEventMessage()
 {
 
 }

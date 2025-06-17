@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/EditEvent.cpp,v 1.3 2002/01/10 16:47:15 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/EditEvent.cpp,v 1.4 2002/01/27 16:11:14 rainy Exp $
 
   $Log: EditEvent.cpp,v $
+  Revision 1.4  2002/01/27 16:11:14  rainy
+  Changed CEvent to CEventMessage to avoid name clash
+
   Revision 1.3  2002/01/10 16:47:15  rainy
   Added support for bitmap/color,
 
@@ -66,6 +69,7 @@ void CEditEvent::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CEditEvent)
 	DDX_Text(pDX, IDC_EDITEVENT_MESSAGE, m_Message);
+	DDV_MaxChars(pDX, m_Message, 1024);
 	DDX_Text(pDX, IDC_EDITEVENT_LABEL, m_Label);
 	DDX_Text(pDX, IDC_EDITEVENT_BITMAP, m_Bitmap);
 	//}}AFX_DATA_MAP

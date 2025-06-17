@@ -16,9 +16,13 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.h,v 1.2 2002/01/15 17:59:44 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.h,v 1.3 2002/02/27 18:59:00 rainy Exp $
 
   $Log: Background.h,v $
+  Revision 1.3  2002/02/27 18:59:00  rainy
+  Fixed multimonitor stuff.
+  Added support for background stretching.
+
   Revision 1.2  2002/01/15 17:59:44  rainy
   Now uses different way to get the desktop image.
 
@@ -37,6 +41,13 @@
 class CBackground
 {
 public:
+	enum MODE 
+	{
+		MODE_TILE,
+		MODE_COPY,
+		MODE_STRETCH
+	};
+
 	CBackground();
 	~CBackground();
 
@@ -51,6 +62,8 @@ public:
 	int GetHeight() { return m_Height; };
 
 	void Initialize();
+
+	bool HasAlpha() { return m_Alpha; };
 
 private:
 	HBITMAP GetWallpaper();

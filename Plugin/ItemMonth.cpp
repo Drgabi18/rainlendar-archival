@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemMonth.cpp,v 1.3 2002/01/10 16:45:33 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemMonth.cpp,v 1.4 2002/02/27 18:52:27 rainy Exp $
 
   $Log: ItemMonth.cpp,v $
+  Revision 1.4  2002/02/27 18:52:27  rainy
+  Added new alignments
+
   Revision 1.3  2002/01/10 16:45:33  rainy
   no message
 
@@ -69,42 +72,65 @@ CItemMonth::~CItemMonth()
 */
 int CItemMonth::GetX()
 {
-	if(m_Rasterizer) {
-		switch(m_Rasterizer->GetAlign()) {
-		case CRasterizer::ALIGN_LEFT:
+	if(m_Rasterizer) 
+	{
+		if(m_Rasterizer->GetAlign() & 0x0F == CRasterizer::ALIGN_LEFT)
 			return CCalendarWindow::c_Config.GetMonthX();
-		case CRasterizer::ALIGN_CENTER:
-			return CCalendarWindow::c_Config.GetMonthX()-GetW()/2;
-		case CRasterizer::ALIGN_RIGHT:
-			return CCalendarWindow::c_Config.GetMonthX()-GetW();
-		}
+
+		if(m_Rasterizer->GetAlign() & 0x0F == CRasterizer::ALIGN_HCENTER)
+			return CCalendarWindow::c_Config.GetMonthX() - GetW() / 2;
+
+		if(m_Rasterizer->GetAlign() & 0x0F == CRasterizer::ALIGN_RIGHT)
+			return CCalendarWindow::c_Config.GetMonthX() - GetW();
 	}
+
 	return 0;
 }
 
 int CItemMonth::GetY()
 {
-	return CCalendarWindow::c_Config.GetMonthY();
+	if(m_Rasterizer) 
+	{
+		if(m_Rasterizer->GetAlign() & 0x0F0 == CRasterizer::ALIGN_TOP)
+			return CCalendarWindow::c_Config.GetMonthY();
+
+		if(m_Rasterizer->GetAlign() & 0x0F0 == CRasterizer::ALIGN_VCENTER)
+			return CCalendarWindow::c_Config.GetMonthY() - GetH() / 2;
+
+		if(m_Rasterizer->GetAlign() & 0x0F0 == CRasterizer::ALIGN_BOTTOM)
+			return CCalendarWindow::c_Config.GetMonthY() - GetH();
+	}
+
+	return 0;
 }
 
 int CItemMonth::GetW()
 {
-	if(m_Rasterizer) {
-		if(m_Rasterizer->GetHeight()>m_Rasterizer->GetWidth()) {
+	if(m_Rasterizer) 
+	{
+		if(m_Rasterizer->GetHeight() > m_Rasterizer->GetWidth()) 
+		{
 			return m_Rasterizer->GetWidth();
-		} else {
-			return m_Rasterizer->GetWidth()/NUMOFCOMPONENTS;
+		} 
+		else 
+		{
+			return m_Rasterizer->GetWidth() / NUMOFCOMPONENTS;
 		}
 	}
+
 	return 0;
 }
 
 int CItemMonth::GetH()
 {
-	if(m_Rasterizer) {
-		if(m_Rasterizer->GetHeight()>m_Rasterizer->GetWidth()) {
-			return m_Rasterizer->GetHeight()/NUMOFCOMPONENTS;
-		} else {
+	if(m_Rasterizer) 
+	{
+		if(m_Rasterizer->GetHeight() > m_Rasterizer->GetWidth()) 
+		{
+			return m_Rasterizer->GetHeight() / NUMOFCOMPONENTS;
+		} 
+		else 
+		{
 			return m_Rasterizer->GetHeight();
 		}
 	}
@@ -163,23 +189,40 @@ void CItemMonth::Paint(CDC& dc)
 {
 	int X, Y, W, H;
 
-	if(m_Rasterizer!=NULL) {
-		W=GetW();
-		H=GetH();
-		Y=CCalendarWindow::c_Config.GetMonthY();
+	if(m_Rasterizer!=NULL) 
+	{
+		W = GetW();
+		H = GetH();
 
-		switch(CCalendarWindow::c_Config.GetMonthAlign()) {
-		case CRasterizer::ALIGN_CENTER:		
-			X=CCalendarWindow::c_Config.GetMonthX()-W/2;
+		switch (m_Rasterizer->GetAlign() & 0x0F)
+		{
+		case CRasterizer::ALIGN_LEFT:
+			X = CCalendarWindow::c_Config.GetMonthX();
+			break;
+
+		case CRasterizer::ALIGN_HCENTER:
+			X = CCalendarWindow::c_Config.GetMonthX() - W / 2;
 			break;
 
 		case CRasterizer::ALIGN_RIGHT:
-			X=CCalendarWindow::c_Config.GetMonthX()-W;
+			X = CCalendarWindow::c_Config.GetMonthX() - W;
+			break;
+		};
+
+		switch (m_Rasterizer->GetAlign() & 0xF0)
+		{
+		case CRasterizer::ALIGN_TOP:
+				Y = CCalendarWindow::c_Config.GetMonthY();
+				break;
+
+		case CRasterizer::ALIGN_VCENTER:
+			Y = CCalendarWindow::c_Config.GetMonthY() - H / 2;
 			break;
 
-		default:
-			X=CCalendarWindow::c_Config.GetMonthX();
-		}
+		case CRasterizer::ALIGN_BOTTOM:
+			Y = CCalendarWindow::c_Config.GetMonthY() - H;
+			break;
+		};
 
 		dc.SetBkMode(TRANSPARENT);
 		dc.SetTextColor(CCalendarWindow::c_Config.GetMonthFontColor());

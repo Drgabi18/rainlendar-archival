@@ -16,9 +16,16 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.h,v 1.3 2002/01/15 17:58:51 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.h,v 1.5 2002/02/27 18:57:15 rainy Exp $
 
   $Log: Config.h,v $
+  Revision 1.5  2002/02/27 18:57:15  rainy
+  Added new configs.
+
+  Revision 1.4  2002/01/27 16:12:44  rainy
+  Changed CEvent to CEventMessage to avoid name clash.
+  Added Server stuff.
+
   Revision 1.3  2002/01/15 17:58:51  rainy
   Removed the StartDelay
 
@@ -38,13 +45,20 @@
 #endif // _MSC_VER > 1000
 
 #include "Rasterizer.h"
+#include "Background.h"
 
 class CConfig  
 {
 public:
+	enum WINDOWPOS 
+	{
+		WINDOWPOS_ONBOTTOM,
+		WINDOWPOS_NORMAL,
+		WINDOWPOS_ONTOP
+	};
+
 	CConfig();
 	~CConfig();
-
 
 	// General
 	int GetX() { return m_X; };
@@ -57,6 +71,11 @@ public:
 	bool GetStartHidden() { return m_StartHidden; };
 	bool GetDisableHotkeys() { return m_DisableHotkeys; };
 	bool GetUseWindowName() { return m_UseWindowName; };
+	bool GetPollWallpaper() { return m_PollWallpaper; };
+	bool GetMovable() { return m_Movable; };
+	bool GetMouseHide() { return m_MouseHide; };
+	CBackground::MODE GetBackgroundMode() { return m_BackgroundMode; };
+	WINDOWPOS GetWindowPos() { return m_WindowPos; };
 
 	void SetX(int X ) { m_X=X; };
 	void SetY(int Y ) { m_Y=Y; };
@@ -68,6 +87,11 @@ public:
 	void SetStartHidden(bool StartHidden ) { m_StartHidden=StartHidden; };
 	void SetDisableHotkeys(bool DisableHotkeys ) { m_DisableHotkeys=DisableHotkeys; };
 	void SetUseWindowName(bool UseWindowName ) { m_UseWindowName=UseWindowName; };
+	void SetPollWallpaper(bool PollWallpaper ) { m_PollWallpaper=PollWallpaper; };
+	void SetMovable(bool Movable) { m_Movable=Movable; };
+	void SetMouseHide(bool MouseHide) { m_MouseHide=MouseHide; };
+	void SetBackgroundMode(CBackground::MODE BackgroundMode ) { m_BackgroundMode=BackgroundMode; };
+	void SetWindowPos(WINDOWPOS WindowPos) { m_WindowPos=WindowPos; };
 
 	CString& GetBackgroundBitmapName() { return m_BackgroundBitmapName; };
 	void SetBackgroundBitmapName(CString& BackgroundBitmapName ) { m_BackgroundBitmapName=BackgroundBitmapName; };
@@ -217,6 +241,21 @@ public:
 	void SetWeekNumbersFontColor(COLORREF WeekNumbersFontColor ) { m_WeekNumbersFontColor=WeekNumbersFontColor; };
 	void SetWeekNumbersNumOfComponents(int WeekNumbersNumOfComponents ) { m_WeekNumbersNumOfComponents=WeekNumbersNumOfComponents; };
 
+	// Server
+	UINT GetServerFrequency() { return m_ServerFrequency; };
+	UINT GetServerPort() { return m_ServerPort; };
+	CString& GetServerAddress() { return m_ServerAddress; };
+	CString& GetServerID() { return m_ServerID; };
+	bool GetServerEnable() { return m_ServerEnable; };
+	bool GetServerStartup() { return m_ServerStartup; };
+
+	void SetServerStartup(bool ServerStartup ) { m_ServerStartup=ServerStartup; };
+	void SetServerFrequency(UINT ServerFrequency ) { m_ServerFrequency=ServerFrequency; };
+	void SetServerPort(UINT ServerPort ) { m_ServerPort=ServerPort; };
+	void SetServerAddress(CString& ServerAddress ) { m_ServerAddress=ServerAddress; };
+	void SetServerID(CString& ServerID ) { m_ServerID=ServerID; };
+	void SetServerEnable(bool ServerEnable ) { m_ServerEnable=ServerEnable; };
+
 	void ReadConfig();
 	void WriteConfig();
 
@@ -232,10 +271,15 @@ private:
 	bool m_StartHidden;
 	bool m_DisableHotkeys;
 	bool m_UseWindowName;
+	bool m_PollWallpaper;
+	bool m_Movable;
+	bool m_MouseHide;
 	CString m_BackgroundBitmapName;	// Name of the background picture
 	CString m_MonthNames;
 	CString m_WeekdayNames;
 	int m_RefreshDelay;
+	CBackground::MODE m_BackgroundMode;
+	WINDOWPOS m_WindowPos;
 
 	bool m_DaysEnable;
 	CString m_DaysBitmapName;	// Name of the day number bitmap
@@ -305,6 +349,13 @@ private:
 	CString m_WeekNumbersFont;
 	COLORREF m_WeekNumbersFontColor;
 	int m_WeekNumbersNumOfComponents;	// Components in the bitmap
+
+	bool m_ServerEnable;
+	CString m_ServerID;
+	CString m_ServerAddress;
+	UINT m_ServerPort;
+	UINT m_ServerFrequency;
+	bool m_ServerStartup;
 };
 
 #endif // !defined(AFX_CONFIG_H__C7D0FDBB_F062_11D3_92A3_0080AD90417B__INCLUDED_)

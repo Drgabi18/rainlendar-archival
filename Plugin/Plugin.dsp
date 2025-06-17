@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "..\..\..\3rdparty\ls-b24" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "_WINDLL" /D "_AFXDLL" /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "..\..\..\3rdparty\ls-b24" /I "..\..\..\3rdparty\ssobjects\\" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "_WINDLL" /D "_AFXDLL" /FD /c
 # SUBTRACT CPP /YX /Yc /Yu
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
@@ -54,10 +54,10 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /machine:I386
-# ADD LINK32 lsapi.lib /nologo /subsystem:windows /dll /machine:I386 /out:"Release/Rainlendar.dll" /libpath:"..\..\..\3rdparty\ls-b24\lsapi\Release"
+# ADD LINK32 lsapi.lib ssobjects.lib Ws2_32.lib /nologo /subsystem:windows /dll /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Release/Rainlendar.dll" /libpath:"..\..\..\3rdparty\ls-b24\lsapi\Release" /libpath:"..\..\..\3rdparty\ssobjects\\"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=Copy        Release\Rainlendar.dll        ..\TestBench\ 
+PostBuild_Cmds=Copy               Release\Rainlendar.dll               ..\TestBench\ 
 # End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "Plugin - Win32 Debug"
@@ -74,7 +74,7 @@ PostBuild_Cmds=Copy        Release\Rainlendar.dll        ..\TestBench\
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "..\..\..\3rdparty\ls-b24" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "..\..\..\3rdparty\ls-b24" /I "..\..\..\3rdparty\ssobjects\\" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /FD /GZ /c
 # SUBTRACT CPP /YX /Yc /Yu
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
@@ -85,10 +85,10 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 lsapi.lib /nologo /subsystem:windows /dll /debug /machine:I386 /out:"Debug/Rainlendar.dll" /pdbtype:sept /libpath:"..\..\..\3rdparty\ls-b24\lsapi\Debug"
+# ADD LINK32 lsapi.lib ssobjects_dbg.lib Ws2_32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /nodefaultlib:"LIBCMTD.lib" /out:"Debug/Rainlendar.dll" /pdbtype:sept /libpath:"..\..\..\3rdparty\ls-b24\lsapi\Debug" /libpath:"..\..\..\3rdparty\ssobjects\\"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=Copy        Debug\Rainlendar.dll        ..\TestBench\ 
+PostBuild_Cmds=Copy               Debug\Rainlendar.dll               ..\TestBench\ 
 # End Special Build Tool
 
 !ENDIF 
@@ -130,6 +130,10 @@ SOURCE=.\DialogMonth.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\DialogServer.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\DialogToday.cpp
 # End Source File
 # Begin Source File
@@ -151,6 +155,10 @@ SOURCE=.\EditEvent.cpp
 # Begin Source File
 
 SOURCE=.\Event.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\Server\EventCombiner.cpp
 # End Source File
 # Begin Source File
 
@@ -183,6 +191,10 @@ SOURCE=.\ItemWeekNumbers.cpp
 # Begin Source File
 
 SOURCE=.\ItemYear.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\NetworkThread.cpp
 # End Source File
 # Begin Source File
 
@@ -238,6 +250,10 @@ SOURCE=.\DialogMonth.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\DialogServer.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\DialogToday.h
 # End Source File
 # Begin Source File
@@ -259,6 +275,10 @@ SOURCE=.\Error.h
 # Begin Source File
 
 SOURCE=.\Event.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Server\EventCombiner.h
 # End Source File
 # Begin Source File
 
@@ -286,15 +306,15 @@ SOURCE=.\ItemWeekdays.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\Host\ItemWeekNumbers.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\ItemWeekNumbers.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\ItemYear.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\NetworkThread.h
 # End Source File
 # Begin Source File
 

@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/DialogGeneral.cpp,v 1.3 2002/01/15 17:58:42 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/DialogGeneral.cpp,v 1.4 2002/02/27 18:56:13 rainy Exp $
 
   $Log: DialogGeneral.cpp,v $
+  Revision 1.4  2002/02/27 18:56:13  rainy
+  Added a lot of new options in the dialog.
+
   Revision 1.3  2002/01/15 17:58:42  rainy
   Removed the StartDelay
 
@@ -56,6 +59,9 @@ CDialogGeneral::CDialogGeneral() : CPropertyPage(CDialogGeneral::IDD)
 	m_StartHidden = FALSE;
 	m_DisableHotkeys = FALSE;
 	m_UseWindowName = FALSE;
+	m_PollWallpaper = FALSE;
+	m_Movable = FALSE;
+	m_MouseHide = FALSE;
 	//}}AFX_DATA_INIT
 }
 
@@ -74,6 +80,9 @@ void CDialogGeneral::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_START_HIDDEN, m_StartHidden);
 	DDX_Check(pDX, IDC_DISABLE_HOTKEYS, m_DisableHotkeys);
 	DDX_Check(pDX, IDC_USE_WINDOW_NAME, m_UseWindowName);
+	DDX_Check(pDX, IDC_POLL_WALLPAPER, m_PollWallpaper);
+	DDX_Check(pDX, IDC_WINDOW_MOVABLE, m_Movable);
+	DDX_Check(pDX, IDC_WINDOW_MOUSEHIDE, m_MouseHide);
 	//}}AFX_DATA_MAP
 }
 
@@ -88,6 +97,15 @@ BEGIN_MESSAGE_MAP(CDialogGeneral, CPropertyPage)
 	ON_BN_CLICKED(IDC_START_HIDDEN, OnStartHidden)
 	ON_BN_CLICKED(IDC_DISABLE_HOTKEYS, OnDisableHotkeys)
 	ON_BN_CLICKED(IDC_USE_WINDOW_NAME, OnUseWindowName)
+	ON_BN_CLICKED(IDC_POLL_WALLPAPER, OnPollWallpaper)
+	ON_BN_CLICKED(IDC_BACKGROUND_TILE, OnBackgroundTile)
+	ON_BN_CLICKED(IDC_BACKGROUND_STRETCH, OnBackgroundStretch)
+	ON_BN_CLICKED(IDC_BACKGROUND_COPY, OnBackgroundCopy)
+	ON_BN_CLICKED(IDC_WINDOW_MOVABLE, OnWindowMovable)
+	ON_BN_CLICKED(IDC_WINDOW_NORMAL, OnWindowNormal)
+	ON_BN_CLICKED(IDC_WINDOW_ONBOTTOM, OnWindowOnbottom)
+	ON_BN_CLICKED(IDC_WINDOW_ONTOP, OnWindowOntop)
+	ON_BN_CLICKED(IDC_WINDOW_MOUSEHIDE, OnWindowMousehide)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -116,6 +134,35 @@ BOOL CDialogGeneral::OnInitDialog()
 	m_StartHidden=CCalendarWindow::c_Config.GetStartHidden();
 	m_DisableHotkeys=CCalendarWindow::c_Config.GetDisableHotkeys();
 	m_UseWindowName=CCalendarWindow::c_Config.GetUseWindowName();
+	m_PollWallpaper=CCalendarWindow::c_Config.GetPollWallpaper();
+	m_Movable=CCalendarWindow::c_Config.GetMovable();
+	m_MouseHide=CCalendarWindow::c_Config.GetMouseHide();
+
+	switch(CCalendarWindow::c_Config.GetBackgroundMode()) {
+	case CBackground::MODE_STRETCH:
+		CheckRadioButton(IDC_BACKGROUND_TILE, IDC_BACKGROUND_COPY, IDC_BACKGROUND_STRETCH);
+		break;
+
+	case CBackground::MODE_COPY:
+		CheckRadioButton(IDC_BACKGROUND_TILE, IDC_BACKGROUND_COPY, IDC_BACKGROUND_COPY);
+		break;
+
+	default:
+		CheckRadioButton(IDC_BACKGROUND_TILE, IDC_BACKGROUND_COPY, IDC_BACKGROUND_TILE);
+	}
+
+	switch(CCalendarWindow::c_Config.GetWindowPos()) {
+	case CConfig::WINDOWPOS_ONBOTTOM:
+		CheckRadioButton(IDC_WINDOW_ONBOTTOM, IDC_WINDOW_ONTOP, IDC_WINDOW_ONBOTTOM);
+		break;
+
+	case CConfig::WINDOWPOS_NORMAL:
+		CheckRadioButton(IDC_WINDOW_ONBOTTOM, IDC_WINDOW_ONTOP, IDC_WINDOW_NORMAL);
+		break;
+
+	default:
+		CheckRadioButton(IDC_WINDOW_ONBOTTOM, IDC_WINDOW_ONTOP, IDC_WINDOW_ONTOP);
+	}
 
 	UpdateData(FALSE);
 	
@@ -132,6 +179,35 @@ void CDialogGeneral::UpdateConfig()
 	CCalendarWindow::c_Config.SetStartHidden(m_StartHidden==TRUE);
 	CCalendarWindow::c_Config.SetDisableHotkeys(m_DisableHotkeys==TRUE);
 	CCalendarWindow::c_Config.SetUseWindowName(m_UseWindowName==TRUE);
+	CCalendarWindow::c_Config.SetPollWallpaper(m_PollWallpaper==TRUE);
+	CCalendarWindow::c_Config.SetMovable(m_Movable==TRUE);
+	CCalendarWindow::c_Config.SetMouseHide(m_MouseHide==TRUE);
+
+	switch(GetCheckedRadioButton(IDC_BACKGROUND_TILE, IDC_BACKGROUND_COPY)) {
+	case IDC_BACKGROUND_STRETCH:
+		CCalendarWindow::c_Config.SetBackgroundMode(CBackground::MODE_STRETCH);
+		break;
+
+	case IDC_BACKGROUND_COPY:
+		CCalendarWindow::c_Config.SetBackgroundMode(CBackground::MODE_COPY);
+		break;
+
+	default:
+		CCalendarWindow::c_Config.SetBackgroundMode(CBackground::MODE_TILE);
+	}
+
+	switch(GetCheckedRadioButton(IDC_WINDOW_ONBOTTOM, IDC_WINDOW_ONTOP)) {
+	case IDC_WINDOW_ONBOTTOM:
+		CCalendarWindow::c_Config.SetWindowPos(CConfig::WINDOWPOS_ONBOTTOM);
+		break;
+
+	case IDC_WINDOW_NORMAL:
+		CCalendarWindow::c_Config.SetWindowPos(CConfig::WINDOWPOS_NORMAL);
+		break;
+
+	default:
+		CCalendarWindow::c_Config.SetWindowPos(CConfig::WINDOWPOS_ONTOP);
+	}
 }
 
 void CDialogGeneral::OnOK() 
@@ -185,6 +261,54 @@ void CDialogGeneral::OnDisableHotkeys()
 }
 
 void CDialogGeneral::OnUseWindowName() 
+{
+	SetModified(TRUE);
+}
+
+void CDialogGeneral::OnPollWallpaper() 
+{
+	SetModified(TRUE);
+}
+
+void CDialogGeneral::OnBackgroundTile() 
+{
+	SetModified(TRUE);
+	GetDlgItem(IDC_BACKGROUND)->EnableWindow(true);
+}
+
+void CDialogGeneral::OnBackgroundStretch() 
+{
+	SetModified(TRUE);
+	GetDlgItem(IDC_BACKGROUND)->EnableWindow(true);
+}
+
+void CDialogGeneral::OnBackgroundCopy() 
+{
+	SetModified(TRUE);
+	GetDlgItem(IDC_BACKGROUND)->EnableWindow(false);
+}
+
+void CDialogGeneral::OnWindowMovable() 
+{
+	SetModified(TRUE);
+}
+
+void CDialogGeneral::OnWindowNormal() 
+{
+	SetModified(TRUE);
+}
+
+void CDialogGeneral::OnWindowOnbottom() 
+{
+	SetModified(TRUE);
+}
+
+void CDialogGeneral::OnWindowOntop() 
+{
+	SetModified(TRUE);
+}
+
+void CDialogGeneral::OnWindowMousehide() 
 {
 	SetModified(TRUE);
 }

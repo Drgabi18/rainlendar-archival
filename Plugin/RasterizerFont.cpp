@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.cpp,v 1.2 2002/01/10 16:40:59 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.cpp,v 1.3 2002/02/27 18:41:48 rainy Exp $
 
   $Log: RasterizerFont.cpp,v $
+  Revision 1.3  2002/02/27 18:41:48  rainy
+  Alignment takes now 9 different positions.
+
   Revision 1.2  2002/01/10 16:40:59  rainy
   Added vertical positioning.
 
@@ -198,31 +201,43 @@ void CRasterizerFont::UpdateDimensions(char* DefaultString)
 void CRasterizerFont::Paint(CDC& dc, int X, int Y, int W, int H, int Index)
 {
 	CFont* OldFont;
-	UINT Format;
+	UINT Format = 0;
 	CRect Rect(X, Y, X+W, Y+H);
 	char tmpSz[16];
 	char* String;
 
 	// Set the alignment
-	switch(m_Align) {
+	switch (m_Align & 0x0F)
+	{
 	case CRasterizer::ALIGN_LEFT:
-		Format=DT_LEFT | DT_VCENTER;
+		Format |= DT_LEFT;
 		break;
-	case CRasterizer::ALIGN_CENTER:
-		Format=DT_CENTER | DT_VCENTER;
-		break;
-	case CRasterizer::ALIGN_RIGHT:
-		Format=DT_RIGHT | DT_VCENTER;
-		break;
-	case CRasterizer::ALIGN_TOP:
-		Format=DT_TOP | DT_CENTER;
-		break;
-	case CRasterizer::ALIGN_BOTTOM:
-		Format=DT_BOTTOM | DT_CENTER;
-		break;
-	}	
 
-	Format|=DT_NOCLIP | DT_SINGLELINE;
+	case CRasterizer::ALIGN_HCENTER:
+		Format |= DT_CENTER;
+		break;
+
+	case CRasterizer::ALIGN_RIGHT:
+		Format |= DT_RIGHT;
+		break;
+	};
+
+	switch (m_Align & 0x0F0)
+	{
+	case CRasterizer::ALIGN_TOP:
+		Format |= DT_TOP;
+		break;
+
+	case CRasterizer::ALIGN_VCENTER:
+		Format |= DT_VCENTER;
+		break;
+
+	case CRasterizer::ALIGN_BOTTOM:
+		Format |= DT_BOTTOM;
+		break;
+	};
+
+	Format |= DT_NOCLIP | DT_SINGLELINE;
 
 	if(m_StringTable==NULL) {
 		sprintf(tmpSz, "%i", Index);

@@ -16,9 +16,13 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerBitmap.cpp,v 1.3 2002/01/10 16:41:10 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerBitmap.cpp,v 1.4 2002/02/27 18:49:33 rainy Exp $
 
   $Log: RasterizerBitmap.cpp,v $
+  Revision 1.4  2002/02/27 18:49:33  rainy
+  Alignment takes now 9 different positions.
+  Added support for $var$
+
   Revision 1.3  2002/01/10 16:41:10  rainy
   Added vertical positioning.
 
@@ -69,6 +73,13 @@ void CRasterizerBitmap::Load(CString& Filename)
 	BITMAP bm;
 	CString PicName;
 	int End, Len;
+
+	if (!CCalendarWindow::GetDummyLitestep())
+	{
+		char buffer[1024];
+		VarExpansion(buffer, Filename);
+		Filename = buffer;
+	}
 
 	if(-1==Filename.Find(':', 0)) {
 		PicName.Format("%s%s", CCalendarWindow::c_Config.GetPath(), Filename);
@@ -140,36 +151,42 @@ void CRasterizerBitmap::Paint(CDC& dc, int X, int Y, int W, int H, int Index)
 	}
 
 	// Align the bitmap correctly
-	if(m_Align==ALIGN_LEFT) 
+	switch (m_Align & 0x0F)
 	{
-		X=X+NumOfNums*ItemWidth;
-	} 
-	else if(m_Align==ALIGN_RIGHT) 
-	{
-		X=X+W;
-	}
-	else	// ALIGN_CENTER, TOP or BOTTOM
-	{
-		X=X+(W-NumOfNums*ItemWidth)/2+NumOfNums*ItemWidth;
-	} 
-	
-	if(m_Align==ALIGN_TOP) 
-	{
-		Y=Y;
-	} 
-	else if(m_Align==ALIGN_BOTTOM) 
-	{
-		Y=Y+(H-ItemHeight);
-	}
-	else
-	{
-		// Center the numbers horizontally
-		Y=Y+(H-ItemHeight)/2;
-	}
+	case CRasterizer::ALIGN_LEFT:
+		X = X + NumOfNums * ItemWidth;
+		break;
 
-	if(m_Alpha) {
+	case CRasterizer::ALIGN_HCENTER:
+		X = X + (W - NumOfNums * ItemWidth) / 2 + NumOfNums * ItemWidth;
+		break;
+
+	case CRasterizer::ALIGN_RIGHT:
+		X = X + W;
+		break;
+	};
+
+	switch (m_Align & 0x0F0)
+	{
+	case CRasterizer::ALIGN_TOP:
+		Y = Y;
+		break;
+
+	case CRasterizer::ALIGN_VCENTER:
+		Y = Y + (H - ItemHeight) / 2;
+		break;
+
+	case CRasterizer::ALIGN_BOTTOM:
+		Y = Y + (H - ItemHeight);
+		break;
+	};
+
+	if(m_Alpha) 
+	{
 		PaintAlpha(dc, X, Y, NumOfNums, Index);
-	} else {
+	} 
+	else 
+	{
 		tmpDC=CreateCompatibleDC(dc);
 		if(tmpDC==NULL) return;
 		OldBitmap=(HBITMAP)SelectObject(tmpDC, m_Bitmap);

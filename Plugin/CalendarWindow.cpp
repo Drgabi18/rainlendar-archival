@@ -16,9 +16,25 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.cpp,v 1.4 2002/01/15 17:59:19 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.cpp,v 1.7 2002/02/27 19:12:50 rainy Exp $
 
   $Log: CalendarWindow.cpp,v $
+  Revision 1.7  2002/02/27 19:12:50  rainy
+  Wallpaper changes can be polled.
+  Added ontop and normal window positioning.
+  Window can be moved.
+  Refreshing is automatic on resolution changes.
+  Window can be hidden on mouse over.
+  Added an About dialog.
+  Bangs can be supplied with WM_COPYDATA.
+
+  Revision 1.6  2002/01/29 17:35:38  rainy
+  Added server communication
+
+  Revision 1.5  2002/01/27 16:12:44  rainy
+  Changed CEvent to CEventMessage to avoid name clash.
+  Added Server stuff.
+
   Revision 1.4  2002/01/15 17:59:19  rainy
   Changed the way refreshing is done.
 
@@ -41,6 +57,7 @@
 #include "Config.h"
 #include "Error.h"
 #include "EditEvent.h"
+#include "NetworkThread.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -48,7 +65,7 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-#define VERSION "0.8"
+#define VERSION "0.9"
 
 // Timers
 #define DATE_TIMER 1
@@ -80,6 +97,8 @@ CCalendarWindow::CCalendarWindow()
 	m_WeekNumbers = NULL;
 	m_Month = NULL;
 	m_Year = NULL;
+	m_ConnectionCounter = 0;
+	m_Hidden = false;
 }
 
 CCalendarWindow::~CCalendarWindow()
@@ -112,9 +131,17 @@ BEGIN_MESSAGE_MAP(CCalendarWindow, CWnd)
 	ON_WM_ERASEBKGND()
 	ON_WM_KEYUP()
 	ON_WM_SYSKEYUP()
+	ON_COMMAND(ID_ABOUT, OnAbout)
+	ON_WM_NCHITTEST()
+	ON_WM_MOVE()
+	ON_WM_NCRBUTTONUP()
+	ON_WM_MOUSEMOVE()
+	ON_WM_NCMOUSEMOVE()
 	//}}AFX_MSG_MAP
 
-	ON_NOTIFY_EX( TTN_NEEDTEXT, 0, OnToolTipNotify )
+	ON_MESSAGE(WM_DISPLAYCHANGE, OnDisplayChange)
+	ON_NOTIFY_EX(TTN_NEEDTEXT, 0, OnToolTipNotify)
+	ON_MESSAGE(WM_COPYDATA, OnCopyData) 
 
 END_MESSAGE_MAP()
 
@@ -128,7 +155,6 @@ void CCalendarWindow::Initialize(HWND ParentWnd, HINSTANCE dllInst, wharfDataTyp
 {
 	try 
 	{
-		LPCTSTR Classname;
 		char tmpName[MAX_LINE_LENGTH];
 		CString PixPath;
 		CRect R(0,0,0,0);
@@ -142,9 +168,20 @@ void CCalendarWindow::Initialize(HWND ParentWnd, HINSTANCE dllInst, wharfDataTyp
 			ParentWnd = NULL;	// Use no parent if run as normal Litestep plug-in
 		}
 
-		Classname=AfxRegisterWndClass(CS_DBLCLKS, ::LoadCursor(NULL, IDC_ARROW), (HBRUSH)(COLOR_WINDOW+1));
+		WNDCLASS  wc;
 
-		if(Classname==NULL) throw ERR_WINDOWCLASS;
+		wc.style = CS_DBLCLKS;
+		wc.lpfnWndProc = ::DefWindowProc;
+		wc.cbClsExtra = 0;
+		wc.cbWndExtra = 0;
+		wc.hInstance = dllInst;
+		wc.hIcon = NULL;
+		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+		wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH); 
+		wc.lpszMenuName =  NULL;
+		wc.lpszClassName = APPNAME;
+
+		if (!AfxRegisterClass(&wc)) throw ERR_WINDOWCLASS;
 
 		if(!CCalendarWindow::GetDummyLitestep()) 
 		{
@@ -168,10 +205,17 @@ void CCalendarWindow::Initialize(HWND ParentWnd, HINSTANCE dllInst, wharfDataTyp
 			PixPath=c_CmdLine;
 		}
 
+		if (!CCalendarWindow::GetDummyLitestep())
+		{
+			char buffer[1024];
+			VarExpansion(buffer, PixPath);
+			PixPath = buffer;
+		}
+
 		// Remove quotes from the commandline
 		PixPath.Remove('\"');
-
-		if(!PixPath.IsEmpty() && PixPath[PixPath.GetLength()-1]!='\\') {
+		if(!PixPath.IsEmpty() && PixPath[PixPath.GetLength()-1]!='\\') 
+		{
 			PixPath+="\\";
 		}
 
@@ -200,13 +244,16 @@ void CCalendarWindow::Initialize(HWND ParentWnd, HINSTANCE dllInst, wharfDataTyp
 			parent.Attach(ParentWnd);
 		}
 		
+		R.left = R.right = c_Config.GetX();
+		R.top = R.bottom = c_Config.GetY();
+
 		if(c_Config.GetUseWindowName())
 		{
-			if(!CreateEx(WS_EX_TOOLWINDOW, Classname, "Rainlendar", winStyle, R, ParentWnd?&parent:NULL, NULL, NULL)) throw ERR_WINDOW;
+			if(!CreateEx(WS_EX_TOOLWINDOW, APPNAME, APPNAME, winStyle, R, ParentWnd?&parent:NULL, NULL, NULL)) throw ERR_WINDOW;
 		}
 		else
 		{
-			if(!CreateEx(WS_EX_TOOLWINDOW, Classname, NULL, winStyle, R, ParentWnd?&parent:NULL, NULL, NULL)) throw ERR_WINDOW;
+			if(!CreateEx(WS_EX_TOOLWINDOW, APPNAME, NULL, winStyle, R, ParentWnd?&parent:NULL, NULL, NULL)) throw ERR_WINDOW;
 		}
 
 		if(ParentWnd)
@@ -234,6 +281,11 @@ void CCalendarWindow::Initialize(HWND ParentWnd, HINSTANCE dllInst, wharfDataTyp
 
 		SetTimer(DATE_TIMER, 1000, NULL);	// Date is checked once per second
 
+		if (c_Config.GetServerStartup())
+		{
+			ConnectServer(REQUEST_GETEVENTS);	// Get the events from server
+		}
+
 	} catch(CString Filename) {
 		CString ErrorStr;
 		ErrorStr.Format("File not found: %s", Filename);
@@ -258,7 +310,7 @@ void CCalendarWindow::FillMenu(CMenu& Menu, CPoint point)
 	POINT Point=point;
 
 	CMenu* Popup=Menu.GetSubMenu(0);
-	CMenu* Months=Popup->GetSubMenu(0);
+	CMenu* Months=Popup->GetSubMenu(2);
 
 	Year=c_TodaysDate.GetYear()+1;
 	Start=0;
@@ -378,14 +430,24 @@ void CCalendarWindow::Refresh()
 		if(X<0) X+=r.Width();
 		if(Y<0) Y+=r.Height();
 
-		SetWindowPos(NULL, X, Y, m_Width, m_Height, SWP_NOACTIVATE | SWP_NOZORDER);
+		if (c_Config.GetWindowPos() == CConfig::WINDOWPOS_ONTOP)
+		{
+			SetWindowPos(&wndTopMost, X, Y, m_Width, m_Height, SWP_NOACTIVATE);
+		}
+		else
+		{
+			SetWindowPos(&wndNoTopMost, X, Y, m_Width, m_Height, SWP_NOACTIVATE);
+		}
 
 		if(c_WharfData == NULL || m_FirstExecute)
 		{
-			if(c_Config.GetBackgroundBitmapName().IsEmpty()) 
+			if(c_Config.GetBackgroundMode() == CBackground::MODE_COPY ||
+			   c_Config.GetBackgroundBitmapName().IsEmpty()) 
 			{
 				m_Background.CopyBackground(m_Width, m_Height);
-			} else {
+			} 
+			else 
+			{
 				m_Background.Load(c_Config.GetBackgroundBitmapName());
 				CalcWindowSize();	// Must be recalced if BG is bigger than current window
 				SetWindowPos(NULL, X, Y, m_Width, m_Height, SWP_NOACTIVATE | SWP_NOZORDER);
@@ -404,6 +466,13 @@ void CCalendarWindow::Refresh()
 
 		DrawCalendar();
 
+		if(c_Config.GetBackgroundMode() != CBackground::MODE_COPY && !m_Background.HasAlpha())
+		{
+			// Set window region
+			HRGN region = BitmapToRegion(*m_DoubleBuffer, RGB(255,0,255), 0x101010, 0, 0);
+			SetWindowRgn(region, FALSE);
+		}
+
 		// Execute on event if this was first refresh (meaning that Rainlendar was started)
 		if(m_FirstExecute) { 
 			m_FirstExecute=false;
@@ -412,7 +481,7 @@ void CCalendarWindow::Refresh()
 			if(CCalendarWindow::c_CurrentDate.GetMonth()==CCalendarWindow::c_TodaysDate.GetMonth() &&
 				CCalendarWindow::c_CurrentDate.GetYear()==CCalendarWindow::c_TodaysDate.GetYear()) {
 	
-				CEvent* TodaysEvent=m_Event->GetEvent(c_TodaysDate.GetDay());
+				CEventMessage* TodaysEvent=m_Event->GetEvent(c_TodaysDate.GetDay());
 				if(c_Config.GetEventEnable() && TodaysEvent!=NULL) {
 					if(c_Config.GetEventMessageBox()) {
 						MessageBox(TodaysEvent->GetMessage(), "Rainlendar", MB_OK | MB_TOPMOST);
@@ -423,6 +492,13 @@ void CCalendarWindow::Refresh()
 						// Do not run bangs if litestep is not enabled
 						if(!c_DummyLitestep || Execute[0] != '!')
 						{
+							if (!c_DummyLitestep)
+							{
+								char buffer[1024];
+								VarExpansion(buffer, Execute);
+								Execute = buffer;
+							}
+
 							CString tmpString;
 							tmpString=Execute;
 							tmpString.Replace("%m", TodaysEvent->GetMessage());
@@ -432,6 +508,8 @@ void CCalendarWindow::Refresh()
 				} 
 			}
 		}
+
+		PollWallpaper(true);
 
 	} catch(CString Filename) {
 		CString ErrorStr;
@@ -446,6 +524,38 @@ void CCalendarWindow::Refresh()
 			::MessageBox(NULL, ErrorStr, APPNAME, MB_OK | MB_ICONERROR);
 
 			OnQuit();	// Error, we have to quit!
+		}
+	}
+}
+
+void CCalendarWindow::PollWallpaper(bool set)
+{
+	if (c_Config.GetPollWallpaper())
+	{
+		// Check if the wallpaper is different that what it was when we refresed last time
+		DWORD size = 256;
+		char str[256];
+		HKEY hKey = NULL;
+
+		// Get the wallpaper name from registry
+		if(RegOpenKeyEx(HKEY_CURRENT_USER, "Control Panel\\Desktop", 0, KEY_READ, &hKey) == ERROR_SUCCESS) 
+		{
+			if(RegQueryValueEx(hKey, "Wallpaper", NULL, NULL, (LPBYTE)&str, (LPDWORD)&size) == ERROR_SUCCESS)
+			{
+				if (set)
+				{
+					m_WallpaperName = str;
+				}
+				else
+				{
+					if (m_WallpaperName != str)
+					{
+						// If the names differ, refresh
+						OnRefresh();
+					}
+				}
+			}
+			RegCloseKey(hKey);
 		}
 	}
 }
@@ -486,7 +596,8 @@ void CCalendarWindow::QuitModule()
 */
 void CCalendarWindow::ToggleWindow()
 {
-	if(GetStyle() & WS_VISIBLE) {
+	if(GetStyle() & WS_VISIBLE) 
+	{
 		HideWindow();
 	} else {
 		ShowWindow();
@@ -571,6 +682,17 @@ void CCalendarWindow::OnContextMenu(CWnd* pWnd, CPoint point)
 	}
 }
 
+void CCalendarWindow::OnNcRButtonUp(UINT nHitTest, CPoint point) 
+{
+	CMenu Menu;
+
+	if(Menu.LoadMenu(IDR_MENU1)) {
+		FillMenu(Menu, point);
+		CMenu* Popup=Menu.GetSubMenu(0);
+		Popup->TrackPopupMenu(TPM_RIGHTBUTTON | TPM_LEFTALIGN, point.x, point.y, this);
+	}
+}
+
 void CCalendarWindow::OnQuit() 
 {
 	if(CCalendarWindow::GetDummyLitestep()) PostQuitMessage(0);
@@ -595,6 +717,7 @@ void CCalendarWindow::OnConfig()
 	Dialog.AddPage(&m_DialogMonth);
 	Dialog.AddPage(&m_DialogYear);
 	Dialog.AddPage(&m_DialogEvent);
+	Dialog.AddPage(&m_DialogServer);
 	Dialog.SetTitle("Rainlendar Config");
 
 	if(IDOK==Dialog.DoModal()) {
@@ -606,9 +729,34 @@ void CCalendarWindow::OnConfig()
 	OnRefresh();
 }
 
+void CCalendarWindow::ConnectServer(int type)
+{
+	static NetworkParams param;
+
+	if (c_Config.GetServerEnable())
+	{
+		// Here is a slight possibility of unsafe thread access
+		// If the OnServerSync() is started multiple times before the
+		// thread has a chance to copy the information, the data might
+		// corrupt. Hopefully this doesn't occur too often :-)
+		param.dialogServer = &m_DialogServer;
+		param.serverPort = c_Config.GetServerPort();
+		param.serverAddress = c_Config.GetServerAddress();
+		param.userID = c_Config.GetServerID();
+		param.requestType = type;
+		param.window = GetSafeHwnd();
+
+		// Launch the network communication thread
+		AfxBeginThread(NetworkThreadProc, &param);
+	}
+}
+
 void CCalendarWindow::OnTimer(UINT nIDEvent) 
 {
-	if(nIDEvent==DATE_TIMER) {
+	if(nIDEvent==DATE_TIMER) 
+	{
+		ShowWindowIfAppropriate();
+
 		CTime Today=CTime::GetCurrentTime();
 		if( c_TodaysDate.GetYear()!=Today.GetYear() ||
 			c_TodaysDate.GetMonth()!=Today.GetMonth() ||
@@ -621,6 +769,18 @@ void CCalendarWindow::OnTimer(UINT nIDEvent)
 			m_FirstExecute=true;				// Act like Rainlendar was first time executed
 			OnRefresh();
 		}
+
+		if (c_Config.GetServerFrequency() > 0)
+		{
+			m_ConnectionCounter++;
+			if (m_ConnectionCounter >= c_Config.GetServerFrequency() * 60)
+			{
+				m_ConnectionCounter = 0;
+				ConnectServer(REQUEST_GETEVENTS);	// Get the events from server
+			}
+		}
+
+		PollWallpaper(false);
 	}
 
 	CWnd::OnTimer(nIDEvent);
@@ -645,12 +805,31 @@ afx_msg LRESULT CCalendarWindow::OnGetRevID(WPARAM wParam, LPARAM lParam) {
 
 void CCalendarWindow::OnWindowPosChanging(WINDOWPOS FAR* lpwndpos) 
 {
-	// Disable Z-order
-	lpwndpos->flags |= SWP_NOZORDER;
+	if(c_Config.GetWindowPos() == CConfig::WINDOWPOS_ONBOTTOM)
+	{
+		// Disable Z-order
+		lpwndpos->flags |= SWP_NOZORDER;
+	}
 
 	CWnd::OnWindowPosChanging(lpwndpos);
 }
 
+void CCalendarWindow::OnMove(int x, int y) 
+{
+	CWnd::OnMove(x, y);
+	
+	if(c_Config.GetMovable())
+	{
+		// Store the new coordinates
+		c_Config.SetX(x);
+		c_Config.SetY(y);
+
+		if (!m_FirstExecute && (c_Config.GetBackgroundMode() == CBackground::MODE_COPY || m_Background.HasAlpha()))
+		{
+			OnRefresh();
+		}
+	}
+}
 
 BOOL CCalendarWindow::DestroyWindow() 
 {
@@ -664,9 +843,19 @@ void CCalendarWindow::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
 	CWnd::OnSettingChange(uFlags, lpszSection);
 	
 	// If wallpapaer is changed, refresh
-	if(uFlags==SPI_SETDESKWALLPAPER) {
+	if(uFlags==SPI_SETDESKWALLPAPER) 
+	{
+		PollWallpaper(true);
 		OnRefresh();
 	}	
+}
+
+void CCalendarWindow::OnDisplayChange(WPARAM wParam, LPARAM lParam) 
+{
+	CWnd::OnDisplayChange(wParam, lParam);
+
+	// Refresh when the resolution changes
+	OnRefresh();
 }
 
 void CCalendarWindow::PostNcDestroy() 
@@ -681,7 +870,7 @@ BOOL CCalendarWindow::OnToolTipNotify( UINT id, NMHDR * pNMHDR, LRESULT * pResul
 	static char ToolTipText[MAX_LINE_LENGTH];
     TOOLTIPTEXT *pTTT = (TOOLTIPTEXT*)pNMHDR;
 
-	CEvent* Event=m_Event->GetEvent(pNMHDR->idFrom);
+	CEventMessage* Event=m_Event->GetEvent(pNMHDR->idFrom);
 	if(Event) {
 		strncpy(ToolTipText, Event->GetMessage(), MAX_LINE_LENGTH-1);
 		ToolTipText[MAX_LINE_LENGTH-1]='\0';
@@ -811,9 +1000,11 @@ void CCalendarWindow::OnLButtonDblClk(UINT nFlags, CPoint point)
 		CEditEvent EditEvent;
 		
 		EditEvent.SetDay(Day);
-		if(IDOK==EditEvent.DoModal()) {
+		if(IDOK == EditEvent.DoModal()) 
+		{
 			EditEvent.WriteEvent();
 			OnRefresh();
+			ConnectServer(REQUEST_SENDEVENTS);	// Send the events to the server
 		}
 	}
 
@@ -824,11 +1015,14 @@ void CCalendarWindow::OnSetevent()
 {
 	CEditEvent EditEvent;
 	
-	if(m_SelectedDay!=0) {
+	if(m_SelectedDay!=0) 
+	{
 		EditEvent.SetDay(m_SelectedDay);
-		if(IDOK==EditEvent.DoModal()) {
+		if(IDOK == EditEvent.DoModal()) 
+		{
 			EditEvent.WriteEvent();
 			OnRefresh();
+			ConnectServer(REQUEST_SENDEVENTS);	// Send the events to the server
 		}
 		m_SelectedDay=0;
 	}
@@ -925,4 +1119,152 @@ void CCalendarWindow::OnSysKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 	}
 	
 	CWnd::OnSysKeyUp(nChar, nRepCnt, nFlags);
+}
+
+LRESULT CCalendarWindow::OnCopyData(WPARAM wParam, LPARAM lParam)
+{
+	COPYDATASTRUCT* pCopyDataStruct = (COPYDATASTRUCT*) lParam;
+
+	if (pCopyDataStruct && (pCopyDataStruct->dwData == 1) && (pCopyDataStruct->cbData > 0))
+	{
+		if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarToggle") == 0)
+		{
+			RainlendarToggle(GetSafeHwnd(), NULL);
+		}
+		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarHide") == 0)
+		{
+			RainlendarHide(GetSafeHwnd(), NULL);
+		}
+		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarShow") == 0)
+		{
+			RainlendarShow(GetSafeHwnd(), NULL);
+		}
+		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarRefresh") == 0)
+		{
+			RainlendarRefresh(GetSafeHwnd(), NULL);
+		}
+		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarConfig") == 0)
+		{
+			RainlendarConfig(GetSafeHwnd(), NULL);
+		}
+		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarQuit") == 0)
+		{
+			RainlendarQuit(GetSafeHwnd(), NULL);
+		}
+		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarShowNext") == 0)
+		{
+			RainlendarShowNext(GetSafeHwnd(), NULL);
+		}
+		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarShowPrev") == 0)
+		{
+			RainlendarShowPrev(GetSafeHwnd(), NULL);
+		}
+		else if (strnicmp((const char*)pCopyDataStruct->lpData, "!RainlendarShowMonth", 20) == 0)
+		{
+			// This one takes arguments
+			if (strlen((const char*)pCopyDataStruct->lpData) > 21)
+			{
+				RainlendarShowMonth(GetSafeHwnd(), (const char*)pCopyDataStruct->lpData + 21);
+			}
+		}
+		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarShowCurrent") == 0)
+		{
+			RainlendarShowCurrent(GetSafeHwnd(), NULL);
+		}
+		else
+		{
+			CString error = "Unknown !bang: ";
+			error += (const char*)pCopyDataStruct->lpData;
+			MessageBox(error, "Rainlendar", MB_OK);
+			return FALSE;
+		}
+	}
+	else
+	{
+		return FALSE;
+	}
+	
+	return TRUE;
+}
+
+void CCalendarWindow::OnAbout() 
+{
+	CString sz;
+	sz = "Rainlendar version ";
+	sz += VERSION;
+	sz += "\n(Build on ";
+	sz += __DATE__;
+	sz += ")\n\nGet the latest version from:\nwww.iki.fi/rainy\n\n";
+						
+	MessageBox(sz, "Rainlendar", MB_OK);
+}
+
+UINT CCalendarWindow::OnNcHitTest(CPoint point) 
+{
+	if(c_Config.GetMovable())
+	{
+		return HTCAPTION;
+	}
+	return CWnd::OnNcHitTest(point);
+}
+
+
+void CCalendarWindow::OnMouseMove(UINT nFlags, CPoint point) 
+{
+	if(c_Config.GetMouseHide())
+	{
+		if(GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000 || GetKeyState(VK_MENU) & 0x8000)
+		{
+			// If Alt, shift or control is down, do not hide the window
+			return;
+		}
+
+		// Hide window if it is visible
+		if(IsWindowVisible()) HideWindow();
+	}	
+	CWnd::OnMouseMove(nFlags, point);
+}
+
+void CCalendarWindow::OnNcMouseMove(UINT nHitTest, CPoint point) 
+{
+	if(c_Config.GetMouseHide())
+	{
+		if(GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000 || GetKeyState(VK_MENU) & 0x8000)
+		{
+			// If Alt, shift or control is down, do not hide the window
+			return;
+		}
+
+		// Hide window if it is visible
+		if(IsWindowVisible()) HideWindow();
+	}
+	
+	CWnd::OnNcMouseMove(nHitTest, point);
+}
+
+void CCalendarWindow::ShowWindowIfAppropriate()
+{
+	if(c_Config.GetMouseHide())
+	{
+		if(GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000 || GetKeyState(VK_MENU) & 0x8000)
+		{
+			// If Alt, shift or control is down, do not show the window
+			return;
+		}
+
+		bool inside = false;
+		POINT pos;
+		RECT rect;
+
+		GetCursorPos(&pos);
+		GetWindowRect(&rect);
+
+		if(rect.left <= pos.x && rect.right >= pos.x &&
+		   rect.top <= pos.y && rect.bottom >= pos.y) inside = true;
+
+		if(m_Hidden && !inside)
+		{
+			ShowWindow();
+		}
+	}
 }

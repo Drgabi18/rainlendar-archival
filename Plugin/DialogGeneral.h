@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/DialogGeneral.h,v 1.2 2002/01/15 17:58:42 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/DialogGeneral.h,v 1.3 2002/02/27 18:56:13 rainy Exp $
 
   $Log: DialogGeneral.h,v $
+  Revision 1.3  2002/02/27 18:56:13  rainy
+  Added a lot of new options in the dialog.
+
   Revision 1.2  2002/01/15 17:58:42  rainy
   Removed the StartDelay
 
@@ -59,6 +62,9 @@ public:
 	BOOL	m_StartHidden;
 	BOOL	m_DisableHotkeys;
 	BOOL	m_UseWindowName;
+	BOOL	m_PollWallpaper;
+	BOOL	m_Movable;
+	BOOL	m_MouseHide;
 	//}}AFX_DATA
 
 
@@ -87,6 +93,15 @@ protected:
 	afx_msg void OnStartHidden();
 	afx_msg void OnDisableHotkeys();
 	afx_msg void OnUseWindowName();
+	afx_msg void OnPollWallpaper();
+	afx_msg void OnBackgroundTile();
+	afx_msg void OnBackgroundStretch();
+	afx_msg void OnBackgroundCopy();
+	afx_msg void OnWindowMovable();
+	afx_msg void OnWindowNormal();
+	afx_msg void OnWindowOnbottom();
+	afx_msg void OnWindowOntop();
+	afx_msg void OnWindowMousehide();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

@@ -1,5 +1,31 @@
-// DialogWeekNumbers.cpp : implementation file
-//
+/*
+  Copyright (C) 2000 Kimmo Pekkola
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+/*
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/DialogWeekNumbers.cpp,v 1.3 2002/02/27 18:55:52 rainy Exp $
+
+  $Log: DialogWeekNumbers.cpp,v $
+  Revision 1.3  2002/02/27 18:55:52  rainy
+  Added support for new aligns
+
+  Revision 1.2  2002/01/27 16:20:45  rainy
+  Added header comment
+
+*/
 
 #include "stdafx.h"
 #include "rainlendardll.h"
@@ -76,16 +102,41 @@ void CDialogWeekNumbers::UpdateConfig()
 		CCalendarWindow::c_Config.SetWeekNumbersRasterizer(CRasterizer::TYPE_FONT);
 	}
 
-	switch(m_Align.GetCurSel()) {
+	int align = 0;
+	switch(m_Align.GetCurSel()) 
+	{
+	case 0:
+		align = CRasterizer::ALIGN_TOP | CRasterizer::ALIGN_LEFT;
+		break;
 	case 1:
-		CCalendarWindow::c_Config.SetWeekNumbersAlign(CRasterizer::ALIGN_CENTER);
+		align = CRasterizer::ALIGN_TOP | CRasterizer::ALIGN_HCENTER;
 		break;
 	case 2:
-		CCalendarWindow::c_Config.SetWeekNumbersAlign(CRasterizer::ALIGN_BOTTOM);
+		align = CRasterizer::ALIGN_TOP | CRasterizer::ALIGN_RIGHT;
+		break;
+	case 3:
+		align = CRasterizer::ALIGN_VCENTER | CRasterizer::ALIGN_LEFT;
+		break;
+	case 4:
+		align = CRasterizer::ALIGN_VCENTER | CRasterizer::ALIGN_HCENTER;
+		break;
+	case 5:
+		align = CRasterizer::ALIGN_VCENTER | CRasterizer::ALIGN_RIGHT;
+		break;
+	case 6:
+		align = CRasterizer::ALIGN_BOTTOM | CRasterizer::ALIGN_LEFT;
+		break;
+	case 7:
+		align = CRasterizer::ALIGN_BOTTOM | CRasterizer::ALIGN_HCENTER;
+		break;
+	case 8:
+		align = CRasterizer::ALIGN_BOTTOM | CRasterizer::ALIGN_RIGHT;
 		break;
 	default:
-		CCalendarWindow::c_Config.SetWeekNumbersAlign(CRasterizer::ALIGN_TOP);
+		align = CRasterizer::ALIGN_VCENTER | CRasterizer::ALIGN_LEFT;
 	}
+	CCalendarWindow::c_Config.SetWeekNumbersAlign((CRasterizer::ALIGN)align);
+
 
 	switch(GetCheckedRadioButton(IDC_WEEKNUM_COMPONENTS_10, IDC_WEEKNUM_COMPONENTS_54)) {
 	case IDC_WEEKNUM_COMPONENTS_54:
@@ -132,17 +183,48 @@ BOOL CDialogWeekNumbers::OnInitDialog()
 		m_Rasterizer.SetCurSel(0);
 	}
 	
-	switch(CCalendarWindow::c_Config.GetWeekNumbersAlign()) {
-	case CRasterizer::ALIGN_TOP:
+	switch(CCalendarWindow::c_Config.GetWeekNumbersAlign()) 
+	{
+	case (CRasterizer::ALIGN_TOP | CRasterizer::ALIGN_LEFT):
 		m_Align.SetCurSel(0);
 		break;
-	case CRasterizer::ALIGN_CENTER:
+
+	case (CRasterizer::ALIGN_TOP | CRasterizer::ALIGN_HCENTER):
 		m_Align.SetCurSel(1);
 		break;
-	case CRasterizer::ALIGN_BOTTOM:
-	default:
+
+	case (CRasterizer::ALIGN_TOP | CRasterizer::ALIGN_RIGHT):
 		m_Align.SetCurSel(2);
+		break;
+
+	case (CRasterizer::ALIGN_VCENTER | CRasterizer::ALIGN_LEFT):
+		m_Align.SetCurSel(3);
+		break;
+
+	case (CRasterizer::ALIGN_VCENTER | CRasterizer::ALIGN_HCENTER):
+		m_Align.SetCurSel(4);
+		break;
+
+	case (CRasterizer::ALIGN_VCENTER | CRasterizer::ALIGN_RIGHT):
+		m_Align.SetCurSel(5);
+		break;
+
+	case (CRasterizer::ALIGN_BOTTOM | CRasterizer::ALIGN_LEFT):
+		m_Align.SetCurSel(6);
+		break;
+
+	case (CRasterizer::ALIGN_BOTTOM | CRasterizer::ALIGN_HCENTER):
+		m_Align.SetCurSel(7);
+		break;
+
+	case (CRasterizer::ALIGN_BOTTOM | CRasterizer::ALIGN_RIGHT):
+		m_Align.SetCurSel(8);
+		break;
+
+	default:
+		m_Align.SetCurSel(3);
 	}
+
 
 	switch(CCalendarWindow::c_Config.GetWeekNumbersNumOfComponents()) {
 	case 54:

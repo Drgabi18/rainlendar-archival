@@ -57,7 +57,7 @@ LINK32=link.exe
 # ADD LINK32 lsapi.lib Rainlendar.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386 /out:"Release/Rainlendar.exe" /libpath:"..\..\..\3rdparty\ls-b24\lsapi\Release" /libpath:"..\Plugin\Release\\"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
-PostBuild_Cmds=Copy     Release\Rainlendar.exe     ..\TestBench\ 
+PostBuild_Cmds=Copy       Release\Rainlendar.exe       ..\TestBench\ 
 # End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "Host - Win32 Debug"
@@ -74,7 +74,7 @@ PostBuild_Cmds=Copy     Release\Rainlendar.exe     ..\TestBench\
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "..\..\..\3rdparty\ls-b24" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /FD /GZ /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "..\..\..\3rdparty\ls-b24" /I "..\..\..\3rdparty\ssobjects\\" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /FD /GZ /c
 # SUBTRACT CPP /YX
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
@@ -85,7 +85,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib lsapi.lib Rainlendar.lib /nologo /subsystem:windows /debug /machine:I386 /out:"Debug/Rainlendar.exe" /pdbtype:sept /libpath:"..\..\..\3rdparty\ls-b24\lsapi\Debug" /libpath:"..\Plugin\Debug\\"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib lsapi.lib Rainlendar.lib /nologo /subsystem:windows /debug /machine:I386 /out:"Debug/Rainlendar.exe" /pdbtype:sept /libpath:"..\Plugin\Debug\\" /libpath:"..\..\..\3rdparty\ls-b24\lsapi\Debug" /libpath:"..\..\..\3rdparty\ssobjects\\"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
 PostBuild_Cmds=Copy Debug\Rainlendar.exe ..\TestBench\Rainlendar.exe

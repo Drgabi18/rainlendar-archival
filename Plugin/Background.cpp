@@ -16,9 +16,13 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.cpp,v 1.3 2002/01/15 17:59:44 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.cpp,v 1.4 2002/02/27 18:59:00 rainy Exp $
 
   $Log: Background.cpp,v $
+  Revision 1.4  2002/02/27 18:59:00  rainy
+  Fixed multimonitor stuff.
+  Added support for background stretching.
+
   Revision 1.3  2002/01/15 17:59:44  rainy
   Now uses different way to get the desktop image.
 
@@ -86,9 +90,19 @@ void CBackground::Load(CString& Filename)
 	CString PicName;
 	int End, Len;
 
-	if(-1==Filename.Find(':', 0)) {
+	if (!CCalendarWindow::GetDummyLitestep())
+	{
+		char buffer[1024];
+		VarExpansion(buffer, Filename);
+		Filename = buffer;
+	}
+
+	if(-1==Filename.Find(':', 0)) 
+	{
 		PicName.Format("%s%s", CCalendarWindow::c_Config.GetPath(), Filename);
-	} else {
+	} 
+	else 
+	{
 		PicName=Filename;
 	}
 	BM=LoadLSImage(PicName, NULL);
@@ -157,10 +171,11 @@ void CBackground::Create(int Width, int Height)
 
 	ReleaseDC(Desktop, DDC);
 
-	RealWidth=max(Width, m_Width);
-	RealHeight=max(Height, m_Height);
+	RealWidth = max(Width, m_Width);
+	RealHeight = max(Height, m_Height);
 
-	if(m_Width<Width || m_Height<Height) {
+	if(m_Width < Width || m_Height < Height) 
+	{
 		// Must tile the background and possible alphamap
 
 		OldBitmap2=(HBITMAP)SelectObject(BGDC, m_Image);
@@ -168,28 +183,47 @@ void CBackground::Create(int Width, int Height)
 		tmpBitmap=CreateCompatibleBitmap(BGDC, RealWidth, RealHeight);
 		if(tmpBitmap==NULL) throw ERR_BACKGROUND;
 
-		if(m_Alpha) {
+		if(m_Alpha) 
+		{
 			tmpBitmapA=CreateCompatibleBitmap(BGDC, RealWidth, RealHeight);
 			if(tmpBitmapA==NULL) throw ERR_BACKGROUND;
 		}
 
 		OldBitmap=(HBITMAP)SelectObject(tmpDC, tmpBitmap);
 
-		// Tile the background
-		for(j=0; j<RealHeight; j+=m_Height) {
-			for(i=0; i<RealWidth; i+=m_Width) {
-				BitBlt(tmpDC, i, j, min(m_Width, RealWidth-i), min(m_Height, RealHeight-j), BGDC, 0, 0, SRCCOPY);
-			}
-		}
-
-		// Alpha must be tiled too
-		if(m_Alpha) {
-			SelectObject(tmpDC, tmpBitmapA);
-			SelectObject(BGDC, m_AlphaImage);
+		if(CCalendarWindow::c_Config.GetBackgroundMode() == MODE_TILE)
+		{
+			// Tile the background
 			for(j=0; j<RealHeight; j+=m_Height) {
 				for(i=0; i<RealWidth; i+=m_Width) {
 					BitBlt(tmpDC, i, j, min(m_Width, RealWidth-i), min(m_Height, RealHeight-j), BGDC, 0, 0, SRCCOPY);
 				}
+			}
+
+			// Alpha must be tiled too
+			if(m_Alpha) {
+				SelectObject(tmpDC, tmpBitmapA);
+				SelectObject(BGDC, m_AlphaImage);
+				for(j=0; j<RealHeight; j+=m_Height) {
+					for(i=0; i<RealWidth; i+=m_Width) {
+						BitBlt(tmpDC, i, j, min(m_Width, RealWidth-i), min(m_Height, RealHeight-j), BGDC, 0, 0, SRCCOPY);
+					}
+				}
+			}
+		}
+		else
+		{
+			SetStretchBltMode(tmpDC, HALFTONE);
+			SetBrushOrgEx(tmpDC, 0, 0, NULL);
+			StretchBlt(tmpDC, 0, 0, Width, Height, BGDC, 0, 0, m_Width, m_Width, SRCCOPY);
+
+			// Alpha must be stretched too
+			if(m_Alpha) 
+			{
+				SelectObject(tmpDC, tmpBitmapA);
+				SelectObject(BGDC, m_AlphaImage);
+
+				StretchBlt(tmpDC, 0, 0, Width, Height, BGDC, 0, 0, m_Width, m_Width, SRCCOPY);
 			}
 		}
 
@@ -199,7 +233,8 @@ void CBackground::Create(int Width, int Height)
 		m_Image.DeleteObject();
 		m_Image.Attach(tmpBitmap);
 
-		if(m_Alpha) {
+		if(m_Alpha) 
+		{
 			m_AlphaImage.DeleteObject();
 			m_AlphaImage.Attach(tmpBitmapA);
 		}
@@ -209,24 +244,25 @@ void CBackground::Create(int Width, int Height)
 	}
 
 	if(m_Width==0 || m_Height==0) return;
-	
-	// Take a copy of the BG
-	CopyBackground(m_Width, m_Height);
 
-	if(m_Alpha) {
-		// ..and create and alphamasked version of the background bitmap
-		CRasterizerBitmap::CreateAlpha(m_Image, m_AlphaImage, m_Background);
-		m_AlphaImage.DeleteObject();	// We won't need this one anymore
+	if (m_Alpha || CCalendarWindow::c_Config.GetBackgroundMode() == CBackground::MODE_COPY)
+	{
+		// Take a copy of the BG
+		CopyBackground(m_Width, m_Height);
+
+		if(m_Alpha) 
+		{
+			// ..and create and alphamasked version of the background bitmap
+			CRasterizerBitmap::CreateAlpha(m_Image, m_AlphaImage, m_Background);
+			m_AlphaImage.DeleteObject();	// We won't need this one anymore
+			m_Background.DeleteObject();	// Delete the old (if there was one)
+			m_Background.Attach(m_Image.Detach());
+		} 
+	}
+	else 
+	{
 		m_Background.DeleteObject();	// Delete the old (if there was one)
 		m_Background.Attach(m_Image.Detach());
-	} else {
-		// Transparentblit for the magic pink
-		OldBitmap=(HBITMAP)SelectObject(tmpDC, m_Image);
-		OldBitmap2=(HBITMAP)SelectObject(BGDC, m_Background);
-		TransparentBltLS(BGDC, 0, 0, m_Width, m_Height, tmpDC, 0, 0, RGB(255,0,255));
-		SelectObject(tmpDC, OldBitmap);
-		SelectObject(BGDC, OldBitmap2);
-		m_Image.DeleteObject();	// No need for this
 	}
 
 	assert(m_Image.Detach()==NULL);
@@ -362,8 +398,8 @@ HBITMAP CBackground::GetWallpaper()
 
 	// Get the screen size
 	GetClientRect(GetDesktopWindow(), &screenRect); 
-
-	HDC winDC = GetWindowDC(*m_CalendarWindow);
+	
+	HDC winDC = GetDC(GetDesktopWindow());
 	if(winDC == NULL) throw ERR_BACKGROUND;
 
 	HDC tmpDC = CreateCompatibleDC(winDC);
@@ -372,7 +408,7 @@ HBITMAP CBackground::GetWallpaper()
 	bgBitmap = CreateCompatibleBitmap(winDC, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top);
 	if(bgBitmap==NULL) throw ERR_BACKGROUND;
 
-	ReleaseDC(*m_CalendarWindow, winDC);
+	ReleaseDC(GetDesktopWindow(), winDC);
 
 	HBITMAP oldBitmap = (HBITMAP)SelectObject(tmpDC, bgBitmap);
 	
@@ -392,48 +428,73 @@ HBITMAP CBackground::GetWallpaper()
 		BITMAP bm;
 		GetObject(bitmap, sizeof(BITMAP), &bm);
 
-		// If the window is off the primary monitor, we'll have to modify the values a bit
-		POINT point = {windowRect.left, windowRect.top };
-		HMONITOR monitor = MonitorFromPoint(point, MONITOR_DEFAULTTOPRIMARY);
-		if(monitor)
+		// We'll have to do the multimonitor stuff like this, cooz 95 or NT don't have the functions.
+		// Multimon?
+		if (GetSystemMetrics(SM_CMONITORS) > 0)
 		{
-			MONITORINFO monInfo;
-			monInfo.cbSize = sizeof(MONITORINFO);
-			GetMonitorInfo(monitor, &monInfo);
-			if(monInfo.dwFlags != MONITORINFOF_PRIMARY)
+			typedef HMONITOR (WINAPI * FPMONITORFROMWINDOW)( HWND hwnd, DWORD dwFlags);
+			typedef BOOL (WINAPI * FPGETMONITORINFO)(HMONITOR hMonitor, LPMONITORINFO lpmi);
+			FPMONITORFROMWINDOW fpMonitorFromWindow;
+			FPGETMONITORINFO	fpGetMonitorInfo;
+
+			HINSTANCE h = LoadLibrary(_T("user32.dll"));
+			
+			fpMonitorFromWindow = (FPMONITORFROMWINDOW)GetProcAddress(h,_T("MonitorFromWindow"));
+			fpGetMonitorInfo = (FPGETMONITORINFO)GetProcAddress(h,_T("GetMonitorInfoA"));
+			
+			// If the window is off the primary monitor, we'll have to modify the values a bit
+			POINT point = {windowRect.left, windowRect.top };
+			HMONITOR monitor = fpMonitorFromWindow(m_CalendarWindow->GetSafeHwnd(), MONITOR_DEFAULTTONEAREST);
+
+			if (monitor)
 			{
-				// Not a primary monitor -> adjust the values
-				if(tile)
+				MONITORINFO monInfo;
+				monInfo.cbSize = sizeof(MONITORINFO);
+				fpGetMonitorInfo(monitor, &monInfo);
+				if(monInfo.dwFlags != MONITORINFOF_PRIMARY)
 				{
-					screenRect.left = 0;
-					screenRect.top = 0;
-					screenRect.right = monInfo.rcMonitor.right;
-					screenRect.bottom = monInfo.rcMonitor.bottom;
-					if(screenRect.left > screenRect.right) 
+					// Not a primary monitor -> adjust the values
+					if(tile)
 					{
-						screenRect.left = screenRect.right;
-						screenRect.right = 0;
+						screenRect.left = 0;
+						screenRect.top = 0;
+						screenRect.right = monInfo.rcMonitor.right;
+						screenRect.bottom = monInfo.rcMonitor.bottom;
+						if(screenRect.left > screenRect.right) 
+						{
+							screenRect.left = screenRect.right;
+							screenRect.right = 0;
+						}
+						if(screenRect.top > screenRect.bottom) 
+						{
+							screenRect.top = screenRect.bottom;
+							screenRect.bottom = 0;
+						}
 					}
-					if(screenRect.top > screenRect.bottom) 
+					else if(stretch)
 					{
-						screenRect.top = screenRect.bottom;
-						screenRect.bottom = 0;
+						windowRect.left -= monInfo.rcMonitor.left + (((monInfo.rcMonitor.right - monInfo.rcMonitor.left) - screenRect.right) / 2);
+						windowRect.top -= monInfo.rcMonitor.top + (((monInfo.rcMonitor.bottom - monInfo.rcMonitor.top) - screenRect.bottom) / 2);;
 					}
-				}
-				else
-				{
-					windowRect.left -= monInfo.rcMonitor.left;
-					windowRect.right -= monInfo.rcMonitor.left;
-					windowRect.top -= monInfo.rcMonitor.top;
-					windowRect.bottom -= monInfo.rcMonitor.top;
-					screenRect.right = (monInfo.rcMonitor.right - monInfo.rcMonitor.left);
-					screenRect.bottom = (monInfo.rcMonitor.bottom - monInfo.rcMonitor.top);
+					else
+					{
+						windowRect.left -= monInfo.rcMonitor.left;
+						windowRect.right -= monInfo.rcMonitor.left;
+						windowRect.top -= monInfo.rcMonitor.top;
+						windowRect.bottom -= monInfo.rcMonitor.top;
+						screenRect.right = (monInfo.rcMonitor.right - monInfo.rcMonitor.left);
+						screenRect.bottom = (monInfo.rcMonitor.bottom - monInfo.rcMonitor.top);
+					}
 				}
 			}
+			FreeLibrary(h);
 		}
 
 		if(stretch)
 		{
+			SetStretchBltMode(tmpDC, HALFTONE);
+			SetBrushOrgEx(tmpDC, 0, 0, NULL);
+
 			StretchBlt(tmpDC, -windowRect.left, -windowRect.top, screenRect.right - screenRect.left, screenRect.bottom - screenRect.top,
 					   bgDC, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
 		}

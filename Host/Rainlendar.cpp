@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Host/Rainlendar.cpp,v 1.3 2002/01/15 17:58:09 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Host/Rainlendar.cpp,v 1.4 2002/02/27 18:14:19 rainy Exp $
 
   $Log: Rainlendar.cpp,v $
+  Revision 1.4  2002/02/27 18:14:19  rainy
+  Rainlendar !Bangs can be given as arguments.
+
   Revision 1.3  2002/01/15 17:58:09  rainy
   Now adds \ to the end of the path if necessary.
   Uses Default folder if command line is empty.
@@ -37,6 +40,7 @@
 BOOL InitApplication(HINSTANCE);
 HWND InitInstance(HINSTANCE, INT);
 LONG APIENTRY MainWndProc(HWND, UINT, UINT, LONG);
+void Bang(HWND hWnd, const char* command);
 
 static char* WinClass;
 static char* WinName;
@@ -56,19 +60,34 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	MSG msg;
 
 	// If Litestep is not running disquise this window as Litestep's so that LoadBitmap works
-	if(NULL==GetLitestepWnd()) {
+	if(NULL==GetLitestepWnd()) 
+	{
 		WinClass="TApplication";
 		WinName="LiteStep";
-	} else {
+	} 
+	else 
+	{
 		WinClass="DummyRainWClass";
 		WinName="Rainlendar control window";
 	}
 
-	UNREFERENCED_PARAMETER(lpCmdLine);
-
 	if(lpCmdLine==NULL || lpCmdLine[0]=='\0') 
 	{
 		lpCmdLine = "Default\\";
+	}
+
+	if(!hPrevInstance) 
+	{
+		if (!InitApplication(hInstance)) return FALSE;
+	}
+
+	HWND hWnd = InitInstance(hInstance, nCmdShow);
+
+	if (lpCmdLine[0] == '!')
+	{
+		// It's a !bang
+		Bang(hWnd, lpCmdLine);
+		return 0;
 	}
 
 	Length=strlen(lpCmdLine);
@@ -95,12 +114,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		return 0;
 	}
 	fclose(File);
-
-	if(!hPrevInstance) {
-		if (!InitApplication(hInstance)) return FALSE;
-	}
-
-	HWND hWnd = InitInstance(hInstance, nCmdShow);
 
 	// Initialize from exe
 	Initialize(true, lpCmdLine);
@@ -159,6 +172,32 @@ HWND InitInstance(HINSTANCE hInstance, INT nCmdShow)
 		hInstance,
 		NULL
 	);
+}
+
+void Bang(HWND hWnd, const char* command)
+{
+	// Check if Rainlendar is running
+	HWND wnd = FindWindow("Rainlendar", "Rainlendar");
+	if (wnd == NULL)
+	{
+		wnd = FindWindow("Rainlendar", NULL);
+	}
+
+	if (wnd != NULL)
+	{
+		COPYDATASTRUCT copyData;
+
+		copyData.dwData = 1;
+		copyData.cbData = strlen(command) + 1;
+		copyData.lpData = (void*)command;
+
+		// Send the bang to the Rainlendar window
+		SendMessage(wnd, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&copyData);
+	}
+	else
+	{
+		MessageBox(hWnd, "Rainlendar is not running.\nUnable to send the !bang to it.", "Rainlendar", MB_OK);
+	}
 }
 
 LONG APIENTRY MainWndProc(HWND hWnd, UINT message, UINT wParam, LONG lParam)

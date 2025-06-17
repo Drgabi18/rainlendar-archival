@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.cpp,v 1.3 2002/01/10 16:46:35 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.cpp,v 1.5 2002/02/27 18:53:51 rainy Exp $
 
   $Log: ItemEvent.cpp,v $
+  Revision 1.5  2002/02/27 18:53:51  rainy
+  Event tooltips are not created inless the window is there.
+
+  Revision 1.4  2002/01/27 16:03:25  rainy
+  Changed CEvent to CEventMessage to avoid name clash
+
   Revision 1.3  2002/01/10 16:46:35  rainy
   Added possibility to show the events in the calendar window.
   Added support for event specific colors/bitmaps.
@@ -149,7 +155,7 @@ void CItemEvent::ReadEvents()
 		if(m_Events[i]) delete m_Events[i];		// Kill the old ones
 
 		if(GetPrivateProfileString( Date, "Message", "", tmpSz, 255, IniPath) > 0) {
-			m_Events[i]=new CEvent;
+			m_Events[i]=new CEventMessage;
 			if(m_Events[i]) 
 			{
 				COLORREF color;
@@ -294,6 +300,8 @@ void CItemEvent::AddToolTips(CCalendarWindow* CalendarWnd)
 	CTime MonthsFirst=CCalendarWindow::c_CurrentDate;
 	int X, Y, W, H, i, j, Day;
 	RECT Rect;
+
+	if (!IsWindow(CalendarWnd->GetToolTip().GetSafeHwnd())) return;
 
 	W=CCalendarWindow::c_Config.GetDaysW()/7;	// 7 Columns
 	H=CCalendarWindow::c_Config.GetDaysH()/6;	// 6 Rows

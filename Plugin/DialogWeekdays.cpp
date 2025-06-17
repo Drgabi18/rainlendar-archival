@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/DialogWeekdays.cpp,v 1.2 2001/12/23 10:00:18 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/DialogWeekdays.cpp,v 1.3 2002/02/27 18:55:52 rainy Exp $
 
   $Log: DialogWeekdays.cpp,v $
+  Revision 1.3  2002/02/27 18:55:52  rainy
+  Added support for new aligns
+
   Revision 1.2  2001/12/23 10:00:18  rainy
   Renamed the static variables (C_ -> c_)
 
@@ -100,16 +103,41 @@ void CDialogWeekdays::UpdateConfig()
 		CCalendarWindow::c_Config.SetWeekdaysRasterizer(CRasterizer::TYPE_FONT);
 	}
 
-	switch(m_Align.GetCurSel()) {
+	int align = 0;
+	switch(m_Align.GetCurSel()) 
+	{
+	case 0:
+		align = CRasterizer::ALIGN_TOP | CRasterizer::ALIGN_LEFT;
+		break;
 	case 1:
-		CCalendarWindow::c_Config.SetWeekdaysAlign(CRasterizer::ALIGN_CENTER);
+		align = CRasterizer::ALIGN_TOP | CRasterizer::ALIGN_HCENTER;
 		break;
 	case 2:
-		CCalendarWindow::c_Config.SetWeekdaysAlign(CRasterizer::ALIGN_RIGHT);
+		align = CRasterizer::ALIGN_TOP | CRasterizer::ALIGN_RIGHT;
+		break;
+	case 3:
+		align = CRasterizer::ALIGN_VCENTER | CRasterizer::ALIGN_LEFT;
+		break;
+	case 4:
+		align = CRasterizer::ALIGN_VCENTER | CRasterizer::ALIGN_HCENTER;
+		break;
+	case 5:
+		align = CRasterizer::ALIGN_VCENTER | CRasterizer::ALIGN_RIGHT;
+		break;
+	case 6:
+		align = CRasterizer::ALIGN_BOTTOM | CRasterizer::ALIGN_LEFT;
+		break;
+	case 7:
+		align = CRasterizer::ALIGN_BOTTOM | CRasterizer::ALIGN_HCENTER;
+		break;
+	case 8:
+		align = CRasterizer::ALIGN_BOTTOM | CRasterizer::ALIGN_RIGHT;
 		break;
 	default:
-		CCalendarWindow::c_Config.SetWeekdaysAlign(CRasterizer::ALIGN_LEFT);
+		align = CRasterizer::ALIGN_VCENTER | CRasterizer::ALIGN_LEFT;
 	}
+	CCalendarWindow::c_Config.SetWeekdaysAlign((CRasterizer::ALIGN)align);
+
 
 }
 
@@ -149,17 +177,48 @@ BOOL CDialogWeekdays::OnInitDialog()
 		m_Rasterizer.SetCurSel(0);
 	}
 	
-	switch(CCalendarWindow::c_Config.GetWeekdaysAlign()) {
-	case CRasterizer::ALIGN_RIGHT:
-		m_Align.SetCurSel(2);
+	switch(CCalendarWindow::c_Config.GetWeekdaysAlign()) 
+	{
+	case (CRasterizer::ALIGN_TOP | CRasterizer::ALIGN_LEFT):
+		m_Align.SetCurSel(0);
 		break;
-	case CRasterizer::ALIGN_CENTER:
+
+	case (CRasterizer::ALIGN_TOP | CRasterizer::ALIGN_HCENTER):
 		m_Align.SetCurSel(1);
 		break;
-	case CRasterizer::ALIGN_LEFT:
+
+	case (CRasterizer::ALIGN_TOP | CRasterizer::ALIGN_RIGHT):
+		m_Align.SetCurSel(2);
+		break;
+
+	case (CRasterizer::ALIGN_VCENTER | CRasterizer::ALIGN_LEFT):
+		m_Align.SetCurSel(3);
+		break;
+
+	case (CRasterizer::ALIGN_VCENTER | CRasterizer::ALIGN_HCENTER):
+		m_Align.SetCurSel(4);
+		break;
+
+	case (CRasterizer::ALIGN_VCENTER | CRasterizer::ALIGN_RIGHT):
+		m_Align.SetCurSel(5);
+		break;
+
+	case (CRasterizer::ALIGN_BOTTOM | CRasterizer::ALIGN_LEFT):
+		m_Align.SetCurSel(6);
+		break;
+
+	case (CRasterizer::ALIGN_BOTTOM | CRasterizer::ALIGN_HCENTER):
+		m_Align.SetCurSel(7);
+		break;
+
+	case (CRasterizer::ALIGN_BOTTOM | CRasterizer::ALIGN_RIGHT):
+		m_Align.SetCurSel(8);
+		break;
+
 	default:
-		m_Align.SetCurSel(0);
+		m_Align.SetCurSel(3);
 	}
+
 
 	m_RealFont=CCalendarWindow::c_Config.GetWeekdaysFont();
 	m_Font=m_RealFont.Mid(m_RealFont.ReverseFind('/')+1);

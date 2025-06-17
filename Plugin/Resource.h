@@ -29,6 +29,7 @@
 #define IDC_DAYS_FONTNAME               1010
 #define IDD_EDITEVENT                   1010
 #define IDC_DAYS_BROWSE                 1011
+#define IDD_SERVER                      1011
 #define IDC_DAYS_COMPONENTS_10          1012
 #define IDC_DAYS_COMPONENTS_32          1013
 #define IDC_DAYS_ALIGN                  1014
@@ -109,6 +110,23 @@
 #define IDC_EDITEVENT_BITMAP            1093
 #define IDC_EDITEVENT_LABEL             1094
 #define IDC_EDITEVENT_FONTCOLOR         1095
+#define IDC_SERVER_ENABLE               1096
+#define IDC_SERVER_ADDRESS              1097
+#define IDC_SERVER_PORT                 1098
+#define IDC_SERVER_ID                   1099
+#define IDC_SERVER_FREQUENCY            1101
+#define IDC_SERVER_SYNC                 1104
+#define IDC_SERVER_STATUS               1107
+#define IDC_SERVER_STARTUP              1108
+#define IDC_POLL_WALLPAPER              1110
+#define IDC_BACKGROUND_TILE             1111
+#define IDC_BACKGROUND_STRETCH          1112
+#define IDC_BACKGROUND_COPY             1113
+#define IDC_WINDOW_MOVABLE              1114
+#define IDC_WINDOW_ONBOTTOM             1115
+#define IDC_WINDOW_NORMAL               1116
+#define IDC_WINDOW_ONTOP                1117
+#define IDC_WINDOW_MOUSEHIDE            1118
 #define ID_RELOAD                       32771
 #define ID_CONFIG                       32772
 #define ID_POPUP_SELECTMONTH_JANUARY    32774
@@ -129,14 +147,15 @@
 #define ID_POPUP_SELECTMONTH_PREVMONTH  32789
 #define ID_SETEVENT                     32790
 #define ID_POPUP_SELECTMONTH_CURRENTMONTH 32791
+#define ID_ABOUT                        32793
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        1014
-#define _APS_NEXT_COMMAND_VALUE         32793
-#define _APS_NEXT_CONTROL_VALUE         1096
+#define _APS_NEXT_COMMAND_VALUE         32794
+#define _APS_NEXT_CONTROL_VALUE         1116
 #define _APS_NEXT_SYMED_VALUE           1000
 #endif
 #endif

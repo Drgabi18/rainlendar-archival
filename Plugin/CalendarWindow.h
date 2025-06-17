@@ -16,9 +16,25 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.h,v 1.4 2002/01/15 17:59:18 rainy Exp $
+  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.h,v 1.7 2002/02/27 19:12:50 rainy Exp $
 
   $Log: CalendarWindow.h,v $
+  Revision 1.7  2002/02/27 19:12:50  rainy
+  Wallpaper changes can be polled.
+  Added ontop and normal window positioning.
+  Window can be moved.
+  Refreshing is automatic on resolution changes.
+  Window can be hidden on mouse over.
+  Added an About dialog.
+  Bangs can be supplied with WM_COPYDATA.
+
+  Revision 1.6  2002/01/29 17:35:38  rainy
+  Added server communication
+
+  Revision 1.5  2002/01/27 16:12:44  rainy
+  Changed CEvent to CEventMessage to avoid name clash.
+  Added Server stuff.
+
   Revision 1.4  2002/01/15 17:59:18  rainy
   Changed the way refreshing is done.
 
@@ -59,6 +75,7 @@
 #include "DialogMonth.h"
 #include "DialogYear.h"
 #include "DialogEvent.h"
+#include "DialogServer.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CCalendarWindow window
@@ -80,12 +97,17 @@ protected:
 	CBackground m_Background;
 	CBitmap* m_DoubleBuffer;
 
+	CString m_WallpaperName;
+
 	int m_Width;
 	int m_Height;
 
 	bool m_FirstExecute;
+	bool m_Hidden;
 
 	int m_SelectedDay;
+
+	unsigned int m_ConnectionCounter;
 
 	CItemDays* m_Days;
 	CItemEvent* m_Event;
@@ -103,6 +125,7 @@ protected:
 	CDialogMonth m_DialogMonth;
 	CDialogYear m_DialogYear;
 	CDialogEvent m_DialogEvent;
+	CDialogServer m_DialogServer;
 
 	CToolTipCtrl m_ToolTip;
 
@@ -118,8 +141,8 @@ public:
 	void RefreshWindow() { OnRefresh(); };
 	void ShowConfig() { OnConfig(); };
 	void QuitRainlendar() { OnQuit(); };
-	void HideWindow() { CWnd::ShowWindow(SW_HIDE); };
-	void ShowWindow() { CWnd::ShowWindow(SW_SHOWNOACTIVATE); };
+	void HideWindow() { CWnd::ShowWindow(SW_HIDE); m_Hidden = true; };
+	void ShowWindow() { CWnd::ShowWindow(SW_SHOWNOACTIVATE); m_Hidden = false; };
 	void ToggleWindow();
 	void ShowMonth(int Month, int Year);
 	void ShowNextMonth() { OnCommand(ID_POPUP_SELECTMONTH_NEXTMONTH, NULL); };
@@ -133,10 +156,13 @@ public:
 	static wharfDataType* GetWharfData() { return c_WharfData; };
 
 private:
+	void PollWallpaper(bool set);
+	void ConnectServer(int type);
 	void FillMenu(CMenu& Menu, CPoint point);
 	void Refresh();
 	void CalcWindowSize();
 	void DrawCalendar();
+	void ShowWindowIfAppropriate();
 
 // Overrides
 	// ClassWizard generated virtual function overrides
@@ -169,8 +195,16 @@ protected:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnSysKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
+	afx_msg void OnAbout();
+	afx_msg UINT OnNcHitTest(CPoint point);
+	afx_msg void OnMove(int x, int y);
+	afx_msg void OnNcRButtonUp(UINT nHitTest, CPoint point);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnNcMouseMove(UINT nHitTest, CPoint point);
 	//}}AFX_MSG
-	afx_msg BOOL OnToolTipNotify( UINT id, NMHDR * pNMHDR, LRESULT * pResult );
+	afx_msg void OnDisplayChange(WPARAM wParam, LPARAM lParam);
+	afx_msg BOOL OnToolTipNotify(UINT id, NMHDR * pNMHDR, LRESULT * pResult);
+	afx_msg LRESULT OnCopyData(WPARAM wParam, LPARAM lParam) ;
 	DECLARE_MESSAGE_MAP()
 
 };

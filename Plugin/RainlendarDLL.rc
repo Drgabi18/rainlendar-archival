@@ -28,8 +28,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,7,0,0
- PRODUCTVERSION 0,7,0,0
+ FILEVERSION 0,9,0,0
+ PRODUCTVERSION 0,9,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -47,14 +47,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "Rainlendar DLL\0"
-            VALUE "FileVersion", "0, 7, 0, 0\0"
+            VALUE "FileVersion", "0, 9, 0, 0\0"
             VALUE "InternalName", "Rainlendar\0"
-            VALUE "LegalCopyright", "Copyright (C) 2000\0"
+            VALUE "LegalCopyright", "Copyright (C) 2002\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "Rainlendar.DLL\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Rainlendar Dynamic Link Library\0"
-            VALUE "ProductVersion", "0, 7, 0, 0\0"
+            VALUE "ProductVersion", "0, 9, 0, 0\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -76,6 +76,8 @@ IDR_MENU1 MENU DISCARDABLE
 BEGIN
     POPUP "Popup"
     BEGIN
+        MENUITEM "About...",                    ID_ABOUT
+        MENUITEM SEPARATOR
         POPUP "Select Month"
         BEGIN
             MENUITEM "Next Month\tRight",           ID_POPUP_SELECTMONTH_NEXTMONTH
@@ -109,7 +111,6 @@ BEGIN
             MENUITEM "December",                    ID_POPUP_SELECTMONTH_DECEMBER
 
         END
-        MENUITEM SEPARATOR
         MENUITEM "Refresh",                     ID_REFRESH
         MENUITEM "Set event...",                ID_SETEVENT
         MENUITEM "Config...",                   ID_CONFIG
@@ -130,9 +131,9 @@ BEGIN
     IDD_GENERAL, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 150
+        RIGHTMARGIN, 170
         TOPMARGIN, 7
-        BOTTOMMARGIN, 88
+        BOTTOMMARGIN, 231
     END
 
     IDD_DAYS, DIALOG
@@ -190,6 +191,14 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 114
     END
+
+    IDD_SERVER, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 208
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 194
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -199,26 +208,46 @@ END
 // Dialog
 //
 
-IDD_GENERAL DIALOG DISCARDABLE  0, 0, 157, 95
+IDD_GENERAL DIALOG DISCARDABLE  0, 0, 177, 238
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "General"
 FONT 8, "MS Sans Serif"
 BEGIN
-    RTEXT           "Position X:",IDC_STATIC,13,7,34,12,SS_CENTERIMAGE
-    EDITTEXT        IDC_X,49,7,26,12,ES_AUTOHSCROLL
-    RTEXT           "Y:",IDC_STATIC,86,7,8,12,SS_CENTERIMAGE
-    EDITTEXT        IDC_Y,97,7,26,12,ES_AUTOHSCROLL
-    RTEXT           "Background:",IDC_STATIC,7,24,40,12,SS_CENTERIMAGE
-    EDITTEXT        IDC_BACKGROUND,49,24,68,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "Browse",IDC_BACKGROUND_BROWSE,121,24,29,12
+    RTEXT           "X:",IDC_STATIC,12,18,11,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_X,26,18,26,12,ES_AUTOHSCROLL
+    RTEXT           "Y:",IDC_STATIC,58,18,8,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_Y,70,18,26,12,ES_AUTOHSCROLL
+    RTEXT           "Name:",IDC_STATIC,13,113,23,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_BACKGROUND,40,113,87,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse",IDC_BACKGROUND_BROWSE,134,114,29,12
     CONTROL         "Start weekdays from Monday",IDC_START_FROM_MONDAY,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,54,103,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,185,103,10
     CONTROL         "Start hidden",IDC_START_HIDDEN,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,7,42,52,10
+                    WS_TABSTOP,7,173,52,10
     CONTROL         "Disable hotkeys",IDC_DISABLE_HOTKEYS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,66,103,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,197,103,10
     CONTROL         "Use window name",IDC_USE_WINDOW_NAME,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,78,103,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,209,103,10
+    GROUPBOX        "Background",IDC_STATIC,7,100,163,68
+    CONTROL         "Poll wallpaper changes",IDC_POLL_WALLPAPER,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,221,89,10
+    GROUPBOX        "Position",IDC_STATIC,7,7,163,89
+    CONTROL         "Tile",IDC_BACKGROUND_TILE,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP,16,132,27,10
+    CONTROL         "Stretch",IDC_BACKGROUND_STRETCH,"Button",
+                    BS_AUTORADIOBUTTON,16,143,39,10
+    CONTROL         "Copy wallpaper",IDC_BACKGROUND_COPY,"Button",
+                    BS_AUTORADIOBUTTON,16,154,64,10
+    CONTROL         "Movable window",IDC_WINDOW_MOVABLE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,68,69,10
+    CONTROL         "OnBottom",IDC_WINDOW_ONBOTTOM,"Button",
+                    BS_AUTORADIOBUTTON | WS_GROUP,14,35,47,10
+    CONTROL         "Normal",IDC_WINDOW_NORMAL,"Button",BS_AUTORADIOBUTTON,
+                    14,46,38,10
+    CONTROL         "OnTop",IDC_WINDOW_ONTOP,"Button",BS_AUTORADIOBUTTON,14,
+                    57,38,10
+    CONTROL         "Hide on mouse over",IDC_WINDOW_MOUSEHIDE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,80,79,10
 END
 
 IDD_DAYS DIALOGEX 0, 0, 205, 185
@@ -241,7 +270,7 @@ BEGIN
     COMBOBOX        IDC_DAYS_RASTERIZER,46,56,60,55,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
     RTEXT           "Align:",IDC_STATIC,112,56,19,12,SS_CENTERIMAGE
-    COMBOBOX        IDC_DAYS_ALIGN,137,56,60,55,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_DAYS_ALIGN,137,54,60,55,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Font",IDC_STATIC,7,72,191,30
     RTEXT           "Fontname:",IDC_STATIC,10,83,33,12,SS_CENTERIMAGE
@@ -466,6 +495,29 @@ BEGIN
                     BS_AUTORADIOBUTTON,83,98,20,12
 END
 
+IDD_SERVER DIALOG DISCARDABLE  0, 0, 215, 201
+STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
+CAPTION "Server"
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "Enable server syncronization",IDC_SERVER_ENABLE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,7,106,10
+    EDITTEXT        IDC_SERVER_ADDRESS,37,22,99,14,ES_AUTOHSCROLL
+    LTEXT           "Address:",IDC_STATIC,5,25,28,8
+    EDITTEXT        IDC_SERVER_PORT,165,23,43,14,ES_AUTOHSCROLL
+    LTEXT           "Port:",IDC_STATIC,145,26,16,8
+    EDITTEXT        IDC_SERVER_ID,37,42,171,14,ES_AUTOHSCROLL
+    LTEXT           "ID:",IDC_STATIC,23,45,10,8
+    EDITTEXT        IDC_SERVER_FREQUENCY,37,62,40,14,ES_AUTOHSCROLL
+    LTEXT           "Update:",IDC_STATIC,7,65,26,8
+    PUSHBUTTON      "Sync now!",IDC_SERVER_SYNC,75,181,45,14
+    LISTBOX         IDC_SERVER_STATUS,7,95,201,83,LBS_NOINTEGRALHEIGHT | 
+                    LBS_NOSEL | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    CONTROL         "Request events on startup",IDC_SERVER_STARTUP,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,37,81,99,10
+    LTEXT           "minutes",IDC_STATIC,83,65,25,8
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -478,12 +530,24 @@ BEGIN
 0x6f46, 0x746e, "\000" 
     IDC_DAYS_RASTERIZER, 0x403, 7, 0
 0x6942, 0x6d74, 0x7061, "\000" 
+    IDC_DAYS_ALIGN, 0x403, 8, 0
+0x6f54, 0x4c70, 0x6665, 0x0074, 
+    IDC_DAYS_ALIGN, 0x403, 4, 0
+0x6f54, 0x0070, 
+    IDC_DAYS_ALIGN, 0x403, 9, 0
+0x6f54, 0x5270, 0x6769, 0x7468, "\000" 
     IDC_DAYS_ALIGN, 0x403, 5, 0
 0x654c, 0x7466, "\000" 
     IDC_DAYS_ALIGN, 0x403, 7, 0
 0x6543, 0x746e, 0x7265, "\000" 
     IDC_DAYS_ALIGN, 0x403, 6, 0
 0x6952, 0x6867, 0x0074, 
+    IDC_DAYS_ALIGN, 0x403, 11, 0
+0x6f42, 0x7474, 0x6d6f, 0x654c, 0x7466, "\000" 
+    IDC_DAYS_ALIGN, 0x403, 7, 0
+0x6f42, 0x7474, 0x6d6f, "\000" 
+    IDC_DAYS_ALIGN, 0x403, 12, 0
+0x6f42, 0x7474, 0x6d6f, 0x6952, 0x6867, 0x0074, 
     0
 END
 
@@ -493,12 +557,26 @@ BEGIN
 0x6f46, 0x746e, "\000" 
     IDC_WEEKDAYS_RASTERIZER, 0x403, 7, 0
 0x6942, 0x6d74, 0x7061, "\000" 
+    IDC_WEEKDAYS_ALIGN, 0x403, 8, 0
+0x6f54, 0x4c70, 0x6665, 0x0074, 
+    IDC_WEEKDAYS_ALIGN, 0x403, 4, 0
+0x6f54, 0x0070, 
+    IDC_WEEKDAYS_ALIGN, 0x403, 9, 0
+0x6f54, 0x5270, 0x6769, 0x7468, "\000" 
     IDC_WEEKDAYS_ALIGN, 0x403, 5, 0
 0x654c, 0x7466, "\000" 
     IDC_WEEKDAYS_ALIGN, 0x403, 7, 0
 0x6543, 0x746e, 0x7265, "\000" 
     IDC_WEEKDAYS_ALIGN, 0x403, 6, 0
 0x6952, 0x6867, 0x0074, 
+    IDC_WEEKDAYS_ALIGN, 0x403, 11, 0
+0x6f42, 0x7474, 0x6d6f, 0x654c, 0x7466, "\000" 
+    IDC_WEEKDAYS_ALIGN, 0x403, 7, 0
+0x6f42, 0x7474, 0x6d6f, "\000" 
+    IDC_WEEKDAYS_ALIGN, 0x403, 12, 0
+0x6f42, 0x7474, 0x6d6f, 0x6952, 0x6867, 0x0074, 
+    IDC_WEEKDAYS_ALIGN, 0x403, 1, 0
+"\000" 
     0
 END
 
@@ -508,12 +586,24 @@ BEGIN
 0x6f46, 0x746e, "\000" 
     IDC_TODAY_RASTERIZER, 0x403, 7, 0
 0x6942, 0x6d74, 0x7061, "\000" 
+    IDC_TODAY_ALIGN, 0x403, 8, 0
+0x6f54, 0x4c70, 0x6665, 0x0074, 
+    IDC_TODAY_ALIGN, 0x403, 4, 0
+0x6f54, 0x0070, 
+    IDC_TODAY_ALIGN, 0x403, 9, 0
+0x6f54, 0x5270, 0x6769, 0x7468, "\000" 
     IDC_TODAY_ALIGN, 0x403, 5, 0
 0x654c, 0x7466, "\000" 
     IDC_TODAY_ALIGN, 0x403, 7, 0
 0x6543, 0x746e, 0x7265, "\000" 
     IDC_TODAY_ALIGN, 0x403, 6, 0
 0x6952, 0x6867, 0x0074, 
+    IDC_TODAY_ALIGN, 0x403, 11, 0
+0x6f42, 0x7474, 0x6d6f, 0x654c, 0x7466, "\000" 
+    IDC_TODAY_ALIGN, 0x403, 7, 0
+0x6f42, 0x7474, 0x6d6f, "\000" 
+    IDC_TODAY_ALIGN, 0x403, 12, 0
+0x6f42, 0x7474, 0x6d6f, 0x6952, 0x6867, 0x0074, 
     0
 END
 
@@ -523,12 +613,24 @@ BEGIN
 0x6f46, 0x746e, "\000" 
     IDC_MONTH_RASTERIZER, 0x403, 7, 0
 0x6942, 0x6d74, 0x7061, "\000" 
+    IDC_MONTH_ALIGN, 0x403, 8, 0
+0x6f54, 0x4c70, 0x6665, 0x0074, 
+    IDC_MONTH_ALIGN, 0x403, 4, 0
+0x6f54, 0x0070, 
+    IDC_MONTH_ALIGN, 0x403, 9, 0
+0x6f54, 0x5270, 0x6769, 0x7468, "\000" 
     IDC_MONTH_ALIGN, 0x403, 5, 0
 0x654c, 0x7466, "\000" 
     IDC_MONTH_ALIGN, 0x403, 7, 0
 0x6543, 0x746e, 0x7265, "\000" 
     IDC_MONTH_ALIGN, 0x403, 6, 0
 0x6952, 0x6867, 0x0074, 
+    IDC_MONTH_ALIGN, 0x403, 11, 0
+0x6f42, 0x7474, 0x6d6f, 0x654c, 0x7466, "\000" 
+    IDC_MONTH_ALIGN, 0x403, 7, 0
+0x6f42, 0x7474, 0x6d6f, "\000" 
+    IDC_MONTH_ALIGN, 0x403, 12, 0
+0x6f42, 0x7474, 0x6d6f, 0x6952, 0x6867, 0x0074, 
     0
 END
 
@@ -538,12 +640,24 @@ BEGIN
 0x6f46, 0x746e, "\000" 
     IDC_YEAR_RASTERIZER, 0x403, 7, 0
 0x6942, 0x6d74, 0x7061, "\000" 
+    IDC_YEAR_ALIGN, 0x403, 8, 0
+0x6f54, 0x4c70, 0x6665, 0x0074, 
+    IDC_YEAR_ALIGN, 0x403, 4, 0
+0x6f54, 0x0070, 
+    IDC_YEAR_ALIGN, 0x403, 9, 0
+0x6f54, 0x5270, 0x6769, 0x7468, "\000" 
     IDC_YEAR_ALIGN, 0x403, 5, 0
 0x654c, 0x7466, "\000" 
     IDC_YEAR_ALIGN, 0x403, 7, 0
 0x6543, 0x746e, 0x7265, "\000" 
     IDC_YEAR_ALIGN, 0x403, 6, 0
 0x6952, 0x6867, 0x0074, 
+    IDC_YEAR_ALIGN, 0x403, 11, 0
+0x6f42, 0x7474, 0x6d6f, 0x654c, 0x7466, "\000" 
+    IDC_YEAR_ALIGN, 0x403, 7, 0
+0x6f42, 0x7474, 0x6d6f, "\000" 
+    IDC_YEAR_ALIGN, 0x403, 12, 0
+0x6f42, 0x7474, 0x6d6f, 0x6952, 0x6867, 0x0074, 
     0
 END
 
@@ -553,12 +667,24 @@ BEGIN
 0x6f46, 0x746e, "\000" 
     IDC_EVENT_RASTERIZER, 0x403, 7, 0
 0x6942, 0x6d74, 0x7061, "\000" 
+    IDC_EVENT_ALIGN, 0x403, 8, 0
+0x6f54, 0x4c70, 0x6665, 0x0074, 
+    IDC_EVENT_ALIGN, 0x403, 4, 0
+0x6f54, 0x0070, 
+    IDC_EVENT_ALIGN, 0x403, 9, 0
+0x6f54, 0x5270, 0x6769, 0x7468, "\000" 
     IDC_EVENT_ALIGN, 0x403, 5, 0
 0x654c, 0x7466, "\000" 
     IDC_EVENT_ALIGN, 0x403, 7, 0
 0x6543, 0x746e, 0x7265, "\000" 
     IDC_EVENT_ALIGN, 0x403, 6, 0
 0x6952, 0x6867, 0x0074, 
+    IDC_EVENT_ALIGN, 0x403, 11, 0
+0x6f42, 0x7474, 0x6d6f, 0x654c, 0x7466, "\000" 
+    IDC_EVENT_ALIGN, 0x403, 7, 0
+0x6f42, 0x7474, 0x6d6f, "\000" 
+    IDC_EVENT_ALIGN, 0x403, 12, 0
+0x6f42, 0x7474, 0x6d6f, 0x6952, 0x6867, 0x0074, 
     0
 END
 
@@ -568,12 +694,24 @@ BEGIN
 0x6f46, 0x746e, "\000" 
     IDC_WEEKNUM_RASTERIZER, 0x403, 7, 0
 0x6942, 0x6d74, 0x7061, "\000" 
+    IDC_WEEKNUM_ALIGN, 0x403, 8, 0
+0x6f54, 0x4c70, 0x6665, 0x0074, 
     IDC_WEEKNUM_ALIGN, 0x403, 4, 0
 0x6f54, 0x0070, 
+    IDC_WEEKNUM_ALIGN, 0x403, 9, 0
+0x6f54, 0x5270, 0x6769, 0x7468, "\000" 
+    IDC_WEEKNUM_ALIGN, 0x403, 5, 0
+0x654c, 0x7466, "\000" 
     IDC_WEEKNUM_ALIGN, 0x403, 7, 0
 0x6543, 0x746e, 0x7265, "\000" 
+    IDC_WEEKNUM_ALIGN, 0x403, 6, 0
+0x6952, 0x6867, 0x0074, 
+    IDC_WEEKNUM_ALIGN, 0x403, 11, 0
+0x6f42, 0x7474, 0x6d6f, 0x654c, 0x7466, "\000" 
     IDC_WEEKNUM_ALIGN, 0x403, 7, 0
 0x6f42, 0x7474, 0x6d6f, "\000" 
+    IDC_WEEKNUM_ALIGN, 0x403, 12, 0
+0x6f42, 0x7474, 0x6d6f, 0x6952, 0x6867, 0x0074, 
     0
 END
 
