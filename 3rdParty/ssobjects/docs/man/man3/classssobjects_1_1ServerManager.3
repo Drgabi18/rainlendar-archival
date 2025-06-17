@@ -1,0 +1,128 @@
+.TH "ssobjects::ServerManager" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::ServerManager \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <servermanager.h>\fP
+.PP
+Inherits \fBssobjects::ThreadHandler\fP.
+.PP
+.SS "Public Types"
+
+.in +1c
+.ti -1c
+.RI "enum { \fBMIN_FREQ\fP = 10 }"
+.br
+.in -1c
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBServerManager\fP (const \fBSockAddr\fP &saBind, const \fBunsigned32\fP nFreq, const \fBunsigned32\fP nMaxConnections, const bool bUseThread)"
+.br
+.ti -1c
+.RI "virtual \fB~ServerManager\fP ()"
+.br
+.ti -1c
+.RI "void \fBstartServer\fP ()"
+.br
+.ti -1c
+.RI "bool \fBcanBind\fP ()"
+.br
+.ti -1c
+.RI "virtual \fBthreadReturn\fP \fBThreadHandlerProc\fP (void)"
+.br
+.ti -1c
+.RI "void \fBacceptConnection\fP (\fBSocketInstance\fP &sListen)"
+.br
+.ti -1c
+.RI "virtual \fBSimpleServer\fP* \fBcreateServerInstance\fP (\fBServerSocket\fP *const psocket, const \fBSockAddr\fP &saClient, const \fBunsigned32\fP nFreq)=0"
+.br
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBSocketInstance\fP \fBm_sListen\fP"
+.br
+.ti -1c
+.RI "\fBSockAddr\fP \fBm_saServer\fP"
+.br
+.ti -1c
+.RI "\fBLinkedList\fP<\fBSimpleServer\fP> \fBm_listSimpleServers\fP"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nIdleFrequency\fP"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nMaxConnections\fP"
+.br
+.ti -1c
+.RI "bool \fBm_bUsingThread\fP"
+.br
+.ti -1c
+.RI "bool \fBm_bPause\fP"
+.br
+.ti -1c
+.RI "\fBCSimpleTime\fP \fBm_serverStartTime\fP"
+.br
+.ti -1c
+.RI "\fBCSimpleDate\fP \fBm_serverStartDate\fP"
+.br
+.in -1c
+.SH "MEMBER ENUMERATION DOCUMENTATION"
+.PP 
+.SS "anonymous enum"
+.PP
+\fBEnumeration values:\fP
+.in +1c
+.TP
+\fB\fIMIN_FREQ\fP \fP
+
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::ServerManager::ServerManager (const \fBSockAddr\fP & saBind, const \fBunsigned32\fP nFreq, const \fBunsigned32\fP nMaxConnections, const bool bUseThread)"
+.PP
+.SS "ssobjects::ServerManager::~ServerManager ()\fC [virtual]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "\fBthreadReturn\fP ssobjects::ServerManager::ThreadHandlerProc (void)\fC [virtual]\fP"
+.PP
+Reimplemented from \fBssobjects::ThreadHandler\fP.
+.SS "void ssobjects::ServerManager::acceptConnection (\fBSocketInstance\fP & sListen)"
+.PP
+.SS "bool ssobjects::ServerManager::canBind ()"
+.PP
+.SS "\fBSimpleServer\fP * ssobjects::ServerManager::createServerInstance (\fBServerSocket\fP *const psocket, const \fBSockAddr\fP & saClient, const \fBunsigned32\fP nFreq)\fC [pure virtual]\fP"
+.PP
+.SS "void ssobjects::ServerManager::startServer ()"
+.PP
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "bool ssobjects::ServerManager::m_bPause\fC [protected]\fP"
+.PP
+.SS "bool ssobjects::ServerManager::m_bUsingThread\fC [protected]\fP"
+.PP
+.SS "\fBLinkedList\fP< \fBSimpleServer\fP > ssobjects::ServerManager::m_listSimpleServers<\fBSimpleServer\fP>\fC [protected]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::ServerManager::m_nIdleFrequency\fC [protected]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::ServerManager::m_nMaxConnections\fC [protected]\fP"
+.PP
+.SS "\fBSocketInstance\fP ssobjects::ServerManager::m_sListen\fC [protected]\fP"
+.PP
+.SS "\fBSockAddr\fP ssobjects::ServerManager::m_saServer\fC [protected]\fP"
+.PP
+.SS "\fBCSimpleDate\fP ssobjects::ServerManager::m_serverStartDate\fC [protected]\fP"
+.PP
+.SS "\fBCSimpleTime\fP ssobjects::ServerManager::m_serverStartTime\fC [protected]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

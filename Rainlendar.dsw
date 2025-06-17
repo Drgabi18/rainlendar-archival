@@ -3,59 +3,125 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
-Project: "Host"=.\Host\Host.dsp - Package Owner=<4>
+Project: "Application"=.\Application\Application.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
+    begin source code control
+    Application
+    .
+    end source code control
 }}}
 
 Package=<4>
 {{{
     Begin Project Dependency
-    Project_Dep_Name Plugin
+    Project_Dep_Name Library
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name PluginICalendar
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name PluginIniFormat
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name PluginOutlook
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name PluginServer
     End Project Dependency
 }}}
 
 ###############################################################################
 
-Project: "IniFormatPlugin"=.\IniFormatPlugin\IniFormatPlugin.dsp - Package Owner=<4>
+Project: "Library"=.\Library\Library.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
+    begin source code control
+    Library
+    .\library
+    end source code control
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "PluginICalendar"=.\Plugins\PluginICalendar\PluginICalendar.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    PluginICalendar
+    .\plugins\pluginicalendar
+    end source code control
 }}}
 
 Package=<4>
 {{{
     Begin Project Dependency
-    Project_Dep_Name Plugin
+    Project_Dep_Name Library
     End Project Dependency
 }}}
 
 ###############################################################################
 
-Project: "OutlookPlugin"=.\OutlookPlugin\OutlookPlugin.dsp - Package Owner=<4>
+Project: "PluginIniFormat"=.\Plugins\PluginIniFormat\PluginIniFormat.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
+    begin source code control
+    PluginIniFormat
+    .\plugins\plugininiformat
+    end source code control
 }}}
 
 Package=<4>
 {{{
     Begin Project Dependency
-    Project_Dep_Name Plugin
+    Project_Dep_Name Library
     End Project Dependency
 }}}
 
 ###############################################################################
 
-Project: "Plugin"=.\Plugin\Plugin.dsp - Package Owner=<4>
+Project: "PluginOutlook"=.\Plugins\PluginOutlook\PluginOutlook.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
+    begin source code control
+    PluginOutlook
+    .\plugins\pluginoutlook
+    end source code control
 }}}
 
 Package=<4>
 {{{
+    Begin Project Dependency
+    Project_Dep_Name Library
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "PluginServer"=.\Plugins\PluginServer\PluginServer.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    PluginServer
+    .\plugins\pluginserver
+    end source code control
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name Library
+    End Project Dependency
 }}}
 
 ###############################################################################
@@ -64,25 +130,14 @@ Project: "Server"=.\Server\Server.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
+    begin source code control
+    Server
+    .\server
+    end source code control
 }}}
 
 Package=<4>
 {{{
-}}}
-
-###############################################################################
-
-Project: "ServerPlugin"=.\ServerPlugin\ServerPlugin.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name Plugin
-    End Project Dependency
 }}}
 
 ###############################################################################

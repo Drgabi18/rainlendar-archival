@@ -1,0 +1,244 @@
+.TH "ssobjects::SocketInstance" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::SocketInstance \- The socket that you use to connect with. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <socketinstance.h>\fP
+.PP
+Inherited by \fBssobjects::BufferedSocket\fP, \fBssobjects::HttpBlockingSocket\fP, \fBssobjects::ServerSocket\fP, and \fBssobjects::TelnetSocket\fP.
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBSocketInstance\fP ()"
+.br
+.ti -1c
+.RI "\fBSOCKET\fP \fBgetSocket\fP () const"
+.br
+.ti -1c
+.RI "void \fBsetExceptionOnReadClose\fP (const bool bThrowException=true)"
+.br
+.RI "\fIToggles exceptions on read closers.\fP"
+.ti -1c
+.RI "void \fBcleanup\fP ()"
+.br
+.ti -1c
+.RI "void \fBcreate\fP (const int nType=SOCK_STREAM)"
+.br
+.ti -1c
+.RI "void \fBclose\fP ()"
+.br
+.ti -1c
+.RI "void \fBbind\fP (\fBLPCSOCKADDR\fP psa)"
+.br
+.ti -1c
+.RI "void \fBlisten\fP ()"
+.br
+.ti -1c
+.RI "void \fBconnect\fP (\fBLPCSOCKADDR\fP psa)"
+.br
+.ti -1c
+.RI "bool \fBaccept\fP (SocketInstance &s, \fBLPSOCKADDR\fP psa)"
+.br
+.ti -1c
+.RI "bool \fBaccept\fP (SocketInstance *s, \fBLPSOCKADDR\fP psa)"
+.br
+.ti -1c
+.RI "int \fBsend\fP (const char *pch, const int nSize, const int nSecs=DEFAULT_SOCKET_TIMEOUT)"
+.br
+.ti -1c
+.RI "int \fBwrite\fP (const char *pch, const int nSize, const int nSecs=DEFAULT_SOCKET_TIMEOUT)"
+.br
+.ti -1c
+.RI "int \fBrecv\fP (char *pch, const int nSize, const int nSecs=DEFAULT_SOCKET_TIMEOUT)"
+.br
+.ti -1c
+.RI "int \fBsendDatagram\fP (const char *pch, const int nSize, \fBLPCSOCKADDR\fP psa, const int nSecs=10)"
+.br
+.ti -1c
+.RI "int \fBreceiveDatagram\fP (char *pch, const int nSize, \fBLPSOCKADDR\fP psa, const int nSecs=10)"
+.br
+.ti -1c
+.RI "void \fBgetPeerAddr\fP (\fBLPSOCKADDR\fP psa)"
+.br
+.ti -1c
+.RI "void \fBgetSockAddr\fP (\fBLPSOCKADDR\fP psa)"
+.br
+.ti -1c
+.RI "\fBoperator SOCKET\fP ()"
+.br
+.ti -1c
+.RI "SocketInstance& \fBoperator=\fP (const SocketInstance &s)"
+.br
+.ti -1c
+.RI "\fBSocketInstance\fP (const SocketInstance &s)"
+.br
+.in -1c
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBSOCKET\fP \fBm_hSocket\fP"
+.br
+.ti -1c
+.RI "bool \fBm_bThrowExceptionOnReadClose\fP"
+.br
+.in -1c
+.SS "Static Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBSockAddr\fP \fBgetHostByName\fP (const char *pchName, const \fBUSHORT\fP ushPort=0)"
+.br
+.ti -1c
+.RI "const char* \fBgetHostByAddr\fP (\fBLPCSOCKADDR\fP psa)"
+.br
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+The socket that you use to connect with.
+.PP
+.PP
+ The \fBSocketInstance\fP object is the lowest level in the socket layer. It provides access methods to read and write to a socket un TCP/IP  or UDP mode.
+.PP
+Typical client session would look like this:
+.PP
+.nf
+
+   ...
+   \fBSocketInstance\fP sConnection;
+   try
+   {
+     //open connection
+     puts('Connecting to server...');
+     \fBSockAddr\fP saServer(szHost,iPort);
+     if(isalpha(szHost[0]))  //check if szHost is in 'host.com' format or '255.255.255.255'
+       saServer = SocketInstance::getHostByName(szHost,iPort);
+     sConnection.create();
+     sConnection.connect(saServer);
+     //we are connected, do something useful
+     ...
+     sConnection.close();
+   }
+   catch(GeneralException* e)
+   {
+     sConnection.cleanup();
+     LOG('error s',e->getErrorMsg());
+   }
+   ...
+   
+.PP
+
+   A server would look like this:
+   
+.PP
+ 
+   ...
+   \fBSocketInstance\fP sClient;
+   \fBSockAddr\fP saClient;
+   \fBSockAddr\fP saServer(INADDR_ANY,atoi(argv[1]));
+   \fBSocketInstance\fP sListen;
+   try
+   {
+     sListen.create();
+     sListen.bind(saServer);
+     sListen.listen();
+     while(bWantMoreConnections)
+     {
+       sListen.accept(sClient,saClient);
+       //we got a connection ...
+       sClient.close();
+     }
+     sListen.close();
+   }
+   catch(GeneralException* e)
+   {
+     sConnection.cleanup();
+     LOG('error s',e->getErrorMsg());
+   }
+   ...
+   
+.fi
+ 
+.PP
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::SocketInstance::SocketInstance ()\fC [inline]\fP"
+.PP
+.SS "ssobjects::SocketInstance::SocketInstance (const SocketInstance & s)\fC [inline]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "bool ssobjects::SocketInstance::accept (SocketInstance * s, \fBLPSOCKADDR\fP psa)"
+.PP
+.SS "bool ssobjects::SocketInstance::accept (SocketInstance & s, \fBLPSOCKADDR\fP psa)"
+.PP
+.SS "void ssobjects::SocketInstance::bind (\fBLPCSOCKADDR\fP psa)"
+.PP
+.SS "void ssobjects::SocketInstance::cleanup ()"
+.PP
+.SS "void ssobjects::SocketInstance::close ()"
+.PP
+.SS "void ssobjects::SocketInstance::connect (\fBLPCSOCKADDR\fP psa)"
+.PP
+.SS "void ssobjects::SocketInstance::create (const int nType = SOCK_STREAM)"
+.PP
+.SS "const char * ssobjects::SocketInstance::getHostByAddr (\fBLPCSOCKADDR\fP psa)\fC [static]\fP"
+.PP
+.SS "\fBSockAddr\fP ssobjects::SocketInstance::getHostByName (const char * pchName, const \fBUSHORT\fP ushPort = 0)\fC [static]\fP"
+.PP
+.SS "void ssobjects::SocketInstance::getPeerAddr (\fBLPSOCKADDR\fP psa)"
+.PP
+.SS "void ssobjects::SocketInstance::getSockAddr (\fBLPSOCKADDR\fP psa)"
+.PP
+.SS "\fBSOCKET\fP ssobjects::SocketInstance::getSocket () const\fC [inline]\fP"
+.PP
+.SS "void ssobjects::SocketInstance::listen ()"
+.PP
+.SS "ssobjects::SocketInstance::operator \fBSOCKET\fP ()\fC [inline]\fP"
+.PP
+.SS "SocketInstance & ssobjects::SocketInstance::operator= (const SocketInstance & s)"
+.PP
+.SS "int ssobjects::SocketInstance::receiveDatagram (char * pch, const int nSize, \fBLPSOCKADDR\fP psa, const int nSecs = 10)"
+.PP
+.SS "int ssobjects::SocketInstance::recv (char * pch, const int nSize, const int nSecs = DEFAULT_SOCKET_TIMEOUT)"
+.PP
+Read in data from connected socket. If m_bThrowExceptionOnReadClose is set, and  the socket is closed gracefully on the other end, an exception is throw. If not set, \fBSocketInstance::recv\fP will return 0 bytes.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fISocketInstanceException\fP\fP
+ If there was an error during the read operation, or the socket was closed. 
+.SS "int ssobjects::SocketInstance::send (const char * pch, const int nSize, const int nSecs = DEFAULT_SOCKET_TIMEOUT)"
+.PP
+.SS "int ssobjects::SocketInstance::sendDatagram (const char * pch, const int nSize, \fBLPCSOCKADDR\fP psa, const int nSecs = 10)"
+.PP
+.SS "void ssobjects::SocketInstance::setExceptionOnReadClose (const bool bThrowException = true)"
+.PP
+Toggles exceptions on read closers.
+.PP
+When read exceptions are set, all socket errors, and closers will throw an exeption. Sometimes however it is desirable not to throw an exception when the connection was gracefully closed on the other end. In this case recv will return 0 bytes read.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIbThrowException\fP\fP
+true causes exceptions will be thrown.  false causes recv to return 0 bytes read. 
+.SS "int ssobjects::SocketInstance::write (const char * pch, const int nSize, const int nSecs = DEFAULT_SOCKET_TIMEOUT)"
+.PP
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "bool ssobjects::SocketInstance::m_bThrowExceptionOnReadClose"
+.PP
+.SS "\fBSOCKET\fP ssobjects::SocketInstance::m_hSocket"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

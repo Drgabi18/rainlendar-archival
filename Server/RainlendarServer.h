@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Server/RainlendarServer.h,v 1.4 2005/03/01 17:02:52 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Server/RainlendarServer.h,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
 
   $Log: RainlendarServer.h,v $
+  Revision 1.1.1.1  2005/07/10 18:48:07  rainy
+  no message
+
   Revision 1.4  2005/03/01 17:02:52  rainy
   Path for the files is selectable.
 

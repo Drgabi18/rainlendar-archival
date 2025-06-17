@@ -1,0 +1,162 @@
+.TH "ssobjects::LinkedList" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::LinkedList \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <linkedlist.h>\fP
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBLinkedList\fP ()"
+.br
+.ti -1c
+.RI "\fB~LinkedList\fP ()"
+.br
+.ti -1c
+.RI "\fBLinkedList\fP (const LinkedList &l)"
+.br
+.ti -1c
+.RI "LinkedList& \fBoperator=\fP (const LinkedList &l)"
+.br
+.ti -1c
+.RI "void \fBforceMasterList\fP ()"
+.br
+.ti -1c
+.RI "void \fBclearMasterList\fP ()"
+.br
+.ti -1c
+.RI "void \fBaddTail\fP (T *pItem)"
+.br
+.ti -1c
+.RI "void \fBaddHead\fP (T *pItem)"
+.br
+.ti -1c
+.RI "void \fBempty\fP ()"
+.br
+.ti -1c
+.RI "void \fBpurge\fP ()"
+.br
+.ti -1c
+.RI "T* \fBremoveHead\fP ()"
+.br
+.ti -1c
+.RI "T* \fBremoveTail\fP ()"
+.br
+.ti -1c
+.RI "T* \fBremoveCurrent\fP (const \fBListDirection\fP direction=listNEXT)"
+.br
+.ti -1c
+.RI "unsigned long \fBgetNumEntries\fP ()"
+.br
+.ti -1c
+.RI "T* \fBgetHead\fP ()"
+.br
+.ti -1c
+.RI "T* \fBgetTail\fP ()"
+.br
+.ti -1c
+.RI "T* \fBgetNext\fP ()"
+.br
+.ti -1c
+.RI "T* \fBgetPrev\fP ()"
+.br
+.ti -1c
+.RI "T* \fBgetCurrent\fP ()"
+.br
+.ti -1c
+.RI "T* \fBgetAt\fP (unsigned long index)"
+.br
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "unsigned long \fBm_nNumEntries\fP"
+.br
+.ti -1c
+.RI "unsigned long \fBm_uniqueID\fP"
+.br
+.ti -1c
+.RI "\fBListNode\fP* \fBm_pHead\fP"
+.br
+.ti -1c
+.RI "\fBListNode\fP* \fBm_pTail\fP"
+.br
+.ti -1c
+.RI "\fBListNode\fP* \fBm_pCurrent\fP"
+.br
+.ti -1c
+.RI "bool \fBm_bMasterList\fP"
+.br
+.in -1c
+
+.SS "template<class T>  class ssobjects::LinkedList"
+
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "template<class T> ssobjects::LinkedList< T >::LinkedList<T> ()"
+.PP
+.SS "template<class T> ssobjects::LinkedList< T >::~LinkedList<T> ()"
+.PP
+.SS "template<class T> ssobjects::LinkedList<T>::LinkedList<T> (const LinkedList<T> & l)\fC [inline]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "template<class T> void ssobjects::LinkedList< T >::addHead (T * pItem)"
+.PP
+.SS "template<class T> void ssobjects::LinkedList< T >::addTail (T * pItem)"
+.PP
+.SS "template<class T> void ssobjects::LinkedList<T>::clearMasterList ()\fC [inline]\fP"
+.PP
+.SS "template<class T> void ssobjects::LinkedList< T >::empty ()"
+.PP
+.SS "template<class T> void ssobjects::LinkedList<T>::forceMasterList ()\fC [inline]\fP"
+.PP
+.SS "template<class T> T * ssobjects::LinkedList< T >::getAt (unsigned long index)"
+.PP
+.SS "template<class T> T * ssobjects::LinkedList< T >::getCurrent ()"
+.PP
+.SS "template<class T> T * ssobjects::LinkedList< T >::getHead ()"
+.PP
+.SS "template<class T> T * ssobjects::LinkedList< T >::getNext ()"
+.PP
+.SS "template<class T> unsigned long ssobjects::LinkedList<T>::getNumEntries ()\fC [inline]\fP"
+.PP
+.SS "template<class T> T * ssobjects::LinkedList< T >::getPrev ()"
+.PP
+.SS "template<class T> T * ssobjects::LinkedList< T >::getTail ()"
+.PP
+.SS "template<class T> LinkedList<T> & ssobjects::LinkedList<T>::operator= (const LinkedList<T> & l)\fC [inline]\fP"
+.PP
+.SS "template<class T> void ssobjects::LinkedList< T >::purge ()"
+.PP
+.SS "template<class T> T * ssobjects::LinkedList< T >::removeCurrent (const \fBListDirection\fP direction = listNEXT)"
+.PP
+.SS "template<class T> T * ssobjects::LinkedList< T >::removeHead ()"
+.PP
+.SS "template<class T> T * ssobjects::LinkedList< T >::removeTail ()"
+.PP
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "template<class T> bool ssobjects::LinkedList<T>::m_bMasterList\fC [protected]\fP"
+.PP
+.SS "template<class T> unsigned long ssobjects::LinkedList<T>::m_nNumEntries\fC [protected]\fP"
+.PP
+.SS "template<class T> \fBListNode\fP * ssobjects::LinkedList<T>::m_pCurrent\fC [protected]\fP"
+.PP
+.SS "template<class T> \fBListNode\fP * ssobjects::LinkedList<T>::m_pHead\fC [protected]\fP"
+.PP
+.SS "template<class T> \fBListNode\fP * ssobjects::LinkedList<T>::m_pTail\fC [protected]\fP"
+.PP
+.SS "template<class T> unsigned long ssobjects::LinkedList<T>::m_uniqueID\fC [protected]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

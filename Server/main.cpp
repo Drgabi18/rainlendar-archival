@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Server/main.cpp,v 1.15 2005/03/01 19:56:58 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Server/main.cpp,v 1.2 2005/07/21 15:01:10 rainy Exp $
 
   $Log: main.cpp,v $
+  Revision 1.2  2005/07/21 15:01:10  rainy
+  no message
+
+  Revision 1.1.1.1  2005/07/10 18:48:07  rainy
+  no message
+
   Revision 1.15  2005/03/01 19:56:58  rainy
   *** empty log message ***
 
@@ -80,7 +86,7 @@
 
 using namespace ssobjects;
 
-#define VERSION "0.7"
+#define VERSION "0.8"
 #define SERVICENAME "RainlendarServer"
 #define SERVICEDISPLAYNAME "Rainlendar Server"
 
@@ -265,6 +271,8 @@ int RunServer()
 			}
 		}
 	}
+
+	pthread_win32_process_attach_np();
 #endif
 
 	// Note that this SockAddr is okay here, as we are not specifying an ip address.
@@ -356,7 +364,8 @@ int RunServer()
 
 	filter = NULL;
 #ifdef _WIN32
-     if(h) CloseHandle(h);
+    if(h) CloseHandle(h);
+	pthread_win32_process_detach_np();
 #endif
 
 	return 0;

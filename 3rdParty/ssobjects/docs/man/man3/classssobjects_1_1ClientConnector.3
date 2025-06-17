@@ -1,0 +1,374 @@
+.TH "ssobjects::ClientConnector" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::ClientConnector \- Blocking client class that a client app uses to connect to a server. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <clientconnector.h>\fP
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "void \fBhandleException\fP (\fBGeneralException\fP &e)"
+.br
+.RI "\fINot currently used.\fP"
+.ti -1c
+.RI "void \fBsendPacket\fP (\fBPacketBuffer\fP *pPkt)"
+.br
+.RI "\fISends the packet.\fP"
+.ti -1c
+.RI "void \fBsendPacket\fP (\fBPacketBuffer\fP &pPkt)"
+.br
+.RI "\fISends the packet.\fP"
+.ti -1c
+.RI "\fBPacketBuffer\fP* \fBrecvPacket\fP ()"
+.br
+.RI "\fIReceives a packet.\fP"
+.ti -1c
+.RI "void \fBoperator<<\fP (\fBPacketBuffer\fP &)"
+.br
+.RI "\fISends the packet.\fP"
+.ti -1c
+.RI "void \fBoperator<<\fP (\fBPacketBuffer\fP *)"
+.br
+.RI "\fISends the packet.\fP"
+.ti -1c
+.RI "void \fBoperator>>\fP (\fBPacketBuffer\fP &)"
+.br
+.RI "\fIReceives a packet.\fP"
+.ti -1c
+.RI "\fBClientConnector\fP ()"
+.br
+.ti -1c
+.RI "\fBClientConnector\fP (const char *pszHost, \fBword\fP wPort)"
+.br
+.RI "\fIConstructs and connects to host.\fP"
+.ti -1c
+.RI "\fB~ClientConnector\fP ()"
+.br
+.RI "\fIDestroys and closes any connections.\fP"
+.ti -1c
+.RI "\fBCONSTCHAR\fP* \fBgetServer\fP ()"
+.br
+.RI "\fIReturns the server host name you assigned this client object.\fP"
+.ti -1c
+.RI "\fBword\fP \fBgetPort\fP ()"
+.br
+.RI "\fIReturns the port you assigned this client object.\fP"
+.ti -1c
+.RI "bool \fBisConnected\fP ()"
+.br
+.RI "\fIReturns if this client is connected or not.\fP"
+.ti -1c
+.RI "\fBBufferedSocket\fP* \fBgetSocket\fP ()"
+.br
+.ti -1c
+.RI "void \fBreconnect\fP ()"
+.br
+.RI "\fITries to reconnect to the server.\fP"
+.ti -1c
+.RI "void \fBconnect\fP ()"
+.br
+.RI "\fIConnects to the server.\fP"
+.ti -1c
+.RI "void \fBconnect\fP (const char *szHost, const unsigned wPort)"
+.br
+.RI "\fIStores server info passed in, and attempts to connect to the server.\fP"
+.ti -1c
+.RI "void \fBclose\fP ()"
+.br
+.RI "\fICloses the connection to the server.\fP"
+.in -1c
+.SS "Protected Methods"
+
+.in +1c
+.ti -1c
+.RI "void \fBcleanup\fP ()"
+.br
+.RI "\fICloses the connection without throwing any exeptions on errors during socket closer. Deletes the socket.\fP"
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBunsigned16\fP \fBm_wPort\fP"
+.br
+.RI "\fIPort number of the server you wish to connect to.\fP"
+.ti -1c
+.RI "\fBCStr\fP \fBm_strHost\fP"
+.br
+.RI "\fIHost name of the server you wish to connect to.\fP"
+.ti -1c
+.RI "\fBBufferedSocket\fP* \fBm_pSocket\fP"
+.br
+.RI "\fISocket connected to the server.\fP"
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+Blocking client class that a client app uses to connect to a server.
+.PP
+.PP
+ Use this class when you want to connect to a server that uses \fBssobjects\fP. \fBClientConnector\fP provides methods and operators for sending a receiving packets to/from the  server you are connected to. 
+.PP
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::ClientConnector::ClientConnector ()"
+.PP
+Default constructor.  [Windows only] If \fBClientConnector\fP hasn't yet called WSAStartup, it will be called now.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIClientConnectorException\fP\fP
+ [Windows only] If WSAStartup failed.
+.PP
+\fB\fBTodo: \fP\fP
+.in +1c
+ Instead of using a flag, a reference count should be used so if there are multiple instances of \fBClientConnector\fP, the windows socket layer won't be closed down.  
+.SS "ssobjects::ClientConnector::ClientConnector (const char * pszHost, \fBword\fP wPort)"
+.PP
+Constructs and connects to host.
+.PP
+Constructs a \fBClientConnector\fP object and connects to the host. [Win32] If the WSAStartup hasn't been called, it will be called at this point. Upon destruction, WSACleanup will be called.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIpszHost\fP\fP
+[in] Describe what host to connect to. 
+.TP
+\fB\fIwPort\fP\fP
+[in] Describe what port to connect to on pszHost
+.PP
+\fBNote: \fP
+.in +1c
+[Win32] Currently, if you create and use more then one at the same time, \fBClientConnector\fP will call WSACleanup when the first \fBClientConnector\fP goes out of scape. If you try socket operations with the section, it will fail.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIClientConnectorException\fP\fP
+ If Windows WSAStartup failed (Windows only). 
+.TP
+\fB\fISocketInstanceException\fP\fP
+ If there is a socket or connect error. 
+.SS "ssobjects::ClientConnector::~ClientConnector ()"
+.PP
+Destroys and closes any connections.
+.PP
+Closes connection.
+.PP
+[Win32] Also calls WSACleanup.
+.PP
+\fBNote: \fP
+.in +1c
+[Win32] Currently, if you create and use more then one at the same time, \fBClientConnector\fP will call WSACleanup when the first \fBClientConnector\fP goes out of scape. If you try socket operations with the section, it will fail. 
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "void ssobjects::ClientConnector::cleanup ()\fC [protected]\fP"
+.PP
+Closes the connection without throwing any exeptions on errors during socket closer. Deletes the socket.
+.PP
+Closes the socket and deletes the memory accociated with the socket. It will not throw any exceptions on error. Use this when you are in a catch block, and need to close the connection. 
+.SS "void ssobjects::ClientConnector::close ()"
+.PP
+Closes the connection to the server.
+.PP
+Closes the connection and deletes the memory accociated with the socket.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIClientConnectorException\fP\fP
+ If socket was not connected. 
+.TP
+\fB\fISocketInstanceException\fP\fP
+ If there was a socket error during close operation. 
+.SS "void ssobjects::ClientConnector::connect (const char * szHost, const unsigned wPort)"
+.PP
+Stores server info passed in, and attempts to connect to the server.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIszHost\fP\fP
+[in] Describe what host to connect to. 
+.TP
+\fB\fIwPort\fP\fP
+[in] Describe what port to connect to on szHost.
+.PP
+Stores the information you pass in, and then tries to connect to that server.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fISee\fP\fP
+ \fBClientConnector::connect\fP for details. 
+.SS "void ssobjects::ClientConnector::connect ()"
+.PP
+Connects to the server.
+.PP
+Attempts to connect to the server.
+.PP
+[Win32] If \fBClientConnector\fP hasn't yet called WSAStartup, it will be called now.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fISocketInstanceException\fP\fP
+ If unable to make a connection or socket creation failed. 
+.TP
+\fB\fIClientConnectorException\fP\fP
+ If the socket is already connected. 
+.SS "\fBword\fP ssobjects::ClientConnector::getPort ()\fC [inline]\fP"
+.PP
+Returns the port you assigned this client object.
+.PP
+.SS "\fBCONSTCHAR\fP * ssobjects::ClientConnector::getServer ()\fC [inline]\fP"
+.PP
+Returns the server host name you assigned this client object.
+.PP
+.SS "\fBBufferedSocket\fP * ssobjects::ClientConnector::getSocket ()"
+.PP
+\fBReturns: \fP
+.in +1c
+The socket this client object is connected to.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIClientConnectorException\fP\fP
+ If the socket isn't connected to anything. 
+.SS "void ssobjects::ClientConnector::handleException (\fBGeneralException\fP & e)"
+.PP
+Not currently used.
+.PP
+.SS "bool ssobjects::ClientConnector::isConnected ()\fC [inline]\fP"
+.PP
+Returns if this client is connected or not.
+.PP
+.SS "void ssobjects::ClientConnector::operator<< (\fBPacketBuffer\fP * ppacket)"
+.PP
+Sends the packet.
+.PP
+Send the data pointed to by ppacket.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIClientConnectorException\fP\fP
+ If socket is not connected. 
+.TP
+\fB\fISocketInstanceException\fP\fP
+ If there was a socket error during send operation. 
+.SS "void ssobjects::ClientConnector::operator<< (\fBPacketBuffer\fP & packet)"
+.PP
+Sends the packet.
+.PP
+Send the data referenced by packet.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIClientConnectorException\fP\fP
+ If socket is not connected. 
+.TP
+\fB\fISocketInstanceException\fP\fP
+ If there was a socket error during send operation. 
+.SS "void ssobjects::ClientConnector::operator>> (\fBPacketBuffer\fP & packet)"
+.PP
+Receives a packet.
+.PP
+Reads a full packet from the socket.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIClientConnectorException\fP\fP
+ If the socket is not connected. 
+.TP
+\fB\fISocketInstanceException\fP\fP
+ If there is a read error or socket gets closed.
+.PP
+\fBNote: \fP
+.in +1c
+This is not as efficient as using \fBClientConnector::recvPacket\fP, as \fBssobjects\fP creates a new packet, then copies this to the reference you passed in.  It does however let you make cleaner C++ code. 
+.SS "void ssobjects::ClientConnector::reconnect ()"
+.PP
+Tries to reconnect to the server.
+.PP
+Closes down any existing connection, and tries to connect to the server by calling \fBconnect\fP() method.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fISee\fP\fP
+ \fBClientConnector::connect\fP for details. 
+.SS "\fBPacketBuffer\fP * ssobjects::ClientConnector::recvPacket ()"
+.PP
+Receives a packet.
+.PP
+Reads a full packet from the socket.
+.PP
+\fBReturns: \fP
+.in +1c
+A \fBPacketBuffer\fP pointer that points to the data that was just read. This packet was created when the data was read in. You are responsible for destrying the memory once you are finished with the packet.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIClientConnectorException\fP\fP
+ If the socket is not connected. 
+.TP
+\fB\fISocketInstanceException\fP\fP
+ If there is a read error or socket gets closed.
+.PP
+\fBNote: \fP
+.in +1c
+This is more effiecent then using the '>>' operator. 
+.SS "void ssobjects::ClientConnector::sendPacket (\fBPacketBuffer\fP & pPkt)"
+.PP
+Sends the packet.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIClientConnectorException\fP\fP
+ If socket is not connected.  
+.TP
+\fB\fISocketInstance\fP\fP
+ If there is a socket error during the send operation. 
+.SS "void ssobjects::ClientConnector::sendPacket (\fBPacketBuffer\fP * pPkt)"
+.PP
+Sends the packet.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIClientConnectorException\fP\fP
+ If socket is not connected.  
+.TP
+\fB\fISocketInstance\fP\fP
+ If there is a socket error during the send operation. 
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "\fBBufferedSocket\fP * ssobjects::ClientConnector::m_pSocket\fC [protected]\fP"
+.PP
+Socket connected to the server.
+.PP
+.SS "\fBCStr\fP ssobjects::ClientConnector::m_strHost\fC [protected]\fP"
+.PP
+Host name of the server you wish to connect to.
+.PP
+.SS "\fBunsigned16\fP ssobjects::ClientConnector::m_wPort\fC [protected]\fP"
+.PP
+Port number of the server you wish to connect to.
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

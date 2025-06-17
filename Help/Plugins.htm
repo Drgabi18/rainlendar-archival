@@ -111,7 +111,16 @@ Few Notes:<br>
 <li>If the UID (i.e. identification string) is not in correct format the event/todo-item is always imported as read-only.</li>
 <li>Deleting an event removes it completely from the .ics-file. This can cause problems with RainlendarServer.</li>
 <li>The iCalendar does not have a done-list so tasks that are moved to there are not saved to the ics-file.</li>
-<li>Exception dates are not supported!</li>
+<li>Exception dates are not supported!</li></p>
+
+<p><b>Mozilla Sunbird integration HOWTO:</b><br>
+- Go to Plugins tab in Rainlendar's Config.<br>
+- Enable the iCalendar Plugin and click the Settings button<br>
+- Pres the '+'-button in the dialog to open the open file dialog.<br>
+- Locate the Sunbird's ics-file in one of the subfolders starting from C:\Documents and Settings\"YourName"\Application Data\Mozilla. The actual location depends on your installation. The file is called CalendarDataFile0.ics (or something similar that ends with .ics). Note that the "Application Data" is a hidden folder so you need to have the hidden files shown from the folder settings.<br>
+- Select the added file from the list and click the star-button to change the type from "Read/Write" to "Read Only".<br>
+- If there are several .ics-files repeat the procedure for each ot them (or those that you want to show in Rainlendar).<br>
+
 <!-- CLIP -->
 			</div>
 			</td>

@@ -1,0 +1,49 @@
+.TH "simpleserver.h" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+simpleserver.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <sys/time.h>\fP
+.br
+\fC#include <unistd.h>\fP
+.br
+\fC#include 'packetbuffer.h'\fP
+.br
+\fC#include 'flags.h'\fP
+.br
+\fC#include 'linkedlist.h'\fP
+.br
+\fC#include 'bufferedsocket.h'\fP
+.br
+\fC#include 'threadutils.h'\fP
+.br
+\fC#include 'packetmessageque.h'\fP
+.br
+\fC#include 'serversocket.h'\fP
+.br
+\fC#include 'simplemanager.h'\fP
+.br
+.SS "Namespaces"
+
+.in +1c
+.ti -1c
+.RI "namespace \fBssobjects\fP"
+.br
+.in -1c
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBthrowSimpleServerException\fP(m)   (throw SimpleServerException(m,__FILE__,__LINE__))"
+.br
+.in -1c
+.SH "DEFINE DOCUMENTATION"
+.PP 
+.SS "#define throwSimpleServerException(m)   (throw SimpleServerException(m,__FILE__,__LINE__))"
+.PP
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

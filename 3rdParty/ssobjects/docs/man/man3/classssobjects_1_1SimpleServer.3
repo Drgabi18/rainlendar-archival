@@ -1,0 +1,517 @@
+.TH "ssobjects::SimpleServer" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::SimpleServer \- Simple Server object used for creating a full fledged server. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <simpleserver.h>\fP
+.PP
+Inherits \fBssobjects::ThreadHandler\fP.
+.PP
+.SS "Public Types"
+
+.in +1c
+.ti -1c
+.RI "enum { \fBMIN_FREQ\fP = 10       }"
+.br
+.in -1c
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBSimpleServer\fP (const \fBSockAddr\fP &saBind, const \fBunsigned32\fP nFreq=1000, const \fBunsigned32\fP nMaxConnections=100)"
+.br
+.RI "\fISingle-threaded constructor.\fP"
+.ti -1c
+.RI "\fBSimpleServer\fP (\fBServerSocket\fP *const psocket, const \fBunsigned32\fP nFreq)"
+.br
+.RI "\fIMulti-threaded constructor.\fP"
+.ti -1c
+.RI "virtual \fB~SimpleServer\fP ()"
+.br
+.ti -1c
+.RI "virtual void \fBstartServer\fP ()"
+.br
+.RI "\fIStarts up the server, makes ready for connections.\fP"
+.ti -1c
+.RI "virtual void \fBkillServer\fP ()"
+.br
+.RI "\fIStops server, and closes all connections.\fP"
+.ti -1c
+.RI "virtual void \fBpauseIncomingConnections\fP ()"
+.br
+.RI "\fI(Not currently in use.) Server will no longer accept connections.\fP"
+.ti -1c
+.RI "virtual void \fBsendPacket\fP (\fBServerSocket\fP *psocket, const \fBPacketBuffer\fP &packet)"
+.br
+.RI "\fISends a packet over a socket.\fP"
+.ti -1c
+.RI "virtual void \fBsendPacket\fP (\fBServerSocket\fP *psocket, const \fBPacketBuffer\fP *ppacket)"
+.br
+.RI "\fISends a packet over a socket.\fP"
+.ti -1c
+.RI "virtual void \fBsend2All\fP (const \fBPacketBuffer\fP &packet)"
+.br
+.RI "\fISends a packet to all client sockets connected to the server.\fP"
+.ti -1c
+.RI "virtual void \fBsend2All\fP (const \fBPacketBuffer\fP *ppacket)"
+.br
+.RI "\fISends a packet to all client sockets connected to the server.\fP"
+.ti -1c
+.RI "virtual void \fBremoveSocket\fP (\fBServerSocket\fP *psocket)"
+.br
+.RI "\fIRemoves a socket from the server.\fP"
+.ti -1c
+.RI "\fBunsigned32\fP \fBgetTicks\fP ()"
+.br
+.RI "\fISystem timer ticks.\fP"
+.ti -1c
+.RI "bool \fBisThreaded\fP ()"
+.br
+.RI "\fICheck if server is in single or multi-threaded mode.\fP"
+.in -1c
+.SS "Static Public Methods"
+
+.in +1c
+.ti -1c
+.RI "bool \fBcanBind\fP (\fBSockAddr\fP &saBind)"
+.br
+.RI "\fIChecks if we are able to bind. good for when you are about to start the server.\fP"
+.in -1c
+.SS "Protected Methods"
+
+.in +1c
+.ti -1c
+.RI "virtual void \fBprocessSingleMsg\fP (\fBPacketMessage\fP *pmsg)=0"
+.br
+.RI "\fIOverride this to process packets that come in from clients.\fP"
+.ti -1c
+.RI "virtual void \fBidle\fP (\fBunsigned32\fP nTimer=0)"
+.br
+.RI "\fIOverride to have a timer in your server.\fP"
+.ti -1c
+.RI "\fBthreadReturn\fP \fBThreadHandlerProc\fP (void)"
+.br
+.ti -1c
+.RI "void \fBprocessMessages\fP ()"
+.br
+.ti -1c
+.RI "bool \fBprocessSockets\fP (int iReady)"
+.br
+.ti -1c
+.RI "void \fBprocessSelectError\fP ()"
+.br
+.ti -1c
+.RI "void \fBacceptConnection\fP ()"
+.br
+.ti -1c
+.RI "int \fBgetMaxFD\fP ()"
+.br
+.ti -1c
+.RI "long \fBgetSleepTime\fP ()"
+.br
+.ti -1c
+.RI "void \fBaddMsg\fP (\fBPacketMessage\fP *pmsg)"
+.br
+.ti -1c
+.RI "void \fBqueClosedMessage\fP (\fBServerSocket\fP *psocketRemoving)"
+.br
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBSocketInstance\fP \fBm_sListen\fP"
+.br
+.ti -1c
+.RI "\fBSockAddr\fP \fBm_saServer\fP"
+.br
+.ti -1c
+.RI "\fBLinkedList\fP<\fBServerSocket\fP> \fBm_listClients\fP"
+.br
+.ti -1c
+.RI "\fBPacketMessageQue\fP \fBm_que\fP"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nIdleFrequency\fP"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nMaxCon\fP"
+.br
+.ti -1c
+.RI "bool \fBm_bUsingThread\fP"
+.br
+.ti -1c
+.RI "bool \fBm_bPause\fP"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nSleepTime\fP"
+.br
+.ti -1c
+.RI "struct \fBtimeval\fP \fBm_tvServerStarted\fP"
+.br
+.ti -1c
+.RI "fd_set \fBm_rset\fP"
+.br
+.ti -1c
+.RI "fd_set \fBm_wset\fP"
+.br
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+Simple Server object used for creating a full fledged server.
+.PP
+.PP
+ \fB Overview \fP 
+.br
+ Simple server is a class that you dirive from to create a fully functional server. The simple server class handles creating a listen socket, reading  full packets from a client connection, and idling the server.
+.PP
+You only need to override \fBprocessSingleMsg\fP() in order to process packets that come from a client socket. \fBidle\fP() is overridden if you want to have an idle task.
+.PP
+The two ways of constructing a simple server are for a single-threaded server, and a multi-threaded server.
+.PP
+\fB User overridables \fP 
+.br
+namespace \fBssobjects\fP \fBprocessSingleMsg\fP() 
+.br
+ \fBidle\fP() 
+.br
+
+.PP
+\fB Components \fP 
+.br
+ o Message Pump 
+.br
+ o Idler 
+.br
+
+.PP
+\fB Message Pump \fP 
+.br
+ The message pump is the way the server talks to your code. When data comes into the server, it is first parsed into packets, and a \fBPacketMessage\fP is created that references the packet and the socket that it was sent from. It is then posted to the message que. Once there, processSingleMsg is called for every packet that was parsed from the incoming data.
+.PP
+This is where your code comes into play. You check what the packet command was, then extract the data from the packet if appropreate, perform some kind of operation, and perhaps send a reply back. This is the process of processing a clients request.
+.PP
+Care should be taken to make sure that when processSingleMsg is called, your operations don't take very long. In a single threaded environment, all other packets - and there-for all the clients - will waiting for you to process thier requests.
+.PP
+\fB Idler \fP 
+.br
+ Idling is the process of repeating tasks at a regular interval, like having a main loop, or more accuratly, like using a WM_TIMER message in Windows. The frequency is controlled by the m_nFrequency attribute.
+.PP
+Override \fBidle\fP() method if you want to do things on a regular basis without waiting for a packet from a client. This is prefered over putting the server into a busy loop. If the server is in a busy loop, it will not process additional packets in a single-threaded environment. You can set how often this is called via the frequency attribute.
+.PP
+\fBThreading\fP 
+.br
+ It is possible to write the server in such a way that it will operate as a single-threaded server or a multi-threaded server, and this decision can be made at run time. It simply requires a little for-planning, and knowing where to put shared data.
+.PP
+The reason you would want to have a server capable of running as a single or threaded server is for debugging purposes under Linux. Single threading is easier to debug. Multi-threaded can give better performance, and is the best way to handle lengthy operations.
+.PP
+Threading requires the use of the \fBSimpleManager\fP object. It's a little tricky to setup.
+.PP
+\fBNote: \fP
+.in +1c
+When running multi-threaded, any shared data in your dirived classes should be in the \fBSimpleManager\fP and passed into the simple server. If you idle in the manager, you should idle the same way in the server. The simple server however should check if it is running multi threaded, and only idle shared data if it is running single threaded. 
+.PP
+.SH "MEMBER ENUMERATION DOCUMENTATION"
+.PP 
+.SS "anonymous enum"
+.PP
+\fBEnumeration values:\fP
+.in +1c
+.TP
+\fB\fIMIN_FREQ\fP \fP
+Used internally when calculating how much time has been spent waiting for data.
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::SimpleServer::SimpleServer (const \fBSockAddr\fP & saBind, const \fBunsigned32\fP nFreq = 1000, const \fBunsigned32\fP nMaxConnections = 100)"
+.PP
+Single-threaded constructor.
+.PP
+This constructs the server object to run as a single threaded server.
+.PP
+[Win32] WSAStartup is called at this point. You should construct the server before calling canBind method.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIsaBind\fP\fP
+Port and protocal address information you want to bind to. See \fBSimpleServer::canBind\fP for more details on using saBind.
+.TP
+\fB\fInFreq\fP\fP
+How often idle method will be called in milli-seconds.
+.TP
+\fB\fInMaxCon\fP\fP
+Reserved for future expansion.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fISimpleServerException\fP\fP
+ If nFreq is out of range. 
+.TP
+\fB\fIGeneralException\fP\fP
+ [Win32] If WSAStartup call failes.
+.PP
+\fB\fBTodo: \fP\fP
+.in +1c
+ Test passing in the protocol address.  
+.SS "ssobjects::SimpleServer::SimpleServer (\fBServerSocket\fP *const psocket, const \fBunsigned32\fP nFreq)"
+.PP
+Multi-threaded constructor.
+.PP
+Creating a simple server as a handler for a socket. This constructor is used in the simple manager. The socket is already attached. This instance of a simple server is meant to be run multi-threaded.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIpsocket\fP\fP
+Client socket that is connected.
+.TP
+\fB\fInFreq\fP\fP
+idle frequency. (See note below.)
+.PP
+\\Todo Finish explaining how threading and idling is accomplished. 
+.SS "ssobjects::SimpleServer::~SimpleServer ()\fC [virtual]\fP"
+.PP
+Destroys the server object, closes the listening socket, removes all msg's in the message que, removes all client socket connects and closes them.
+.PP
+[Win32] Calls WSACleanup() 
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "\fBthreadReturn\fP ssobjects::SimpleServer::ThreadHandlerProc (void)\fC [protected, virtual]\fP"
+.PP
+Reimplemented from \fBssobjects::ThreadHandler\fP.
+.SS "void ssobjects::SimpleServer::acceptConnection ()\fC [protected]\fP"
+.PP
+.SS "void ssobjects::SimpleServer::addMsg (\fBPacketMessage\fP * pmsg)\fC [inline, protected]\fP"
+.PP
+.SS "bool ssobjects::SimpleServer::canBind (\fBSockAddr\fP & saBind)\fC [static]\fP"
+.PP
+Checks if we are able to bind. good for when you are about to start the server.
+.PP
+Creates a listen socket and tries binding it using the port information passed in. Once the connection has been bound, the connection is put into listen mode, and is then closed. Good for when you want to start the server in single threaded mode, but need to make sure that you were able to bind.
+.PP
+When using the protocol address in saBind, this will bind this server to a specific IP address. Useful when the machine this server is running on has more then one IP address assigned to it. See the manpage on bind for more details.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIsaBind\fP\fP
+Port and protocol address information you want to bind to. 
+.SS "int ssobjects::SimpleServer::getMaxFD ()\fC [protected]\fP"
+.PP
+.SS "long ssobjects::SimpleServer::getSleepTime ()\fC [protected]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::SimpleServer::getTicks ()"
+.PP
+System timer ticks.
+.PP
+\fBReturns: \fP
+.in +1c
+(windows) number of ticks since windows started. (linux) number of ticks since server app started 
+.SS "void ssobjects::SimpleServer::idle (\fBunsigned32\fP nTimer = 0)\fC [inline, protected, virtual]\fP"
+.PP
+Override to have a timer in your server.
+.PP
+.SS "bool ssobjects::SimpleServer::isThreaded ()\fC [inline]\fP"
+.PP
+Check if server is in single or multi-threaded mode.
+.PP
+.SS "void ssobjects::SimpleServer::killServer ()\fC [virtual]\fP"
+.PP
+Stops server, and closes all connections.
+.PP
+.SS "void ssobjects::SimpleServer::pauseIncomingConnections ()\fC [virtual]\fP"
+.PP
+(Not currently in use.) Server will no longer accept connections.
+.PP
+.SS "void ssobjects::SimpleServer::processMessages ()\fC [protected]\fP"
+.PP
+.SS "void ssobjects::SimpleServer::processSelectError ()\fC [protected]\fP"
+.PP
+.SS "void ssobjects::SimpleServer::processSingleMsg (\fBPacketMessage\fP * pmsg)\fC [protected, pure virtual]\fP"
+.PP
+Override this to process packets that come in from clients.
+.PP
+.PP
+ The server will call this method when there was enough data to have parsed it into a packet and needs to have the packet processed. A \fBPacketMessage\fP object is created to contain both the packet and client socket that send the packet. You will typically send your reply to this socket. In certain circumstances you will send the reply to all client connections such as in the case of a chat message.
+.PP
+When you override this method, your function will typically look something like:
+.PP
+.nf
+
+        ...
+        void
+        YourServer::processSingleMsg(PacketMessage* pmsg)
+        {
+          \fBServerSocket\fP* psocket = (\fBServerSocket\fP*)pmsg->socket();
+          \fBPacketBuffer\fP* ppacket = pmsg->packet();
+          switch(ppacket->getCmd())
+          {
+            //One way to handle the message. Process and reply within the switch.
+            case \fBPacketBuffer::pcPing\fP:
+              //do something importaint
+              sendPacket(psocket,PacketBuffer(PacketBuffer::pcPong)); //send a reply pong
+              break;
+
+            //The prefered way to handle the message. Keeps the switch clean.
+            case \fBPacketBuffer::pcGetVersion\fP: onGetVersion(pmsg); break;
+          }
+          DELETE_NULL(ppacket);   //IMPORTANT! The packet is no longer needed. You must delete it.
+        }
+        ...
+        void
+        YourServer::onGetVersion(PacketMessage* pmsg)
+        {
+          \fBServerSocket\fP* psocket = (\fBServerSocket\fP*)pmsg->socket();
+          \fBPacketBuffer\fP version(PacketBuffer::pcVersion);  //create the reply packet
+          version << 'Version: 1.0';              //insert the version information into the packet
+          sendPacket(psocket,version);            //send the packet to the client socket
+        }
+        ...
+        
+.fi
+.PP
+For more information see the Message Pump section in the Detailed Description section.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIpmsg\fP\fP
+Pointer to the message object that contains the packet and cilent socket that sent the packet. 
+.SS "bool ssobjects::SimpleServer::processSockets (int iReady)\fC [protected]\fP"
+.PP
+.SS "void ssobjects::SimpleServer::queClosedMessage (\fBServerSocket\fP * psocketRemoving)\fC [protected]\fP"
+.PP
+Creates and posts a \fBPacketBuffer::pcClosed\fP message to the server message que. The message contains the socket handle, and the ip address in dotted decimal format. The socket you pass in is the socket that you are removing. The socket should still be valid (not yet deleted) when this method is called.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIs\fP\fP
+Pointer to the socket that is being removed. 
+.SS "void ssobjects::SimpleServer::removeSocket (\fBServerSocket\fP * psocket)\fC [virtual]\fP"
+.PP
+Removes a socket from the server.
+.PP
+Removes this socket from our client list, deletes the object, and posts a message to say that this guy is gone. Once this function returns, the socket passed in can no longer be used. Undefined behavior will occur If you attempt to use the socket after a call to this function.
+.PP
+You will receive a pcClosed message in a call to processSingleMsg. Included in the message is the socket number, and dotted decimal IP address that was attached to the socket. You should no longer use the socket number, or the socket object.
+.PP
+Typically, you store the socket number in a list somewhere so when a socket is closed, you will be able to find it and remove it from your user data.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIpsocketRemoving\fP\fP
+Pointer to the socket object that should be removed. 
+.SS "void ssobjects::SimpleServer::send2All (const \fBPacketBuffer\fP * ppacket)\fC [virtual]\fP"
+.PP
+Sends a packet to all client sockets connected to the server.
+.PP
+Use this when you want to send a packet to all client connections.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIppacket\fP\fP
+Pointer to the packet you want to send. You are responsible for deleting the packet when you are finished with it.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fISocketInstanceException\fP\fP
+ if the send operation had an error. 
+.SS "void ssobjects::SimpleServer::send2All (const \fBPacketBuffer\fP & packet)\fC [virtual]\fP"
+.PP
+Sends a packet to all client sockets connected to the server.
+.PP
+Use this when you want to send a packet to all client connections.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIpacket\fP\fP
+Packet you wish to send.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fISocketInstanceException\fP\fP
+ if the send operation had an error. 
+.SS "void ssobjects::SimpleServer::sendPacket (\fBServerSocket\fP * psocket, const \fBPacketBuffer\fP * ppacket)\fC [virtual]\fP"
+.PP
+Sends a packet over a socket.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIs\fP\fP
+Socket you are sending this packet to. 
+.TP
+\fB\fIppacket\fP\fP
+Packet containing the data you are sending.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fISocketInstanceException\fP\fP
+ if the send operation had an error. 
+.SS "void ssobjects::SimpleServer::sendPacket (\fBServerSocket\fP * psocket, const \fBPacketBuffer\fP & packet)\fC [virtual]\fP"
+.PP
+Sends a packet over a socket.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIs\fP\fP
+Socket you are sending this packet to. 
+.TP
+\fB\fIpacket\fP\fP
+Packet containing the data you are sending.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fISocketInstanceException\fP\fP
+ if the send operation had an error. 
+.SS "void ssobjects::SimpleServer::startServer ()\fC [virtual]\fP"
+.PP
+Starts up the server, makes ready for connections.
+.PP
+Creates the listen socket, binds to the address passed in at construction, and puts the listen socket into listen mode.
+.PP
+This method does not return until the server has stopped. The message pump and idler are your only access points after this call. You would typically do any setup you need to do before this is called. Once this returns, the server object can be destroyed. 
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "bool ssobjects::SimpleServer::m_bPause\fC [protected]\fP"
+.PP
+.SS "bool ssobjects::SimpleServer::m_bUsingThread\fC [protected]\fP"
+.PP
+.SS "\fBLinkedList\fP< \fBServerSocket\fP > ssobjects::SimpleServer::m_listClients<\fBServerSocket\fP>\fC [protected]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::SimpleServer::m_nIdleFrequency\fC [protected]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::SimpleServer::m_nMaxCon\fC [protected]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::SimpleServer::m_nSleepTime\fC [protected]\fP"
+.PP
+.SS "\fBPacketMessageQue\fP ssobjects::SimpleServer::m_que\fC [protected]\fP"
+.PP
+.SS "fd_set ssobjects::SimpleServer::m_rset\fC [protected]\fP"
+.PP
+.SS "\fBSocketInstance\fP ssobjects::SimpleServer::m_sListen\fC [protected]\fP"
+.PP
+.SS "\fBSockAddr\fP ssobjects::SimpleServer::m_saServer\fC [protected]\fP"
+.PP
+.SS "struct \fBtimeval\fP ssobjects::SimpleServer::m_tvServerStarted\fC [protected]\fP"
+.PP
+.SS "fd_set ssobjects::SimpleServer::m_wset\fC [protected]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

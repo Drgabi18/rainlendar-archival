@@ -1,0 +1,94 @@
+.TH "ssobjects::CMclThread" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::CMclThread \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <mclthread.h>\fP
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBCMclThread\fP (\fBCMclThreadHandler\fP *pcThreadHandler)"
+.br
+.ti -1c
+.RI "void \fBWait\fP (\fBDWORD\fP dwMilliSeconds=INFINITE)"
+.br
+.ti -1c
+.RI "pthread_t \fBGetThread\fP ()"
+.br
+.ti -1c
+.RI "\fBDWORD\fP \fBSuspend\fP (void)"
+.br
+.ti -1c
+.RI "\fBDWORD\fP \fBResume\fP (void)"
+.br
+.ti -1c
+.RI "\fBBOOL\fP \fBTerminate\fP (\fBDWORD\fP dwExitCode)"
+.br
+.ti -1c
+.RI "\fBBOOL\fP \fBGetExitCode\fP (\fBDWORD\fP *pdwExitCode)"
+.br
+.ti -1c
+.RI "\fBBOOL\fP \fBSetPriority\fP (int nPriority)"
+.br
+.ti -1c
+.RI "int \fBGetPriority\fP (void)"
+.br
+.ti -1c
+.RI "\fBDWORD\fP \fBGetThreadId\fP (void)"
+.br
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBCMclThreadHandler\fP* \fBm_pcThreadHandler\fP"
+.br
+.ti -1c
+.RI "pthread_t \fBm_Thread\fP"
+.br
+.ti -1c
+.RI "\fBDWORD\fP \fBm_dwStatus\fP"
+.br
+.in -1c
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::CMclThread::CMclThread (\fBCMclThreadHandler\fP * pcThreadHandler)"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "\fBBOOL\fP ssobjects::CMclThread::GetExitCode (\fBDWORD\fP * pdwExitCode)"
+.PP
+.SS "int ssobjects::CMclThread::GetPriority (void)"
+.PP
+.SS "pthread_t ssobjects::CMclThread::GetThread ()\fC [inline]\fP"
+.PP
+.SS "\fBDWORD\fP ssobjects::CMclThread::GetThreadId (void)"
+.PP
+.SS "\fBDWORD\fP ssobjects::CMclThread::Resume (void)"
+.PP
+.SS "\fBBOOL\fP ssobjects::CMclThread::SetPriority (int nPriority)"
+.PP
+.SS "\fBDWORD\fP ssobjects::CMclThread::Suspend (void)"
+.PP
+.SS "\fBBOOL\fP ssobjects::CMclThread::Terminate (\fBDWORD\fP dwExitCode)"
+.PP
+.SS "void ssobjects::CMclThread::Wait (\fBDWORD\fP dwMilliSeconds = INFINITE)"
+.PP
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "pthread_t ssobjects::CMclThread::m_Thread\fC [protected]\fP"
+.PP
+.SS "\fBDWORD\fP ssobjects::CMclThread::m_dwStatus\fC [protected]\fP"
+.PP
+.SS "\fBCMclThreadHandler\fP * ssobjects::CMclThread::m_pcThreadHandler\fC [protected]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

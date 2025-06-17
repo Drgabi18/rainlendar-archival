@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Server/IPFilter.h,v 1.3 2004/11/14 11:37:46 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Server/IPFilter.h,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
 
   $Log: IPFilter.h,v $
+  Revision 1.1.1.1  2005/07/10 18:48:07  rainy
+  no message
+
   Revision 1.3  2004/11/14 11:37:46  rainy
   no message
 

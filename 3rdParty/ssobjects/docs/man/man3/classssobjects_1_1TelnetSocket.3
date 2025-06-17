@@ -1,0 +1,114 @@
+.TH "ssobjects::TelnetSocket" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::TelnetSocket \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <socketinstance.h>\fP
+.PP
+Inherits \fBssobjects::SocketInstance\fP.
+.PP
+.SS "Public Types"
+
+.in +1c
+.ti -1c
+.RI "enum { \fBnSizeRecv\fP =  1024 }"
+.br
+.ti -1c
+.RI "enum { \fBFLAG_VALIDATED\fP = 1, \fBFLAG_PLAYING\fP = 2 }"
+.br
+.in -1c
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBTelnetSocket\fP ()"
+.br
+.ti -1c
+.RI "\fBTelnetSocket\fP (\fBSocketInstance\fP &s)"
+.br
+.ti -1c
+.RI "\fBTelnetSocket\fP (\fBSocketInstance\fP *s)"
+.br
+.ti -1c
+.RI "virtual \fB~TelnetSocket\fP ()"
+.br
+.ti -1c
+.RI "int \fBreadLine\fP (char *pch, const int nSize, const int nSecs=DEFAULT_SOCKET_TIMEOUT)"
+.br
+.ti -1c
+.RI "int \fBreadResponse\fP (char *pch, const int nSize, const int nSecs=DEFAULT_SOCKET_TIMEOUT)"
+.br
+.ti -1c
+.RI "int \fBprintln\fP (const char *fmt,...)"
+.br
+.ti -1c
+.RI "int \fBprint\fP (const char *fmt,...)"
+.br
+.ti -1c
+.RI "bool \fBsetLoginName\fP (const char *name)"
+.br
+.in -1c
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "char* \fBm_pLoginName\fP"
+.br
+.ti -1c
+.RI "\fBWORD\fP \fBm_wFlags\fP"
+.br
+.in -1c
+.SH "MEMBER ENUMERATION DOCUMENTATION"
+.PP 
+.SS "anonymous enum"
+.PP
+\fBEnumeration values:\fP
+.in +1c
+.TP
+\fB\fInSizeRecv\fP \fP
+
+.SS "anonymous enum"
+.PP
+\fBEnumeration values:\fP
+.in +1c
+.TP
+\fB\fIFLAG_VALIDATED\fP \fP
+.TP
+\fB\fIFLAG_PLAYING\fP \fP
+
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::TelnetSocket::TelnetSocket ()"
+.PP
+.SS "ssobjects::TelnetSocket::TelnetSocket (\fBSocketInstance\fP & s)"
+.PP
+.SS "ssobjects::TelnetSocket::TelnetSocket (\fBSocketInstance\fP * s)"
+.PP
+.SS "ssobjects::TelnetSocket::~TelnetSocket ()\fC [virtual]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "int ssobjects::TelnetSocket::print (const char * fmt, ...)"
+.PP
+.SS "int ssobjects::TelnetSocket::println (const char * fmt, ...)"
+.PP
+.SS "int ssobjects::TelnetSocket::readLine (char * pch, const int nSize, const int nSecs = DEFAULT_SOCKET_TIMEOUT)"
+.PP
+.SS "int ssobjects::TelnetSocket::readResponse (char * pch, const int nSize, const int nSecs = DEFAULT_SOCKET_TIMEOUT)"
+.PP
+.SS "bool ssobjects::TelnetSocket::setLoginName (const char * name)"
+.PP
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "char * ssobjects::TelnetSocket::m_pLoginName"
+.PP
+.SS "\fBWORD\fP ssobjects::TelnetSocket::m_wFlags"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

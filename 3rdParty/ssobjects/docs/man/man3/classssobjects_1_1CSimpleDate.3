@@ -1,0 +1,347 @@
+.TH "ssobjects::CSimpleDate" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::CSimpleDate \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <SimpleDate.h>\fP
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBCSimpleDate\fP (int FormatType=MMDDYYYY)"
+.br
+.ti -1c
+.RI "\fBCSimpleDate\fP (\fBLPCSTR\fP DateString, int FormatType=MMDDYYYY)"
+.br
+.ti -1c
+.RI "\fBCSimpleDate\fP (long JD, int FormatType=MMDDYYYY)"
+.br
+.ti -1c
+.RI "virtual \fB~CSimpleDate\fP ()"
+.br
+.ti -1c
+.RI "const CSimpleDate& \fBAddDays\fP (int Days)"
+.br
+.ti -1c
+.RI "const CSimpleDate& \fBAddYears\fP (int Yrs)"
+.br
+.ti -1c
+.RI "const CSimpleDate& \fBAddMonths\fP (int Mon)"
+.br
+.ti -1c
+.RI "const CSimpleDate& \fBSubtractYears\fP (int Yrs)"
+.br
+.ti -1c
+.RI "const CSimpleDate& \fBSubtractDays\fP (int Days)"
+.br
+.ti -1c
+.RI "const CSimpleDate& \fBSubtractMonths\fP (int Mon)"
+.br
+.ti -1c
+.RI "virtual int \fBYearsOld\fP ()"
+.br
+.ti -1c
+.RI "\fBLPCSTR\fP \fBGetFullDateString\fP ()"
+.br
+.ti -1c
+.RI "\fBLPCSTR\fP \fBGetFullDateStringLong\fP ()"
+.br
+.ti -1c
+.RI "virtual int \fBGetDayOfWeek\fP ()"
+.br
+.ti -1c
+.RI "virtual bool \fBIsValid\fP () const"
+.br
+.ti -1c
+.RI "long \fBGetJulianDate\fP ()"
+.br
+.ti -1c
+.RI "virtual int \fBGetDay\fP ()"
+.br
+.ti -1c
+.RI "virtual int \fBGetMonth\fP ()"
+.br
+.ti -1c
+.RI "virtual int \fBGetYear\fP ()"
+.br
+.ti -1c
+.RI "virtual void \fBGetIntegerDate\fP (int &m, int &d, int &y)"
+.br
+.ti -1c
+.RI "virtual int \fBGetHour\fP ()"
+.br
+.ti -1c
+.RI "virtual int \fBGetMin\fP ()"
+.br
+.ti -1c
+.RI "virtual int \fBGetSeconds\fP ()"
+.br
+.ti -1c
+.RI "virtual void \fBGetTimeString\fP (\fBLPSTR\fP s, int nLen, bool AmPm=true)"
+.br
+.ti -1c
+.RI "virtual void \fBGetTimeStringShort\fP (\fBLPSTR\fP s, int nLen, bool AmPm=true)"
+.br
+.ti -1c
+.RI "\fBoperator LPCSTR\fP ()"
+.br
+.ti -1c
+.RI "\fBoperator long\fP () const"
+.br
+.ti -1c
+.RI "const CSimpleDate& \fBoperator=\fP (const CSimpleDate &Date)"
+.br
+.ti -1c
+.RI "const CSimpleDate& \fBoperator=\fP (\fBLPCSTR\fP Date)"
+.br
+.ti -1c
+.RI "bool \fBoperator>\fP (const CSimpleDate &Date) const"
+.br
+.ti -1c
+.RI "bool \fBoperator<\fP (const CSimpleDate &Date) const"
+.br
+.ti -1c
+.RI "bool \fBoperator>=\fP (const CSimpleDate &Date) const"
+.br
+.ti -1c
+.RI "bool \fBoperator<=\fP (const CSimpleDate &Date) const"
+.br
+.ti -1c
+.RI "bool \fBoperator==\fP (const CSimpleDate &Date) const"
+.br
+.ti -1c
+.RI "bool \fBoperator!=\fP (const CSimpleDate &Date) const"
+.br
+.ti -1c
+.RI "bool \fBoperator>\fP (\fBLPCSTR\fP Date) const"
+.br
+.ti -1c
+.RI "bool \fBoperator<\fP (\fBLPCSTR\fP Date) const"
+.br
+.ti -1c
+.RI "bool \fBoperator>=\fP (\fBLPCSTR\fP Date) const"
+.br
+.ti -1c
+.RI "bool \fBoperator<=\fP (\fBLPCSTR\fP Date) const"
+.br
+.ti -1c
+.RI "bool \fBoperator==\fP (\fBLPCSTR\fP Date) const"
+.br
+.ti -1c
+.RI "bool \fBoperator!=\fP (\fBLPCSTR\fP Date) const"
+.br
+.in -1c
+.SS "Static Public Methods"
+
+.in +1c
+.ti -1c
+.RI "bool \fBVerifyDateFormat\fP (\fBLPCSTR\fP date)"
+.br
+.ti -1c
+.RI "bool \fBFixDateFormat\fP (\fBLPSTR\fP date)"
+.br
+.in -1c
+.SS "Protected Methods"
+
+.in +1c
+.ti -1c
+.RI "virtual bool \fBSetToday\fP ()"
+.br
+.ti -1c
+.RI "virtual bool \fBParseDateString\fP (\fBLPCSTR\fP, int &m, int &d, int &y)"
+.br
+.ti -1c
+.RI "virtual bool \fBParseDateString\fP (\fBLPCSTR\fP)"
+.br
+.ti -1c
+.RI "virtual long \fBConvertToJulian\fP (int month, int day, int year)"
+.br
+.ti -1c
+.RI "virtual long \fBConvertToJulian\fP ()"
+.br
+.ti -1c
+.RI "virtual void \fBConvertFromJulian\fP (int &Month, int &Day, int &Year)"
+.br
+.ti -1c
+.RI "virtual void \fBConvertFromJulian\fP ()"
+.br
+.ti -1c
+.RI "virtual void \fBAdjustDays\fP ()"
+.br
+.ti -1c
+.RI "virtual void \fBSetTime\fP ()"
+.br
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "int \fBm_Year\fP"
+.br
+.ti -1c
+.RI "int \fBm_Month\fP"
+.br
+.ti -1c
+.RI "int \fBm_Day\fP"
+.br
+.ti -1c
+.RI "long \fBm_JulianDate\fP"
+.br
+.ti -1c
+.RI "int \fBm_Format\fP"
+.br
+.ti -1c
+.RI "char \fBm_DateString\fP [80]"
+.br
+.ti -1c
+.RI "int \fBm_Hour\fP"
+.br
+.ti -1c
+.RI "int \fBm_Min\fP"
+.br
+.ti -1c
+.RI "int \fBm_Second\fP"
+.br
+.ti -1c
+.RI "bool \fBm_bPM\fP"
+.br
+.in -1c
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::CSimpleDate::CSimpleDate (int FormatType = MMDDYYYY)"
+.PP
+.SS "ssobjects::CSimpleDate::CSimpleDate (\fBLPCSTR\fP DateString, int FormatType = MMDDYYYY)"
+.PP
+.SS "ssobjects::CSimpleDate::CSimpleDate (long JD, int FormatType = MMDDYYYY)"
+.PP
+.SS "ssobjects::CSimpleDate::~CSimpleDate ()\fC [virtual]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "const CSimpleDate & ssobjects::CSimpleDate::AddDays (int Days)"
+.PP
+.SS "const CSimpleDate & ssobjects::CSimpleDate::AddMonths (int Mon)"
+.PP
+.SS "const CSimpleDate & ssobjects::CSimpleDate::AddYears (int Yrs)"
+.PP
+.SS "void ssobjects::CSimpleDate::AdjustDays ()\fC [protected, virtual]\fP"
+.PP
+.SS "void ssobjects::CSimpleDate::ConvertFromJulian ()\fC [protected, virtual]\fP"
+.PP
+.SS "void ssobjects::CSimpleDate::ConvertFromJulian (int & Month, int & Day, int & Year)\fC [protected, virtual]\fP"
+.PP
+.SS "long ssobjects::CSimpleDate::ConvertToJulian ()\fC [protected, virtual]\fP"
+.PP
+.SS "long ssobjects::CSimpleDate::ConvertToJulian (int month, int day, int year)\fC [protected, virtual]\fP"
+.PP
+.SS "bool ssobjects::CSimpleDate::FixDateFormat (\fBLPSTR\fP date)\fC [static]\fP"
+.PP
+.SS "int ssobjects::CSimpleDate::GetDay ()\fC [inline, virtual]\fP"
+.PP
+.SS "int ssobjects::CSimpleDate::GetDayOfWeek ()\fC [virtual]\fP"
+.PP
+.SS "\fBLPCSTR\fP ssobjects::CSimpleDate::GetFullDateString ()"
+.PP
+.SS "\fBLPCSTR\fP ssobjects::CSimpleDate::GetFullDateStringLong ()"
+.PP
+.SS "int ssobjects::CSimpleDate::GetHour ()\fC [inline, virtual]\fP"
+.PP
+.SS "void ssobjects::CSimpleDate::GetIntegerDate (int & m, int & d, int & y)\fC [inline, virtual]\fP"
+.PP
+.SS "long ssobjects::CSimpleDate::GetJulianDate ()"
+.PP
+.SS "int ssobjects::CSimpleDate::GetMin ()\fC [inline, virtual]\fP"
+.PP
+.SS "int ssobjects::CSimpleDate::GetMonth ()\fC [inline, virtual]\fP"
+.PP
+.SS "int ssobjects::CSimpleDate::GetSeconds ()\fC [inline, virtual]\fP"
+.PP
+.SS "void ssobjects::CSimpleDate::GetTimeString (\fBLPSTR\fP s, int nLen, bool AmPm = true)\fC [virtual]\fP"
+.PP
+.SS "void ssobjects::CSimpleDate::GetTimeStringShort (\fBLPSTR\fP s, int nLen, bool AmPm = true)\fC [virtual]\fP"
+.PP
+.SS "int ssobjects::CSimpleDate::GetYear ()\fC [inline, virtual]\fP"
+.PP
+.SS "bool ssobjects::CSimpleDate::IsValid () const\fC [virtual]\fP"
+.PP
+.SS "bool ssobjects::CSimpleDate::ParseDateString (\fBLPCSTR\fP TheDate)\fC [protected, virtual]\fP"
+.PP
+.SS "bool ssobjects::CSimpleDate::ParseDateString (\fBLPCSTR\fP date, int & m, int & d, int & y)\fC [protected, virtual]\fP"
+.PP
+.SS "void ssobjects::CSimpleDate::SetTime ()\fC [protected, virtual]\fP"
+.PP
+.SS "bool ssobjects::CSimpleDate::SetToday ()\fC [protected, virtual]\fP"
+.PP
+.SS "const CSimpleDate & ssobjects::CSimpleDate::SubtractDays (int Days)"
+.PP
+.SS "const CSimpleDate & ssobjects::CSimpleDate::SubtractMonths (int Mon)"
+.PP
+.SS "const CSimpleDate & ssobjects::CSimpleDate::SubtractYears (int Yrs)"
+.PP
+.SS "bool ssobjects::CSimpleDate::VerifyDateFormat (\fBLPCSTR\fP date)\fC [static]\fP"
+.PP
+.SS "int ssobjects::CSimpleDate::YearsOld ()\fC [virtual]\fP"
+.PP
+.SS "ssobjects::CSimpleDate::operator \fBLPCSTR\fP ()"
+.PP
+.SS "ssobjects::CSimpleDate::operator long () const"
+.PP
+.SS "bool ssobjects::CSimpleDate::operator!= (\fBLPCSTR\fP Date) const"
+.PP
+.SS "bool ssobjects::CSimpleDate::operator!= (const CSimpleDate & Date) const"
+.PP
+.SS "bool ssobjects::CSimpleDate::operator< (\fBLPCSTR\fP Date) const"
+.PP
+.SS "bool ssobjects::CSimpleDate::operator< (const CSimpleDate & Date) const"
+.PP
+.SS "bool ssobjects::CSimpleDate::operator<= (\fBLPCSTR\fP Date) const"
+.PP
+.SS "bool ssobjects::CSimpleDate::operator<= (const CSimpleDate & Date) const"
+.PP
+.SS "const CSimpleDate & ssobjects::CSimpleDate::operator= (\fBLPCSTR\fP Date)"
+.PP
+.SS "const CSimpleDate & ssobjects::CSimpleDate::operator= (const CSimpleDate & Date)"
+.PP
+.SS "bool ssobjects::CSimpleDate::operator== (\fBLPCSTR\fP Date) const"
+.PP
+.SS "bool ssobjects::CSimpleDate::operator== (const CSimpleDate & Date) const"
+.PP
+.SS "bool ssobjects::CSimpleDate::operator> (\fBLPCSTR\fP Date) const"
+.PP
+.SS "bool ssobjects::CSimpleDate::operator> (const CSimpleDate & Date) const"
+.PP
+.SS "bool ssobjects::CSimpleDate::operator>= (\fBLPCSTR\fP Date) const"
+.PP
+.SS "bool ssobjects::CSimpleDate::operator>= (const CSimpleDate & Date) const"
+.PP
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "char ssobjects::CSimpleDate::m_DateString\fC [protected]\fP"
+.PP
+.SS "int ssobjects::CSimpleDate::m_Day\fC [protected]\fP"
+.PP
+.SS "int ssobjects::CSimpleDate::m_Format\fC [protected]\fP"
+.PP
+.SS "int ssobjects::CSimpleDate::m_Hour\fC [protected]\fP"
+.PP
+.SS "long ssobjects::CSimpleDate::m_JulianDate\fC [protected]\fP"
+.PP
+.SS "int ssobjects::CSimpleDate::m_Min\fC [protected]\fP"
+.PP
+.SS "int ssobjects::CSimpleDate::m_Month\fC [protected]\fP"
+.PP
+.SS "int ssobjects::CSimpleDate::m_Second\fC [protected]\fP"
+.PP
+.SS "int ssobjects::CSimpleDate::m_Year\fC [protected]\fP"
+.PP
+.SS "bool ssobjects::CSimpleDate::m_bPM\fC [protected]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

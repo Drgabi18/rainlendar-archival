@@ -1,0 +1,56 @@
+.TH "packetmessageque.h" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+packetmessageque.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'mcl.h'\fP
+.br
+\fC#include 'generalexception.h'\fP
+.br
+\fC#include 'packetbuffer.h'\fP
+.br
+\fC#include 'threadutils.h'\fP
+.br
+\fC#include 'socketinstance.h'\fP
+.br
+\fC#include 'linkedlist.h'\fP
+.br
+.SS "Namespaces"
+
+.in +1c
+.ti -1c
+.RI "namespace \fBssobjects\fP"
+.br
+.in -1c
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBPACKETMESSAGEQUE_H\fP"
+.br
+.ti -1c
+.RI "#define \fBthrowPacketMessageException\fP(m)   (throw PacketMessageException(m,__FILE__,__LINE__))"
+.br
+.ti -1c
+.RI "#define \fBthrowPacketMessageQueException\fP(m)   (throw PacketMessageQueException(m,__FILE__,__LINE__))"
+.br
+.in -1c
+.SH "DEFINE DOCUMENTATION"
+.PP 
+.SS "#define PACKETMESSAGEQUE_H"
+.PP
+\fBValue:\fP
+.PP
+.nf
+
+.fi
+.SS "#define throwPacketMessageException(m)   (throw PacketMessageException(m,__FILE__,__LINE__))"
+.PP
+.SS "#define throwPacketMessageQueException(m)   (throw PacketMessageQueException(m,__FILE__,__LINE__))"
+.PP
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

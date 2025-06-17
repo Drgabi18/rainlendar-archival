@@ -1,4 +1,4 @@
-Upgrading from 0.6 to 0.7
+Upgrading from 0.6 to 0.8
 -------------------------
 The place where the database files are created has been changed. They
 are now placed in your home folder ($HOME/.rainlendarserver on Linux and

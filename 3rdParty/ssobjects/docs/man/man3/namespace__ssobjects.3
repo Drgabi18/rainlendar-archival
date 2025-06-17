@@ -1,0 +1,251 @@
+.TH "ssobjects" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Compounds"
+
+.in +1c
+.ti -1c
+.RI "class \fBssobjects::AsyncClientConnector\fP"
+.br
+.RI "\fINon-blocking client class that a client app uses to connect to a server.\fP"
+.ti -1c
+.RI "class \fBssobjects::AsyncClientConnectorException\fP"
+.br
+.RI "\fIAsyncClient object throws exceptions of this type.\fP"
+.ti -1c
+.RI "class \fBssobjects::AutoLock\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::BufferedSocket\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::BufferedSocketException\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::ClientConnector\fP"
+.br
+.RI "\fIBlocking client class that a client app uses to connect to a server.\fP"
+.ti -1c
+.RI "class \fBssobjects::ClientConnectorException\fP"
+.br
+.RI "\fI\fBClientConnector\fP object throws exeptions of this type.\fP"
+.ti -1c
+.RI "class \fBssobjects::CMclAutoLock\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::CMclCritSec\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::CMclEvent\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::CMclMutex\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::CMclThread\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::CMclThreadHandler\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::Communicable\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::CParseField\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::CParseIt\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::CSimpleDate\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::CSimpleTime\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::CStr\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::Event\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::File\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::FileException\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::Flags\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::FmtString\fP"
+.br
+.RI "\fIFormated String.\fP"
+.ti -1c
+.RI "class \fBssobjects::GeneralException\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::HttpBlockingSocket\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::LinkedList\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::ListNode\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::Lock\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::logs\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::MsgQueException\fP"
+.br
+.RI "\fI\fBPacketMessageQue\fP object errors.\fP"
+.ti -1c
+.RI "class \fBssobjects::NetFile\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::NetFileException\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::PacketBuffer\fP"
+.br
+.RI "\fIPacket object used for storing data that is sent or received.\fP"
+.ti -1c
+.RI "class \fBssobjects::PacketBufferException\fP"
+.br
+.RI "\fI\fBPacketBuffer\fP object errors.\fP"
+.ti -1c
+.RI "class \fBssobjects::PacketBufferHeader\fP"
+.br
+.RI "\fIHeader information that is sent with every packet.\fP"
+.ti -1c
+.RI "class \fBssobjects::PacketMessage\fP"
+.br
+.RI "\fIContainer for a packet and socket.\fP"
+.ti -1c
+.RI "class \fBssobjects::PacketMessageException\fP"
+.br
+.RI "\fI\fBPacketMessage\fP object errors.\fP"
+.ti -1c
+.RI "class \fBssobjects::PacketMessageQue\fP"
+.br
+.RI "\fIThread-safe list of messages.\fP"
+.ti -1c
+.RI "class \fBssobjects::RWLock\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::ServerHandler\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::ServerManager\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::ServerSocket\fP"
+.br
+.RI "\fISocket object that contains both a read and write buffer.\fP"
+.ti -1c
+.RI "class \fBssobjects::ServerSocketException\fP"
+.br
+.RI "\fI\fBServerSocket\fP object errors.\fP"
+.ti -1c
+.RI "class \fBssobjects::SimpleManager\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::SimpleServer\fP"
+.br
+.RI "\fISimple Server object used for creating a full fledged server.\fP"
+.ti -1c
+.RI "class \fBssobjects::SimpleServerException\fP"
+.br
+.RI "\fI\fBSimpleServer\fP errors.\fP"
+.ti -1c
+.RI "class \fBssobjects::SockAddr\fP"
+.br
+.RI "\fIReplacement for \fBsockaddr_in\fP structure.\fP"
+.ti -1c
+.RI "class \fBssobjects::SocketInstance\fP"
+.br
+.RI "\fIThe socket that you use to connect with.\fP"
+.ti -1c
+.RI "class \fBssobjects::SocketInstanceException\fP"
+.br
+.RI "\fISocket error.\fP"
+.ti -1c
+.RI "class \fBssobjects::StopWatch\fP"
+.br
+.RI "\fITimer operations.\fP"
+.ti -1c
+.RI "class \fBssobjects::TelnetSocket\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::ThreadHandler\fP"
+.br
+.ti -1c
+.RI "class \fBssobjects::TimeVal\fP"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef FILE* \fBPFILE\fP"
+.br
+.ti -1c
+.RI "typedef void* \fBthreadReturn\fP"
+.br
+.ti -1c
+.RI "typedef const char* \fBLPCSTR\fP"
+.br
+.ti -1c
+.RI "typedef char* \fBLPSTR\fP"
+.br
+.ti -1c
+.RI "typedef const char* \fBPTIMESTRING\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBtimeval\fP* \fBPTIMEVAL\fP"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBListDirection\fP { \fBlistPREV\fP, \fBlistNEXT\fP }"
+.br
+.in -1c
+.SH "TYPEDEF DOCUMENTATION"
+.PP 
+.SS "typedef const char * ssobjects::LPCSTR"
+.PP
+.SS "typedef char * ssobjects::LPSTR"
+.PP
+.SS "typedef FILE * ssobjects::PFILE"
+.PP
+.SS "typedef const char * ssobjects::PTIMESTRING"
+.PP
+.SS "typedef struct \fBtimeval\fP * ssobjects::PTIMEVAL"
+.PP
+.SS "typedef void * ssobjects::threadReturn"
+.PP
+.SH "ENUMERATION TYPE DOCUMENTATION"
+.PP 
+.SS "enum ssobjects::ListDirection"
+.PP
+\fBEnumeration values:\fP
+.in +1c
+.TP
+\fB\fIlistPREV\fP \fP
+.TP
+\fB\fIlistNEXT\fP \fP
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

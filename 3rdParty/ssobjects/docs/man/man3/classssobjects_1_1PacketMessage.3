@@ -1,0 +1,80 @@
+.TH "ssobjects::PacketMessage" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::PacketMessage \- Container for a packet and socket. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <packetmessageque.h>\fP
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBPacketMessage\fP (\fBSocketInstance\fP *const s, \fBPacketBuffer\fP *const p)"
+.br
+.ti -1c
+.RI "virtual \fB~PacketMessage\fP ()"
+.br
+.ti -1c
+.RI "\fBPacketBuffer\fP* \fBpacket\fP () const"
+.br
+.RI "\fI< Pointer to the packet that was read in.\fP"
+.ti -1c
+.RI "\fBSocketInstance\fP* \fBsocket\fP () const"
+.br
+.RI "\fI< Pointer to the socket that the packet data was read from.\fP"
+.ti -1c
+.RI "\fBuint\fP \fBid\fP () const"
+.br
+.RI "\fI< Unique id of this packet.\fP"
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+Container for a packet and socket.
+.PP
+.PP
+ The \fBPacketMessage\fP object is created by the \fBSimpleServer\fP object, and is used to contain a pointer to the socket and packet data that was just read in.
+.PP
+\fBNote: \fP
+.in +1c
+The unique id is not thread-safe. 
+.PP
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::PacketMessage::PacketMessage (\fBSocketInstance\fP *const s, \fBPacketBuffer\fP *const p)"
+.PP
+Constructs a message that will be used to place into the message que.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIs\fP\fP
+Pointer to the socket that the data in p was read from. 
+.TP
+\fB\fIp\fP\fP
+Pointer to the packet object that was created from the data read from socket s. 
+.SS "ssobjects::PacketMessage::~PacketMessage ()\fC [virtual]\fP"
+.PP
+Destructs. Does not delete objects that were passed in. You are responsible for that. 
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "\fBuint\fP ssobjects::PacketMessage::id () const\fC [inline]\fP"
+.PP
+< Unique id of this packet.
+.PP
+This is rarely used. 
+.SS "\fBPacketBuffer\fP * ssobjects::PacketMessage::packet () const\fC [inline]\fP"
+.PP
+< Pointer to the packet that was read in.
+.PP
+.SS "\fBSocketInstance\fP * ssobjects::PacketMessage::socket () const\fC [inline]\fP"
+.PP
+< Pointer to the socket that the packet data was read from.
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

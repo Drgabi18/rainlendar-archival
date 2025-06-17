@@ -37,12 +37,12 @@ RSC=rc.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir "Release"
-# PROP Intermediate_Dir "Release"
+# PROP Output_Dir "x32\Release"
+# PROP Intermediate_Dir "x32\Release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "..\Plugin" /I "..\..\..\3rdparty\ssobjects\\" /I "..\..\..\3rdParty\pthreads-snap-2001-06-06" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "..\3rdParty\ssobjects" /I "..\3rdParty\pthreads" /D "_WIN32" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
 # ADD BASE RSC /l 0x40b /d "NDEBUG"
 # ADD RSC /l 0x40b /d "NDEBUG"
 BSC32=bscmake.exe
@@ -50,11 +50,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 Advapi32.lib ssobjects.lib pthreadVCE.lib Ws2_32.lib Winmm.lib /nologo /subsystem:console /machine:I386 /nodefaultlib:"LIBCMTD.lib LIBCMT.lib" /out:"Release/RainlendarServer.exe" /libpath:"..\..\..\3rdparty\ssobjects\\" /libpath:"..\..\..\3rdParty\pthreads-snap-2001-06-06"
-# Begin Special Build Tool
-SOURCE="$(InputPath)"
-PostBuild_Cmds=Copy                 Release\RainlendarServer.exe                 ..\TestBench\ 
-# End Special Build Tool
+# ADD LINK32 Winmm.lib Ws2_32.lib pthreads.lib ssobjects.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386 /out:"../TestBench/x32/Release/RainlendarServer.exe" /libpath:"..\3rdParty\ssobjects" /libpath:"..\3rdParty\pthreads\Release"
 
 !ELSEIF  "$(CFG)" == "Server - Win32 Debug"
 
@@ -65,12 +61,12 @@ PostBuild_Cmds=Copy                 Release\RainlendarServer.exe                
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "Debug"
-# PROP Intermediate_Dir "Debug"
+# PROP Output_Dir "x32\Debug"
+# PROP Intermediate_Dir "x32\Debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "..\Plugin" /I "..\..\..\3rdparty\ssobjects\\" /I "..\..\..\3rdParty\pthreads-snap-2001-06-06" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
+# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /I "..\3rdParty\ssobjects" /I "..\3rdParty\pthreads" /D "_WIN32" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
 # ADD BASE RSC /l 0x40b /d "_DEBUG"
 # ADD RSC /l 0x40b /d "_DEBUG"
 BSC32=bscmake.exe
@@ -78,11 +74,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 Advapi32.lib ssobjects.lib pthreadVCE.lib Ws2_32.lib Winmm.lib /nologo /subsystem:console /debug /machine:I386 /nodefaultlib:"LIBCMTD.lib" /out:"Debug/RainlendarServer.exe" /pdbtype:sept /libpath:"..\..\..\3rdparty\ssobjects\\" /libpath:"..\..\..\3rdParty\pthreads-snap-2001-06-06"
-# Begin Special Build Tool
-SOURCE="$(InputPath)"
-PostBuild_Cmds=Copy                 Debug\RainlendarServer.exe                 ..\TestBench\ 
-# End Special Build Tool
+# ADD LINK32 Winmm.lib Ws2_32.lib pthreads_dbg.lib ssobjects_dbg.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /out:"../TestBench/x32/Debug/RainlendarServer.exe" /pdbtype:sept /libpath:"..\3rdParty\ssobjects" /libpath:"..\3rdParty\pthreads\Debug"
 
 !ENDIF 
 
@@ -145,38 +137,14 @@ SOURCE=.\IPNumber.h
 
 SOURCE=.\RainlendarServer.h
 # End Source File
+# Begin Source File
+
+SOURCE=.\resource.h
+# End Source File
 # End Group
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # End Group
-# Begin Source File
-
-SOURCE=.\AUTHORS
-# End Source File
-# Begin Source File
-
-SOURCE=.\ChangeLog
-# End Source File
-# Begin Source File
-
-SOURCE=.\COPYING
-# End Source File
-# Begin Source File
-
-SOURCE=.\filter.txt
-# End Source File
-# Begin Source File
-
-SOURCE=.\INSTALL
-# End Source File
-# Begin Source File
-
-SOURCE=.\NEWS
-# End Source File
-# Begin Source File
-
-SOURCE=.\README
-# End Source File
 # End Target
 # End Project

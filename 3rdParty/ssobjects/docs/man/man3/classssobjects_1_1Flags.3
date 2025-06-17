@@ -1,0 +1,77 @@
+.TH "ssobjects::Flags" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::Flags \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <flags.h>\fP
+.PP
+.SS "Public Types"
+
+.in +1c
+.ti -1c
+.RI "enum { \fBF_NONE\fP = 0, \fBF_ALL\fP = 0xFFFFFFFF             }"
+.br
+.in -1c
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBFlags\fP (\fBunsigned32\fP nInitiallySet=0)"
+.br
+.ti -1c
+.RI "virtual \fB~Flags\fP ()"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBtoggle\fP (\fBunsigned32\fP nFlagsSetting, \fBunsigned32\fP nFlagsResetting=F_NONE)"
+.br
+.ti -1c
+.RI "bool \fBisSet\fP (\fBunsigned32\fP nCheckFlags)"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBget\fP ()"
+.br
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nFlags\fP"
+.br
+.in -1c
+.SH "MEMBER ENUMERATION DOCUMENTATION"
+.PP 
+.SS "anonymous enum"
+.PP
+\fBEnumeration values:\fP
+.in +1c
+.TP
+\fB\fIF_NONE\fP \fP
+.TP
+\fB\fIF_ALL\fP \fP
+
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::Flags::Flags (\fBunsigned32\fP nInitiallySet = 0)"
+.PP
+.SS "ssobjects::Flags::~Flags ()\fC [virtual]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "\fBunsigned32\fP ssobjects::Flags::get ()\fC [inline]\fP"
+.PP
+.SS "bool ssobjects::Flags::isSet (\fBunsigned32\fP nCheckFlags)"
+.PP
+.SS "\fBunsigned32\fP ssobjects::Flags::toggle (\fBunsigned32\fP nFlagsSetting, \fBunsigned32\fP nFlagsResetting = F_NONE)"
+.PP
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "\fBunsigned32\fP ssobjects::Flags::m_nFlags\fC [protected]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

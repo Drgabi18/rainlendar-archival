@@ -1,0 +1,156 @@
+.TH "ssobjects::SimpleManager" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::SimpleManager \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <simplemanager.h>\fP
+.PP
+Inherits \fBssobjects::ThreadHandler\fP.
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBSimpleManager\fP (const \fBSockAddr\fP &saBind, const bool bUseThread, const \fBunsigned32\fP nFreq, const \fBunsigned32\fP nMaxConnections)"
+.br
+.ti -1c
+.RI "virtual \fB~SimpleManager\fP ()"
+.br
+.ti -1c
+.RI "virtual void \fBstartServer\fP ()"
+.br
+.ti -1c
+.RI "virtual void \fBidle\fP ()"
+.br
+.ti -1c
+.RI "void \fBwaitFinish\fP ()"
+.br
+.ti -1c
+.RI "bool \fBisThreaded\fP ()"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBidleFrequency\fP () const"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBmaxConnections\fP () const"
+.br
+.ti -1c
+.RI "\fBCSimpleTime\fP& \fBstartTime\fP ()"
+.br
+.ti -1c
+.RI "\fBCSimpleDate\fP& \fBstartDate\fP ()"
+.br
+.ti -1c
+.RI "\fBSockAddr\fP& \fBbindAddr\fP ()"
+.br
+.in -1c
+.SS "Protected Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBthreadReturn\fP \fBThreadHandlerProc\fP (void)"
+.br
+.ti -1c
+.RI "void \fBacceptConnection\fP ()"
+.br
+.ti -1c
+.RI "virtual \fBSimpleServer\fP* \fBcreateServerInstance\fP (\fBServerSocket\fP *const psocket)=0"
+.br
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBLinkedList\fP<\fBSimpleServer\fP> \fBm_listSimpleServers\fP"
+.br
+.ti -1c
+.RI "\fBLinkedList\fP<\fBServerSocket\fP> \fBm_listClientSockets\fP"
+.br
+.ti -1c
+.RI "\fBSocketInstance\fP \fBm_sListen\fP"
+.br
+.ti -1c
+.RI "\fBSockAddr\fP \fBm_saBind\fP"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nIdleFrequency\fP"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nMaxConnections\fP"
+.br
+.ti -1c
+.RI "bool \fBm_bUsingThreads\fP"
+.br
+.ti -1c
+.RI "bool \fBm_bPause\fP"
+.br
+.ti -1c
+.RI "\fBCSimpleTime\fP \fBm_serverStartTime\fP"
+.br
+.ti -1c
+.RI "\fBCSimpleDate\fP \fBm_serverStartDate\fP"
+.br
+.in -1c
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::SimpleManager::SimpleManager (const \fBSockAddr\fP & saBind, const bool bUseThread, const \fBunsigned32\fP nFreq, const \fBunsigned32\fP nMaxConnections)"
+.PP
+.SS "ssobjects::SimpleManager::~SimpleManager ()\fC [virtual]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "\fBthreadReturn\fP ssobjects::SimpleManager::ThreadHandlerProc (void)\fC [protected, virtual]\fP"
+.PP
+Reimplemented from \fBssobjects::ThreadHandler\fP.
+.SS "void ssobjects::SimpleManager::acceptConnection ()\fC [protected]\fP"
+.PP
+.SS "\fBSockAddr\fP & ssobjects::SimpleManager::bindAddr ()\fC [inline]\fP"
+.PP
+.SS "\fBSimpleServer\fP * ssobjects::SimpleManager::createServerInstance (\fBServerSocket\fP *const psocket)\fC [protected, pure virtual]\fP"
+.PP
+.SS "void ssobjects::SimpleManager::idle ()\fC [inline, virtual]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::SimpleManager::idleFrequency () const\fC [inline]\fP"
+.PP
+.SS "bool ssobjects::SimpleManager::isThreaded ()\fC [inline]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::SimpleManager::maxConnections () const\fC [inline]\fP"
+.PP
+.SS "\fBCSimpleDate\fP & ssobjects::SimpleManager::startDate ()\fC [inline]\fP"
+.PP
+.SS "void ssobjects::SimpleManager::startServer ()\fC [virtual]\fP"
+.PP
+.SS "\fBCSimpleTime\fP & ssobjects::SimpleManager::startTime ()\fC [inline]\fP"
+.PP
+.SS "void ssobjects::SimpleManager::waitFinish ()"
+.PP
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "bool ssobjects::SimpleManager::m_bPause\fC [protected]\fP"
+.PP
+.SS "bool ssobjects::SimpleManager::m_bUsingThreads\fC [protected]\fP"
+.PP
+.SS "\fBLinkedList\fP< \fBServerSocket\fP > ssobjects::SimpleManager::m_listClientSockets<\fBServerSocket\fP>\fC [protected]\fP"
+.PP
+.SS "\fBLinkedList\fP< \fBSimpleServer\fP > ssobjects::SimpleManager::m_listSimpleServers<\fBSimpleServer\fP>\fC [protected]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::SimpleManager::m_nIdleFrequency\fC [protected]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::SimpleManager::m_nMaxConnections\fC [protected]\fP"
+.PP
+.SS "\fBSocketInstance\fP ssobjects::SimpleManager::m_sListen\fC [protected]\fP"
+.PP
+.SS "\fBSockAddr\fP ssobjects::SimpleManager::m_saBind\fC [protected]\fP"
+.PP
+.SS "\fBCSimpleDate\fP ssobjects::SimpleManager::m_serverStartDate\fC [protected]\fP"
+.PP
+.SS "\fBCSimpleTime\fP ssobjects::SimpleManager::m_serverStartTime\fC [protected]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

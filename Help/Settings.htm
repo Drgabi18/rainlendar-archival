@@ -37,7 +37,7 @@ a <i>Rainlendar.ini</i>-file when you press the OK-button.</p>
 If enabled a tooltip will open when you move the mouse over a day that has an event. The tooltip will display all the day's events.
 
 <p><b>Show message alarms<br></b>
-If enabled a message box will be opened when an event is due. The message box will always be opened in the middle of your desktop.
+If enabled a message box will be opened when an event is due. 
 
 <p><b>Show all today's messages at startup<br></b>
 If enabled a message box will be opened when Rainlendar is started. The message box will display all the today's events.
@@ -62,7 +62,7 @@ If enabled a message box will be opened when Rainlendar is started. The message 
       tooltip.</p>
 
       <p><b>Show tray icon<br>
-      </b>This displays the current date in your system tray. Doubleclicking the 
+      </b>This displays the current date in your system tray. Double clicking the 
       icon toggles the window visibility.</p>
 
       <p><b>Use native Windows transparency<br>
@@ -75,7 +75,7 @@ You can also adjust the overall transparency value from the slider.</p>
 Creates (or deletes) the Rainlendar's log-file. The log is written into the same folder where Rainlendar.dll is (usually C:\Program Files\Rainlendar). 
 
 <p><b>Show Log</b><br>
-Opens the log-file with notepad.
+Opens the log-file with Notepad.
 
 <p><b>Advanced</b><br>
 Opens the Rainlendar.ini with notepad. See the advanced section below.   
@@ -125,7 +125,7 @@ holding Shift-key down while moving the mouse (It's not registered immediately s
       January&quot; option shows January always as the first month. This is useful if 
       you want to show all year at the same time on the desktop.</p>
 
-<p>Opaque on mouse over<b></b><br>
+<p><b>Opaque on mouse over</b><br>
 Changes the window to completely opaque when the mouse is moved over the calendar. The window should
 have some transparency assigned with the slider in the General-tab or otherwise this feature doesn't
 do much.</p>
@@ -159,9 +159,6 @@ Defines the location of the calendar, todo and event list windows.<p>
 
 <b>MessageBoxX and MessageBoxY</b><br>
 Defines the location of the Message Box. Note that the position is not pixels like in the other windows but percent of the desktop area.</p>
-
-<b>MessageBoxY</b><br>
-</p>
 
 <b>ToolTipMaxWidth</b><br>
 Defines the maximum width (in pixels) of the tooltip. If set to 0 there is no limit.<p>
@@ -256,7 +253,18 @@ to change the settings if you cannot click the windows anymore. Especially if yo
 Define the editor that you want to use when advanced-button is clicked in the config or skin dialog. Do not use spaces in the path or filename.</p>
 
 <b>UseSkinCharSet</b><br>
-Set to 1 if you want to use the charset defined in the skin's fonts. Otherwise the fonts use the default charset defined in Windows locale.
+Set to 1 if you want to use the charset defined in the skin's fonts. Otherwise the fonts use the default charset defined in Windows locale.</p>
+
+<b>WeekendDays</b><br>
+This defines which days are considered weekend days.<br>
+1=Sunday<br>
+2=Monday<br>
+4=Tuesday<br>
+8=Wednesday<br>
+16=Thursday<br>
+32=Friday<br>
+64=Saturday<br>
+You can add the numbers together to select several days. E.g. If you want the weekend to be defined as Friday and Saturday set it like this: WeekendDays=96
 </p>
 
 <!-- CLIP -->

@@ -27,6 +27,49 @@
 
 <!-- CLIP -->
 
+      <p>20 JUL 2005 (Version 0.21.2 ß)</p>
+      <ul>
+        <li>All day events that lasted forever were not shown correctly in the all events dialog. Fixed</li>
+        <li>!RainlendarEditSkin didn't work. Fixed</li>
+        <li>The iCal-plugin hung if it tried to monitor a non-existing file. Fixed</li>
+        <li>Fixed a crash bug when events that were deleted were read from several sources.</li>
+        <li>Selecting events for editing from the context menu didn't work correctly. Fixed.</li>
+        <li>The "Until" in recurring events didn't work correctly. Fixed.</li>
+        <li>The window shouldn't popup on top anymore on midnight.</li>
+        <li>Alt-F4 is disabled if "Disable keyboard shortcuts" is checked. It also shouldn't react to unintended key presses so easily anymore.</li>
+        <li>iCal-plugin can read vCalendar files too.</li>
+        <li>Events can be imported just by dropping the file over any of the windows.</li>
+        <li>iCal-events are not imported as read-only anymore if the GUID cannot be decoded.</li>
+        <li>The iCal-plugin can now read also read-only files.</li>
+        <li>Fixed double clicking with vertical day layout.</li>
+        <li>Exporting iCal events over an existing file doesn't merge them anymore.</li>
+        <li>Double clicks on the event list window will always open the edit event dialog.</li>
+        <li>The ServerPlugin crashed if the message was too long. Fixed.</li>
+        <li>Fixed some endian problems with the server.</li>
+        <li>A "\n" in the message is not converted to newline anymore.</li>
+        <li>Todo-list positions are stored also to the ics-files.</li>
+        <li>The alarm time is taken from the Outlook appointment.</li>
+        <li>Added NumOfComponents to the time item.</li>
+      </ul>
+
+      <p>25 MAR 2005 (Version 0.21.1 ß)</p>
+      <ul>
+	    <li>Fixed event sorting again. Hopefully it now works correctly.</li>
+	    <li>iCalendar plugin wrote also done todo-items to the ics-file. Fixed.</li>
+	    <li>ToolTip used always the default font. Fixed.</li>
+	    <li>Imported iCal events were sometimes a day too long. Fixed.</li>
+	    <li>GrowUpwards didn't work correctly with the event list. Fixed.</li>
+	    <li>Changed the file system monitoring in iCalPlugin. It now compares the filesize.</li>
+	    <li>Fixed a memory leak in iCalPlugin.</li>
+	    <li>"Refresh when screen resolution changes" works again.</li>
+	    <li>Fixed time parsing routine.</li>
+	    <li>"Mark all checked as done" doesn't affect read-only items anymore.</li>
+	    <li>If the ServerPlugin was active modified events were not send to the server. Fixed.</li>
+	    <li>Reversed the strings in month's and year's align combo box.</li>
+	    <li>Fixed a crash bug in iCalendar and Server plugins.</li>
+	    <li>Weekends can be defined with WeekendDays.</li>
+      </ul>
+
       <p>1 MAR 2005 (Version 0.21 ß)</p>
       <ul>
 	    <li>Added support for iCalendar files.</li>

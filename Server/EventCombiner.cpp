@@ -16,9 +16,18 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Server/EventCombiner.cpp,v 1.17 2004/11/14 12:11:53 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Server/EventCombiner.cpp,v 1.2 2005/07/11 16:16:34 rainy Exp $
 
   $Log: EventCombiner.cpp,v $
+  Revision 1.2  2005/07/11 16:16:34  rainy
+  *** empty log message ***
+
+  Revision 1.1.1.1  2005/07/10 18:48:07  rainy
+  no message
+
+  Revision 1.18  2005/04/30 08:35:35  rainy
+  Endian fixes
+
   Revision 1.17  2004/11/14 12:11:53  rainy
   Linux fixes
 
@@ -542,55 +551,132 @@ PacketBuffer* CEventCombiner::EncodePacket(EventInfo* info, CIPFilter* filter, U
 {
 	PacketBuffer* newPacket = NULL;
 
-	if (info && info->item)
+	try
 	{
-		char* profile = NULL;
-		newPacket = new PacketBuffer(pcEvent);
-
-		if (info->item->type == RAINLENDAR_TYPE_EVENT)
+		if (info && info->item)
 		{
-			RainlendarEvent* event = (RainlendarEvent*)info->item;
+			char* profile = NULL;
+			newPacket = new PacketBuffer(pcEvent);
 
-			// Add the raw-data
-			newPacket->append((unsigned char*)event, sizeof(RainlendarEvent));
-
-			// Add the recurrency
-			if (event->recurrency) 
+			if (info->item->type == RAINLENDAR_TYPE_EVENT)
 			{
-				newPacket->append((unsigned char*)event->recurrency, sizeof(RainlendarRecurrency));
+				RainlendarEvent* event = (RainlendarEvent*)info->item;
+
+				(*newPacket) << (unsigned32)event->size;
+				(*newPacket) << (unsigned32)event->type;
+				newPacket->append((unsigned8*)&event->guid, sizeof(GUID));
+				(*newPacket) << (unsigned32)event->timeStamp;
+				(*newPacket) << (unsigned32)event->readOnly;
+				(*newPacket) << (unsigned32)event->deleted;
+				(*newPacket) << (unsigned32)event->startTime.dwHighDateTime;
+				(*newPacket) << (unsigned32)event->startTime.dwLowDateTime;
+				(*newPacket) << (unsigned32)event->endTime.dwHighDateTime;
+				(*newPacket) << (unsigned32)event->endTime.dwLowDateTime;
+				(*newPacket) << (unsigned32)event->alarm;
+
+				// Add the strings
+				if (event->header) 
+				{
+					(*newPacket) << event->header;
+				}
+				else
+				{
+					(*newPacket) << "";
+				}
+
+				if (event->message)
+				{
+					(*newPacket) << event->message;
+				}
+				else
+				{
+					(*newPacket) << "";
+				}
+
+				if (event->profile)
+				{
+					(*newPacket) << event->profile;
+				}
+				else
+				{
+					(*newPacket) << "";
+				}
+
+				// Add the recurrency
+				if (event->recurrency) 
+				{
+					(*newPacket) << (unsigned32)1;
+
+					RainlendarRecurrency* recurrency = event->recurrency;
+
+					(*newPacket) << (unsigned32)recurrency->size;
+					(*newPacket) << (unsigned32)recurrency->type;
+					(*newPacket) << (unsigned32)recurrency->frequency;
+					(*newPacket) << (unsigned32)recurrency->days;
+					(*newPacket) << (unsigned32)recurrency->repeatType;
+					(*newPacket) << (unsigned32)recurrency->count;
+					(*newPacket) << (unsigned32)recurrency->until.dwHighDateTime;
+					(*newPacket) << (unsigned32)recurrency->until.dwLowDateTime;
+				}
+				else
+				{
+					(*newPacket) << (unsigned32)0;
+				}
+				profile = event->profile;
+			}
+			else if (info->item->type == RAINLENDAR_TYPE_TODO)
+			{
+				RainlendarTodo* todo = (RainlendarTodo*)info->item;
+
+				(*newPacket) << (unsigned32)todo->size;
+				(*newPacket) << (unsigned32)todo->type;
+				(*newPacket) << (unsigned32)todo->timeStamp;
+				newPacket->append((unsigned8*)&todo->guid, sizeof(GUID));
+				(*newPacket) << (unsigned32)todo->todoType;
+				(*newPacket) << (unsigned32)todo->readOnly;
+				(*newPacket) << (unsigned32)todo->deleted;
+				(*newPacket) << (unsigned32)todo->position;
+				(*newPacket) << (unsigned32)todo->checked;
+
+				// Add the strings
+				if (todo->message)
+				{
+					(*newPacket) << todo->message;
+				}
+				else
+				{
+					(*newPacket) << "";
+				}
+
+				if (todo->profile)
+				{
+					(*newPacket) << todo->profile;
+				}
+				else
+				{
+					(*newPacket) << "";
+				}
+				profile = todo->profile;
 			}
 
-			// Add the strings
-			if (event->header) (*newPacket) << event->header;
-			if (event->message) (*newPacket) << event->message;
-			if (event->profile) (*newPacket) << event->profile;
-
-			profile = event->profile;
-		}
-		else if (info->item->type == RAINLENDAR_TYPE_TODO)
-		{
-			RainlendarTodo* todo = (RainlendarTodo*)info->item;
-
-			// Add the raw-data
-			newPacket->append((unsigned char*)todo, sizeof(RainlendarTodo));
-
-			// Add the strings
-			if (todo->message) (*newPacket) << todo->message;
-			if (todo->profile) (*newPacket) << todo->profile;
-
-			profile = todo->profile;
-		}
-
-		if (filter)
-		{
-			if (!filter->CheckOutgoing(CIPNumber(ipAddr, 32), profile))
+			if (filter && info->item)
 			{
-				LOG("The outgoing event %s was filtered (rule: %s).", GuidToString(info->item->guid), filter->GetRule());
-				delete newPacket;
-				newPacket = new PacketBuffer(pcFiltered);
+				if (!filter->CheckOutgoing(CIPNumber(ipAddr, 32), profile))
+				{
+					LOG("The outgoing event %s was filtered (rule: %s).", GuidToString(info->item->guid), filter->GetRule());
+					delete newPacket;
+					newPacket = new PacketBuffer(pcFiltered);
+				}
 			}
 		}
 	}
+	catch(GeneralException& e)
+	{
+		delete newPacket;
+		newPacket = NULL;
+		LOG("Unable to encode packet: %s", e.getErrorMsg());
+	}
+
 	return newPacket;
 }
 
@@ -606,64 +692,153 @@ bool CEventCombiner::DecodePacket(PacketBuffer* packet, CIPFilter* filter, ULONG
 		RainlendarItem* item = NULL;
 
 		// Size is the first
-		DWORD size = *((DWORD*)buffer);
+		unsigned32 size;
+		*packet >> size;
 		if (size == sizeof(RainlendarEvent))
 		{
 			RainlendarEvent* newEvent = new RainlendarEvent;
 
-			// Copy the data
-			*newEvent = *((RainlendarEvent*)buffer);
+			newEvent->size = size;
+			unsigned32 value;
 
-			buffer = buffer + sizeof(RainlendarEvent);
+			(*packet) >> value;
+			newEvent->type = (RAINLENDAR_TYPE)value;
 
-			// Copy the recurrency
-			if (newEvent->recurrency)
+			for (int i = 0; i < sizeof(GUID); i++)
+			{
+				(*packet) >> ((unsigned8*)&newEvent->guid)[i];
+			}
+
+			(*packet) >> value;
+			newEvent->timeStamp = value;
+			(*packet) >> value;
+			newEvent->readOnly = value;
+			(*packet) >> value;
+			newEvent->deleted = value;
+			(*packet) >> value;
+			newEvent->startTime.dwHighDateTime = value;
+			(*packet) >> value;
+			newEvent->startTime.dwLowDateTime = value;
+			(*packet) >> value;
+			newEvent->endTime.dwHighDateTime = value;
+			(*packet) >> value;
+			newEvent->endTime.dwLowDateTime = value;
+			(*packet) >> value;
+			newEvent->alarm = value;
+
+			CStr tempStr;
+			(*packet) >> tempStr;
+			if (tempStr.getLength() == 0)
+			{
+				newEvent->header = NULL;
+			}
+			else
+			{
+				newEvent->header = _strdup(tempStr);
+			}
+
+			(*packet) >> tempStr;
+			if (tempStr.getLength() == 0)
+			{
+				newEvent->message = NULL;
+			}
+			else
+			{
+				newEvent->message = _strdup(tempStr);
+			}
+
+			(*packet) >> tempStr;
+			if (tempStr.getLength() == 0)
+			{
+				newEvent->profile = NULL;
+			}
+			else
+			{
+				newEvent->profile = _strdup(tempStr);
+			}
+
+			unsigned32 recurrence;
+			(*packet) >> recurrence;
+
+			// Copy the recurrence
+			if (recurrence)
 			{
 				newEvent->recurrency = new RainlendarRecurrency;
-				*(newEvent->recurrency) = *((RainlendarRecurrency*)buffer);
 
-				buffer = buffer + sizeof(RainlendarRecurrency);
+				(*packet) >> value;
+				newEvent->recurrency->size = value;
+				(*packet) >> value;
+				newEvent->recurrency->type = (RECURRENCY_TYPE)value;
+				(*packet) >> value;
+				newEvent->recurrency->frequency = value;
+				(*packet) >> value;
+				newEvent->recurrency->days = value;
+				(*packet) >> value;
+				newEvent->recurrency->repeatType = (RECURRENCY_REPEAT)value;
+				(*packet) >> value;
+				newEvent->recurrency->count = value;
+				(*packet) >> value;
+				newEvent->recurrency->until.dwHighDateTime = value;
+				(*packet) >> value;
+				newEvent->recurrency->until.dwLowDateTime = value;
 			}
-
-			// Copy the strings;
-			if (newEvent->header)
+			else
 			{
-				newEvent->header = _strdup((char*)buffer);
-				buffer = buffer + strlen((char*)buffer) + 1;
-			}
-			if (newEvent->message)
-			{
-				newEvent->message = _strdup((char*)buffer);
-				buffer = buffer + strlen((char*)buffer) + 1;
-			}
-			if (newEvent->profile)
-			{
-				newEvent->profile = _strdup((char*)buffer);
-				buffer = buffer + strlen((char*)buffer) + 1;
+				newEvent->recurrency = NULL;
 			}
 
 			item = newEvent;
+
 			profile = newEvent->profile;
 		}
 		else if (size == sizeof(RainlendarTodo))
 		{
 			RainlendarTodo* newTodo = new RainlendarTodo;
 
-			// Copy the data
-			*newTodo = *((RainlendarTodo*)buffer);
+			newTodo->size = size;
+			unsigned32 value;
 
-			buffer = buffer + sizeof(RainlendarTodo);
+			(*packet) >> value;
+			newTodo->type = (RAINLENDAR_TYPE)value;
+			(*packet) >> value;
+			newTodo->timeStamp = value;
+
+			for (int i = 0; i < sizeof(GUID); i++)
+			{
+				(*packet) >> ((unsigned8*)&newTodo->guid)[i];
+			}
+
+			(*packet) >> value;
+			newTodo->todoType = (TODO_TYPE)value;
+			(*packet) >> value;
+			newTodo->readOnly = value;
+			(*packet) >> value;
+			newTodo->deleted = value;
+			(*packet) >> value;
+			newTodo->position = value;
+			(*packet) >> value;
+			newTodo->checked = value;
 
 			// Copy the strings;
-			if (newTodo->message)
+			CStr tempStr;
+			(*packet) >> tempStr;
+			if (tempStr.getLength() == 0)
 			{
-				newTodo->message = _strdup((char*)buffer);
-				buffer = buffer + strlen((char*)buffer) + 1;
+				newTodo->message = NULL;
 			}
-			if (newTodo->profile)
+			else
 			{
-				newTodo->profile = _strdup((char*)buffer);
-				buffer = buffer + strlen((char*)buffer) + 1;
+				newTodo->message = _strdup(tempStr);
+			}
+
+			(*packet) >> tempStr;
+			if (tempStr.getLength() == 0)
+			{
+				newTodo->profile = NULL;
+			}
+			else
+			{
+				newTodo->profile = _strdup(tempStr);
 			}
 
 			item = newTodo;
@@ -671,12 +846,13 @@ bool CEventCombiner::DecodePacket(PacketBuffer* packet, CIPFilter* filter, ULONG
 		}
 		else
 		{
-			LOG("Something's wrong. The size of the item %s doesn't match.", GuidToString(item->guid));
+			LOG("Something's wrong. The size of the item is incorrect (%i - %i - %i).", size, sizeof(RainlendarEvent), sizeof(RainlendarTodo));
+			return false;
 		}
 
 		info->item = item;
 
-		if (filter)
+		if (filter && item)
 		{
 			if (!filter->CheckIncoming(CIPNumber(ipAddr, 32), profile))
 			{
@@ -722,11 +898,16 @@ const char* CEventCombiner::GuidToString(GUID guid)
 {
 	static char buffer[256];
 
-	unsigned char* data = (unsigned char*)&guid;
+	buffer[0] = 0;
 
-	for (int i = 0; i < sizeof(GUID); i++)
+	unsigned char* data = (unsigned char*)&guid;
+	
+	if (data)
 	{
-		sprintf(buffer + (i * 3), "%02X ", data[i]); 
+		for (int i = 0; i < sizeof(GUID); i++)
+		{
+			sprintf(buffer + (i * 3), "%02X ", data[i]); 
+		}
 	}
 
 	return buffer;

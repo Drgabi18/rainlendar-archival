@@ -1,0 +1,113 @@
+.TH "ssobjects::File" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::File \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <file.h>\fP
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBFile\fP ()"
+.br
+.ti -1c
+.RI "\fBFile\fP (const char *pszFilename, const char *pszModes='rb')"
+.br
+.ti -1c
+.RI "\fB~File\fP ()"
+.br
+.ti -1c
+.RI "int \fBopen\fP (const char *pszFilename, const char *pszModes)"
+.br
+.ti -1c
+.RI "void \fBclose\fP ()"
+.br
+.ti -1c
+.RI "\fBunsigned8\fP* \fBload\fP ()"
+.br
+.ti -1c
+.RI "void \fBunload\fP ()"
+.br
+.ti -1c
+.RI "long \fBread\fP (void *pDest, \fBuint\fP nMax=0)"
+.br
+.ti -1c
+.RI "long \fBwrite\fP (void *pSrc, \fBuint\fP nCount)"
+.br
+.ti -1c
+.RI "long \fBwrite\fP (\fBCStr\fP &string)"
+.br
+.ti -1c
+.RI "long \fBgetSize\fP ()"
+.br
+.ti -1c
+.RI "\fBunsigned8\fP* \fBgetDataPtr\fP ()"
+.br
+.ti -1c
+.RI "char* \fBfgets\fP (char *s, int size)"
+.br
+.ti -1c
+.RI "char* \fBfgetsTrimNL\fP (char *s, int size)"
+.br
+.ti -1c
+.RI "\fBoperator PFILE\fP ()"
+.br
+.ti -1c
+.RI "void \fBrewind\fP ()"
+.br
+.ti -1c
+.RI "\fBFile\fP (const File &file)"
+.br
+.ti -1c
+.RI "File& \fBoperator=\fP (const File &file)"
+.br
+.in -1c
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::File::File ()"
+.PP
+.SS "ssobjects::File::File (const char * pszFilename, const char * pszModes = 'rb')"
+.PP
+.SS "ssobjects::File::~File ()"
+.PP
+.SS "ssobjects::File::File (const File & file)"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "void ssobjects::File::close ()"
+.PP
+.SS "char * ssobjects::File::fgets (char * s, int size)"
+.PP
+.SS "char * ssobjects::File::fgetsTrimNL (char * s, int size)"
+.PP
+.SS "\fBunsigned8\fP * ssobjects::File::getDataPtr ()"
+.PP
+.SS "long ssobjects::File::getSize ()"
+.PP
+.SS "\fBunsigned8\fP * ssobjects::File::load ()"
+.PP
+.SS "int ssobjects::File::open (const char * pszFilename, const char * pszModes)"
+.PP
+.SS "ssobjects::File::operator \fBPFILE\fP ()\fC [inline]\fP"
+.PP
+.SS "File & ssobjects::File::operator= (const File & file)"
+.PP
+.SS "long ssobjects::File::read (void * pDest, \fBuint\fP nMax = 0)"
+.PP
+.SS "void ssobjects::File::rewind ()"
+.PP
+.SS "void ssobjects::File::unload ()"
+.PP
+.SS "long ssobjects::File::write (\fBCStr\fP & string)"
+.PP
+.SS "long ssobjects::File::write (void * pSrc, \fBuint\fP nCount)"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

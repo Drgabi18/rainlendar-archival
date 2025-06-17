@@ -1,0 +1,52 @@
+.TH "cstr.h" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+cstr.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <assert.h>\fP
+.br
+\fC#include <stdlib.h>\fP
+.br
+\fC#include <string.h>\fP
+.br
+\fC#include 'defs.h'\fP
+.br
+.SS "Namespaces"
+
+.in +1c
+.ti -1c
+.RI "namespace \fBssobjects\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "char* \fBstrtoupper\fP (char *pszConvert)"
+.br
+.ti -1c
+.RI "char* \fBstrtolower\fP (char *pszConvert)"
+.br
+.ti -1c
+.RI "char* \fBultoa\fP (\fBulong\fP nValue, char *pszBuffer, \fBuint\fP nRadix=10)"
+.br
+.ti -1c
+.RI "char* \fBltoa\fP (long nValue, char *pszBuffer, \fBuint\fP nRadix=10)"
+.br
+.in -1c
+.SH "FUNCTION DOCUMENTATION"
+.PP 
+.SS "char* ltoa (long nValue, char * pszBuffer, \fBuint\fP nRadix = 10)"
+.PP
+.SS "char* strtolower (char * pszConvert)"
+.PP
+.SS "char* strtoupper (char * pszConvert)"
+.PP
+.SS "char* ultoa (\fBulong\fP nValue, char * pszBuffer, \fBuint\fP nRadix = 10)"
+.PP
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

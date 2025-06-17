@@ -1,0 +1,67 @@
+.TH "packetbuffer.h" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+packetbuffer.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <time.h>\fP
+.br
+\fC#include 'defs.h'\fP
+.br
+\fC#include 'generalexception.h'\fP
+.br
+\fC#include 'logs.h'\fP
+.br
+.SS "Namespaces"
+
+.in +1c
+.ti -1c
+.RI "namespace \fBssobjects\fP"
+.br
+.in -1c
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBPACKETBUFFER_H\fP"
+.br
+.ti -1c
+.RI "#define \fBtypeCookie\fP   \fBunsigned16\fP"
+.br
+.ti -1c
+.RI "#define \fBtypeBufferSize\fP   \fBunsigned32\fP"
+.br
+.ti -1c
+.RI "#define \fBtypeCommand\fP   \fBunsigned16\fP"
+.br
+.ti -1c
+.RI "#define \fBthrowPacketBufferException\fP(m)   (throw PacketBufferException(m,__FILE__,__LINE__))"
+.br
+.ti -1c
+.RI "#define \fBthrowNetFileException\fP(m)   (throw NetFileException(m,__FILE__,__LINE__))"
+.br
+.in -1c
+.SH "DEFINE DOCUMENTATION"
+.PP 
+.SS "#define PACKETBUFFER_H"
+.PP
+\fBValue:\fP
+.PP
+.nf
+
+.fi
+.SS "#define throwNetFileException(m)   (throw NetFileException(m,__FILE__,__LINE__))"
+.PP
+.SS "#define throwPacketBufferException(m)   (throw PacketBufferException(m,__FILE__,__LINE__))"
+.PP
+.SS "#define typeBufferSize   \fBunsigned32\fP"
+.PP
+.SS "#define typeCommand   \fBunsigned16\fP"
+.PP
+.SS "#define typeCookie   \fBunsigned16\fP"
+.PP
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

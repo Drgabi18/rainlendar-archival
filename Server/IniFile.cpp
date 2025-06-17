@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Server/IniFile.cpp,v 1.2 2005/03/01 17:02:15 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Server/IniFile.cpp,v 1.2 2005/07/11 18:27:55 rainy Exp $
 
   $Log: IniFile.cpp,v $
+  Revision 1.2  2005/07/11 18:27:55  rainy
+  no message
+
+  Revision 1.1.1.1  2005/07/10 18:48:07  rainy
+  no message
+
   Revision 1.2  2005/03/01 17:02:15  rainy
   Added file.h include
 
@@ -114,12 +120,24 @@ bool CIniFile::LoadFile()
 
 									// replace \n with newline
 									std::string tmpString = endPos + 1;
-									
-									int n = tmpString.find("\\n");
+
+									int n = tmpString.find("\\");
 									while (n != -1)
 									{
-										tmpString.replace(tmpString.begin() + n, tmpString.begin() + n + 2, "\r\n");
-										n = tmpString.find("\\n");
+										if (tmpString[n + 1] == '\\') 
+										{
+											tmpString.replace(n, 2, "\\");
+											n = tmpString.find("\\", n + 1);
+										}
+										else if (tmpString[n + 1] == 'n')
+										{
+											tmpString.replace(n, 2, "\r\n");
+											n = tmpString.find("\\", n + 2);
+										}
+										else
+										{
+											n = tmpString.find("\\", n + 1);
+										}
 									}
 									
 									newSection->data[pos] = tmpString;
@@ -189,11 +207,20 @@ bool CIniFile::SaveFile()
 				fputs("=", file);
 
 				// Change \r\n to "\n"
+				int pos;
 				std::string message = (*iter).second;
-				int pos = message.find("\r\n");
+
+				pos = message.find("\\");
 				while (pos != -1)
 				{
-					message.replace(message.begin() + pos, message.begin() + pos + 2, "\\n");
+					message.replace(pos, 1, "\\\\");
+					pos = message.find("\\", pos + 2);
+				}
+
+				pos = message.find("\r\n");
+				while (pos != -1)
+				{
+					message.replace(pos, 2, "\\n");
 					pos = message.find("\r\n", pos);
 				}
 

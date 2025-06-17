@@ -1,0 +1,118 @@
+.TH "ssobjects::CParseIt" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::CParseIt \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <Parseit.h>\fP
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBCParseIt\fP (bool Strip=false)"
+.br
+.ti -1c
+.RI "\fBCParseIt\fP (\fBLPCSTR\fP Data, \fBLPCSTR\fP Sep=',',bool Strip=false)"
+.br
+.ti -1c
+.RI "\fB~CParseIt\fP ()"
+.br
+.ti -1c
+.RI "int \fBGetNumFields\fP ()"
+.br
+.ti -1c
+.RI "\fBLPCSTR\fP \fBGetSeperator\fP ()"
+.br
+.ti -1c
+.RI "void \fBSetSeperator\fP (\fBLPCSTR\fP Sep)"
+.br
+.ti -1c
+.RI "bool \fBParse\fP ()"
+.br
+.ti -1c
+.RI "bool \fBParse\fP (\fBLPCSTR\fP Data, \fBLPCSTR\fP Sep=',',bool Strip=false)"
+.br
+.ti -1c
+.RI "bool \fBGetField\fP (int nFNum, \fBLPSTR\fP Buff)"
+.br
+.ti -1c
+.RI "\fBCParseField\fP \fBGetField\fP (int n)"
+.br
+.ti -1c
+.RI "void \fBReSet\fP ()"
+.br
+.in -1c
+.SS "Protected Methods"
+
+.in +1c
+.ti -1c
+.RI "bool \fBIsSeperator\fP (char s)"
+.br
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "bool \fBStripQuotes\fP"
+.br
+.ti -1c
+.RI "char \fBSeperator\fP [10]"
+.br
+.ti -1c
+.RI "int \fBNumFields\fP"
+.br
+.ti -1c
+.RI "\fBLinkedList\fP<\fBCParseField\fP> \fBTheFields\fP"
+.br
+.ti -1c
+.RI "\fBLPSTR\fP \fBTheData\fP"
+.br
+.in -1c
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::CParseIt::CParseIt (bool Strip = false)"
+.PP
+.SS "ssobjects::CParseIt::CParseIt (\fBLPCSTR\fP Data, \fBLPCSTR\fP Sep = ',', bool Strip = false)"
+.PP
+.SS "ssobjects::CParseIt::~CParseIt ()"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "\fBCParseField\fP ssobjects::CParseIt::GetField (int n)"
+.PP
+.SS "bool ssobjects::CParseIt::GetField (int nFNum, \fBLPSTR\fP Buff)"
+.PP
+.SS "int ssobjects::CParseIt::GetNumFields ()\fC [inline]\fP"
+.PP
+.SS "\fBLPCSTR\fP ssobjects::CParseIt::GetSeperator ()\fC [inline]\fP"
+.PP
+.SS "bool ssobjects::CParseIt::IsSeperator (char s)\fC [protected]\fP"
+.PP
+.SS "bool ssobjects::CParseIt::Parse (\fBLPCSTR\fP Data, \fBLPCSTR\fP Sep = ',', bool Strip = false)"
+.PP
+.SS "bool ssobjects::CParseIt::Parse ()"
+.PP
+.SS "void ssobjects::CParseIt::ReSet ()"
+.PP
+.SS "void ssobjects::CParseIt::SetSeperator (\fBLPCSTR\fP Sep)\fC [inline]\fP"
+.PP
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "int ssobjects::CParseIt::NumFields\fC [protected]\fP"
+.PP
+.SS "char ssobjects::CParseIt::Seperator\fC [protected]\fP"
+.PP
+.SS "bool ssobjects::CParseIt::StripQuotes\fC [protected]\fP"
+.PP
+.SS "\fBLPSTR\fP ssobjects::CParseIt::TheData\fC [protected]\fP"
+.PP
+.SS "\fBLinkedList\fP< \fBCParseField\fP > ssobjects::CParseIt::TheFields<\fBCParseField\fP>\fC [protected]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

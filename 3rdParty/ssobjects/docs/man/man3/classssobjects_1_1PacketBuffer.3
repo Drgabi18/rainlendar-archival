@@ -1,0 +1,815 @@
+.TH "ssobjects::PacketBuffer" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::PacketBuffer \- Packet object used for storing data that is sent or received. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <packetbuffer.h>\fP
+.PP
+Inherited by \fBssobjects::Communicable\fP, and \fBssobjects::NetFile\fP.
+.PP
+.SS "Public Types"
+
+.in +1c
+.ti -1c
+.RI "enum { \fBpcInvalid\fP = 0, \fBpcLogin\fP, \fBpcLoginOkay\fP, \fBpcLoginBad\fP, \fBpcLogout\fP, \fBpcGetVersion\fP, \fBpcVersion\fP, \fBpcPing\fP, \fBpcPong\fP, \fBpcStatus\fP, \fBpcNetFileStart\fP, \fBpcNetFileData\fP, \fBpcNetFileEnd\fP, \fBpcClosed\fP, \fBpcNewConnection\fP, \fBpcAuthenticate\fP, \fBpcAuthReply\fP, \fBpcNoop\fP = 100, \fBpcUser\fP = 256 }"
+.br
+.ti -1c
+.RI "enum { \fBpkCookie\fP = 0x4C50       }"
+.br
+.ti -1c
+.RI "enum { \fBDefaultPacketBufferSize\fP = 1000       }"
+.br
+.in -1c
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "virtual void \fBmakeNetworkReady\fP (bool bOverrideFailsave=false)"
+.br
+.RI "\fIConvert header to network byte order (htonl).\fP"
+.ti -1c
+.RI "virtual void \fBmakeHostReady\fP (bool bOverrideFailsave=false)"
+.br
+.RI "\fIConvert header from network byte order (ntohl).\fP"
+.ti -1c
+.RI "virtual \fBunsigned32\fP \fBgetPacketSize\fP () const"
+.br
+.RI "\fIReturns the size of the packet buffer plus the size of the header.\fP"
+.ti -1c
+.RI "virtual \fBunsigned32\fP \fBgetBufferSizeMax\fP () const"
+.br
+.RI "\fIReturns the maximum size of the packet.\fP"
+.ti -1c
+.RI "virtual \fBunsigned32\fP \fBgetBufferSize\fP () const"
+.br
+.RI "\fIReturns the size of the buffer.\fP"
+.ti -1c
+.RI "virtual \fBunsigned8\fP* \fBgetBuffer\fP () const"
+.br
+.RI "\fIReturns a pointer to the begining of the packets buffer.\fP"
+.ti -1c
+.RI "virtual \fBunsigned8\fP* \fBgetPointer\fP () const"
+.br
+.RI "\fIReturns the pointer to the buffer contents.\fP"
+.ti -1c
+.RI "virtual \fBunsigned8\fP* \fBgetHeader\fP () const"
+.br
+.RI "\fIReturns a pointer to the first byte of the header for this packet.\fP"
+.ti -1c
+.RI "virtual \fBunsigned8\fP* \fBresizeBuffer\fP (\fBunsigned32\fP nNewSize)"
+.br
+.RI "\fIChange the size of the packet buffer.\fP"
+.ti -1c
+.RI "\fBPacketBuffer\fP (const PacketBuffer &)"
+.br
+.RI "\fIcopy constructor.\fP"
+.ti -1c
+.RI "PacketBuffer& \fBoperator=\fP (const PacketBuffer &packet)"
+.br
+.RI "\fIassignment operator.\fP"
+.ti -1c
+.RI "\fBPacketBuffer\fP (\fBunsigned16\fP wCmd, \fBunsigned32\fP nSize=DefaultPacketBufferSize)"
+.br
+.RI "\fIMost commonly used constructor.\fP"
+.ti -1c
+.RI "\fBPacketBuffer\fP ()"
+.br
+.RI "\fIConstruct an empty packet.\fP"
+.ti -1c
+.RI "virtual \fB~PacketBuffer\fP ()"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBgetID\fP ()"
+.br
+.RI "\fIReturns the unique ID of this packet.\fP"
+.ti -1c
+.RI "\fBunsigned16\fP \fBgetCmd\fP () const"
+.br
+.RI "\fIReturns the command (type) of this packet.\fP"
+.ti -1c
+.RI "\fBunsigned16\fP \fBcookie\fP () const"
+.br
+.RI "\fIReturns the cookie; the always constant value.\fP"
+.ti -1c
+.RI "void \fBrewind\fP ()"
+.br
+.RI "\fIPuts the index pointer to the beginning of the buffer.\fP"
+.ti -1c
+.RI "void \fBreset\fP ()"
+.br
+.RI "\fIResets the packet and the packets header.\fP"
+.ti -1c
+.RI "void \fBappend\fP (\fBunsigned8\fP *pdata, \fBunsigned32\fP nSize)"
+.br
+.RI "\fIAdd data to the end of the buffer.\fP"
+.ti -1c
+.RI "void \fBoperator<<\fP (const char *)"
+.br
+.RI "\fIAdd a zero terminated string.\fP"
+.ti -1c
+.RI "void \fBoperator<<\fP (char *)"
+.br
+.RI "\fIAdd a zero terminated string.\fP"
+.ti -1c
+.RI "void \fBoperator<<\fP (\fBCStr\fP &)"
+.br
+.RI "\fIAdd a zero terminated string.\fP"
+.ti -1c
+.RI "void \fBoperator<<\fP (\fBsigned32\fP)"
+.br
+.RI "\fIAdd a signed 32-bit number.\fP"
+.ti -1c
+.RI "void \fBoperator<<\fP (\fBunsigned32\fP)"
+.br
+.RI "\fIAdd a unsigned 32-bit number.\fP"
+.ti -1c
+.RI "void \fBoperator<<\fP (\fBsigned16\fP)"
+.br
+.RI "\fIAdd a signed 16-bit number.\fP"
+.ti -1c
+.RI "void \fBoperator<<\fP (\fBunsigned16\fP)"
+.br
+.RI "\fIAdd a unsigned 16-bit number.\fP"
+.ti -1c
+.RI "void \fBoperator<<\fP (\fBunsigned8\fP)"
+.br
+.RI "\fIAdd a signed 8-bit number.\fP"
+.ti -1c
+.RI "void \fBoperator<<\fP (double)"
+.br
+.RI "\fIAdd a double number.\fP"
+.ti -1c
+.RI "void \fBoperator<<\fP (float)"
+.br
+.RI "\fIAdd a float number.\fP"
+.ti -1c
+.RI "void \fBoperator>>\fP (char *)"
+.br
+.RI "\fIExtract a zero terminated string.\fP"
+.ti -1c
+.RI "void \fBoperator>>\fP (\fBCStr\fP &)"
+.br
+.RI "\fIExtract a zero terminated string.\fP"
+.ti -1c
+.RI "void \fBoperator>>\fP (\fBsigned32\fP &)"
+.br
+.RI "\fIExtract a signed 32-bit number.\fP"
+.ti -1c
+.RI "void \fBoperator>>\fP (\fBunsigned32\fP &)"
+.br
+.RI "\fIExtract a unsigned 32-bit number.\fP"
+.ti -1c
+.RI "void \fBoperator>>\fP (\fBsigned16\fP &)"
+.br
+.RI "\fIExtract a signed 16-bit number.\fP"
+.ti -1c
+.RI "void \fBoperator>>\fP (\fBunsigned16\fP &)"
+.br
+.RI "\fIExtract a unsigned 16-bit number.\fP"
+.ti -1c
+.RI "void \fBoperator>>\fP (\fBunsigned8\fP &)"
+.br
+.RI "\fIExtract a unsigned 8-bit number.\fP"
+.ti -1c
+.RI "void \fBoperator>>\fP (double &)"
+.br
+.RI "\fIExtract a double number.\fP"
+.ti -1c
+.RI "void \fBoperator>>\fP (float &)"
+.br
+.RI "\fIExtract a float number.\fP"
+.in -1c
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBPacketBufferHeader\fP \fBm_packetHeader\fP"
+.br
+.RI "\fIContains information about this packet.\fP"
+.in -1c
+.SS "Static Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBunsigned32\fP \fBgetHeaderSize\fP ()"
+.br
+.in -1c
+.SS "Protected Methods"
+
+.in +1c
+.ti -1c
+.RI "virtual void \fBreceive\fP (\fBBufferedSocket\fP *)"
+.br
+.RI "\fICalled to fill itself with data.\fP"
+.ti -1c
+.RI "virtual void \fBtransmit\fP (\fBBufferedSocket\fP *)"
+.br
+.RI "\fICalled to send itself.\fP"
+.ti -1c
+.RI "virtual void \fBprocess\fP ()"
+.br
+.RI "\fICalled when data is read in from ccClient. This is an empty implimentation. You need to override it if you want this functionality.\fP"
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBunsigned8\fP* \fBm_Buffer\fP"
+.br
+.RI "\fIBuffer that holds the data holds data that will be sent.\fP"
+.ti -1c
+.RI "\fBunsigned8\fP* \fBm_pPointer\fP"
+.br
+.RI "\fICurrent position in the buffer.\fP"
+.ti -1c
+.RI "bool \fBm_bUsed\fP"
+.br
+.RI "\fIIs this packet in use?\fP"
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nID\fP"
+.br
+.RI "\fIUnique ID.\fP"
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nBufferSizeMax\fP"
+.br
+.RI "\fIHow big the buffer can get.\fP"
+.ti -1c
+.RI "friend \fBClientConnector\fP"
+.br
+.RI "\fIFriend of \fBClientConnector\fP class.\fP"
+.ti -1c
+.RI "friend \fBBufferedSocket\fP"
+.br
+.RI "\fIFriend of \fBBufferedSocket\fP class.\fP"
+.in -1c
+.SS "Static Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nUniqueID\fP = 1"
+.br
+.RI "\fIUnique ID to keep all packets unique.\fP"
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+Packet object used for storing data that is sent or received.
+.PP
+.PP
+ The packet object is the base class for storing any information you indend to send, and when data is received, it is put into a \fBPacketBuffer\fP object. The object has operators for storing and extracting 8, 16 or 32 bit numbers, as well as zero terminated strings and \fBCStr\fP objects.
+.PP
+To store data in the packet, you would typically construct the packet with the command type, and then insert data into it via the '<<' operator. For example: 
+.PP
+.nf
+
+   ... 
+   \fBPacketBuffer\fP ping(PacketBuffer::pcAuthenticate); 
+   unsigned32 nVersion = 100; //version 1.00 
+   ping << 'lpatterson';      //user name 
+   ping << 'mypassword';      //password 
+   ping << 100;               //version 
+   ... 
+   The server would extract the data like this: 
+   ... 
+   pPacket = psocket->recvPacket(); 
+   \fBCStr\fP sUserName; 
+   \fBCStr\fP sPassword; 
+   unsigned32 nVersion; 
+   *pPacket >> sUserName; 
+   *pPacket >> sPassword; 
+   *pPacket >> nVersion; 
+   ... 
+   
+.fi
+ 
+.PP
+.SH "MEMBER ENUMERATION DOCUMENTATION"
+.PP 
+.SS "anonymous enum"
+.PP
+These enums are provided for convience. When you construct a new Packet object, you will pass a packet command listed here, or from one you create. For instance, you would create a new packet like this:
+.PP
+.nf
+
+       \fBPacketBuffer\fP login(PacketBuffer::pcLogin); 
+       
+.fi
+.PP
+When you want to create your own packet commands, you should create a new class and dirive it from \fBPacketBuffer\fP, and start your enumeration from pcUser. All ones below pcUser are reserved for furture use. 'pc' part  stands for Packet Command.
+.PP
+.nf
+
+       class ChessPacket : public \fBPacketBuffer\fP 
+       { 
+         public: 
+           pcNewGame = pcUser,  //start your packets at pcUser and up 
+           pcQuitGame, 
+           pcStartGame 
+       }; 
+       ... 
+       //create a new game packet 
+       \fBPacketBuffer\fP newGame(ChessPacket::pcNewGame); 
+       ... 
+       
+.fi
+ 
+.PP
+\fBEnumeration values:\fP
+.in +1c
+.TP
+\fB\fIpcInvalid\fP \fP
+0 - Invalid packet or not initialized.
+.TP
+\fB\fIpcLogin\fP \fP
+1 - server wants client to login.
+.TP
+\fB\fIpcLoginOkay\fP \fP
+2 - user was validated okay.
+.TP
+\fB\fIpcLoginBad\fP \fP
+3 - user was not validated.
+.TP
+\fB\fIpcLogout\fP \fP
+4 - client is logging out.
+.TP
+\fB\fIpcGetVersion\fP \fP
+5 - version info.
+.TP
+\fB\fIpcVersion\fP \fP
+6 - version info.
+.TP
+\fB\fIpcPing\fP \fP
+7 - we are expecting a pong back.
+.TP
+\fB\fIpcPong\fP \fP
+8 - reply to a ping.
+.TP
+\fB\fIpcStatus\fP \fP
+9 - generic status query/result (18).
+.TP
+\fB\fIpcNetFileStart\fP \fP
+10 - file being sent over network contains: filesize, filename.
+.TP
+\fB\fIpcNetFileData\fP \fP
+11 - data for network file contains: size (size of contained data).
+.TP
+\fB\fIpcNetFileEnd\fP \fP
+12 - terminater contains: nothing.
+.TP
+\fB\fIpcClosed\fP \fP
+13 - a connection was closed.
+.TP
+\fB\fIpcNewConnection\fP \fP
+14 - a new connection was made.
+.TP
+\fB\fIpcAuthenticate\fP \fP
+15 - client is authenticating.
+.TP
+\fB\fIpcAuthReply\fP \fP
+16 - server is replying to authentication request.
+.TP
+\fB\fIpcNoop\fP \fP
+100 - no op. Do nothing with this, except to have a case in msg handler for it.
+.TP
+\fB\fIpcUser\fP \fP
+256 (100H) - user defined packets start here, first 55H are reserved.
+.SS "anonymous enum"
+.PP
+\fBEnumeration values:\fP
+.in +1c
+.TP
+\fB\fIpkCookie\fP \fP
+Constant value used to make sure a packet is valid.
+.SS "anonymous enum"
+.PP
+\fBEnumeration values:\fP
+.in +1c
+.TP
+\fB\fIDefaultPacketBufferSize\fP \fP
+Default size of a packet.
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::PacketBuffer::PacketBuffer (const PacketBuffer & packet)"
+.PP
+copy constructor.
+.PP
+.SS "ssobjects::PacketBuffer::PacketBuffer (\fBunsigned16\fP wCmd, \fBunsigned32\fP nSize = DefaultPacketBufferSize)"
+.PP
+Most commonly used constructor.
+.PP
+The most commonly used packet constructor. You usually construct passing in the packet command. The command may also be refered to as the packet type. Basically, the command is how you tell what you are suppose to do with the packet once you receive it.
+.PP
+An example of creating one would be
+.PP
+.nf
+
+   \fBPacketBuffer\fP ping(PacketBuffer::pcPing); 
+   
+.fi
+.PP
+'pc' part of 'pcPing' stands for Packet Command. Normally, if you need additional packet commands, you create a new class, and dirive it from \fBPacketBuffer\fP. For instance:
+.PP
+.nf
+
+   From mypackts.h: 
+   class mypackets : public \fBPacketBuffer\fP 
+   { 
+     public: 
+       pcBackflip = pcUser,     //start at user, don't start at anything below, 
+       pcCartWheel              //as they are reserved for \fBssobjects\fP 
+   }; 
+   
+.fi
+ 
+.SS "ssobjects::PacketBuffer::PacketBuffer ()"
+.PP
+Construct an empty packet.
+.PP
+An empty packet is created with a default packet buffer size of \fBPacketBuffer::DefaultPacketBufferSize\fP. You normally only create an empty packet if you are using it to receive data. However, the most common way to receive data is to let \fBBufferedSocket\fP or \fBSimpleServer\fP create the packet for you. 
+.SS "ssobjects::PacketBuffer::~PacketBuffer ()\fC [virtual]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "void ssobjects::PacketBuffer::append (\fBunsigned8\fP * pdata, \fBunsigned32\fP nSize)"
+.PP
+Add data to the end of the buffer.
+.PP
+Adds data to the end of the buffer, and increases the buffer size. Good way to add misc data. The size of the data that was appended is not stored however. This means that when you are extracting the data, you will some way to know how much data to extract.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIpdata\fP\fP
+Pointer to the data you will be copying into the packet buffer. 
+.TP
+\fB\fInSize\fP\fP
+The number of bytes you will be copying into the packet buffer.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIPacketBufferException\fP\fP
+ If there is not enough room left in the buffer.
+.PP
+\fBNote: \fP
+.in +1c
+There is no extraction method to compliment this method. Using this method is discouraged. 
+.SS "\fBunsigned16\fP ssobjects::PacketBuffer::cookie () const\fC [inline]\fP"
+.PP
+Returns the cookie; the always constant value.
+.PP
+.SS "\fBunsigned8\fP * ssobjects::PacketBuffer::getBuffer () const\fC [virtual]\fP"
+.PP
+Returns a pointer to the begining of the packets buffer.
+.PP
+A \fBPacketBuffer\fP object contains a buffer to hold all the information you will be transmitting or receiving. This returns the actual buffer.
+.PP
+\fBReturns: \fP
+.in +1c
+A pointer to the begining of the buffer.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIPacketBufferException\fP\fP
+ If the buffer is not allocated. 
+.SS "\fBunsigned32\fP ssobjects::PacketBuffer::getBufferSize () const\fC [inline, virtual]\fP"
+.PP
+Returns the size of the buffer.
+.PP
+.SS "\fBunsigned32\fP ssobjects::PacketBuffer::getBufferSizeMax () const\fC [inline, virtual]\fP"
+.PP
+Returns the maximum size of the packet.
+.PP
+.SS "\fBunsigned16\fP ssobjects::PacketBuffer::getCmd () const\fC [inline]\fP"
+.PP
+Returns the command (type) of this packet.
+.PP
+.SS "\fBunsigned8\fP * ssobjects::PacketBuffer::getHeader () const\fC [inline, virtual]\fP"
+.PP
+Returns a pointer to the first byte of the header for this packet.
+.PP
+.SS "\fBunsigned32\fP ssobjects::PacketBuffer::getHeaderSize ()\fC [inline, static]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::PacketBuffer::getID ()\fC [inline]\fP"
+.PP
+Returns the unique ID of this packet.
+.PP
+.SS "\fBunsigned32\fP ssobjects::PacketBuffer::getPacketSize () const\fC [inline, virtual]\fP"
+.PP
+Returns the size of the packet buffer plus the size of the header.
+.PP
+.SS "\fBunsigned8\fP * ssobjects::PacketBuffer::getPointer () const\fC [virtual]\fP"
+.PP
+Returns the pointer to the buffer contents.
+.PP
+To keep track of where the \fBPacketBuffer\fP object last put data, a index pointer is  maintained that points one byte past the last data that was appended to the buffer. This returns that index.
+.PP
+\fBReturns: \fP
+.in +1c
+A pointer to the index pointer. 
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIPacketBufferException\fP\fP
+ If there is no buffer allocated. 
+.SS "void ssobjects::PacketBuffer::makeHostReady (bool bOverrideFailsave = false)\fC [virtual]\fP"
+.PP
+Convert header from network byte order (ntohl).
+.PP
+Puts the header into host-byte order.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIbOverrideFailsafe\fP\fP
+[in] false (default) will not reorder the bytes if you have already. true if you want to anyway. 
+.SS "void ssobjects::PacketBuffer::makeNetworkReady (bool bOverrideFailsave = false)\fC [virtual]\fP"
+.PP
+Convert header to network byte order (htonl).
+.PP
+Puts the header into network-byte order.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIbOverrideFailsafe\fP\fP
+[in] false (default) will not reorder the bytes if you have already. true if you want to anyway. 
+.SS "void ssobjects::PacketBuffer::operator<< (float Number)"
+.PP
+Add a float number.
+.PP
+Copies Number to the buffer. The number is not converted to network-byte order, as there are no network conversion routines for this.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIPacketBufferException\fP\fP
+ If there is not enough room left in the buffer.
+.PP
+\fBNote: \fP
+.in +1c
+This has not been tested on big-indian machines. You may want to convert  Number to a string, and pass it as a zero terminated string instead to be safe. 
+.SS "void ssobjects::PacketBuffer::operator<< (double Number)"
+.PP
+Add a double number.
+.PP
+Copies Number to the buffer. The number is not converted to network-byte order, as there are no network conversion routines for this.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIPacketBufferException\fP\fP
+ If there is not enough room left in the buffer.
+.PP
+\fBNote: \fP
+.in +1c
+This has not been tested on big-indian machines. You may want to convert  Number to a string, and pass it as a zero terminated string instead to be safe. 
+.SS "void ssobjects::PacketBuffer::operator<< (\fBunsigned8\fP Number)"
+.PP
+Add a signed 8-bit number.
+.PP
+Copies Number to the buffer. The number is converted to network-byte order when it is stored in the buffer.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIPacketBufferException\fP\fP
+ If there is not enough room left in the buffer. 
+.SS "void ssobjects::PacketBuffer::operator<< (\fBunsigned16\fP Number)"
+.PP
+Add a unsigned 16-bit number.
+.PP
+Copies Number to the buffer. The number is converted to network-byte order when it is stored in the buffer.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIPacketBufferException\fP\fP
+ If there is not enough room left in the buffer. 
+.SS "void ssobjects::PacketBuffer::operator<< (\fBsigned16\fP Number)"
+.PP
+Add a signed 16-bit number.
+.PP
+Copies Number to the buffer. The number is converted to network-byte order when it is stored in the buffer.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIPacketBufferException\fP\fP
+ If there is not enough room left in the buffer. 
+.SS "void ssobjects::PacketBuffer::operator<< (\fBunsigned32\fP Number)"
+.PP
+Add a unsigned 32-bit number.
+.PP
+Copies Number to the buffer. The number is converted to network-byte order when it is stored in the buffer.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIPacketBufferException\fP\fP
+ If there is not enough room left in the buffer. 
+.SS "void ssobjects::PacketBuffer::operator<< (\fBsigned32\fP iNumber)"
+.PP
+Add a signed 32-bit number.
+.PP
+Copies Number to the buffer. The number is converted to network-byte order when it is stored in the buffer.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIPacketBufferException\fP\fP
+ If there is not enough room left in the buffer. 
+.SS "void ssobjects::PacketBuffer::operator<< (\fBCStr\fP & String)"
+.PP
+Add a zero terminated string.
+.PP
+Copies String to the buffer. String is stared as a zero terminated string. If String has no buffer, an empty string is stored. An empty string consists of a single zero byte.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIPacketBufferException\fP\fP
+ If there is not enough room left in the buffer. 
+.SS "void ssobjects::PacketBuffer::operator<< (char * pString)"
+.PP
+Add a zero terminated string.
+.PP
+Copies the zero terminated string pointed to by pString
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIPacketBufferException\fP\fP
+ If there is not enough room left in the buffer. 
+.SS "void ssobjects::PacketBuffer::operator<< (const char * pString)"
+.PP
+Add a zero terminated string.
+.PP
+Copies the zero terminated string pointed to by pString
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIPacketBufferException\fP\fP
+ If there is not enough room left in the buffer. 
+.SS "PacketBuffer & ssobjects::PacketBuffer::operator= (const PacketBuffer & packet)"
+.PP
+assignment operator.
+.PP
+.SS "void ssobjects::PacketBuffer::operator>> (float & Number)"
+.PP
+Extract a float number.
+.PP
+Copies the float number in the buffer to Number. Number will be in host-byte order. The number in the buffer is NOT expected to be in network-byte order as there is no network conversion routines for this.
+.PP
+\fBNote: \fP
+.in +1c
+This has not been tested on big-indian machines. You may want to convert the float number to a string, and pass it as a zero terminated string instead to be safe. 
+.SS "void ssobjects::PacketBuffer::operator>> (double & Number)"
+.PP
+Extract a double number.
+.PP
+Copies the double number in the buffer to Number. Number will be in host-byte order. The number in the buffer is NOT expected to be in network-byte order as there is no network conversion routines for this.
+.PP
+\fBNote: \fP
+.in +1c
+This has not been tested on big-indian machines. You may want to convert the double number to a string, and pass it as a zero terminated string instead to be safe. 
+.SS "void ssobjects::PacketBuffer::operator>> (\fBunsigned8\fP & Number)"
+.PP
+Extract a unsigned 8-bit number.
+.PP
+Copies the 8-bit (BYTE) number in the buffer to Number. Number will be in host-byte order. The number in the buffer is expected to be in network-byte order. When the insertion operator '<<' is used, it will be. 
+.SS "void ssobjects::PacketBuffer::operator>> (\fBunsigned16\fP & Number)"
+.PP
+Extract a unsigned 16-bit number.
+.PP
+Copies the 16-bit (WORD) number in the buffer to Number. Number will be in host-byte order. The number in the buffer is expected to be in network-byte order. When the insertion operator '<<' is used, it will be. 
+.SS "void ssobjects::PacketBuffer::operator>> (\fBsigned16\fP & Number)"
+.PP
+Extract a signed 16-bit number.
+.PP
+Copies the 16-bit number in the buffer to Number. Number will be in host-byte order. The number in the buffer is expected to be in network-byte order. When the insertion operator '<<' is used, it will be. 
+.SS "void ssobjects::PacketBuffer::operator>> (\fBunsigned32\fP & Number)"
+.PP
+Extract a unsigned 32-bit number.
+.PP
+Copies the 32-bit (DWORD) number in the buffer to Number. Number will be in host-byte order. The number in the buffer is expected to be in network-byte order. When the insertion operator '<<' is used, it will be. 
+.SS "void ssobjects::PacketBuffer::operator>> (\fBsigned32\fP & Number)"
+.PP
+Extract a signed 32-bit number.
+.PP
+Copies the 32-bit number in the buffer to Number. Number will be in host-byte order. The number in the buffer is expected to be in network-byte order. When the insertion operator '<<' is used, it will be. 
+.SS "void ssobjects::PacketBuffer::operator>> (\fBCStr\fP & String)"
+.PP
+Extract a zero terminated string.
+.PP
+Copies the zero terminated string in the buffer to String. This is a safer way to extract strings then the char* operator. 
+.SS "void ssobjects::PacketBuffer::operator>> (char * pString)"
+.PP
+Extract a zero terminated string.
+.PP
+Copies the data from the buffer to pString. pString is assumed to have enough space to hold the string. If pString is not large enough, the results are undefined.
+.PP
+It's a good idea to either use a \fBCStr\fP object instead, or allocate a string the same size as the PacketBuffers max buffer size. pString will be zero terminated. 
+.SS "void ssobjects::PacketBuffer::process ()\fC [inline, protected, virtual]\fP"
+.PP
+Called when data is read in from ccClient. This is an empty implimentation. You need to override it if you want this functionality.
+.PP
+Reimplemented in \fBssobjects::Communicable\fP.
+.SS "void ssobjects::PacketBuffer::receive (\fBBufferedSocket\fP * psocket)\fC [protected, virtual]\fP"
+.PP
+Called to fill itself with data.
+.PP
+Calls the sockets recvPacket to read data into this packet object. Once the data has been received, \fBprocess\fP() is called. If this object is part of a \fBCommunicable\fP object, then process is actually a call to \fBCommunicable::process\fP which will in turn call \fBCommunicable::extract\fP  method to start the attribute populating process.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIPacketBufferException\fP\fP
+ If the socket is invalid. 
+.PP
+Reimplemented in \fBssobjects::NetFile\fP.
+.SS "void ssobjects::PacketBuffer::reset ()"
+.PP
+Resets the packet and the packets header.
+.PP
+Puts header back to an initial state by making the index pointer point to the beginning  of the buffer, and calling the headers reset method which sets the buffer size to 0, and puts header into host byte order. 
+.SS "\fBunsigned8\fP * ssobjects::PacketBuffer::resizeBuffer (\fBunsigned32\fP nNewSize)\fC [virtual]\fP"
+.PP
+Change the size of the packet buffer.
+.PP
+If you wish to increase or decrease the size of your packets buffer, use this. It allocates new memory, copies the existing buffer data to the new memory location, then deletes the old memory. This isn't very efficent.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIPacketBufferException\fP\fP
+ if there was no memory to allocate new packet. If this happens,  the old memory is left untouched, and is still valid.
+.PP
+\fBReturns: \fP
+.in +1c
+Pointer to the new memory. 
+.SS "void ssobjects::PacketBuffer::rewind ()\fC [inline]\fP"
+.PP
+Puts the index pointer to the beginning of the buffer.
+.PP
+.SS "void ssobjects::PacketBuffer::transmit (\fBBufferedSocket\fP * psocket)\fC [protected, virtual]\fP"
+.PP
+Called to send itself.
+.PP
+Sends the packet over the socket psocket
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIPacketBufferException\fP\fP
+ if the socket is not valid. 
+.PP
+Reimplemented in \fBssobjects::NetFile\fP.
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "BufferedSocket\fC [protected]\fP"
+.PP
+Friend of \fBBufferedSocket\fP class.
+.PP
+.SS "ClientConnector\fC [protected]\fP"
+.PP
+Friend of \fBClientConnector\fP class.
+.PP
+.SS "\fBunsigned8\fP * ssobjects::PacketBuffer::m_Buffer\fC [protected]\fP"
+.PP
+Buffer that holds the data holds data that will be sent.
+.PP
+.SS "bool ssobjects::PacketBuffer::m_bUsed\fC [protected]\fP"
+.PP
+Is this packet in use?
+.PP
+.SS "\fBunsigned32\fP ssobjects::PacketBuffer::m_nBufferSizeMax\fC [protected]\fP"
+.PP
+How big the buffer can get.
+.PP
+.SS "\fBunsigned32\fP ssobjects::PacketBuffer::m_nID\fC [protected]\fP"
+.PP
+Unique ID.
+.PP
+.SS "\fBunsigned32\fP ssobjects::PacketBuffer::m_nUniqueID = 1\fC [static, protected]\fP"
+.PP
+Unique ID to keep all packets unique.
+.PP
+.SS "\fBunsigned8\fP * ssobjects::PacketBuffer::m_pPointer\fC [protected]\fP"
+.PP
+Current position in the buffer.
+.PP
+.SS "\fBPacketBufferHeader\fP ssobjects::PacketBuffer::m_packetHeader"
+.PP
+Contains information about this packet.
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

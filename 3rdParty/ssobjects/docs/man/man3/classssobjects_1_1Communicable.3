@@ -1,0 +1,65 @@
+.TH "ssobjects::Communicable" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::Communicable \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <packetbuffer.h>\fP
+.PP
+Inherits \fBssobjects::PacketBuffer\fP.
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBCommunicable\fP ()"
+.br
+.ti -1c
+.RI "\fBCommunicable\fP (\fBunsigned16\fP wCmd)"
+.br
+.in -1c
+.SS "Protected Methods"
+
+.in +1c
+.ti -1c
+.RI "virtual void \fBextract\fP (\fBPacketBuffer\fP *ppacket)"
+.br
+.ti -1c
+.RI "virtual void \fBextractData\fP (\fBPacketBuffer\fP *)=0"
+.br
+.ti -1c
+.RI "virtual void \fBextractHeader\fP (\fBPacketBuffer\fP *ppacket)"
+.br
+.ti -1c
+.RI "virtual void \fBstuff\fP ()=0"
+.br
+.ti -1c
+.RI "virtual void \fBprocess\fP ()"
+.br
+.in -1c
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::Communicable::Communicable ()\fC [inline]\fP"
+.PP
+.SS "ssobjects::Communicable::Communicable (\fBunsigned16\fP wCmd)\fC [inline]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "void ssobjects::Communicable::extract (\fBPacketBuffer\fP * ppacket)\fC [inline, protected, virtual]\fP"
+.PP
+.SS "void ssobjects::Communicable::extractData (\fBPacketBuffer\fP *)\fC [protected, pure virtual]\fP"
+.PP
+.SS "void ssobjects::Communicable::extractHeader (\fBPacketBuffer\fP * ppacket)\fC [inline, protected, virtual]\fP"
+.PP
+.SS "void ssobjects::Communicable::process ()\fC [inline, protected, virtual]\fP"
+.PP
+Reimplemented from \fBssobjects::PacketBuffer\fP.
+.SS "void ssobjects::Communicable::stuff ()\fC [protected, pure virtual]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

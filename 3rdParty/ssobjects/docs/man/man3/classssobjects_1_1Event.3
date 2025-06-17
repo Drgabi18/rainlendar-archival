@@ -1,0 +1,50 @@
+.TH "ssobjects::Event" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::Event \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <threadutils.h>\fP
+.PP
+Inherits \fBssobjects::CMclEvent\fP.
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBEvent\fP (bool bAutoSignal=true)"
+.br
+.ti -1c
+.RI "virtual \fB~Event\fP ()"
+.br
+.ti -1c
+.RI "bool \fBsignal\fP ()"
+.br
+.ti -1c
+.RI "bool \fBreset\fP ()"
+.br
+.ti -1c
+.RI "bool \fBwait\fP (unsigned int nMilliSeconds=INFINITE)"
+.br
+.in -1c
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::Event::Event (bool bAutoSignal = true)\fC [inline]\fP"
+.PP
+.SS "ssobjects::Event::~Event ()\fC [inline, virtual]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "bool ssobjects::Event::reset ()\fC [inline]\fP"
+.PP
+.SS "bool ssobjects::Event::signal ()\fC [inline]\fP"
+.PP
+.SS "bool ssobjects::Event::wait (unsigned int nMilliSeconds = INFINITE)\fC [inline]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

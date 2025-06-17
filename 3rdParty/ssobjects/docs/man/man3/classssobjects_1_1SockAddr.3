@@ -1,0 +1,114 @@
+.TH "ssobjects::SockAddr" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::SockAddr \- Replacement for \fBsockaddr_in\fP structure. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <socketinstance.h>\fP
+.PP
+Inherits \fBsockaddr_in\fP.
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBSockAddr\fP ()"
+.br
+.ti -1c
+.RI "\fBSockAddr\fP (const sockaddr &sa)"
+.br
+.ti -1c
+.RI "\fBSockAddr\fP (const \fBsockaddr_in\fP &sin)"
+.br
+.ti -1c
+.RI "\fBSockAddr\fP (const \fBULONG\fP ulAddr, const \fBUSHORT\fP ushPort=0)"
+.br
+.ti -1c
+.RI "\fBSockAddr\fP (const char *pchIP, const \fBUSHORT\fP ushPort=0)"
+.br
+.ti -1c
+.RI "char* \fBdottedDecimal\fP ()"
+.br
+.ti -1c
+.RI "\fBUSHORT\fP \fBport\fP () const"
+.br
+.ti -1c
+.RI "\fBULONG\fP \fBipAddr\fP () const"
+.br
+.ti -1c
+.RI "const SockAddr& \fBoperator=\fP (const \fBSOCKADDR\fP &sa)"
+.br
+.ti -1c
+.RI "const SockAddr& \fBoperator=\fP (const \fBSOCKADDR_IN\fP &sin)"
+.br
+.ti -1c
+.RI "\fBoperator SOCKADDR\fP ()"
+.br
+.ti -1c
+.RI "\fBoperator LPSOCKADDR\fP ()"
+.br
+.ti -1c
+.RI "\fBoperator LPSOCKADDR_IN\fP ()"
+.br
+.ti -1c
+.RI "bool \fBoperator==\fP (const \fBsockaddr_in\fP &sa)"
+.br
+.RI "\fICompairs two socket addresses.\fP"
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+Replacement for \fBsockaddr_in\fP structure.
+.PP
+.PP
+ Provides a much easier way to access and manipulate a socket address structure. 
+.PP
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::SockAddr::SockAddr ()\fC [inline]\fP"
+.PP
+.SS "ssobjects::SockAddr::SockAddr (const sockaddr & sa)\fC [inline]\fP"
+.PP
+.SS "ssobjects::SockAddr::SockAddr (const \fBsockaddr_in\fP & sin)\fC [inline]\fP"
+.PP
+.SS "ssobjects::SockAddr::SockAddr (const \fBULONG\fP ulAddr, const \fBUSHORT\fP ushPort = 0)\fC [inline]\fP"
+.PP
+.SS "ssobjects::SockAddr::SockAddr (const char * pchIP, const \fBUSHORT\fP ushPort = 0)\fC [inline]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "char * ssobjects::SockAddr::dottedDecimal ()\fC [inline]\fP"
+.PP
+.SS "\fBULONG\fP ssobjects::SockAddr::ipAddr () const\fC [inline]\fP"
+.PP
+.SS "ssobjects::SockAddr::operator \fBLPSOCKADDR\fP ()\fC [inline]\fP"
+.PP
+.SS "ssobjects::SockAddr::operator \fBLPSOCKADDR_IN\fP ()\fC [inline]\fP"
+.PP
+.SS "ssobjects::SockAddr::operator \fBSOCKADDR\fP ()\fC [inline]\fP"
+.PP
+.SS "const SockAddr & ssobjects::SockAddr::operator= (const \fBSOCKADDR_IN\fP & sin)\fC [inline]\fP"
+.PP
+.SS "const SockAddr & ssobjects::SockAddr::operator= (const \fBSOCKADDR\fP & sa)\fC [inline]\fP"
+.PP
+.SS "bool ssobjects::SockAddr::operator== (const \fBsockaddr_in\fP & sa)"
+.PP
+Compairs two socket addresses.
+.PP
+Does a compairison of the sin_family, sin_port and sin_addr to determine if the passed socket address is the same. sin_len & sin_zero are not checked as sin_len is not always implimented (Linux and Windows) and sin_zero is unused and only provided to make socket address structures at least 16-bytes in size.
+.PP
+\fBReturns: \fP
+.in +1c
+true if they are found to be the same, false otherwise.
+.PP
+\fBNote: \fP
+.in +1c
+sin_zero may have other uses. It may have been used to obtain a byte by byte address, but this hasn't been verified. 
+.SS "\fBUSHORT\fP ssobjects::SockAddr::port () const\fC [inline]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

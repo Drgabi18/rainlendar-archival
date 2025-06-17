@@ -1,0 +1,50 @@
+.TH "ssobjects::GeneralException" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::GeneralException \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <generalexception.h>\fP
+.PP
+Inherited by \fBssobjects::AsyncClientConnectorException\fP, \fBssobjects::BufferedSocketException\fP, \fBssobjects::ClientConnectorException\fP, \fBssobjects::FileException\fP, \fBssobjects::MsgQueException\fP, \fBssobjects::PacketBufferException\fP, \fBssobjects::PacketMessageException\fP, \fBssobjects::ServerSocketException\fP, \fBssobjects::SimpleServerException\fP, and \fBssobjects::SocketInstanceException\fP.
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBGeneralException\fP (const char *pszMessage, const char *pszFname, const int iLine)"
+.br
+.ti -1c
+.RI "virtual \fB~GeneralException\fP ()"
+.br
+.ti -1c
+.RI "char* \fBgetErrorMsg\fP ()"
+.br
+.ti -1c
+.RI "char* \fBgetFullErrorMsg\fP ()"
+.br
+.ti -1c
+.RI "int \fBgetError\fP ()"
+.br
+.in -1c
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::GeneralException::GeneralException (const char * pszMessage, const char * pszFname, const int iLine)"
+.PP
+.SS "ssobjects::GeneralException::~GeneralException ()\fC [inline, virtual]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "int ssobjects::GeneralException::getError ()\fC [inline]\fP"
+.PP
+.SS "char * ssobjects::GeneralException::getErrorMsg ()\fC [inline]\fP"
+.PP
+.SS "char * ssobjects::GeneralException::getFullErrorMsg ()\fC [inline]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

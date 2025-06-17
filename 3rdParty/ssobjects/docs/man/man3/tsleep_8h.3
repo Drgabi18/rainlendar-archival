@@ -1,0 +1,38 @@
+.TH "tsleep.h" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+tsleep.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'defs.h'\fP
+.br
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBtsleep\fP (\fBunsigned32\fP nMilliSeconds)"
+.br
+.RI "\fISleep a specified number of milliseconds.\fP"
+.in -1c
+.SH "FUNCTION DOCUMENTATION"
+.PP 
+.SS "void tsleep (\fBunsigned32\fP nMilliSeconds)"
+.PP
+Sleep a specified number of milliseconds.
+.PP
+Sleeps for the specified number of milliseconds. Note that the amount of time slept is within about 10 milliseconds, usually under.
+.PP
+So if you request 100ms, the system may only sleep for 91ms.
+.PP
+There are 1000 milliseconds in a second.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fInMilliSeconds\fP\fP
+The number of milliseconds you want to sleep. 
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

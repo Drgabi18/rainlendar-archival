@@ -1,0 +1,211 @@
+.TH "socketinstance.h" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+socketinstance.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <sys/types.h>\fP
+.br
+\fC#include <ctype.h>\fP
+.br
+\fC#include 'msdefs.h'\fP
+.br
+\fC#include <stdio.h>\fP
+.br
+\fC#include <netinet/in.h>\fP
+.br
+\fC#include <netdb.h>\fP
+.br
+\fC#include <sys/select.h>\fP
+.br
+\fC#include <arpa/inet.h>\fP
+.br
+\fC#include <sys/time.h>\fP
+.br
+\fC#include <sys/socket.h>\fP
+.br
+\fC#include <unistd.h>\fP
+.br
+\fC#include <stdlib.h>\fP
+.br
+\fC#include 'generalexception.h'\fP
+.br
+\fC#include 'errno.h'\fP
+.br
+.SS "Namespaces"
+
+.in +1c
+.ti -1c
+.RI "namespace \fBssobjects\fP"
+.br
+.in -1c
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fB__SockAddr__\fP"
+.br
+.ti -1c
+.RI "#define \fB__SocketInstance__\fP"
+.br
+.ti -1c
+.RI "#define \fB__SocketInstanceException__\fP"
+.br
+.ti -1c
+.RI "#define \fB__TelnetSocket__\fP"
+.br
+.ti -1c
+.RI "#define \fB__HttpBlockingSocket__\fP"
+.br
+.ti -1c
+.RI "#define \fBTELNET_PORT\fP   23"
+.br
+.ti -1c
+.RI "#define \fBWEB_PORT\fP   80"
+.br
+.ti -1c
+.RI "#define \fBWSAEWOULDBLOCK\fP   EWOULDBLOCK"
+.br
+.ti -1c
+.RI "#define \fBSOCKET_ERROR\fP   (-1)"
+.br
+.ti -1c
+.RI "#define \fBINVALID_SOCKET\fP   (-1)"
+.br
+.ti -1c
+.RI "#define \fBclosesocket\fP(s)   close(s)"
+.br
+.ti -1c
+.RI "#define \fBWSAGetLastError\fP()   errno"
+.br
+.ti -1c
+.RI "#define \fBthrowSocketInstanceException\fP(m)   (throw SocketInstanceException(m,__FILE__,__LINE__))"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef int \fBSOCKET\fP"
+.br
+.ti -1c
+.RI "typedef struct sockaddr \fBSOCKADDR\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBsockaddr_in\fP \fBSOCKADDR_IN\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBsockaddr_in\fP* \fBLPSOCKADDR_IN\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBtimeval\fP \fBTIMEVAL\fP"
+.br
+.ti -1c
+.RI "typedef unsigned long \fBULONG\fP"
+.br
+.ti -1c
+.RI "typedef unsigned short \fBUSHORT\fP"
+.br
+.ti -1c
+.RI "typedef const struct sockaddr* \fBLPCSOCKADDR\fP"
+.br
+.ti -1c
+.RI "typedef struct sockaddr* \fBLPSOCKADDR\fP"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum { \fBDEFAULT_SOCKET_TIMEOUT\fP = 600, \fBNO_TIMEOUT\fP = 0 }"
+.br
+.in -1c
+.SH "DEFINE DOCUMENTATION"
+.PP 
+.SS "#define INVALID_SOCKET   (-1)"
+.PP
+.SS "#define SOCKET_ERROR   (-1)"
+.PP
+.SS "#define TELNET_PORT   23"
+.PP
+.SS "#define WEB_PORT   80"
+.PP
+.SS "#define WSAEWOULDBLOCK   EWOULDBLOCK"
+.PP
+.SS "#define WSAGetLastError()   errno"
+.PP
+.SS "#define __HttpBlockingSocket__"
+.PP
+\fBValue:\fP
+.PP
+.nf
+
+.fi
+.SS "#define __SockAddr__"
+.PP
+\fBValue:\fP
+.PP
+.nf
+
+.fi
+.SS "#define __SocketInstanceException__"
+.PP
+\fBValue:\fP
+.PP
+.nf
+
+.fi
+.SS "#define __SocketInstance__"
+.PP
+\fBValue:\fP
+.PP
+.nf
+
+.fi
+.SS "#define __TelnetSocket__"
+.PP
+\fBValue:\fP
+.PP
+.nf
+
+.fi
+.SS "#define closesocket(s)   close(s)"
+.PP
+.SS "#define throwSocketInstanceException(m)   (throw SocketInstanceException(m,__FILE__,__LINE__))"
+.PP
+.SH "TYPEDEF DOCUMENTATION"
+.PP 
+.SS "typedef const struct sockaddr * LPCSOCKADDR"
+.PP
+.SS "typedef struct sockaddr * LPSOCKADDR"
+.PP
+.SS "typedef struct \fBsockaddr_in\fP * LPSOCKADDR_IN"
+.PP
+.SS "typedef struct sockaddr SOCKADDR"
+.PP
+.SS "typedef struct \fBsockaddr_in\fP SOCKADDR_IN"
+.PP
+.SS "typedef int SOCKET"
+.PP
+.SS "typedef struct \fBtimeval\fP TIMEVAL"
+.PP
+.SS "typedef unsigned long ULONG"
+.PP
+.SS "typedef unsigned short USHORT"
+.PP
+.SH "ENUMERATION TYPE DOCUMENTATION"
+.PP 
+.SS "anonymous enum"
+.PP
+\fBEnumeration values:\fP
+.in +1c
+.TP
+\fB\fIDEFAULT_SOCKET_TIMEOUT\fP \fP
+.TP
+\fB\fINO_TIMEOUT\fP \fP
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

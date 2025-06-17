@@ -1,0 +1,186 @@
+.TH "ssobjects::BufferedSocket" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::BufferedSocket \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <bufferedsocket.h>\fP
+.PP
+Inherits \fBssobjects::SocketInstance\fP.
+.PP
+.SS "Public Types"
+
+.in +1c
+.ti -1c
+.RI "enum \fBReleaseFlag\fP { \fBautoRelease\fP, \fBnoRelease\fP }"
+.br
+.in -1c
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBBufferedSocket\fP ()"
+.br
+.RI "\fIConstruct the socket.\fP"
+.ti -1c
+.RI "\fB~BufferedSocket\fP ()"
+.br
+.RI "\fIDestroys the socket, and closes the connection.\fP"
+.ti -1c
+.RI "int \fBsendPacket\fP (\fBPacketBuffer\fP *pPacket, const \fBReleaseFlag\fP release=noRelease)"
+.br
+.RI "\fITransmits the packet.\fP"
+.ti -1c
+.RI "int \fBsendPacket\fP (\fBPacketBuffer\fP &packet)"
+.br
+.RI "\fITransmits the packet.\fP"
+.ti -1c
+.RI "\fBPacketBuffer\fP* \fBrecvPacket\fP ()"
+.br
+.RI "\fIReads and waits for a full \fBPacketBuffer\fP object.\fP"
+.ti -1c
+.RI "\fBPacketBuffer\fP* \fBrecvPacket\fP (\fBPacketBuffer\fP &packet)"
+.br
+.RI "\fIReads and waits for a full \fBPacketBuffer\fP object.\fP"
+.ti -1c
+.RI "int \fBsetTimeout\fP (const int iTimeOut)"
+.br
+.RI "\fISets how long to wait for incoming data before throwing.\fP"
+.ti -1c
+.RI "void \fBoperator<<\fP (\fBPacketBuffer\fP &packet)"
+.br
+.RI "\fITransmits the packet.\fP"
+.ti -1c
+.RI "void \fBoperator<<\fP (\fBPacketBuffer\fP *ppacket)"
+.br
+.RI "\fITransmits the packet.\fP"
+.ti -1c
+.RI "void \fBoperator>>\fP (\fBPacketBuffer\fP &packet)"
+.br
+.RI "\fIReads and waits for a full \fBPacketBuffer\fP object.\fP"
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+Base class for sending and receiving data send as PacketBuffers.
+.PP
+When data is sent, not all data is garenteed to be sent in the one call.  (See man page for send(3) for details.)
+.PP
+When data is read, or received, not all the data is garenteed to be  read in one recv call. (See man page for recv(3) for details.)
+.PP
+To make life easier, the functionality for sending and receiving an  entire \fBPacketBuffer\fP object, without multiple calls to \fBsend\fP()/\fBrecv\fP() is  wrapped up in this object.
+.PP
+Also, if 3 packets were sent, but only 2 1/2 were read, \fBBufferedSocket\fP will parse out the two, and keep the data from 3 till the next call.
+.PP
+\fB\fBTodo: \fP\fP
+.in +1c
+ Verify it's send(3) and not send(2).  
+.PP
+.SH "MEMBER ENUMERATION DOCUMENTATION"
+.PP 
+.SS "enum ssobjects::BufferedSocket::ReleaseFlag"
+.PP
+\fBEnumeration values:\fP
+.in +1c
+.TP
+\fB\fIautoRelease\fP \fP
+.TP
+\fB\fInoRelease\fP \fP
+
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::BufferedSocket::BufferedSocket ()"
+.PP
+Construct the socket.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIBufferedSocketException\fP\fP
+ If memory for the buffer was not available. 
+.SS "ssobjects::BufferedSocket::~BufferedSocket ()"
+.PP
+Destroys the socket, and closes the connection.
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "void ssobjects::BufferedSocket::operator<< (\fBPacketBuffer\fP * ppacket)"
+.PP
+Transmits the packet.
+.PP
+.SS "void ssobjects::BufferedSocket::operator<< (\fBPacketBuffer\fP & packet)"
+.PP
+Transmits the packet.
+.PP
+.SS "void ssobjects::BufferedSocket::operator>> (\fBPacketBuffer\fP & packet)"
+.PP
+Reads and waits for a full \fBPacketBuffer\fP object.
+.PP
+.SS "\fBPacketBuffer\fP * ssobjects::BufferedSocket::recvPacket (\fBPacketBuffer\fP & packet)"
+.PP
+Reads and waits for a full \fBPacketBuffer\fP object.
+.PP
+Reads data into the referenced packet. This isn't as effiecent as using  \fBrecvPacket\fP(). You are gerented to receive a full \fBPacketBuffer\fP object.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fISocketInstanceException\fP\fP
+ If there is a read error, or a connection was closed. 
+.TP
+\fB\fIBufferedSocketException\fP\fP
+ If a bad packet was read. 
+.SS "\fBPacketBuffer\fP * ssobjects::BufferedSocket::recvPacket ()"
+.PP
+Reads and waits for a full \fBPacketBuffer\fP object.
+.PP
+Reads data and returns a pointer to a new \fBPacketBuffer\fP object. You are responsible for  deleting the returned packet when you are finished with it.
+.PP
+You are gerented to receive a full \fBPacketBuffer\fP object.
+.PP
+When data is read in, some verification is done to ensure that the packet header is  valid. There is no way to validate the buffer portion of the packet. A test is done on the header to see if the cookie (just a constant value passed all the time) and to see the the command looks like it might be valid. There is no way to tell other then  if the command is zero (\fBPacketBuffer::pcInvalid\fP). Note that a common problem with getting  \fBPacketBuffer::pcInvalid\fP as a command is not setting the command in a packet before sending it.
+.PP
+If a packet is sent with a size greater then 3000 bytes, the read operation will reset the internal buffer, and throw an exception. This is done to prevent bogus packets overflowing the buffer.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fISocketInstanceException\fP\fP
+ If there is a read error, or a connection was closed. 
+.TP
+\fB\fIBufferedSocketException\fP\fP
+ If a bad packet was read. 
+.SS "int ssobjects::BufferedSocket::sendPacket (\fBPacketBuffer\fP & packet)"
+.PP
+Transmits the packet.
+.PP
+.SS "int ssobjects::BufferedSocket::sendPacket (\fBPacketBuffer\fP * pPacket, const \fBReleaseFlag\fP release = noRelease)"
+.PP
+Transmits the packet.
+.PP
+Sends the data pointed to by pPacket, and optionaly destroys the memory pointed to by pPacket  once the data is sent. All data is garented to be sent.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIpPacket\fP\fP
+Packet you are sending. 
+.TP
+\fB\fIrelease\fP\fP
+When set to autoRelease, pPacket will be deleted once the data has been sent.  When set to noRelease, pPacket is not deleted.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fISocketInstanceException\fP\fP
+ If there was a problem during the send operation. 
+.SS "int ssobjects::BufferedSocket::setTimeout (const int iTimeOut)"
+.PP
+Sets how long to wait for incoming data before throwing.
+.PP
+Sets how many seconds a read or send operation will wait  before throwing an exception. 
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

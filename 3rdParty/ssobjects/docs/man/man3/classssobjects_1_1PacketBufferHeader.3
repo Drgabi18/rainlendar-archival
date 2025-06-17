@@ -1,0 +1,211 @@
+.TH "ssobjects::PacketBufferHeader" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::PacketBufferHeader \- Header information that is sent with every packet. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <packetbuffer.h>\fP
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBPacketBufferHeader\fP ()"
+.br
+.ti -1c
+.RI "\fBPacketBufferHeader\fP (\fBunsigned16\fP wCommand, \fBunsigned16\fP wCookie)"
+.br
+.ti -1c
+.RI "void \fBmakeNetworkReady\fP (bool bOverrideFailsave=false)"
+.br
+.RI "\fIConvert header to network byte order (htonl).\fP"
+.ti -1c
+.RI "void \fBmakeHostReady\fP (bool bOverrideFailsafe=false)"
+.br
+.RI "\fIConvert header from network byte order (ntohl).\fP"
+.ti -1c
+.RI "\fBunsigned8\fP* \fBgetHeader\fP () const"
+.br
+.RI "\fIReturns a pointer to the header data.\fP"
+.ti -1c
+.RI "\fBunsigned32\fP \fBgetBufferSize\fP () const"
+.br
+.RI "\fIReturns the current buffer size.\fP"
+.ti -1c
+.RI "\fBunsigned16\fP \fBgetCookie\fP () const"
+.br
+.RI "\fIReturns the cookie.\fP"
+.ti -1c
+.RI "\fBunsigned16\fP \fBgetCmd\fP () const"
+.br
+.RI "\fIReturns the command.\fP"
+.ti -1c
+.RI "void \fBreset\fP ()"
+.br
+.RI "\fIPuts header to initial state.\fP"
+.ti -1c
+.RI "bool \fBisValid\fP ()"
+.br
+.RI "\fIVerify this header has valid values.\fP"
+.ti -1c
+.RI "bool \fBisNetworkReady\fP () const"
+.br
+.RI "\fIReturns true if the header is in network byte order, false otherwise.\fP"
+.in -1c
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "typeBufferSize \fBm_nBufferSize\fP"
+.br
+.RI "\fIHow much data is in this packet, not including the header.\fP"
+.ti -1c
+.RI "typeCookie \fBm_wCookie\fP"
+.br
+.RI "\fISpecial constant value used to determin if the packet is valid. Not to be mistaken for cookies in browsers.\fP"
+.ti -1c
+.RI "typeCommand \fBm_wCommand\fP"
+.br
+.RI "\fIThe command, or type of packet this is.\fP"
+.ti -1c
+.RI "bool \fBm_bNetworkReady\fP"
+.br
+.RI "\fITrue when the header is in network byte order, false otherwise.\fP"
+.in -1c
+.SS "Static Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBunsigned32\fP \fBgetMaxPacketSize\fP ()"
+.br
+.RI "\fIGet the max allowed packet size.\fP"
+.ti -1c
+.RI "\fBunsigned32\fP \fBsetMaxPacketSize\fP (\fBunsigned32\fP)"
+.br
+.RI "\fISet what the limit should be.\fP"
+.ti -1c
+.RI "\fBunsigned32\fP \fBgetSize\fP ()"
+.br
+.RI "\fIReturns the actual size of the header.\fP"
+.in -1c
+.SS "Static Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nMaxPacketSize\fP = 1500000"
+.br
+.RI "\fIHow big the buffer is allowed to get.\fP"
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+Header information that is sent with every packet.
+.PP
+.PP
+ The header is what tells you what command/type of packet this is, and how big it is. The header is a vital part of the \fBPacketBuffer\fP class. 
+.PP
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::PacketBufferHeader::PacketBufferHeader ()\fC [inline]\fP"
+.PP
+.SS "ssobjects::PacketBufferHeader::PacketBufferHeader (\fBunsigned16\fP wCommand, \fBunsigned16\fP wCookie)\fC [inline]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "\fBunsigned32\fP ssobjects::PacketBufferHeader::getBufferSize () const\fC [inline]\fP"
+.PP
+Returns the current buffer size.
+.PP
+.SS "\fBunsigned16\fP ssobjects::PacketBufferHeader::getCmd () const\fC [inline]\fP"
+.PP
+Returns the command.
+.PP
+.SS "\fBunsigned16\fP ssobjects::PacketBufferHeader::getCookie () const\fC [inline]\fP"
+.PP
+Returns the cookie.
+.PP
+.SS "\fBunsigned8\fP * ssobjects::PacketBufferHeader::getHeader () const\fC [inline]\fP"
+.PP
+Returns a pointer to the header data.
+.PP
+.SS "\fBunsigned32\fP ssobjects::PacketBufferHeader::getMaxPacketSize ()\fC [static]\fP"
+.PP
+Get the max allowed packet size.
+.PP
+.SS "\fBunsigned32\fP ssobjects::PacketBufferHeader::getSize ()\fC [inline, static]\fP"
+.PP
+Returns the actual size of the header.
+.PP
+.SS "bool ssobjects::PacketBufferHeader::isNetworkReady () const\fC [inline]\fP"
+.PP
+Returns true if the header is in network byte order, false otherwise.
+.PP
+.SS "bool ssobjects::PacketBufferHeader::isValid ()"
+.PP
+Verify this header has valid values.
+.PP
+Does some simple tests to see if this header is valid. First checks to see if the cookie is our constant cookie value of \fBPacketBuffer::pkCookie\fP. Then checks if the command is non-zero. Lastly, we check if the buffersize value is better then the max packet size. If all these pass, then we can assume that the header is probably safe. 
+.SS "void ssobjects::PacketBufferHeader::makeHostReady (bool bOverrideFailsafe = false)"
+.PP
+Convert header from network byte order (ntohl).
+.PP
+Convert the header longs and shorts into host byte order.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIbOverrideFailsafe\fP\fP
+[in] false (default) will not reorder the bytes if you have already. true if you want to anyway.
+.PP
+\fBNote: \fP
+.in +1c
+Used only in by BufferedSocket::parsForPacket() when a packet is just read in. The new object will be in host byte order, and the data read in will be in network byte order. So we need to force into host byte order even thought the object thinks it is already like that. 
+.SS "void ssobjects::PacketBufferHeader::makeNetworkReady (bool bOverrideFailsave = false)"
+.PP
+Convert header to network byte order (htonl).
+.PP
+Convert the header longs and shorts into network byte order blah blah blah.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIbOverrideFailsafe\fP\fP
+[in] false (default) will not reorder the bytes if you have already. true if you want to anyway. 
+.SS "void ssobjects::PacketBufferHeader::reset ()"
+.PP
+Puts header to initial state.
+.PP
+Make the header host-byte ordered, and reset the buffer size to zero. 
+.SS "\fBunsigned32\fP ssobjects::PacketBufferHeader::setMaxPacketSize (\fBunsigned32\fP newSize)\fC [static]\fP"
+.PP
+Set what the limit should be.
+.PP
+Sets the max packet size to newSize. Does nothing to the actual packet buffer. This is just a number we use for reference. 
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "bool ssobjects::PacketBufferHeader::m_bNetworkReady"
+.PP
+True when the header is in network byte order, false otherwise.
+.PP
+.SS "typeBufferSize ssobjects::PacketBufferHeader::m_nBufferSize"
+.PP
+How much data is in this packet, not including the header.
+.PP
+.SS "\fBunsigned32\fP ssobjects::PacketBufferHeader::m_nMaxPacketSize = 1500000\fC [static]\fP"
+.PP
+How big the buffer is allowed to get.
+.PP
+.SS "typeCommand ssobjects::PacketBufferHeader::m_wCommand"
+.PP
+The command, or type of packet this is.
+.PP
+.SS "typeCookie ssobjects::PacketBufferHeader::m_wCookie"
+.PP
+Special constant value used to determin if the packet is valid. Not to be mistaken for cookies in browsers.
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

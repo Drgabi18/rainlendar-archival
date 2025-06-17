@@ -1,0 +1,25 @@
+# IP-Filters for RainlendarServer
+#
+# The IP number must be defined like this: A.B.C.D/M, where M defines the number 
+# of valid bits from the beginning.
+# 
+# Separate different profiles with ';'-char (e.g. 127.0.0.1/32=Exam;Holiday;Important;)
+# Use * for all profiles (e.g. 127.0.0.1/32=*)
+#
+# Everything is case-sensitive! Do not use extra spaces in anywhere!
+#
+# This is just an example, which accepts and delivers everything else except Personal events
+# unless they came from or go to 127.0.0.1. If you want to use this yourself change the 127.0.0.1
+# to your own IP.
+
+[AcceptIncoming]
+127.0.0.1/32=Personal
+
+[DenyIncoming]
+0.0.0.0/0=Personal
+
+[AcceptOutgoing]
+127.0.0.1/32=Personal
+
+[DenyOutgoing]
+0.0.0.0/0=Personal

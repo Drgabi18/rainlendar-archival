@@ -1,0 +1,117 @@
+.TH "ssobjects::logs" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::logs \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <logs.h>\fP
+.PP
+.SS "Public Types"
+
+.in +1c
+.ti -1c
+.RI "enum { \fBL_FILE\fP = 1, \fBL_CONSOLE\fP = 2, \fBL_DEFAULT\fP = 3, \fBL_NONE\fP = 0, \fBL_ALL\fP = 0xFFFFFFFF }"
+.br
+.in -1c
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBlogs\fP (const char *pFuncName)"
+.br
+.ti -1c
+.RI "\fB~logs\fP ()"
+.br
+.in -1c
+.SS "Static Public Methods"
+
+.in +1c
+.ti -1c
+.RI "void \fBlog\fP (const char *fmt,...)"
+.br
+.ti -1c
+.RI "void \fBlogln\fP (const char *fmt,...)"
+.br
+.ti -1c
+.RI "void \fBdump\fP (void *pMemory, \fBDWORD\fP dwNumBytes)"
+.br
+.ti -1c
+.RI "void \fBinit\fP (const char *pszLogFileName)"
+.br
+.ti -1c
+.RI "void \fBdeinit\fP ()"
+.br
+.ti -1c
+.RI "void \fBenable\fP (bool bEnable=true)"
+.br
+.ti -1c
+.RI "void \fBset\fP (unsigned nSet, unsigned nReset=0)"
+.br
+.in -1c
+.SS "Static Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "bool \fBm_bActive\fP = false"
+.br
+.ti -1c
+.RI "unsigned \fBm_nFlags\fP = L_CONSOLE"
+.br
+.ti -1c
+.RI "bool \fBm_bInited\fP = false"
+.br
+.in -1c
+.SH "MEMBER ENUMERATION DOCUMENTATION"
+.PP 
+.SS "anonymous enum"
+.PP
+\fBEnumeration values:\fP
+.in +1c
+.TP
+\fB\fIL_FILE\fP \fP
+.TP
+\fB\fIL_CONSOLE\fP \fP
+.TP
+\fB\fIL_DEFAULT\fP \fP
+.TP
+\fB\fIL_NONE\fP \fP
+.TP
+\fB\fIL_ALL\fP \fP
+
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::logs::logs (const char * pFuncName)"
+.PP
+.SS "ssobjects::logs::~logs ()"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "void ssobjects::logs::deinit ()\fC [static]\fP"
+.PP
+.SS "void ssobjects::logs::dump (void * pMemory, \fBDWORD\fP dwNumBytes)\fC [static]\fP"
+.PP
+.SS "void ssobjects::logs::enable (bool bEnable = true)\fC [static]\fP"
+.PP
+.SS "void ssobjects::logs::init (const char * pszLogFileName)\fC [static]\fP"
+.PP
+.SS "void ssobjects::logs::log (const char * fmt, ...)\fC [static]\fP"
+.PP
+.SS "void ssobjects::logs::logln (const char * fmt, ...)\fC [static]\fP"
+.PP
+.SS "void ssobjects::logs::set (unsigned nSet, unsigned nReset = 0)\fC [static]\fP"
+.PP
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "bool ssobjects::logs::m_bActive = false\fC [static]\fP"
+.PP
+.SS "bool ssobjects::logs::m_bInited = false\fC [static]\fP"
+.PP
+.SS "unsigned ssobjects::logs::m_nFlags = L_CONSOLE\fC [static]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

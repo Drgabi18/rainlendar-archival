@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Server/IniFile.h,v 1.2 2005/03/01 17:43:20 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Server/IniFile.h,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
 
   $Log: IniFile.h,v $
+  Revision 1.1.1.1  2005/07/10 18:48:07  rainy
+  no message
+
   Revision 1.2  2005/03/01 17:43:20  rainy
   Linux fixes
 

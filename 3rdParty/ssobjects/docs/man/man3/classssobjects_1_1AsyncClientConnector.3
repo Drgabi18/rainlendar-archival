@@ -1,0 +1,312 @@
+.TH "ssobjects::AsyncClientConnector" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::AsyncClientConnector \- Non-blocking client class that a client app uses to connect to a server. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <asyncclientconnector.h>\fP
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "void \fBhandleException\fP (\fBGeneralException\fP &e)"
+.br
+.RI "\fINot currently used.\fP"
+.ti -1c
+.RI "void \fBsendPacket\fP (\fBPacketBuffer\fP *pPkt)"
+.br
+.RI "\fISends the packet.\fP"
+.ti -1c
+.RI "void \fBsendPacket\fP (\fBPacketBuffer\fP &pPkt)"
+.br
+.RI "\fISends the packet.\fP"
+.ti -1c
+.RI "void \fBoperator<<\fP (\fBPacketBuffer\fP &)"
+.br
+.RI "\fISends the packet.\fP"
+.ti -1c
+.RI "void \fBoperator<<\fP (\fBPacketBuffer\fP *)"
+.br
+.RI "\fISends the packet.\fP"
+.ti -1c
+.RI "\fBPacketMessage\fP* \fBgetMsg\fP ()"
+.br
+.RI "\fIRetrieves the next message from the message queue.\fP"
+.ti -1c
+.RI "\fBAsyncClientConnector\fP (const char *pszHost, \fBword\fP wPort)"
+.br
+.RI "\fIConstructs and connects to host.\fP"
+.ti -1c
+.RI "\fB~AsyncClientConnector\fP ()"
+.br
+.RI "\fIDestroys and closes any connections.\fP"
+.ti -1c
+.RI "const char* \fBgetServer\fP ()"
+.br
+.RI "\fIReturns the server host name you assigned this client object.\fP"
+.ti -1c
+.RI "const \fBword\fP \fBgetPort\fP ()"
+.br
+.RI "\fIReturns the port you assigned this client object.\fP"
+.ti -1c
+.RI "bool \fBisConnected\fP ()"
+.br
+.RI "\fIReturns if this client is connected or not.\fP"
+.ti -1c
+.RI "\fBServerSocket\fP* \fBgetSocket\fP ()"
+.br
+.RI "\fIReturns the \fBServerSocket\fP of this client object.\fP"
+.ti -1c
+.RI "void \fBreconnect\fP ()"
+.br
+.RI "\fITries to reconnect to the server.\fP"
+.ti -1c
+.RI "void \fBconnect\fP (const char *pszHost, const \fBunsigned16\fP wPort)"
+.br
+.RI "\fIStores server info passed in, and attempts to connect to the server.\fP"
+.ti -1c
+.RI "void \fBconnect\fP ()"
+.br
+.RI "\fIConnects to the server.\fP"
+.ti -1c
+.RI "void \fBclose\fP ()"
+.br
+.RI "\fICloses the connection to the server.\fP"
+.ti -1c
+.RI "bool \fBidle\fP ()"
+.br
+.RI "\fIYou call this so \fBAsyncClientConnector\fP can check for incoming data.\fP"
+.in -1c
+.SS "Protected Methods"
+
+.in +1c
+.ti -1c
+.RI "void \fBcleanup\fP ()"
+.br
+.RI "\fICloses the connection without throwing any exeptions on errors during socket closer. Deletes the socket.\fP"
+.ti -1c
+.RI "void \fBsetNonBlocking\fP (\fBSOCKET\fP sockfd)"
+.br
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBunsigned16\fP \fBm_wPort\fP"
+.br
+.RI "\fIPort number of the server you wish to connect to.\fP"
+.ti -1c
+.RI "\fBCStr\fP \fBm_strHost\fP"
+.br
+.RI "\fIHost name of the server you wish to connect to.\fP"
+.ti -1c
+.RI "\fBServerSocket\fP* \fBm_pSocket\fP"
+.br
+.RI "\fISocket connected to the server.\fP"
+.ti -1c
+.RI "\fBPacketMessageQue\fP \fBm_que\fP"
+.br
+.RI "\fIMessage que that contains any messages that have been parsed from read socket data.\fP"
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+Non-blocking client class that a client app uses to connect to a server.
+.PP
+.PP
+ This is an asynchronis client class used so you can poll for incoming packets. If there are no packets available, your program will not block. If there is incoming data, it will be read and parsed into packets and posted to the message queue if possible.
+.PP
+You would use this class if you didn't want to use threads. Note however, since this class uses the \fBPacketMessageQue\fP class, you must still compile using threading options. 
+.PP
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::AsyncClientConnector::AsyncClientConnector (const char * pszHost, \fBword\fP wPort)"
+.PP
+Constructs and connects to host.
+.PP
+Constructs a \fBAsyncClientConnector\fP object and connects to host pointed to by pszHost on port pointed to by wPort.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIAsyncClientConnectorException\fP\fP
+ [Windows only] If Windows WSAStartup failed 
+.SS "ssobjects::AsyncClientConnector::~AsyncClientConnector ()"
+.PP
+Destroys and closes any connections.
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "void ssobjects::AsyncClientConnector::cleanup ()\fC [protected]\fP"
+.PP
+Closes the connection without throwing any exeptions on errors during socket closer. Deletes the socket.
+.PP
+.SS "void ssobjects::AsyncClientConnector::close ()"
+.PP
+Closes the connection to the server.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIAsyncClientConnectorException\fP\fP
+ If socket was not connected. 
+.TP
+\fB\fISocketInstanceException\fP\fP
+ If there was a socket error during close operation. 
+.SS "void ssobjects::AsyncClientConnector::connect ()"
+.PP
+Connects to the server.
+.PP
+Attempts to connect to the server. Once connected, the socket  is put into non-blocking mode.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fISocketInstanceException\fP\fP
+ If unable to make a connection or socket creation  failed. 
+.SS "void ssobjects::AsyncClientConnector::connect (const char * pszHost, const \fBunsigned16\fP wPort)"
+.PP
+Stores server info passed in, and attempts to connect to the server.
+.PP
+Stores the information you pass in, and then tries to connect to that server.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fISee\fP\fP
+ \fBAsyncClientConnector::connect\fP for details. 
+.SS "\fBPacketMessage\fP * ssobjects::AsyncClientConnector::getMsg ()"
+.PP
+Retrieves the next message from the message queue.
+.PP
+Gets the next message, and removes it from the message queue.
+.PP
+\fBReturns: \fP
+.in +1c
+NULL if there are no messages.  A pointer to the next message otherwise. 
+.SS "const \fBword\fP ssobjects::AsyncClientConnector::getPort ()\fC [inline]\fP"
+.PP
+Returns the port you assigned this client object.
+.PP
+.SS "const char * ssobjects::AsyncClientConnector::getServer ()\fC [inline]\fP"
+.PP
+Returns the server host name you assigned this client object.
+.PP
+.SS "\fBServerSocket\fP * ssobjects::AsyncClientConnector::getSocket ()"
+.PP
+Returns the \fBServerSocket\fP of this client object.
+.PP
+.SS "void ssobjects::AsyncClientConnector::handleException (\fBGeneralException\fP & e)"
+.PP
+Not currently used.
+.PP
+.SS "bool ssobjects::AsyncClientConnector::idle ()"
+.PP
+You call this so \fBAsyncClientConnector\fP can check for incoming data.
+.PP
+You call idle as often as you are able to. When idle is called, it will check for incoming data. If there is data on the connected socket, it will be read, and parsed into packets. If the connection is closed gracefully on the other end, \fBPacketBuffer::pcClosed\fP is posted to the message que. If the connection is not closed gracefully, and exeption is generated.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIAsyncClientConnectorException\fP\fP
+ If there was any read or select errors.
+.PP
+\fBReturns: \fP
+.in +1c
+true if there was packets parsed.  false otherwise. 
+.SS "bool ssobjects::AsyncClientConnector::isConnected ()\fC [inline]\fP"
+.PP
+Returns if this client is connected or not.
+.PP
+.SS "void ssobjects::AsyncClientConnector::operator<< (\fBPacketBuffer\fP * ppacket)"
+.PP
+Sends the packet.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIAsyncClientConnectorException\fP\fP
+ If the socket is not connected. 
+.SS "void ssobjects::AsyncClientConnector::operator<< (\fBPacketBuffer\fP & packet)"
+.PP
+Sends the packet.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIAsyncClientConnectorException\fP\fP
+ If the socket is not connected. 
+.SS "void ssobjects::AsyncClientConnector::reconnect ()"
+.PP
+Tries to reconnect to the server.
+.PP
+Closes down any existing connection, and tries to connect to the server.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fISee\fP\fP
+ \fBAsyncClientConnector::connect\fP for details. 
+.SS "void ssobjects::AsyncClientConnector::sendPacket (\fBPacketBuffer\fP & pPkt)"
+.PP
+Sends the packet.
+.PP
+Attempts to send the packet referenced by packet.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIAsyncClientConnectorException\fP\fP
+ If the socket is not connected. 
+.SS "void ssobjects::AsyncClientConnector::sendPacket (\fBPacketBuffer\fP * pPkt)"
+.PP
+Sends the packet.
+.PP
+Attempts to send the packet pointed to by pPkt.
+.PP
+Asserts if pPkt is NULL.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIAsyncClientConnectorException\fP\fP
+ If the socket is not connected. 
+.SS "void ssobjects::AsyncClientConnector::setNonBlocking (\fBSOCKET\fP sockfd)\fC [protected]\fP"
+.PP
+Sets the socket to non-blocking mode. 
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIAsyncClientConnectorException\fP\fP
+ If unable to set socket to non-blocking mode. 
+.PP
+\fBNote: \fP
+.in +1c
+[Windows only] When compiled for windows, this is an empty function.  Socket is not put into non-blocking mode. 
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "\fBServerSocket\fP * ssobjects::AsyncClientConnector::m_pSocket\fC [protected]\fP"
+.PP
+Socket connected to the server.
+.PP
+.SS "\fBPacketMessageQue\fP ssobjects::AsyncClientConnector::m_que\fC [protected]\fP"
+.PP
+Message que that contains any messages that have been parsed from read socket data.
+.PP
+.SS "\fBCStr\fP ssobjects::AsyncClientConnector::m_strHost\fC [protected]\fP"
+.PP
+Host name of the server you wish to connect to.
+.PP
+.SS "\fBunsigned16\fP ssobjects::AsyncClientConnector::m_wPort\fC [protected]\fP"
+.PP
+Port number of the server you wish to connect to.
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

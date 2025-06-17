@@ -1,0 +1,113 @@
+.TH "ssobjects::PacketMessageQue" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::PacketMessageQue \- Thread-safe list of messages. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <packetmessageque.h>\fP
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBPacketMessageQue\fP (bool bSetEvents=true)"
+.br
+.ti -1c
+.RI "virtual \fB~PacketMessageQue\fP ()"
+.br
+.ti -1c
+.RI "void \fBadd\fP (\fBPacketMessage\fP *)"
+.br
+.RI "\fIAdds msg to the end of the list.\fP"
+.ti -1c
+.RI "\fBPacketMessage\fP* \fBget\fP ()"
+.br
+.RI "\fIReturns the first item, and removes from the list.\fP"
+.ti -1c
+.RI "bool \fBisEmpty\fP ()"
+.br
+.RI "\fIChecks if there are any messages in the message que.\fP"
+.ti -1c
+.RI "void \fBpurge\fP ()"
+.br
+.RI "\fIRemove all items from the msg list que.\fP"
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+Thread-safe list of messages.
+.PP
+.PP
+ Works like a FIFO stack. Messages are added to the end of the list, and retrieved from the head of the list.
+.PP
+In the following example, we have added 'Aa', 'Bb' and 'Cc' to the list in that order.
+.PP
+.nf
+
+   ---[head]--- 
+   [    Aa    ] 
+   [    Bb    ] 
+   [    Cc    ] 
+   ---[tail]--- 
+   
+.fi
+.PP
+When you call the get method, it will retrieve the head item - 'Aa' - and remove it from the list. The next call will retrieve 'Bb' and so on.
+.PP
+The server uses the message que to store all the messages that have been parsed. It then runs through the que and calls your message pump (see \fBSimpleServer::processSingleMsg\fP for further details.) 
+.PP
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::PacketMessageQue::PacketMessageQue (bool bSetEvents = true)"
+.PP
+Constructs a message que. When events are set, whenever a message is added to the que, the event will fire. This event however is not in use at the moment.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIbSetEvents\fP\fP
+Tells the message que to signal it's internal event when data is added to the que. 
+.SS "ssobjects::PacketMessageQue::~PacketMessageQue ()\fC [virtual]\fP"
+.PP
+Deletes all messages in this message que. 
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "void ssobjects::PacketMessageQue::add (\fBPacketMessage\fP * pmsg)"
+.PP
+Adds msg to the end of the list.
+.PP
+Add a message to the tail end of the message que.
+.PP
+If the event flag is set, the event will be signaled.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIpmsg\fP\fP
+The message object containing the socket and packet information you wish to add to the message que. 
+.SS "\fBPacketMessage\fP * ssobjects::PacketMessageQue::get ()"
+.PP
+Returns the first item, and removes from the list.
+.PP
+Checks if there are any messages in the que and returns head (first) message if there is one. If there is a message pointer to be returned, it is removed from the message que, so subsiquent calls will return the next one. Works like a FIFO stack.
+.PP
+\fBReturns: \fP
+.in +1c
+NULL if there are no messages in the que, a pointer to the \fBPacketMessage\fP object otherwise. 
+.SS "bool ssobjects::PacketMessageQue::isEmpty ()"
+.PP
+Checks if there are any messages in the message que.
+.PP
+\fBReturns: \fP
+.in +1c
+true if there are any messages in the message que, false otherwise. 
+.SS "void ssobjects::PacketMessageQue::purge ()"
+.PP
+Remove all items from the msg list que.
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

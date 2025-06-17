@@ -1,0 +1,325 @@
+.TH "ssobjects::ServerSocket" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::ServerSocket \- Socket object that contains both a read and write buffer. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <serversocket.h>\fP
+.PP
+Inherits \fBssobjects::SocketInstance\fP.
+.PP
+.SS "Public Types"
+
+.in +1c
+.ti -1c
+.RI "enum { \fBmodeInvalid\fP =  0, \fBmodeWriteOkay\fP =  1, \fBmodeSendOkay\fP =  2, \fBmodeReadOkay\fP =  4, \fBmodeClosing\fP =  8, \fBmodeNotified\fP =  16, \fBmodeClosed\fP =  32, \fBmodeValid\fP = modeSendOkay|modeWriteOkay|modeReadOkay, \fBmodeAll\fP = 0xFFFFFFFF       }"
+.br
+.RI "\fINot used.\fP"
+.in -1c
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBServerSocket\fP (const \fBunsigned32\fP nBufferSize=18000, const int iTimeout=DEFAULT_SOCKET_TIMEOUT)"
+.br
+.ti -1c
+.RI "\fBServerSocket\fP (const \fBSocketInstance\fP &socket, const \fBSockAddr\fP &sa, const \fBunsigned32\fP nBuffSize, const int iTimeout)"
+.br
+.ti -1c
+.RI "virtual \fB~ServerSocket\fP ()"
+.br
+.ti -1c
+.RI "void \fBsendPacket\fP (const \fBPacketBuffer\fP &packet)"
+.br
+.RI "\fIWill add to outgoing buffer, and try sending it.\fP"
+.ti -1c
+.RI "void \fBsendPacket\fP (const \fBPacketBuffer\fP *const ppacket)"
+.br
+.RI "\fIWill add to outgoing buffer, and try sending it.\fP"
+.ti -1c
+.RI "void \fBsendBuffer\fP ()"
+.br
+.RI "\fIWill attept to send any data in the outgoing buffer.\fP"
+.ti -1c
+.RI "int \fBreadData\fP ()"
+.br
+.RI "\fIReads in as much data is available on the socket.\fP"
+.ti -1c
+.RI "\fBPacketBuffer\fP* \fBextractPacket\fP ()"
+.br
+.RI "\fIExtracts a packet from the incoming buffer.\fP"
+.ti -1c
+.RI "const \fBFlags\fP& \fBflags\fP () const"
+.br
+.RI "\fIReturns the socket flags. (Not currently used.).\fP"
+.ti -1c
+.RI "\fBunsigned32\fP \fBgetOutBufferSize\fP () const"
+.br
+.RI "\fIReturn bytes in outgoing buffer.\fP"
+.ti -1c
+.RI "\fBunsigned32\fP \fBgetOutBufferSizeMax\fP () const"
+.br
+.RI "\fIReturn the actual size (how much was allocated) of the buffer.\fP"
+.ti -1c
+.RI "\fBunsigned32\fP \fBgetInBufferSize\fP () const"
+.br
+.RI "\fIReturn bytes in incoming buffer.\fP"
+.ti -1c
+.RI "\fBunsigned32\fP \fBgetBufferSizeMax\fP () const"
+.br
+.RI "\fIHow big the in/out buffer is.\fP"
+.ti -1c
+.RI "\fBSockAddr\fP \fBgetAddr\fP () const"
+.br
+.RI "\fIGets the socket address information of the connected socket.\fP"
+.ti -1c
+.RI "int \fBsocketTimeout\fP () const"
+.br
+.RI "\fIReturns the number of seconds a send/receive operation will wait before throwing.\fP"
+.ti -1c
+.RI "\fBServerHandler\fP* \fBserverHandler\fP () const"
+.br
+.RI "\fIReturns the \fBServerHandler\fP object that was assigned to this server socket object.\fP"
+.ti -1c
+.RI "void \fBsetServerHandler\fP (\fBServerHandler\fP *s)"
+.br
+.RI "\fISets the \fBServerHandler\fP object that this server socket will use.\fP"
+.in -1c
+.SS "Protected Methods"
+
+.in +1c
+.ti -1c
+.RI "char* \fBgetOutBuffer\fP () const"
+.br
+.ti -1c
+.RI "char* \fBgetInBuffer\fP () const"
+.br
+.ti -1c
+.RI "void \fBrotateBuffer\fP (char *pbuffer, \fBunsigned32\fP nBuffSize, \fBunsigned32\fP nBytesRotatingOut)"
+.br
+.ti -1c
+.RI "void \fBaddPacketBuffer\fP (const \fBPacketBuffer\fP *const ppacket)"
+.br
+.ti -1c
+.RI "\fBServerSocket\fP (const ServerSocket &)"
+.br
+.ti -1c
+.RI "ServerSocket& \fBoperator=\fP (const ServerSocket &)"
+.br
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBServerHandler\fP* \fBm_pserverHandler\fP"
+.br
+.ti -1c
+.RI "\fBSockAddr\fP \fBm_socketAddr\fP"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nID\fP"
+.br
+.ti -1c
+.RI "int \fBm_iTimeout\fP"
+.br
+.ti -1c
+.RI "\fBFlags\fP \fBm_flags\fP"
+.br
+.ti -1c
+.RI "char* \fBm_pInBuff\fP"
+.br
+.ti -1c
+.RI "char* \fBm_pOutBuff\fP"
+.br
+.ti -1c
+.RI "char* \fBm_pOutPtr\fP"
+.br
+.ti -1c
+.RI "char* \fBm_pInPtr\fP"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nBytesIn\fP"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nBytesOut\fP"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nBufferSizeMax\fP"
+.br
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+Socket object that contains both a read and write buffer.
+.PP
+.PP
+ The Server Socket object contains an incoming buffer for data that is  read in and isn't parsed, and an outgoing buffer for data that hasn't  been sent. The \fBSimpleServer\fP object uses this object for every connection that comes in.
+.PP
+A \fBServerHandler\fP object can be stored here for easy access to it from a server object that has a number of server socket objects. 
+.PP
+.SH "MEMBER ENUMERATION DOCUMENTATION"
+.PP 
+.SS "anonymous enum"
+.PP
+Not used.
+.PP
+\fBEnumeration values:\fP
+.in +1c
+.TP
+\fB\fImodeInvalid\fP \fP
+.TP
+\fB\fImodeWriteOkay\fP \fP
+.TP
+\fB\fImodeSendOkay\fP \fP
+.TP
+\fB\fImodeReadOkay\fP \fP
+.TP
+\fB\fImodeClosing\fP \fP
+.TP
+\fB\fImodeNotified\fP \fP
+.TP
+\fB\fImodeClosed\fP \fP
+.TP
+\fB\fImodeValid\fP \fP
+.TP
+\fB\fImodeAll\fP \fP
+
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::ServerSocket::ServerSocket (const \fBunsigned32\fP nBufferSize = 18000, const int iTimeout = DEFAULT_SOCKET_TIMEOUT)"
+.PP
+.SS "ssobjects::ServerSocket::ServerSocket (const \fBSocketInstance\fP & socket, const \fBSockAddr\fP & sa, const \fBunsigned32\fP nBuffSize, const int iTimeout)"
+.PP
+.SS "ssobjects::ServerSocket::~ServerSocket ()\fC [virtual]\fP"
+.PP
+Deletes the in buffer, out buffer, and the server handler you assigned it. 
+.SS "ssobjects::ServerSocket::ServerSocket (const ServerSocket &)\fC [protected]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "void ssobjects::ServerSocket::addPacketBuffer (const \fBPacketBuffer\fP *const ppacket)\fC [protected]\fP"
+.PP
+.SS "\fBPacketBuffer\fP * ssobjects::ServerSocket::extractPacket ()"
+.PP
+Extracts a packet from the incoming buffer.
+.PP
+We do two checks to see that we have enough data to make  a full packet. One check is to see that we have enough data the make a header. The second is to see if there is enough to make a packet with a header plus it's data.
+.PP
+We return NULL if there wasn't enough data to make a full packet.  If there is enough data we return _one_ complete packet, and make  sure the buffer is ready to extract more packets, and recieve  additional data.
+.PP
+A full packet is the size of the packet header (all packets _must_ have full header) plus the size of any data. There  doesn't always have to be any data with the packet.
+.PP
+If the size that is read in is invalid, extractPacket throws an  exception. This indicates that the data read in was not valid.
+.PP
+\fBReturns: \fP
+.in +1c
+NULL if there isn't enough data to return a full packet. A pointer to a newly created \fBPacketBuffer\fP object if there is.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fIServerSocketException\fP\fP
+ If a packet with an invalid size is read. 
+.SS "const \fBFlags\fP & ssobjects::ServerSocket::flags () const\fC [inline]\fP"
+.PP
+Returns the socket flags. (Not currently used.).
+.PP
+.SS "\fBSockAddr\fP ssobjects::ServerSocket::getAddr () const\fC [inline]\fP"
+.PP
+Gets the socket address information of the connected socket.
+.PP
+.SS "\fBunsigned32\fP ssobjects::ServerSocket::getBufferSizeMax () const\fC [inline]\fP"
+.PP
+How big the in/out buffer is.
+.PP
+.SS "char * ssobjects::ServerSocket::getInBuffer () const\fC [inline, protected]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::ServerSocket::getInBufferSize () const\fC [inline]\fP"
+.PP
+Return bytes in incoming buffer.
+.PP
+.SS "char * ssobjects::ServerSocket::getOutBuffer () const\fC [inline, protected]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::ServerSocket::getOutBufferSize () const\fC [inline]\fP"
+.PP
+Return bytes in outgoing buffer.
+.PP
+.SS "\fBunsigned32\fP ssobjects::ServerSocket::getOutBufferSizeMax () const\fC [inline]\fP"
+.PP
+Return the actual size (how much was allocated) of the buffer.
+.PP
+.SS "ServerSocket & ssobjects::ServerSocket::operator= (const ServerSocket &)\fC [protected]\fP"
+.PP
+.SS "int ssobjects::ServerSocket::readData ()"
+.PP
+Reads in as much data is available on the socket.
+.PP
+Reads data from the socket. Will only read as many bytes as will fit in our input buffer. If 0 bytes are available in the buffer, then recv will read  0 bytes. When this happens, a \fBSocketInstanceException\fP is thrown. This is  desirable as if the buffer is full, and hasn't been processed, then it is considered an error.
+.PP
+\fBReturns: \fP
+.in +1c
+The number of bytes read.
+.PP
+\fBExceptions: \fP
+.in +1c
+.TP
+\fB\fISocketInstanceException\fP\fP
+ If there was a read error, or the input buffer was full. 
+.SS "void ssobjects::ServerSocket::rotateBuffer (char * pbuffer, \fBunsigned32\fP nBuffSize, \fBunsigned32\fP nBytesRotatingOut)\fC [protected]\fP"
+.PP
+.SS "void ssobjects::ServerSocket::sendBuffer ()"
+.PP
+Will attept to send any data in the outgoing buffer.
+.PP
+.SS "void ssobjects::ServerSocket::sendPacket (const \fBPacketBuffer\fP *const ppacket)"
+.PP
+Will add to outgoing buffer, and try sending it.
+.PP
+.SS "void ssobjects::ServerSocket::sendPacket (const \fBPacketBuffer\fP & packet)"
+.PP
+Will add to outgoing buffer, and try sending it.
+.PP
+.SS "\fBServerHandler\fP * ssobjects::ServerSocket::serverHandler () const\fC [inline]\fP"
+.PP
+Returns the \fBServerHandler\fP object that was assigned to this server socket object.
+.PP
+.SS "void ssobjects::ServerSocket::setServerHandler (\fBServerHandler\fP * s)\fC [inline]\fP"
+.PP
+Sets the \fBServerHandler\fP object that this server socket will use.
+.PP
+.SS "int ssobjects::ServerSocket::socketTimeout () const\fC [inline]\fP"
+.PP
+Returns the number of seconds a send/receive operation will wait before throwing.
+.PP
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "\fBFlags\fP ssobjects::ServerSocket::m_flags\fC [protected]\fP"
+.PP
+.SS "int ssobjects::ServerSocket::m_iTimeout\fC [protected]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::ServerSocket::m_nBufferSizeMax\fC [protected]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::ServerSocket::m_nBytesIn\fC [protected]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::ServerSocket::m_nBytesOut\fC [protected]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::ServerSocket::m_nID\fC [protected]\fP"
+.PP
+.SS "char * ssobjects::ServerSocket::m_pInBuff\fC [protected]\fP"
+.PP
+.SS "char * ssobjects::ServerSocket::m_pInPtr\fC [protected]\fP"
+.PP
+.SS "char * ssobjects::ServerSocket::m_pOutBuff\fC [protected]\fP"
+.PP
+.SS "char * ssobjects::ServerSocket::m_pOutPtr\fC [protected]\fP"
+.PP
+.SS "\fBServerHandler\fP * ssobjects::ServerSocket::m_pserverHandler\fC [protected]\fP"
+.PP
+.SS "\fBSockAddr\fP ssobjects::ServerSocket::m_socketAddr\fC [protected]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

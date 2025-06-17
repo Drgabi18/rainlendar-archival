@@ -1,0 +1,182 @@
+.TH "defs.h" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+defs.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <sys/types.h>\fP
+.br
+\fC#include 'msdefs.h'\fP
+.br
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBCCDEFS_H\fP"
+.br
+.ti -1c
+.RI "#define \fBmin\fP(x, y)   (((x)<(y))?(x):(y))"
+.br
+.ti -1c
+.RI "#define \fBmax\fP(x, y)   (((x)>(y))?(x):(y))"
+.br
+.ti -1c
+.RI "#define \fBZEROMEMORY\fP(address, numBytes)   memset((void*)(address), (int)0, (size_t)(numBytes))"
+.br
+.ti -1c
+.RI "#define \fBFREE_NULL\fP(ptr)   {free(ptr);ptr=NULL;}"
+.br
+.ti -1c
+.RI "#define \fBIS_EVEN\fP(n)   ((int)((n)/2)*2 == (n))"
+.br
+.ti -1c
+.RI "#define \fBIS_ODD\fP(n)   (!((int)((n)/2)*2 == (n)))"
+.br
+.ti -1c
+.RI "#define \fBNULL_TERMINATE\fP(s, n)   ((s[(n)-1] = '\\0'))"
+.br
+.ti -1c
+.RI "#define \fBRND\fP(min, max)   (rand()%(max+1-min)+min)"
+.br
+.ti -1c
+.RI "#define \fBBREAK\fP"
+.br
+.ti -1c
+.RI "#define \fBBREAK_ALWAYS\fP   asm('int $3')"
+.br
+.ti -1c
+.RI "#define \fBUNUSED\fP(x)"
+.br
+.ti -1c
+.RI "#define \fBUNUSED_ALWAYS\fP(x)   ((void)x)"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef unsigned char \fBbyte\fP"
+.br
+.ti -1c
+.RI "typedef unsigned short \fBword\fP"
+.br
+.ti -1c
+.RI "typedef short \fBsword\fP"
+.br
+.ti -1c
+.RI "typedef long \fBdsword\fP"
+.br
+.ti -1c
+.RI "typedef unsigned long \fBdword\fP"
+.br
+.ti -1c
+.RI "typedef unsigned long \fBulong\fP"
+.br
+.ti -1c
+.RI "typedef unsigned int \fBuint\fP"
+.br
+.ti -1c
+.RI "typedef const char \fBCONSTCHAR\fP"
+.br
+.ti -1c
+.RI "typedef const char* \fBPCONSTCHAR\fP"
+.br
+.ti -1c
+.RI "typedef unsigned char \fBunsigned8\fP"
+.br
+.ti -1c
+.RI "typedef signed char \fBsigned8\fP"
+.br
+.ti -1c
+.RI "typedef unsigned short \fBunsigned16\fP"
+.br
+.ti -1c
+.RI "typedef signed short \fBsigned16\fP"
+.br
+.ti -1c
+.RI "typedef unsigned long \fBunsigned32\fP"
+.br
+.ti -1c
+.RI "typedef signed long \fBsigned32\fP"
+.br
+.in -1c
+.SH "DEFINE DOCUMENTATION"
+.PP 
+.SS "#define BREAK"
+.PP
+\fBValue:\fP
+.PP
+.nf
+
+.fi
+.SS "#define BREAK_ALWAYS   asm('int $3')"
+.PP
+.SS "#define CCDEFS_H"
+.PP
+\fBValue:\fP
+.PP
+.nf
+
+.fi
+.SS "#define FREE_NULL(ptr)   {free(ptr);ptr=NULL;}"
+.PP
+.SS "#define IS_EVEN(n)   ((int)((n)/2)*2 == (n))"
+.PP
+.SS "#define IS_ODD(n)   (!((int)((n)/2)*2 == (n)))"
+.PP
+.SS "#define NULL_TERMINATE(s, n)   ((s[(n)-1] = '\\0'))"
+.PP
+.SS "#define RND(min, max)   (rand()%(max+1-min)+min)"
+.PP
+.SS "#define UNUSED(x)"
+.PP
+\fBValue:\fP
+.PP
+.nf
+
+.fi
+.SS "#define UNUSED_ALWAYS(x)   ((void)x)"
+.PP
+.SS "#define ZEROMEMORY(address, numBytes)   memset((void*)(address), (int)0, (size_t)(numBytes))"
+.PP
+.SS "#define max(x, y)   (((x)>(y))?(x):(y))"
+.PP
+.SS "#define min(x, y)   (((x)<(y))?(x):(y))"
+.PP
+.SH "TYPEDEF DOCUMENTATION"
+.PP 
+.SS "typedef const char CONSTCHAR"
+.PP
+.SS "typedef const char * PCONSTCHAR"
+.PP
+.SS "typedef unsigned char byte"
+.PP
+.SS "typedef long dsword"
+.PP
+.SS "typedef unsigned long dword"
+.PP
+.SS "typedef signed short signed16"
+.PP
+.SS "typedef signed long signed32"
+.PP
+.SS "typedef signed char signed8"
+.PP
+.SS "typedef short sword"
+.PP
+.SS "typedef unsigned int uint"
+.PP
+.SS "typedef unsigned long ulong"
+.PP
+.SS "typedef unsigned short unsigned16"
+.PP
+.SS "typedef unsigned long unsigned32"
+.PP
+.SS "typedef unsigned char unsigned8"
+.PP
+.SS "typedef unsigned short word"
+.PP
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

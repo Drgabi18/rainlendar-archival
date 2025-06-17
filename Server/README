@@ -9,9 +9,6 @@ There is some additional information in the Rainlendar's documentation
 (see the ServerPlugin), which I suggest that you read before trying to 
 run this server.
 
-The Windows version needs pthreadVCE.dll. Get it from here: 
-ftp://sources.redhat.com/pub/pthreads-win32/pthreads-dll-2004-06-22/lib/
-
 IMPORTANT: The protocol is not secure. All the information is send as a 
 plain text and since there is no authentication anyone can read and 
 modify your events if they can guess the user ID. So, it is adviced that 
@@ -116,8 +113,8 @@ RainlendarServer --stop
 RainlendarServer --remove
 
 You need to manually remove the database files from ~/.rainlendarserver/ 
-
 (in Linux) or %APPDATA%\RainlendarServer\ (in Windows).
+
 
 Protocol
 --------
@@ -178,21 +175,13 @@ in some situations.
 Compiling in Linux
 ------------------
 
-The server (and ServerPlugin) needs Simple Server Objects by Lee Patterson
-(http://ssobjects.sourceforge.net/). The server also need PThreads 
-(http://sources.redhat.com/pthreads-win32/) in Windows. Get those and 
-compile them. 
+Everything that is needed to compile the server is included in the source
+package. Just uncompress it to a temporary folder. Go to the Server-folder 
+and run:
 
-Then just run configure and make. Note that you need to point $CPPFLAGS and
-
-$LDFLAGS to the place where the ssobjects is. E.g. like this:
-
-
-export CPPFLAGS="$CPPFLAGS -I/home/rainy/sources/ssobjects"
-export LDFLAGS="$LDFLAGS -L/home/rainy/sources/ssobjects"
 ./configure
 make
 
-You can then install the server:
+If everything went fine you can then install the server:
 
 make install

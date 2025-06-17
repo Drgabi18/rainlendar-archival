@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Server/EventCombiner.h,v 1.12 2005/03/01 19:33:51 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Server/EventCombiner.h,v 1.2 2005/07/11 16:16:37 rainy Exp $
 
   $Log: EventCombiner.h,v $
+  Revision 1.2  2005/07/11 16:16:37  rainy
+  *** empty log message ***
+
+  Revision 1.1.1.1  2005/07/10 18:48:07  rainy
+  no message
+
   Revision 1.12  2005/03/01 19:33:51  rainy
   *** empty log message ***
 
@@ -71,9 +77,9 @@
 #include <vector>
 #include <clientconnector.h>
 #include "IPNumber.h"
-#include "RainlendarAPI.h"
+#include "../Library/RainlendarAPI.h"
 
-const unsigned32 PROTOCOL_VERSION = 400;
+const unsigned32 PROTOCOL_VERSION = 500;
 
 class CIPFilter;
 
@@ -81,7 +87,7 @@ enum
 {
 	pcRequestEvents = ssobjects::PacketBuffer::pcUser,
 	pcUpdateEvents,
-	pcWaitingForEvents,
+	pcWaitingForEvents,	
 	pcSendingEvents,
 	pcEvent,
 	pcIncorrectVersion,

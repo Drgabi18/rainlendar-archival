@@ -1,0 +1,61 @@
+.TH "ssobjects::HttpBlockingSocket" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::HttpBlockingSocket \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <socketinstance.h>\fP
+.PP
+Inherits \fBssobjects::SocketInstance\fP.
+.PP
+.SS "Public Types"
+
+.in +1c
+.ti -1c
+.RI "enum { \fBnSizeRecv\fP =  1000 }"
+.br
+.in -1c
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBHttpBlockingSocket\fP ()"
+.br
+.ti -1c
+.RI "\fB~HttpBlockingSocket\fP ()"
+.br
+.ti -1c
+.RI "int \fBreadHttpHeaderLine\fP (char *pch, const int nSize, const int nSecs)"
+.br
+.ti -1c
+.RI "int \fBreadHttpResponse\fP (char *pch, const int nSize, const int nSecs)"
+.br
+.in -1c
+.SH "MEMBER ENUMERATION DOCUMENTATION"
+.PP 
+.SS "anonymous enum"
+.PP
+\fBEnumeration values:\fP
+.in +1c
+.TP
+\fB\fInSizeRecv\fP \fP
+
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::HttpBlockingSocket::HttpBlockingSocket ()"
+.PP
+.SS "ssobjects::HttpBlockingSocket::~HttpBlockingSocket ()"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "int ssobjects::HttpBlockingSocket::readHttpHeaderLine (char * pch, const int nSize, const int nSecs)"
+.PP
+.SS "int ssobjects::HttpBlockingSocket::readHttpResponse (char * pch, const int nSize, const int nSecs)"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

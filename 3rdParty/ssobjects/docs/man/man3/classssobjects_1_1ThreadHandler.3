@@ -1,0 +1,95 @@
+.TH "ssobjects::ThreadHandler" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::ThreadHandler \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <threadutils.h>\fP
+.PP
+Inherits \fBssobjects::CMclThreadHandler\fP.
+.PP
+Inherited by \fBssobjects::ServerManager\fP, \fBssobjects::SimpleManager\fP, and \fBssobjects::SimpleServer\fP.
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBThreadHandler\fP (bool bStart=false)"
+.br
+.ti -1c
+.RI "void \fBstart\fP ()"
+.br
+.ti -1c
+.RI "void \fBstop\fP ()"
+.br
+.ti -1c
+.RI "void \fBsetRunning\fP (bool bRunning)"
+.br
+.ti -1c
+.RI "bool \fBrunning\fP ()"
+.br
+.ti -1c
+.RI "\fBthreadReturn\fP \fBThreadHandlerProc\fP (void)=0"
+.br
+.ti -1c
+.RI "virtual \fB~ThreadHandler\fP ()"
+.br
+.in -1c
+.SS "Protected Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBThreadHandler\fP (const ThreadHandler &)"
+.br
+.ti -1c
+.RI "ThreadHandler& \fBoperator=\fP (const ThreadHandler &)"
+.br
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "bool \fBm_bRun\fP"
+.br
+.ti -1c
+.RI "\fBCMclThread\fP* \fBm_pThread\fP"
+.br
+.in -1c
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::ThreadHandler::ThreadHandler (bool bStart = false)"
+.PP
+.SS "ssobjects::ThreadHandler::~ThreadHandler ()\fC [virtual]\fP"
+.PP
+.SS "ssobjects::ThreadHandler::ThreadHandler (const ThreadHandler &)\fC [protected]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "\fBthreadReturn\fP ssobjects::ThreadHandler::ThreadHandlerProc (void)\fC [pure virtual]\fP"
+.PP
+Reimplemented from \fBssobjects::CMclThreadHandler\fP.
+.PP
+Reimplemented in \fBssobjects::ServerManager\fP, \fBssobjects::SimpleManager\fP, and \fBssobjects::SimpleServer\fP.
+.SS "ThreadHandler & ssobjects::ThreadHandler::operator= (const ThreadHandler &)\fC [protected]\fP"
+.PP
+.SS "bool ssobjects::ThreadHandler::running ()\fC [inline]\fP"
+.PP
+.SS "void ssobjects::ThreadHandler::setRunning (bool bRunning)\fC [inline]\fP"
+.PP
+.SS "void ssobjects::ThreadHandler::start ()"
+.PP
+.SS "void ssobjects::ThreadHandler::stop ()"
+.PP
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "bool ssobjects::ThreadHandler::m_bRun\fC [protected]\fP"
+.PP
+.SS "\fBCMclThread\fP * ssobjects::ThreadHandler::m_pThread\fC [protected]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

@@ -1,0 +1,197 @@
+.TH "ssobjects::CSimpleTime" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::CSimpleTime \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <simpletime.h>\fP
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBCSimpleTime\fP ()"
+.br
+.ti -1c
+.RI "\fBCSimpleTime\fP (const char *szTime)"
+.br
+.ti -1c
+.RI "\fBCSimpleTime\fP (unsigned seconds)"
+.br
+.ti -1c
+.RI "virtual unsigned \fBGetHour\fP ()"
+.br
+.ti -1c
+.RI "virtual unsigned \fBGetMinute\fP ()"
+.br
+.ti -1c
+.RI "virtual unsigned \fBGetSecond\fP ()"
+.br
+.ti -1c
+.RI "\fBoperator unsigned\fP () const"
+.br
+.ti -1c
+.RI "\fBoperator PTIMESTRING\fP ()"
+.br
+.ti -1c
+.RI "CSimpleTime& \fBoperator=\fP (const char *time)"
+.br
+.ti -1c
+.RI "CSimpleTime& \fBoperator=\fP (const unsigned time)"
+.br
+.ti -1c
+.RI "CSimpleTime \fBoperator+=\fP (const unsigned time)"
+.br
+.ti -1c
+.RI "CSimpleTime \fBoperator-=\fP (const unsigned time)"
+.br
+.ti -1c
+.RI "bool \fBoperator==\fP (const unsigned time) const"
+.br
+.ti -1c
+.RI "bool \fBoperator<\fP (const unsigned time) const"
+.br
+.ti -1c
+.RI "bool \fBoperator>\fP (const unsigned time) const"
+.br
+.ti -1c
+.RI "bool \fBoperator<=\fP (const unsigned time) const"
+.br
+.ti -1c
+.RI "bool \fBoperator>=\fP (const unsigned time) const"
+.br
+.ti -1c
+.RI "bool \fBoperator==\fP (const CSimpleTime &time) const"
+.br
+.ti -1c
+.RI "bool \fBoperator<\fP (const CSimpleTime &time) const"
+.br
+.ti -1c
+.RI "bool \fBoperator>\fP (const CSimpleTime &time) const"
+.br
+.ti -1c
+.RI "bool \fBoperator<=\fP (const CSimpleTime &time) const"
+.br
+.ti -1c
+.RI "bool \fBoperator>=\fP (const CSimpleTime &time) const"
+.br
+.in -1c
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "unsigned \fBm_currentTime\fP"
+.br
+.ti -1c
+.RI "unsigned \fBm_hour\fP"
+.br
+.ti -1c
+.RI "unsigned \fBm_minute\fP"
+.br
+.ti -1c
+.RI "unsigned \fBm_second\fP"
+.br
+.ti -1c
+.RI "char \fBm_szFormated\fP [80]"
+.br
+.in -1c
+.SS "Static Public Methods"
+
+.in +1c
+.ti -1c
+.RI "unsigned \fBGetCurrentTime\fP ()"
+.br
+.ti -1c
+.RI "unsigned \fBConvert\fP (unsigned hour, unsigned minute, unsigned second)"
+.br
+.ti -1c
+.RI "bool \fBIsValid\fP (unsigned time)"
+.br
+.in -1c
+.SS "Protected Methods"
+
+.in +1c
+.ti -1c
+.RI "void \fBFormatOutput\fP ()"
+.br
+.ti -1c
+.RI "void \fBSetTime\fP ()"
+.br
+.in -1c
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::CSimpleTime::CSimpleTime ()"
+.PP
+.SS "ssobjects::CSimpleTime::CSimpleTime (const char * szTime)"
+.PP
+.SS "ssobjects::CSimpleTime::CSimpleTime (unsigned seconds)"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "unsigned ssobjects::CSimpleTime::Convert (unsigned hour, unsigned minute, unsigned second)\fC [static]\fP"
+.PP
+.SS "void ssobjects::CSimpleTime::FormatOutput ()\fC [protected]\fP"
+.PP
+.SS "unsigned ssobjects::CSimpleTime::GetCurrentTime ()\fC [static]\fP"
+.PP
+.SS "unsigned ssobjects::CSimpleTime::GetHour ()\fC [virtual]\fP"
+.PP
+.SS "unsigned ssobjects::CSimpleTime::GetMinute ()\fC [virtual]\fP"
+.PP
+.SS "unsigned ssobjects::CSimpleTime::GetSecond ()\fC [virtual]\fP"
+.PP
+.SS "bool ssobjects::CSimpleTime::IsValid (unsigned time)\fC [inline, static]\fP"
+.PP
+.SS "void ssobjects::CSimpleTime::SetTime ()\fC [protected]\fP"
+.PP
+.SS "ssobjects::CSimpleTime::operator \fBPTIMESTRING\fP ()"
+.PP
+.SS "ssobjects::CSimpleTime::operator unsigned () const\fC [inline]\fP"
+.PP
+.SS "CSimpleTime ssobjects::CSimpleTime::operator+= (const unsigned time)"
+.PP
+.SS "CSimpleTime ssobjects::CSimpleTime::operator-= (const unsigned time)"
+.PP
+.SS "bool ssobjects::CSimpleTime::operator< (const CSimpleTime & time) const"
+.PP
+.SS "bool ssobjects::CSimpleTime::operator< (const unsigned time) const"
+.PP
+.SS "bool ssobjects::CSimpleTime::operator<= (const CSimpleTime & time) const"
+.PP
+.SS "bool ssobjects::CSimpleTime::operator<= (const unsigned time) const"
+.PP
+.SS "CSimpleTime & ssobjects::CSimpleTime::operator= (const unsigned time)"
+.PP
+.SS "CSimpleTime & ssobjects::CSimpleTime::operator= (const char * time)"
+.PP
+.SS "bool ssobjects::CSimpleTime::operator== (const CSimpleTime & time) const"
+.PP
+.SS "bool ssobjects::CSimpleTime::operator== (const unsigned time) const"
+.PP
+.SS "bool ssobjects::CSimpleTime::operator> (const CSimpleTime & time) const"
+.PP
+.SS "bool ssobjects::CSimpleTime::operator> (const unsigned time) const"
+.PP
+.SS "bool ssobjects::CSimpleTime::operator>= (const CSimpleTime & time) const"
+.PP
+.SS "bool ssobjects::CSimpleTime::operator>= (const unsigned time) const"
+.PP
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "unsigned ssobjects::CSimpleTime::m_currentTime"
+.PP
+.SS "unsigned ssobjects::CSimpleTime::m_hour"
+.PP
+.SS "unsigned ssobjects::CSimpleTime::m_minute"
+.PP
+.SS "unsigned ssobjects::CSimpleTime::m_second"
+.PP
+.SS "char ssobjects::CSimpleTime::m_szFormated"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

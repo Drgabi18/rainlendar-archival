@@ -1,0 +1,92 @@
+.TH "ssobjects::NetFile" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::NetFile \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <packetbuffer.h>\fP
+.PP
+Inherits \fBssobjects::PacketBuffer\fP.
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBNetFile\fP (const char *pszFilename, \fBunsigned32\fP nSize, \fBunsigned8\fP *pdata)"
+.br
+.ti -1c
+.RI "\fBNetFile\fP ()"
+.br
+.ti -1c
+.RI "virtual \fB~NetFile\fP ()"
+.br
+.ti -1c
+.RI "\fBCONSTCHAR\fP* \fBgetFilename\fP ()"
+.br
+.ti -1c
+.RI "const \fBunsigned32\fP \fBgetSize\fP ()"
+.br
+.ti -1c
+.RI "\fBunsigned8\fP* \fBgetData\fP ()"
+.br
+.in -1c
+.SS "Protected Methods"
+
+.in +1c
+.ti -1c
+.RI "virtual void \fBreceive\fP (\fBBufferedSocket\fP *psocket)"
+.br
+.ti -1c
+.RI "virtual void \fBtransmit\fP (\fBBufferedSocket\fP *psocket)"
+.br
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nFileSize\fP"
+.br
+.ti -1c
+.RI "\fBCStr\fP \fBm_strFilename\fP"
+.br
+.ti -1c
+.RI "\fBunsigned8\fP* \fBm_pFileData\fP"
+.br
+.in -1c
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::NetFile::NetFile (const char * pszFilename, \fBunsigned32\fP nSize, \fBunsigned8\fP * pdata)"
+.PP
+.SS "ssobjects::NetFile::NetFile ()\fC [inline]\fP"
+.PP
+.SS "ssobjects::NetFile::~NetFile ()\fC [virtual]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "\fBunsigned8\fP * ssobjects::NetFile::getData ()\fC [inline]\fP"
+.PP
+.SS "\fBCONSTCHAR\fP * ssobjects::NetFile::getFilename ()\fC [inline]\fP"
+.PP
+.SS "const \fBunsigned32\fP ssobjects::NetFile::getSize ()\fC [inline]\fP"
+.PP
+.SS "void ssobjects::NetFile::receive (\fBBufferedSocket\fP * psocket)\fC [protected, virtual]\fP"
+.PP
+Reimplemented from \fBssobjects::PacketBuffer\fP.
+.SS "void ssobjects::NetFile::transmit (\fBBufferedSocket\fP * psocket)\fC [protected, virtual]\fP"
+.PP
+Reimplemented from \fBssobjects::PacketBuffer\fP.
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "\fBunsigned32\fP ssobjects::NetFile::m_nFileSize\fC [protected]\fP"
+.PP
+.SS "\fBunsigned8\fP * ssobjects::NetFile::m_pFileData\fC [protected]\fP"
+.PP
+.SS "\fBCStr\fP ssobjects::NetFile::m_strFilename\fC [protected]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

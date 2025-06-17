@@ -1,0 +1,111 @@
+.TH "ssobjects::StopWatch" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::StopWatch \- Timer operations. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stopwatch.h>\fP
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "\fBStopWatch\fP ()"
+.br
+.RI "\fIConstruct a stop watch.\fP"
+.ti -1c
+.RI "void \fBstart\fP ()"
+.br
+.RI "\fIStart the timer.\fP"
+.ti -1c
+.RI "void \fBstop\fP ()"
+.br
+.RI "\fIStop the timer.\fP"
+.ti -1c
+.RI "void \fBreset\fP ()"
+.br
+.RI "\fIReset all times to zero.\fP"
+.ti -1c
+.RI "bool \fBisRunning\fP () const"
+.br
+.RI "\fIFind out if the stop watch is currently running.\fP"
+.ti -1c
+.RI "\fBunsigned32\fP \fBmilliseconds\fP () const"
+.br
+.RI "\fIGet the current time in milli-seconds.\fP"
+.ti -1c
+.RI "\fBunsigned32\fP \fBseconds\fP () const"
+.br
+.RI "\fIGet the current time in seconds.\fP"
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+Timer operations.
+.PP
+.PP
+ You can start and stop a stopwatch.
+.PP
+\fBNote: \fP
+.in +1c
+Plans are that this should work seemlessly with simple time or something so I can produce a report on how many days, minutes and seconds a timer has run. 
+.PP
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::StopWatch::StopWatch ()"
+.PP
+Construct a stop watch.
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "bool ssobjects::StopWatch::isRunning () const"
+.PP
+Find out if the stop watch is currently running.
+.PP
+Checks if the stop watch is currently running.
+.PP
+\fBReturns: \fP
+.in +1c
+true if the stop watch is currently active, false otherwise. 
+.SS "\fBunsigned32\fP ssobjects::StopWatch::milliseconds () const"
+.PP
+Get the current time in milli-seconds.
+.PP
+If the stop watch is currently running, this will return the number of milli-seconds that have elapsed since the stop watch was started, till the current time. If the stop watch is stopped, this returns the number of milli-seconds from the time the stop watch was started, to the time the stop watch was stopped.
+.PP
+If the timer has never started, the time returned will be zero.
+.PP
+\fBReturns: \fP
+.in +1c
+The number of milli-seconds the stop watch has counted. 
+.SS "void ssobjects::StopWatch::reset ()"
+.PP
+Reset all times to zero.
+.PP
+Sets the stopwatch to its initial state of zero, and not running. 
+.SS "\fBunsigned32\fP ssobjects::StopWatch::seconds () const"
+.PP
+Get the current time in seconds.
+.PP
+If the stop watch is currently running, this will return the number of seconds that have elapsed since the stop watch was started, till the current time. If the stop watch is stopped, this returns the number of seconds from the time the stop watch was started, to the time the stopwatch was stopped. The number of milliseconds is ignored. So if the elapsed time is 1500 milliseconds, \fBseconds\fP() returns 1 second.
+.PP
+If the timer has never started, the time returned will be zero.
+.PP
+\fBReturns: \fP
+.in +1c
+The number of seconds the stop watch has counted. 
+.SS "void ssobjects::StopWatch::start ()"
+.PP
+Start the timer.
+.PP
+Starts the stopwatch timer. Clears any stored laps. 
+.SS "void ssobjects::StopWatch::stop ()"
+.PP
+Stop the timer.
+.PP
+Stops the stop watch timer. Notes the time the timer was stopped. 
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

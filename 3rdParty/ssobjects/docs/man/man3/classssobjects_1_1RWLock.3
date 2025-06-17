@@ -1,0 +1,94 @@
+.TH "ssobjects::RWLock" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::RWLock \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <threadutils.h>\fP
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "int \fBisLocked\fP ()"
+.br
+.ti -1c
+.RI "int \fBisRLocked\fP ()"
+.br
+.ti -1c
+.RI "int \fBisWLocked\fP ()"
+.br
+.ti -1c
+.RI "\fBRWLock\fP ()"
+.br
+.ti -1c
+.RI "\fB~RWLock\fP ()"
+.br
+.ti -1c
+.RI "void \fBrlock\fP ()"
+.br
+.ti -1c
+.RI "void \fBwlock\fP ()"
+.br
+.ti -1c
+.RI "void \fBwunlock\fP ()"
+.br
+.ti -1c
+.RI "void \fBrunlock\fP ()"
+.br
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nReadersReading\fP"
+.br
+.ti -1c
+.RI "\fBunsigned32\fP \fBm_nWriterWriting\fP"
+.br
+.ti -1c
+.RI "pthread_mutex_t \fBm_mutex\fP"
+.br
+.ti -1c
+.RI "pthread_cond_t \fBm_condLockFree\fP"
+.br
+.in -1c
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::RWLock::RWLock ()"
+.PP
+.SS "ssobjects::RWLock::~RWLock ()"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "int ssobjects::RWLock::isLocked ()\fC [inline]\fP"
+.PP
+.SS "int ssobjects::RWLock::isRLocked ()\fC [inline]\fP"
+.PP
+.SS "int ssobjects::RWLock::isWLocked ()\fC [inline]\fP"
+.PP
+.SS "void ssobjects::RWLock::rlock ()"
+.PP
+.SS "void ssobjects::RWLock::runlock ()"
+.PP
+.SS "void ssobjects::RWLock::wlock ()"
+.PP
+.SS "void ssobjects::RWLock::wunlock ()"
+.PP
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "pthread_cond_t ssobjects::RWLock::m_condLockFree\fC [protected]\fP"
+.PP
+.SS "pthread_mutex_t ssobjects::RWLock::m_mutex\fC [protected]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::RWLock::m_nReadersReading\fC [protected]\fP"
+.PP
+.SS "\fBunsigned32\fP ssobjects::RWLock::m_nWriterWriting\fC [protected]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

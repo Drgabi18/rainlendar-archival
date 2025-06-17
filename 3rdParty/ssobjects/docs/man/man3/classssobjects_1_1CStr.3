@@ -1,0 +1,415 @@
+.TH "ssobjects::CStr" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::CStr \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <cstr.h>\fP
+.PP
+Inherited by \fBssobjects::FmtString\fP.
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "virtual \fBuint\fP \fBaddError\fP ()"
+.br
+.ti -1c
+.RI "virtual \fB~CStr\fP ()"
+.br
+.ti -1c
+.RI "char* \fBappend\fP (const char *pszString, \fBuint\fP nMaxChars=0, \fBuint\fP nKnownStringLength=0)"
+.br
+.ti -1c
+.RI "char* \fBappend\fP (char nChar)"
+.br
+.ti -1c
+.RI "char* \fBappendCRLF\fP ()"
+.br
+.ti -1c
+.RI "char* \fBappendNumber\fP (int nValue)"
+.br
+.ti -1c
+.RI "char* \fBappendNumber\fP (\fBuint\fP nValue)"
+.br
+.ti -1c
+.RI "char* \fBappendNumber\fP (long nValue)"
+.br
+.ti -1c
+.RI "char* \fBappendNumber\fP (\fBulong\fP nValue)"
+.br
+.ti -1c
+.RI "\fBCStr\fP (const char *pszString, \fBuint\fP nMaxChars=0)"
+.br
+.ti -1c
+.RI "\fBCStr\fP (CStr const &str)"
+.br
+.ti -1c
+.RI "\fBCStr\fP ()"
+.br
+.ti -1c
+.RI "\fBoperator char *\fP ()"
+.br
+.ti -1c
+.RI "\fBoperator char *\fP () const"
+.br
+.ti -1c
+.RI "char* \fBformat\fP (const char *pszFormat,...)"
+.br
+.ti -1c
+.RI "CStr& \fBoperator=\fP (CStr const &s)"
+.br
+.ti -1c
+.RI "CStr& \fBoperator=\fP (const char *pszString)"
+.br
+.ti -1c
+.RI "CStr& \fBoperator=\fP (int iValue)"
+.br
+.ti -1c
+.RI "CStr& \fBoperator=\fP (\fBuint\fP nValue)"
+.br
+.ti -1c
+.RI "char* \fBoperator+=\fP (const char *pszString)"
+.br
+.ti -1c
+.RI "char* \fBoperator<<\fP (const char *pszString)"
+.br
+.ti -1c
+.RI "char* \fBoperator+=\fP (char nChar)"
+.br
+.ti -1c
+.RI "char* \fBoperator<<\fP (char nChar)"
+.br
+.ti -1c
+.RI "char* \fBoperator+=\fP (int nValue)"
+.br
+.ti -1c
+.RI "char* \fBoperator<<\fP (int nValue)"
+.br
+.ti -1c
+.RI "char* \fBoperator+=\fP (\fBuint\fP nValue)"
+.br
+.ti -1c
+.RI "char* \fBoperator<<\fP (\fBuint\fP nValue)"
+.br
+.ti -1c
+.RI "bool \fBoperator==\fP (int nValue) const"
+.br
+.ti -1c
+.RI "bool \fBoperator==\fP (\fBuint\fP nValue) const"
+.br
+.ti -1c
+.RI "bool \fBoperator==\fP (const char *pszString) const"
+.br
+.ti -1c
+.RI "bool \fBoperator!=\fP (const char *pszString) const"
+.br
+.ti -1c
+.RI "bool \fBisEmpty\fP () const"
+.br
+.ti -1c
+.RI "bool \fBisNotEmpty\fP () const"
+.br
+.ti -1c
+.RI "\fBuint\fP \fBgetCharCount\fP (char nChar) const"
+.br
+.ti -1c
+.RI "char& \fBcharAt\fP (\fBuint\fP nIndex) const"
+.br
+.ti -1c
+.RI "void \fBcharAt\fP (\fBuint\fP nIndex, char nChar)"
+.br
+.ti -1c
+.RI "int \fBcompare\fP (const char *pszString) const"
+.br
+.ti -1c
+.RI "int \fBcompareNoCase\fP (const char *pszString) const"
+.br
+.ti -1c
+.RI "int \fBfind\fP (const char *pszSubString) const"
+.br
+.ti -1c
+.RI "int \fBfind\fP (char nChar) const"
+.br
+.ti -1c
+.RI "CStr \fBleft\fP (\fBuint\fP nCount) const"
+.br
+.ti -1c
+.RI "CStr \fBmid\fP (\fBuint\fP nFirst, \fBuint\fP nCount=0) const"
+.br
+.ti -1c
+.RI "CStr \fBright\fP (\fBuint\fP nCount) const"
+.br
+.ti -1c
+.RI "char* \fBtrimRight\fP ()"
+.br
+.ti -1c
+.RI "char* \fBtrimLeft\fP ()"
+.br
+.ti -1c
+.RI "char* \fBtrim\fP ()"
+.br
+.ti -1c
+.RI "char* \fBmakeLower\fP ()"
+.br
+.ti -1c
+.RI "char* \fBmakeUpper\fP ()"
+.br
+.ti -1c
+.RI "\fBuint\fP \fBgetLength\fP (bool bBuffer=false) const"
+.br
+.ti -1c
+.RI "\fBuint\fP \fBstrlen\fP ()"
+.br
+.ti -1c
+.RI "void \fBendWith\fP (char nChar)"
+.br
+.ti -1c
+.RI "char* \fBempty\fP (bool bFreeBuffer=true, bool bResetErrorCount=true)"
+.br
+.ti -1c
+.RI "char* \fBremoveSection\fP (\fBuint\fP nFirst, \fBuint\fP nRemoveCount=1)"
+.br
+.ti -1c
+.RI "char* \fBreplaceBuffer\fP (char *pszString, \fBuint\fP nAllocatedMemorySize, \fBuint\fP nKnownStringLength=0)"
+.br
+.ti -1c
+.RI "char* \fBreplaceBuffer\fP (CStr &strFrom)"
+.br
+.ti -1c
+.RI "char* \fBreplaceCharacters\fP (char nFind, char nReplacement)"
+.br
+.ti -1c
+.RI "char* \fBreplaceFirstChar\fP (char nChar, char nReplacement='\\0')"
+.br
+.ti -1c
+.RI "char* \fBreplaceLastChar\fP (char nChar, char nReplacement='\\0')"
+.br
+.ti -1c
+.RI "\fBuint\fP \fBgetErrorCount\fP () const"
+.br
+.ti -1c
+.RI "\fBuint\fP& \fBgetGranularity\fP () const"
+.br
+.ti -1c
+.RI "char* \fBstealBuffer\fP ()"
+.br
+.ti -1c
+.RI "char* \fBString\fP () const"
+.br
+.ti -1c
+.RI "char* \fBString\fP (const char *pszString, \fBuint\fP nExtraBytes=0, \fBuint\fP nMaxChars=0, \fBuint\fP nKnownStringLength=0)"
+.br
+.ti -1c
+.RI "char* \fBString\fP (int nValue)"
+.br
+.ti -1c
+.RI "char* \fBString\fP (\fBuint\fP nValue)"
+.br
+.ti -1c
+.RI "char* \fBString\fP (long nValue)"
+.br
+.ti -1c
+.RI "char* \fBString\fP (\fBulong\fP nValue)"
+.br
+.ti -1c
+.RI "void \fBupdateLength\fP (\fBuint\fP nLength=0)"
+.br
+.in -1c
+.SS "Protected Methods"
+
+.in +1c
+.ti -1c
+.RI "CStr* \fBduplicateOverlap\fP (const char *pszString, bool &bDuplicateRequired)"
+.br
+.ti -1c
+.RI "void \fBinit\fP (CStr const *pExisting=NULL)"
+.br
+.ti -1c
+.RI "char* \fBreplaceFirstOrLastChar\fP (char nChar, char nReplacement, bool bFirst)"
+.br
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "char* \fBm_pszString\fP"
+.br
+.ti -1c
+.RI "\fBuint\fP \fBm_nLength\fP"
+.br
+.ti -1c
+.RI "\fBuint\fP \fBm_nAllocLength\fP"
+.br
+.ti -1c
+.RI "\fBuint\fP \fBm_nGranularity\fP"
+.br
+.ti -1c
+.RI "\fBuint\fP \fBm_nErrorCount\fP"
+.br
+.in -1c
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::CStr::~CStr ()\fC [inline, virtual]\fP"
+.PP
+.SS "ssobjects::CStr::CStr (const char * pszString, \fBuint\fP nMaxChars = 0)"
+.PP
+.SS "ssobjects::CStr::CStr (CStr const & str)"
+.PP
+.SS "ssobjects::CStr::CStr ()"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "char * ssobjects::CStr::String (\fBulong\fP nValue)"
+.PP
+.SS "char * ssobjects::CStr::String (long nValue)"
+.PP
+.SS "char * ssobjects::CStr::String (\fBuint\fP nValue)\fC [inline]\fP"
+.PP
+.SS "char * ssobjects::CStr::String (int nValue)\fC [inline]\fP"
+.PP
+.SS "char * ssobjects::CStr::String (const char * pszString, \fBuint\fP nExtraBytes = 0, \fBuint\fP nMaxChars = 0, \fBuint\fP nKnownStringLength = 0)"
+.PP
+.SS "char * ssobjects::CStr::String () const\fC [inline]\fP"
+.PP
+.SS "\fBuint\fP ssobjects::CStr::addError ()\fC [virtual]\fP"
+.PP
+.SS "char * ssobjects::CStr::append (char nChar)"
+.PP
+.SS "char * ssobjects::CStr::append (const char * pszString, \fBuint\fP nMaxChars = 0, \fBuint\fP nKnownStringLength = 0)"
+.PP
+.SS "char * ssobjects::CStr::appendCRLF ()"
+.PP
+.SS "char * ssobjects::CStr::appendNumber (\fBulong\fP nValue)\fC [inline]\fP"
+.PP
+.SS "char * ssobjects::CStr::appendNumber (long nValue)\fC [inline]\fP"
+.PP
+.SS "char * ssobjects::CStr::appendNumber (\fBuint\fP nValue)\fC [inline]\fP"
+.PP
+.SS "char * ssobjects::CStr::appendNumber (int nValue)\fC [inline]\fP"
+.PP
+.SS "void ssobjects::CStr::charAt (\fBuint\fP nIndex, char nChar)"
+.PP
+.SS "char & ssobjects::CStr::charAt (\fBuint\fP nIndex) const"
+.PP
+.SS "int ssobjects::CStr::compare (const char * pszString) const"
+.PP
+.SS "int ssobjects::CStr::compareNoCase (const char * pszString) const"
+.PP
+.SS "CStr * ssobjects::CStr::duplicateOverlap (const char * pszString, bool & bDuplicateRequired)\fC [protected]\fP"
+.PP
+.SS "char * ssobjects::CStr::empty (bool bFreeBuffer = true, bool bResetErrorCount = true)"
+.PP
+.SS "void ssobjects::CStr::endWith (char nChar)"
+.PP
+.SS "int ssobjects::CStr::find (char nChar) const"
+.PP
+.SS "int ssobjects::CStr::find (const char * pszSubString) const"
+.PP
+.SS "char * ssobjects::CStr::format (const char * pszFormat, ...)"
+.PP
+.SS "\fBuint\fP ssobjects::CStr::getCharCount (char nChar) const"
+.PP
+.SS "\fBuint\fP ssobjects::CStr::getErrorCount () const\fC [inline]\fP"
+.PP
+.SS "\fBuint\fP & ssobjects::CStr::getGranularity () const\fC [inline]\fP"
+.PP
+.SS "\fBuint\fP ssobjects::CStr::getLength (bool bBuffer = false) const"
+.PP
+.SS "void ssobjects::CStr::init (CStr const * pExisting = NULL)\fC [protected]\fP"
+.PP
+.SS "bool ssobjects::CStr::isEmpty () const"
+.PP
+.SS "bool ssobjects::CStr::isNotEmpty () const"
+.PP
+.SS "CStr ssobjects::CStr::left (\fBuint\fP nCount) const"
+.PP
+.SS "char * ssobjects::CStr::makeLower ()"
+.PP
+.SS "char * ssobjects::CStr::makeUpper ()"
+.PP
+.SS "CStr ssobjects::CStr::mid (\fBuint\fP nFirst, \fBuint\fP nCount = 0) const"
+.PP
+.SS "ssobjects::CStr::operator char * () const"
+.PP
+.SS "ssobjects::CStr::operator char * ()"
+.PP
+.SS "bool ssobjects::CStr::operator!= (const char * pszString) const"
+.PP
+.SS "char * ssobjects::CStr::operator+= (\fBuint\fP nValue)\fC [inline]\fP"
+.PP
+.SS "char * ssobjects::CStr::operator+= (int nValue)\fC [inline]\fP"
+.PP
+.SS "char * ssobjects::CStr::operator+= (char nChar)\fC [inline]\fP"
+.PP
+.SS "char * ssobjects::CStr::operator+= (const char * pszString)\fC [inline]\fP"
+.PP
+.SS "char * ssobjects::CStr::operator<< (\fBuint\fP nValue)\fC [inline]\fP"
+.PP
+.SS "char * ssobjects::CStr::operator<< (int nValue)\fC [inline]\fP"
+.PP
+.SS "char * ssobjects::CStr::operator<< (char nChar)\fC [inline]\fP"
+.PP
+.SS "char * ssobjects::CStr::operator<< (const char * pszString)\fC [inline]\fP"
+.PP
+.SS "CStr & ssobjects::CStr::operator= (\fBuint\fP nValue)\fC [inline]\fP"
+.PP
+.SS "CStr & ssobjects::CStr::operator= (int iValue)\fC [inline]\fP"
+.PP
+.SS "CStr & ssobjects::CStr::operator= (const char * pszString)\fC [inline]\fP"
+.PP
+.SS "CStr & ssobjects::CStr::operator= (CStr const & s)"
+.PP
+.SS "bool ssobjects::CStr::operator== (const char * pszString) const"
+.PP
+.SS "bool ssobjects::CStr::operator== (\fBuint\fP nValue) const"
+.PP
+.SS "bool ssobjects::CStr::operator== (int nValue) const"
+.PP
+.SS "char * ssobjects::CStr::removeSection (\fBuint\fP nFirst, \fBuint\fP nRemoveCount = 1)"
+.PP
+.SS "char * ssobjects::CStr::replaceBuffer (CStr & strFrom)"
+.PP
+.SS "char * ssobjects::CStr::replaceBuffer (char * pszString, \fBuint\fP nAllocatedMemorySize, \fBuint\fP nKnownStringLength = 0)"
+.PP
+.SS "char * ssobjects::CStr::replaceCharacters (char nFind, char nReplacement)"
+.PP
+.SS "char * ssobjects::CStr::replaceFirstChar (char nChar, char nReplacement = '\\0')\fC [inline]\fP"
+.PP
+.SS "char * ssobjects::CStr::replaceFirstOrLastChar (char nChar, char nReplacement, bool bFirst)\fC [protected]\fP"
+.PP
+.SS "char * ssobjects::CStr::replaceLastChar (char nChar, char nReplacement = '\\0')\fC [inline]\fP"
+.PP
+.SS "CStr ssobjects::CStr::right (\fBuint\fP nCount) const"
+.PP
+.SS "char * ssobjects::CStr::stealBuffer ()"
+.PP
+.SS "\fBuint\fP ssobjects::CStr::strlen ()\fC [inline]\fP"
+.PP
+.SS "char * ssobjects::CStr::trim ()"
+.PP
+.SS "char * ssobjects::CStr::trimLeft ()"
+.PP
+.SS "char * ssobjects::CStr::trimRight ()"
+.PP
+.SS "void ssobjects::CStr::updateLength (\fBuint\fP nLength = 0)"
+.PP
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "\fBuint\fP ssobjects::CStr::m_nAllocLength\fC [protected]\fP"
+.PP
+.SS "\fBuint\fP ssobjects::CStr::m_nErrorCount\fC [protected]\fP"
+.PP
+.SS "\fBuint\fP ssobjects::CStr::m_nGranularity\fC [protected]\fP"
+.PP
+.SS "\fBuint\fP ssobjects::CStr::m_nLength\fC [protected]\fP"
+.PP
+.SS "char * ssobjects::CStr::m_pszString\fC [protected]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.

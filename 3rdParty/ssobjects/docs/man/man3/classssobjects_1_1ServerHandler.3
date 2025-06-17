@@ -1,0 +1,64 @@
+.TH "ssobjects::ServerHandler" 3 "25 Sep 2001" "SimpleServerObjects" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ssobjects::ServerHandler \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <serverhandler.h>\fP
+.PP
+.SS "Public Methods"
+
+.in +1c
+.ti -1c
+.RI "virtual void \fBprocessMsg\fP (\fBPacketMessage\fP *pmsg)=0"
+.br
+.ti -1c
+.RI "\fBServerSocket\fP* \fBmysocket\fP ()"
+.br
+.ti -1c
+.RI "\fBSimpleServer\fP* \fBserver\fP ()"
+.br
+.ti -1c
+.RI "\fBServerHandler\fP (\fBServerSocket\fP *psocket, \fBSimpleServer\fP *pserver)"
+.br
+.ti -1c
+.RI "virtual \fB~ServerHandler\fP ()"
+.br
+.in -1c
+.SS "Protected Attributes"
+
+.in +1c
+.ti -1c
+.RI "\fBServerSocket\fP* \fBm_psocket\fP"
+.br
+.ti -1c
+.RI "\fBSimpleServer\fP* \fBm_pserver\fP"
+.br
+.in -1c
+.SH "CONSTRUCTOR & DESTRUCTOR DOCUMENTATION"
+.PP 
+.SS "ssobjects::ServerHandler::ServerHandler (\fBServerSocket\fP * psocket, \fBSimpleServer\fP * pserver)"
+.PP
+.SS "ssobjects::ServerHandler::~ServerHandler ()\fC [virtual]\fP"
+.PP
+.SH "MEMBER FUNCTION DOCUMENTATION"
+.PP 
+.SS "\fBServerSocket\fP * ssobjects::ServerHandler::mysocket ()\fC [inline]\fP"
+.PP
+.SS "void ssobjects::ServerHandler::processMsg (\fBPacketMessage\fP * pmsg)\fC [pure virtual]\fP"
+.PP
+.SS "\fBSimpleServer\fP * ssobjects::ServerHandler::server ()\fC [inline]\fP"
+.PP
+.SH "MEMBER DATA DOCUMENTATION"
+.PP 
+.SS "\fBSimpleServer\fP * ssobjects::ServerHandler::m_pserver\fC [protected]\fP"
+.PP
+.SS "\fBServerSocket\fP * ssobjects::ServerHandler::m_psocket\fC [protected]\fP"
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for SimpleServerObjects from the source code.
