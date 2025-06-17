@@ -56,7 +56,7 @@ This section consists of the info inside the latest `Help\History.htm` file conv
 *   Added NumOfComponents to the time item.
 *   The parameter for !RainlendarShowNext and !RainlendarShowPrev didn't work. Fixed.
 
-25 MAR 2005 (Version 0.21.1 ß)
+### 25 MAR 2005 (Version 0.21.1 ß)
 
 *   Fixed event sorting again. Hopefully it now works correctly.
 *   iCalendar plugin wrote also done todo-items to the ics-file. Fixed.
