@@ -16,30 +16,22 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Error.cpp,v 1.1 2002/05/30 18:27:33 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Error.cpp,v 1.2 2003/06/15 09:46:06 Rainy Exp $
 
   $Log: Error.cpp,v $
+  Revision 1.2  2003/06/15 09:46:06  Rainy
+  Strings are read from CLanguage class.
+
   Revision 1.1  2002/05/30 18:27:33  rainy
   Initial version
 
 */
 
-#include "Error.h"
-#include <stdio.h>
+#pragma warning(disable: 4786)
 
-const char* CError::c_ErrorStrings[] = 
-{
-	"No Errors!",
-	"Out of memory!",
-	"Unable to create the window class!",
-	"Unable to create the main window!",
-	"Unable to fetch the desktop's background!",
-	"Background and it's alpha-map must be same size!!",
-	"Bitmap and it's alpha-map must be same size!!",
-	"Unable to create font!",
-	"Unable to calculate text dimensions!",
-	"NULL parameter!",
-};
+#include "Error.h"
+#include "CalendarWindow.h"
+#include <stdio.h>
 
 /* 
 ** GetString
@@ -53,7 +45,7 @@ const std::string& CError::GetString()
 
 	if (m_Error != ERR_USER) 
 	{
-		m_String = c_ErrorStrings[m_Error];
+		m_String = CCalendarWindow::c_Language.GetString("Error", m_Error);
 		if (m_File) 
 		{
 			sprintf(Buffer, "%i", m_Line);

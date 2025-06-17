@@ -16,9 +16,23 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/CalendarWindow.h,v 1.13 2002/11/25 17:11:57 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/CalendarWindow.h,v 1.17 2003/06/15 09:50:55 Rainy Exp $
 
   $Log: CalendarWindow.h,v $
+  Revision 1.17  2003/06/15 09:50:55  Rainy
+  Strings are read from CLanguage class.
+  Added support for multiple calendars.
+
+  Revision 1.16  2003/05/24 13:51:00  Rainy
+  Added refresh when windows refurns from suspend.
+
+  Revision 1.15  2003/05/07 19:16:25  rainy
+  Few bugs fixed.
+  Added support for Outlook.
+
+  Revision 1.14  2003/03/22 20:31:11  rainy
+  Added Move and ZPos bangs
+
   Revision 1.13  2002/11/25 17:11:57  rainy
   Wallpaper polling checks the timestamp too.
 
@@ -92,9 +106,12 @@
 #include "ItemMonth.h"
 #include "ItemYear.h"
 #include "Resource.h"
+#include "Language.h"
 #include <windows.h>
 #include <commctrl.h>
 #include <string>
+
+#define WM_SERVER_SYNC_FINISHED WM_USER + 100
 
 class CRainlendar;
 
@@ -113,18 +130,22 @@ public:
 	void HideWindow() { ::ShowWindow(m_Window, SW_HIDE); m_Hidden = true; };
 	void ShowWindow(bool activate = false);
 	void ToggleWindow();
-	void ShowMonth(int Month, int Year);
 	void ShowNextMonth() { OnCommand(ID_POPUP_SELECTMONTH_NEXTMONTH, NULL); };
 	void ShowPrevMonth() { OnCommand(ID_POPUP_SELECTMONTH_PREVMONTH, NULL); };
 	void ShowCurrentMonth() { OnCommand(ID_POPUP_SELECTMONTH_CURRENTMONTH, NULL); };
 	void MoveWindow(int x, int y);
 	void SetWindowZPos(CConfig::WINDOWPOS pos);
 
+	int GetWidth() { return m_Width; };
+	int GetHeight() { return m_Height; };
+
 	HDC GetDoubleBuffer() { return m_DC; };
 	HWND GetWindow() { return m_Window; };
-	int GetSelectedDay() { return m_SelectedDay; };
+	int GetSelectedDate() { return m_SelectedDate; };
 
 	CEventManager* GetEventManager() { return m_Event->GetEventManager(); };
+
+	static void ChangeMonth(int Month, int Year);
 
 	static CConfig c_Config;
 	static SYSTEMTIME c_TodaysDate;
@@ -133,6 +154,7 @@ public:
 	void ConnectServer(int type);
 
 	static bool Is2k();
+	static CLanguage c_Language;
 
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -154,7 +176,9 @@ protected:
 	LRESULT OnMouseMove(WPARAM wParam, LPARAM lParam);
 	LRESULT OnNcMouseMove(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDisplayChange(WPARAM wParam, LPARAM lParam);
+	LRESULT OnPowerBroadcast(WPARAM wParam, LPARAM lParam);
 	LRESULT OnCopyData(WPARAM wParam, LPARAM lParam);
+	LRESULT OnServerSyncFinished(WPARAM wParam, LPARAM lParam);
 
 private:
 	void UpdateTransparency();
@@ -197,8 +221,8 @@ private:
 	int m_Height;
 	bool m_FirstExecute;
 	bool m_Hidden;
-	int m_SelectedDay;
-	int m_MenuSelectedDay;
+	int m_SelectedDate;
+	int m_MenuSelectedDate;
 	unsigned int m_ConnectionCounter;
 	bool m_Refreshing;
 

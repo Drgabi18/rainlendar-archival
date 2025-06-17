@@ -1,4 +1,4 @@
-/*
+     /*
   Copyright (C) 2000 Kimmo Pekkola
 
   This program is free software; you can redistribute it and/or
@@ -16,9 +16,21 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.cpp,v 1.12 2002/11/25 17:11:35 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Config.cpp,v 1.16 2003/06/15 09:43:01 Rainy Exp $
 
   $Log: Config.cpp,v $
+  Revision 1.16  2003/06/15 09:43:01  Rainy
+  Added Layout stuff.
+
+  Revision 1.15  2003/05/25 18:08:44  Rainy
+  Added tooltip separator.
+
+  Revision 1.14  2003/05/07 19:15:36  rainy
+  Added few new options.
+
+  Revision 1.13  2003/03/22 20:31:01  rainy
+  Refresh on resolution change is optional.
+
   Revision 1.12  2002/11/25 17:11:35  rainy
   Added some stuff to the profiles.
 
@@ -84,6 +96,14 @@ CConfig::CConfig()
 	m_WindowPos=WINDOWPOS_ONBOTTOM;
 	m_CurrentProfile="Default";
 	m_BGCopyMode=BG_NORMAL;
+    m_ShowOutlookAppointments=false;
+    m_Week1HasJanuary1st=false;
+    m_TooltipSeparator=true;
+	
+	m_VerticalCount = 1;
+	m_HorizontalCount = 1;
+	m_PreviousMonths = 0;
+	m_StartFromJanuary = false;
 
 	m_BackgroundMode=CBackground::MODE_TILE;
 	m_BackgroundSolidColor=GetSysColor(COLOR_3DFACE);
@@ -161,6 +181,7 @@ CConfig::CConfig()
 	m_ServerPort = 0;
 	m_ServerFrequency = 60;		// every hour
 	m_ServerStartup = false;
+	m_ServerSyncOnEdit = false;
 
 	m_ToolTipFontColor = GetSysColor(COLOR_INFOTEXT);
 	m_ToolTipBGColor = GetSysColor(COLOR_INFOBK);
@@ -174,6 +195,17 @@ CConfig::~CConfig()
 	{
 		delete (*i);
 	}
+}
+
+UINT CConfig::GetPreviousMonths()
+{
+	if (m_StartFromJanuary)
+	{
+		// Return the 'distance' to January
+		return CCalendarWindow::c_TodaysDate.wMonth - 1;
+	}
+
+	return m_PreviousMonths;
 }
 
 void CConfig::GetIniTime(const std::string& filename)
@@ -251,9 +283,17 @@ void CConfig::ReadGeneralConfig(const char* iniFile)
 	m_SnapEdges=(1==GetPrivateProfileInt( "Rainlendar", "SnapEdges", m_SnapEdges?1:0, iniFile))?true:false;
 	m_NativeTransparency=(1==GetPrivateProfileInt( "Rainlendar", "NativeTransparency", m_NativeTransparency?1:0, iniFile))?true:false;
 	m_RefreshOnResolutionChange=(1==GetPrivateProfileInt( "Rainlendar", "RefreshOnResolutionChange", m_RefreshOnResolutionChange?1:0, iniFile))?true:false;
+	m_ShowOutlookAppointments=(1==GetPrivateProfileInt( "Rainlendar", "ShowOutlookAppointments", m_ShowOutlookAppointments?1:0, iniFile))?true:false;
+	m_Week1HasJanuary1st=(1==GetPrivateProfileInt( "Rainlendar", "Week1HasJanuary1st", m_Week1HasJanuary1st?1:0, iniFile))?true:false;
+	m_TooltipSeparator=(1==GetPrivateProfileInt( "Rainlendar", "TooltipSeparator", m_TooltipSeparator?1:0, iniFile))?true:false;
 	m_RefreshDelay=GetPrivateProfileInt( "Rainlendar", "RefreshDelay", m_RefreshDelay, iniFile);
 	m_WindowPos=(WINDOWPOS)GetPrivateProfileInt( "Rainlendar", "WindowPos", m_WindowPos, iniFile);
 	m_BGCopyMode=(BG_COPY_MODE)GetPrivateProfileInt( "Rainlendar", "BGCopyMode", m_BGCopyMode, iniFile);
+
+	m_VerticalCount=GetPrivateProfileInt( "Rainlendar", "VerticalCount", m_VerticalCount, iniFile);
+	m_HorizontalCount=GetPrivateProfileInt( "Rainlendar", "HorizontalCount", m_HorizontalCount, iniFile);
+	m_PreviousMonths=GetPrivateProfileInt( "Rainlendar", "PreviousMonths", m_PreviousMonths, iniFile);
+	m_StartFromJanuary=(1==GetPrivateProfileInt( "Rainlendar", "StartFromJanuary", m_StartFromJanuary?1:0, iniFile))?true:false;
 
 	if(GetPrivateProfileString( "Rainlendar", "CurrentProfile", m_CurrentProfile.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
@@ -279,6 +319,7 @@ void CConfig::ReadGeneralConfig(const char* iniFile)
 	m_ServerPort=GetPrivateProfileInt( "Rainlendar", "ServerPort", m_ServerPort, iniFile);
 	m_ServerFrequency=GetPrivateProfileInt( "Rainlendar", "ServerFrequency", m_ServerFrequency, iniFile);
 	m_ServerStartup=(1==GetPrivateProfileInt( "Rainlendar", "ServerStartup", m_ServerStartup, iniFile))?true:false;
+	m_ServerSyncOnEdit=(1==GetPrivateProfileInt( "Rainlendar", "ServerSyncOnEdit", m_ServerSyncOnEdit, iniFile))?true:false;
 
 	if(GetPrivateProfileString( "Rainlendar", "CurrentSkin", m_CurrentSkin.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
@@ -287,6 +328,10 @@ void CConfig::ReadGeneralConfig(const char* iniFile)
 	if(GetPrivateProfileString( "Rainlendar", "CurrentSkinIni", m_CurrentSkinIni.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
 		m_CurrentSkinIni=tmpSz;
+	}
+	if(GetPrivateProfileString( "Rainlendar", "CurrentLanguage", m_CurrentLanguage.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_CurrentLanguage=tmpSz;
 	}
 }
 
@@ -694,6 +739,7 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			// Write only general settings to the Rainlendar.ini
 			WritePrivateProfileString( "Rainlendar", "CurrentSkin", m_CurrentSkin.c_str(), INIPath.c_str() );
 			WritePrivateProfileString( "Rainlendar", "CurrentSkinIni", m_CurrentSkinIni.c_str(), INIPath.c_str() );
+			WritePrivateProfileString( "Rainlendar", "CurrentLanguage", m_CurrentLanguage.c_str(), INIPath.c_str() );
 		}
 		if (flags & WRITE_POS)
 		{
@@ -724,6 +770,12 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			WritePrivateProfileString( "Rainlendar", "NativeTransparency", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_RefreshOnResolutionChange);
 			WritePrivateProfileString( "Rainlendar", "RefreshOnResolutionChange", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_ShowOutlookAppointments);
+			WritePrivateProfileString( "Rainlendar", "ShowOutlookAppointments", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_Week1HasJanuary1st);
+			WritePrivateProfileString( "Rainlendar", "Week1HasJanuary1st", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_TooltipSeparator);
+			WritePrivateProfileString( "Rainlendar", "TooltipSeparator", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_RefreshDelay);
 			WritePrivateProfileString( "Rainlendar", "RefreshDelay", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_WindowPos);
@@ -737,6 +789,15 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			WritePrivateProfileString( "Rainlendar", "BGCopyMode", tmpSz, INIPath.c_str() );
 			WritePrivateProfileString( "Rainlendar", "CurrentProfile", m_CurrentProfile.c_str(), INIPath.c_str() );
 
+			sprintf(tmpSz, "%i", m_VerticalCount);
+			WritePrivateProfileString( "Rainlendar", "VerticalCount", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_HorizontalCount);
+			WritePrivateProfileString( "Rainlendar", "HorizontalCount", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_PreviousMonths);
+			WritePrivateProfileString( "Rainlendar", "PreviousMonths", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_StartFromJanuary);
+			WritePrivateProfileString( "Rainlendar", "StartFromJanuary", tmpSz, INIPath.c_str() );
+
 			sprintf(tmpSz, "%i", m_ServerEnable);
 			WritePrivateProfileString( "Rainlendar", "ServerEnable", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_ServerPort);
@@ -747,6 +808,8 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			WritePrivateProfileString( "Rainlendar", "ServerID", m_ServerID.c_str(), INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_ServerStartup);
 			WritePrivateProfileString( "Rainlendar", "ServerStartup", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_ServerSyncOnEdit);
+			WritePrivateProfileString( "Rainlendar", "ServerSyncOnEdit", tmpSz, INIPath.c_str() );
 		}
 	}
 

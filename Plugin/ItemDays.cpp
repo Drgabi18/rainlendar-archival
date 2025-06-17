@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemDays.cpp,v 1.6 2002/11/12 18:11:41 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemDays.cpp,v 1.7 2003/06/15 09:49:12 Rainy Exp $
 
   $Log: ItemDays.cpp,v $
+  Revision 1.7  2003/06/15 09:49:12  Rainy
+  Added support for multiple calendars.
+
   Revision 1.6  2002/11/12 18:11:41  rainy
   The interface of Paint changed a little.
 
@@ -52,7 +55,6 @@
 
 CItemDays::CItemDays()
 {
-	m_DaysInMonth=0;
 }
 
 CItemDays::~CItemDays()
@@ -130,34 +132,12 @@ void CItemDays::Initialize()
 }
 
 /* 
-** ResetDayTypes
-**
-** Resets the day types for the displayed month
-**
-*/
-void CItemDays::ResetDayTypes()
-{
-	// Set all days to NORMAL
-	for(int i = 0; i < 32; i++) 
-	{
-		c_DayTypes[i] = NORMAL;
-	}
-
-	// If this month is shown, mark today
-	if(CCalendarWindow::c_MonthsFirstDate.wMonth == CCalendarWindow::c_TodaysDate.wMonth &&
-		CCalendarWindow::c_MonthsFirstDate.wYear == CCalendarWindow::c_TodaysDate.wYear) 
-	{
-		SetDayType(CCalendarWindow::c_TodaysDate.wDay, TODAY);
-	}
-}
-
-/* 
 ** Paint
 **
 ** Paints the numbers in correct place
 **
 */
-void CItemDays::Paint(CImage& background)
+void CItemDays::Paint(CImage& background, POINT offset)
 {
 	int FirstWeekday;
 	int X, Y, W, H, Index, DayType, NumOfDays, i;
@@ -180,7 +160,7 @@ void CItemDays::Paint(CImage& background)
 		for(i = 0; i < NumOfDays; i++) 
 		{
 			Index = i + FirstWeekday;
-			DayType = GetDayType(i + 1);
+			DayType = GetDayType(i + 1, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 
 			// Don't show today or events if selected
 			if(!(CCalendarWindow::c_Config.GetDaysIgnoreToday() && (DayType&TODAY) ||
@@ -189,12 +169,13 @@ void CItemDays::Paint(CImage& background)
 				X = CCalendarWindow::c_Config.GetDaysX() + (Index % 7) * W;
 				Y = CCalendarWindow::c_Config.GetDaysY() + (Index / 7) * H;
 	
+				X += offset.x;
+				Y += offset.y;
+
 				m_Rasterizer->Paint(background, X, Y, W, H, i + 1);
 			}
 		}
 	}
-
-	m_DaysInMonth = NumOfDays;
 }
 
 /* 
@@ -205,6 +186,39 @@ void CItemDays::Paint(CImage& background)
 */
 int CItemDays::HitTest(int x, int y)
 {
+	int thisMonth = CCalendarWindow::c_MonthsFirstDate.wMonth;
+	int thisYear = CCalendarWindow::c_MonthsFirstDate.wYear;
+
+	int startMonth = thisMonth - CCalendarWindow::c_Config.GetPreviousMonths();
+	int startYear = thisYear;
+
+	while (startMonth <= 0)
+	{
+		startYear--;
+		startMonth += 12;
+	}
+
+	POINT offset;
+
+	int w = GetRainlendar()->GetCalendarWindow().GetWidth() / CCalendarWindow::c_Config.GetHorizontalCount();
+	int h = GetRainlendar()->GetCalendarWindow().GetHeight() / CCalendarWindow::c_Config.GetVerticalCount();
+
+	offset.x = (x / w) * w;
+	offset.y = (y / h) * h;
+
+	startMonth += (y / h) * CCalendarWindow::c_Config.GetHorizontalCount() + (x / w);
+	while (startMonth > 12)
+	{
+		startYear++;
+		startMonth -= 12;
+	}
+
+	CCalendarWindow::ChangeMonth(startMonth, startYear);
+	int NumOfDays = GetDaysInMonth(startYear, startMonth);
+
+	x -= offset.x;
+	y -= offset.y;
+
 	int FirstWeekday;
 	int X, Y, W, H, Day;
 
@@ -214,6 +228,9 @@ int CItemDays::HitTest(int x, int y)
 	Y = CCalendarWindow::c_Config.GetDaysY();
 
 	FirstWeekday = CCalendarWindow::c_MonthsFirstDate.wDayOfWeek;
+
+	// Reset the values
+	CCalendarWindow::ChangeMonth(thisMonth, thisYear);
 
 	if(CCalendarWindow::c_Config.GetStartFromMonday()) 
 	{
@@ -229,14 +246,14 @@ int CItemDays::HitTest(int x, int y)
 	Day = (y / H) * 7 + (x / W);
 	Day = (Day + 1) - FirstWeekday;
 
-	if(m_DaysInMonth == 0) 
+	if(NumOfDays == 0) 
 	{
 		if(Day < 1 || Day > 31) return 0;	// No hit
 	}
 	else 
 	{
-		if(Day < 1 || Day > m_DaysInMonth) return 0;	// No hit
+		if(Day < 1 || Day > NumOfDays) return 0;	// No hit
 	}
 
-	return Day;
+	return CEventMessage::DateToValue(Day, startMonth, startYear);
 }

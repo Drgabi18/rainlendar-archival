@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Item.h,v 1.5 2002/11/12 18:11:41 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Item.h,v 1.6 2003/06/15 09:49:12 Rainy Exp $
 
   $Log: Item.h,v $
+  Revision 1.6  2003/06/15 09:49:12  Rainy
+  Added support for multiple calendars.
+
   Revision 1.5  2002/11/12 18:11:41  rainy
   The interface of Paint changed a little.
 
@@ -53,8 +56,7 @@ public:
 	virtual ~CItem();
 
 	virtual void Initialize() = 0;
-	virtual void ResetDayTypes() { /* Nothing */ };
-	virtual void Paint(CImage& background) = 0;
+	virtual void Paint(CImage& background, POINT offset) = 0;
 
 	CRasterizer* GetRasterizer() { return m_Rasterizer; };
 	void SetRasterizer(CRasterizer* Rasterizer);
@@ -64,15 +66,12 @@ public:
 	virtual int GetW() { return 0; };
 	virtual int GetH() { return 0; };
 
-	static int GetDayType(int Index) { return c_DayTypes[Index]; };
-	static void SetDayType(int Index, int DayType) { c_DayTypes[Index]|=DayType; };		// Note the OR !!
+	int GetDayType(int day, int month, int year);
 
 	static UINT GetDaysInMonth(int year, int month);
 
 protected:
 	CRasterizer* m_Rasterizer;
-
-	static int c_DayTypes[32];
 };
 
 #endif

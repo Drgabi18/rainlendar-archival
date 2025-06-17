@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemToday.h,v 1.3 2002/11/12 18:11:34 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemToday.h,v 1.5 2003/06/15 09:49:12 Rainy Exp $
 
   $Log: ItemToday.h,v $
+  Revision 1.5  2003/06/15 09:49:12  Rainy
+  Added support for multiple calendars.
+
+  Revision 1.4  2003/03/22 20:30:25  rainy
+  Overwrote dimension getters.
+
   Revision 1.3  2002/11/12 18:11:34  rainy
   The interface of Paint changed a little.
 
@@ -42,7 +48,7 @@ public:
 	virtual ~CItemToday();
 
 	void Initialize();
-	void Paint(CImage& background);
+	void Paint(CImage& background, POINT offset);
 
 	virtual int GetX();
 	virtual int GetY();

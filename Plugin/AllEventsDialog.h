@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2000 Kimmo Pekkola
+  Copyright (C) 2003 Kimmo Pekkola
 
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License
@@ -16,20 +16,20 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/SkinDialog.h,v 1.1 2002/08/03 16:37:09 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/AllEventsDialog.h,v 1.1 2003/05/26 18:44:27 Rainy Exp $
 
-  $Log: SkinDialog.h,v $
-  Revision 1.1  2002/08/03 16:37:09  rainy
-  Intial version.
+  $Log: AllEventsDialog.h,v $
+  Revision 1.1  2003/05/26 18:44:27  Rainy
+  Initial version.
 
 */
 
-#ifndef _SKINDIALOG_H_
-#define _SKINDIALOG_H_
+#ifndef _ALLEVENTS_H_
+#define _ALLEVENTS_H_
 
 #include "CalendarWindow.h"
 
-VOID OpenSkinDialog(HWND hwndOwner, HINSTANCE instance);
+BOOL CALLBACK AllEventsProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 
 #endif
 

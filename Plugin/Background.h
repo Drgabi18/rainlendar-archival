@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.h,v 1.6 2002/11/12 18:01:41 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Background.h,v 1.7 2003/06/15 09:42:42 Rainy Exp $
 
   $Log: Background.h,v $
+  Revision 1.7  2003/06/15 09:42:42  Rainy
+  Added support for multiple calendars.
+
   Revision 1.6  2002/11/12 18:01:41  rainy
   Modified to use the CImage class.
 

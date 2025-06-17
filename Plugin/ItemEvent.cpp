@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemEvent.cpp,v 1.12 2002/11/25 17:03:24 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemEvent.cpp,v 1.14 2003/06/15 09:49:12 Rainy Exp $
 
   $Log: ItemEvent.cpp,v $
+  Revision 1.14  2003/06/15 09:49:12  Rainy
+  Added support for multiple calendars.
+
+  Revision 1.13  2003/05/25 18:10:11  Rainy
+  The GetEvent() returns now a sorted vector.
+
   Revision 1.12  2002/11/25 17:03:24  rainy
   Added DrawIcon method.
 
@@ -131,39 +137,12 @@ void CItemEvent::Initialize()
 }
 
 /* 
-** ResetDayTypes
-**
-** Resets the day types for the displayed month
-**
-*/
-void CItemEvent::ResetDayTypes()
-{
-	// Fill the day types for current month
-	int NumOfDays = GetDaysInMonth(CCalendarWindow::c_MonthsFirstDate.wYear, CCalendarWindow::c_MonthsFirstDate.wMonth);
-	for (int i = 1; i <= NumOfDays; i++)
-	{
-		std::list<CEventMessage*> eventList = m_EventManager.GetEvents(i, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
-
-		// Make sure that the events are not deleted
-		std::list<CEventMessage*>::iterator iter = eventList.begin();
-		for( ;  iter != eventList.end(); iter++)
-		{
-			if (!((*iter)->IsDeleted()))
-			{
-				SetDayType(i, EVENT);
-				break;
-			}
-		}
-	}
-}
-
-/* 
 ** Paint
 **
 ** Paints the numbers in correct place
 **
 */
-void CItemEvent::Paint(CImage& background)
+void CItemEvent::Paint(CImage& background, POINT offset)
 {
 	int FirstWeekday;
 	int X, Y, W, H, Index, DayType, NumOfDays, i;
@@ -186,7 +165,7 @@ void CItemEvent::Paint(CImage& background)
 		for(i = 0; i < NumOfDays; i++) 
 		{
 			Index = i + FirstWeekday;
-			DayType = GetDayType(i + 1);
+			DayType = GetDayType(i + 1, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 
 			// Only show event days
 			if((DayType & EVENT) && (!CCalendarWindow::c_Config.GetDaysIgnoreToday() ||
@@ -194,6 +173,9 @@ void CItemEvent::Paint(CImage& background)
 			{	
 				X = CCalendarWindow::c_Config.GetDaysX() + (Index % 7) * W;
 				Y = CCalendarWindow::c_Config.GetDaysY() + (Index / 7) * H;
+
+				X += offset.x;
+				Y += offset.y;
 
 				// Set the correct profile
 				m_Rasterizer->SetProfile(GetEventProfile(i + 1));
@@ -211,8 +193,8 @@ void CItemEvent::Paint(CImage& background)
 					int count = 0, width = 0, height = 0;
 					RECT rect;
 					std::vector<int> heights;
-					std::list<CEventMessage*>::iterator eventIter;
-					std::list<CEventMessage*> eventList = m_EventManager.GetEvents(i + 1, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
+					std::vector<CEventMessage*>::iterator eventIter;
+					std::vector<CEventMessage*> eventList = m_EventManager.GetEvents(i + 1, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 
 					OldFont = (HFONT)SelectObject(dc, m_EventFont);
 					OldBitmap = (HBITMAP)SelectObject(dc, background.GetBitmap());
@@ -287,11 +269,11 @@ void CItemEvent::Paint(CImage& background)
 void CItemEvent::DrawIcon(CImage& background, int day, int X, int Y, int W, int H)
 {
 	// Draw all icons 
-	std::list<CEventMessage*> eventList = m_EventManager.GetEvents(day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
+	std::vector<CEventMessage*> eventList = m_EventManager.GetEvents(day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 	
 	if (!eventList.empty())
 	{
-		std::list<CEventMessage*>::iterator i = eventList.begin();
+		std::vector<CEventMessage*>::iterator i = eventList.begin();
 		for( ;  i != eventList.end(); i++)
 		{
 			int x = X;
@@ -347,7 +329,7 @@ void CItemEvent::DrawIcon(CImage& background, int day, int X, int Y, int W, int 
 ** Adds tooltips for the current month
 **
 */
-void CItemEvent::AddToolTips(CCalendarWindow* CalendarWnd)
+void CItemEvent::AddToolTips(CCalendarWindow* CalendarWnd, POINT offset)
 {
 	int FirstWeekday;
 	int X, Y, W, H, i, j, Day;
@@ -358,6 +340,9 @@ void CItemEvent::AddToolTips(CCalendarWindow* CalendarWnd)
 	X = CCalendarWindow::c_Config.GetDaysX();
 	Y = CCalendarWindow::c_Config.GetDaysY();
 
+	X += offset.x;
+	Y += offset.y;
+
 	FirstWeekday = CCalendarWindow::c_MonthsFirstDate.wDayOfWeek;
 
 	if(CCalendarWindow::c_Config.GetStartFromMonday()) 
@@ -365,8 +350,6 @@ void CItemEvent::AddToolTips(CCalendarWindow* CalendarWnd)
 		FirstWeekday = (FirstWeekday - 1);
 		if(FirstWeekday == -1) FirstWeekday = 6;
 	} 
-
-	CToolTip::Instance().DeleteAllToolTips();
 
 	Rect.top = Y;
 	Rect.bottom = Y + H;
@@ -381,13 +364,13 @@ void CItemEvent::AddToolTips(CCalendarWindow* CalendarWnd)
 			{
 				if(CCalendarWindow::c_Config.GetEventEnable() && CCalendarWindow::c_Config.GetEventToolTips()) 
 				{
-					if(GetDayType(Day) & EVENT) 
+					if(GetDayType(Day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear) & EVENT) 
 					{
-						std::list<CEventMessage*> eventList = m_EventManager.GetEvents(Day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
+						std::vector<CEventMessage*> eventList = m_EventManager.GetEvents(Day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 
 						int ID = CToolTip::Instance().CreateToolTip(Rect);
 
-						std::list<CEventMessage*>::iterator eventIter = eventList.begin();
+						std::vector<CEventMessage*>::iterator eventIter = eventList.begin();
 						for( ;  eventIter != eventList.end(); eventIter++)
 						{
 							if (!((*eventIter)->GetMessage().empty()) && !((*eventIter)->IsDeleted()))
@@ -431,11 +414,11 @@ const Profile* CItemEvent::GetEventProfile(int day)
 	const char* currentProfile = NULL;
 	int currentType = 0;
 
-	std::list<CEventMessage*> eventList = m_EventManager.GetEvents(day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
+	std::vector<CEventMessage*> eventList = m_EventManager.GetEvents(day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 	
 	if (!eventList.empty())
 	{
-		std::list<CEventMessage*>::iterator i = eventList.begin();
+		std::vector<CEventMessage*>::iterator i = eventList.begin();
 		for( ;  i != eventList.end(); i++)
 		{
 			// Events that occur more rarely override frequent events
@@ -498,11 +481,11 @@ const Profile* CItemEvent::GetEventProfile(int day)
 */
 bool CItemEvent::GetEventText(int day, std::string& text)
 {
-	std::list<CEventMessage*> eventList = m_EventManager.GetEvents(day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
+	std::vector<CEventMessage*> eventList = m_EventManager.GetEvents(day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 	
 	if (!eventList.empty())
 	{
-		std::list<CEventMessage*>::iterator i = eventList.begin();
+		std::vector<CEventMessage*>::iterator i = eventList.begin();
 		for( ;  i != eventList.end(); i++)
 		{
 			if (!((*i)->GetMessage().empty()))

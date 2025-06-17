@@ -16,9 +16,21 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Config.h,v 1.9 2002/11/25 17:11:34 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Config.h,v 1.13 2003/06/15 09:43:01 Rainy Exp $
 
   $Log: Config.h,v $
+  Revision 1.13  2003/06/15 09:43:01  Rainy
+  Added Layout stuff.
+
+  Revision 1.12  2003/05/25 18:08:44  Rainy
+  Added tooltip separator.
+
+  Revision 1.11  2003/05/07 19:15:35  rainy
+  Added few new options.
+
+  Revision 1.10  2003/03/22 20:31:01  rainy
+  Refresh on resolution change is optional.
+
   Revision 1.9  2002/11/25 17:11:34  rainy
   Added some stuff to the profiles.
 
@@ -111,15 +123,36 @@ public:
 	void SetCurrentSkin(const std::string& CurrentSkin) { m_CurrentSkin=CurrentSkin; };
 	const std::string& GetCurrentSkinIni() { return m_CurrentSkinIni; };
 	void SetCurrentSkinIni(const std::string& CurrentSkinIni) { m_CurrentSkinIni=CurrentSkinIni; };
+	const std::string& GetCurrentLanguage() { return m_CurrentLanguage; };
+	void SetCurrentLanguage(const std::string& CurrentLanguage) { m_CurrentLanguage=CurrentLanguage; };
 
 	const std::string GetMonthName(int index) { return m_MonthName[index]; };
 
 	const std::string& GetCurrentProfile() { return m_CurrentProfile; };
 	void SetCurrentProfile(const std::string& CurrentProfile) { m_CurrentProfile=CurrentProfile; };
 
-	// General
+	// Layout
 	int GetX() { return m_X; };
 	int GetY() { return m_Y; };
+	WINDOWPOS GetWindowPos() { return m_WindowPos; };
+	bool GetMouseHide() { return m_MouseHide; };
+	bool GetMovable() { return m_Movable; };
+	UINT GetVerticalCount() { return m_VerticalCount; };
+	UINT GetHorizontalCount() { return m_HorizontalCount; };
+	UINT GetPreviousMonths();
+	bool GetStartFromJanuary() { return m_StartFromJanuary; };
+
+	void SetX(int X ) { m_X=X; };
+	void SetY(int Y ) { m_Y=Y; };
+	void SetWindowPos(WINDOWPOS WindowPos) { m_WindowPos=WindowPos; };
+	void SetMovable(bool Movable) { m_Movable=Movable; };
+	void SetMouseHide(bool MouseHide) { m_MouseHide=MouseHide; };
+	void SetVerticalCount(UINT VerticalCount) { m_VerticalCount=VerticalCount; };
+	void SetHorizontalCount(UINT HorizontalCount) { m_HorizontalCount=HorizontalCount; };
+	void SetPreviousMonths(UINT PreviousMonths) { m_PreviousMonths=PreviousMonths; };
+	void SetStartFromJanuary(bool StartFromJanuary) { m_StartFromJanuary=StartFromJanuary; };
+
+	// General
 	bool GetStartFromMonday() { return m_StartFromMonday; };
     const std::string& GetWeekdayNames() { return m_WeekdayNames; };
     const std::string& GetMonthNames() { return m_MonthNames; };
@@ -128,16 +161,13 @@ public:
 	bool GetDisableHotkeys() { return m_DisableHotkeys; };
 	bool GetUseWindowName() { return m_UseWindowName; };
 	bool GetPollWallpaper() { return m_PollWallpaper; };
-	bool GetMovable() { return m_Movable; };
 	bool GetSnapEdges() { return m_SnapEdges; };
-	bool GetMouseHide() { return m_MouseHide; };
 	bool GetNativeTransparency() { return m_NativeTransparency; };
 	bool GetRefreshOnResolutionChange() { return m_RefreshOnResolutionChange; };
-	WINDOWPOS GetWindowPos() { return m_WindowPos; };
+	bool GetShowOutlookAppointments() { return m_ShowOutlookAppointments; };
+	bool GetWeek1HasJanuary1st() { return m_Week1HasJanuary1st; };
 	BG_COPY_MODE GetBGCopyMode() { return m_BGCopyMode; };
 
-	void SetX(int X ) { m_X=X; };
-	void SetY(int Y ) { m_Y=Y; };
 	void SetStartFromMonday(bool StartFromMonday ) { m_StartFromMonday=StartFromMonday; };
 	void SetWeekdayNames(const std::string& WeekdayNames ) { m_WeekdayNames=WeekdayNames; };
 	void SetMonthNames(const std::string& MonthNames ) { m_MonthNames=MonthNames; };
@@ -146,12 +176,11 @@ public:
 	void SetDisableHotkeys(bool DisableHotkeys ) { m_DisableHotkeys=DisableHotkeys; };
 	void SetUseWindowName(bool UseWindowName ) { m_UseWindowName=UseWindowName; };
 	void SetPollWallpaper(bool PollWallpaper ) { m_PollWallpaper=PollWallpaper; };
-	void SetMovable(bool Movable) { m_Movable=Movable; };
 	void SetSnapEdges(bool SnapEdges) { m_SnapEdges=SnapEdges; };
-	void SetMouseHide(bool MouseHide) { m_MouseHide=MouseHide; };
 	void SetNativeTransparency(bool NativeTransparency) { m_NativeTransparency=NativeTransparency; };
 	void SetRefreshOnResolutionChange(bool RefreshOnResolutionChange) { m_RefreshOnResolutionChange=RefreshOnResolutionChange; };
-	void SetWindowPos(WINDOWPOS WindowPos) { m_WindowPos=WindowPos; };
+	void SetShowOutlookAppointments(bool ShowOutlookAppointments) { m_ShowOutlookAppointments=ShowOutlookAppointments; };
+	void SetWeek1HasJanuary1st(bool Week1HasJanuary1st) { m_Week1HasJanuary1st=Week1HasJanuary1st; };
 	void SetBGCopyMode(BG_COPY_MODE bgMode) { m_BGCopyMode=bgMode; };
 
 	CBackground::MODE GetBackgroundMode() { return m_BackgroundMode; };
@@ -326,6 +355,7 @@ public:
     const std::string& GetServerID() { return m_ServerID; };
 	bool GetServerEnable() { return m_ServerEnable; };
 	bool GetServerStartup() { return m_ServerStartup; };
+	bool GetServerSyncOnEdit() { return m_ServerSyncOnEdit; };
 
 	void SetServerStartup(bool ServerStartup ) { m_ServerStartup=ServerStartup; };
 	void SetServerFrequency(UINT ServerFrequency ) { m_ServerFrequency=ServerFrequency; };
@@ -333,6 +363,7 @@ public:
 	void SetServerAddress(const std::string& ServerAddress ) { m_ServerAddress=ServerAddress; };
 	void SetServerID(const std::string& ServerID ) { m_ServerID=ServerID; };
 	void SetServerEnable(bool ServerEnable ) { m_ServerEnable=ServerEnable; };
+	void SetServerSyncOnEdit(bool ServerSyncOnEdit ) { m_ServerSyncOnEdit=ServerSyncOnEdit; };
 
 	void SetToolTipFontColor(COLORREF ToolTipFontColor ) { m_ToolTipFontColor=ToolTipFontColor; };
 	COLORREF GetToolTipFontColor() { return m_ToolTipFontColor; };
@@ -340,6 +371,8 @@ public:
 	COLORREF GetToolTipBGColor() { return m_ToolTipBGColor; };
 	void SetToolTipFont(const std::string& ToolTipFont ) { m_ToolTipFont=ToolTipFont; };
     const std::string& GetToolTipFont() { return m_ToolTipFont; };
+	void SetTooltipSeparator(bool TooltipSeparator) { m_TooltipSeparator=TooltipSeparator; };
+    bool GetTooltipSeparator() { return m_TooltipSeparator; };
 
 	void ReadConfig();
 	void WriteConfig(WRITE_FLAGS flags);
@@ -367,39 +400,50 @@ private:
 	std::string m_Path;				// Path to the .ini file
 	std::string m_EventsPath;		// Path to the events.ini file
 	std::string m_SkinsPath;		// Path to the skins folder
+	std::string m_CurrentLanguage;	// Name of the current language
 	std::string m_CurrentSkin;		// Name of the current skin path
 	std::string m_CurrentSkinIni;	// Name of the current skin ini-file
 	std::vector<std::string> m_MonthName;
 
-	// General settings
+	// Layout settings
 	int m_X;					// Position ot the main window
 	int m_Y;
+	WINDOWPOS m_WindowPos;
+	bool m_MouseHide;
+	bool m_Movable;
+	UINT m_VerticalCount;
+	UINT m_HorizontalCount;
+	UINT m_PreviousMonths;
+	bool m_StartFromJanuary;
+
+	// General settings
 	bool m_StartFromMonday;
 	bool m_StartHidden;
 	bool m_DisableHotkeys;
 	bool m_UseWindowName;
 	bool m_PollWallpaper;
-	bool m_Movable;
-	bool m_MouseHide;
 	bool m_SnapEdges;
 	bool m_NativeTransparency;
 	bool m_RefreshOnResolutionChange;
+	bool m_ShowOutlookAppointments;
+	bool m_Week1HasJanuary1st;
 	std::string m_MonthNames;
 	std::string m_WeekdayNames;
 	int m_RefreshDelay;
-	WINDOWPOS m_WindowPos;
 	std::string m_EventExecute;
 	bool m_EventToolTips;
 	bool m_EventMessageBox;
 	BG_COPY_MODE m_BGCopyMode;
 	std::string m_CurrentProfile;
 
+	// Server settings
 	bool m_ServerEnable;
 	std::string m_ServerID;
 	std::string m_ServerAddress;
 	UINT m_ServerPort;
 	UINT m_ServerFrequency;
 	bool m_ServerStartup;
+	bool m_ServerSyncOnEdit;
 
 	// Skinning settings
 	std::string m_BackgroundBitmapName;	// Name of the background picture
@@ -481,6 +525,7 @@ private:
 	COLORREF m_ToolTipFontColor;
 	COLORREF m_ToolTipBGColor;
 	std::string m_ToolTipFont;
+	bool m_TooltipSeparator;
 };
 
 #endif

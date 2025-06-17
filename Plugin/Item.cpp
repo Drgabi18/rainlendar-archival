@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Item.cpp,v 1.2 2002/05/23 17:33:41 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Item.cpp,v 1.3 2003/06/15 09:49:11 Rainy Exp $
 
   $Log: Item.cpp,v $
+  Revision 1.3  2003/06/15 09:49:11  Rainy
+  Added support for multiple calendars.
+
   Revision 1.2  2002/05/23 17:33:41  rainy
   Removed all MFC stuff
 
@@ -29,8 +32,6 @@
 
 #include "RainlendarDLL.h"
 #include "Item.h"
-
-int CItem::c_DayTypes[32];
 
 CItem::CItem()
 {
@@ -46,6 +47,34 @@ void CItem::SetRasterizer(CRasterizer* Rasterizer)
 {
 	if(m_Rasterizer) delete m_Rasterizer;	// Kill the old
 	m_Rasterizer=Rasterizer;
+}
+
+int CItem::GetDayType(int day, int month, int year)
+{
+	int type = NORMAL;
+
+	std::vector<CEventMessage*> eventList = GetRainlendar()->GetCalendarWindow().GetEventManager()->GetEvents(day, month, year);
+
+	// Make sure that the events are not deleted
+	std::vector<CEventMessage*>::iterator iter = eventList.begin();
+	for( ;  iter != eventList.end(); iter++)
+	{
+		if (!((*iter)->IsDeleted()))
+		{
+			type = EVENT;
+			break;
+		}
+	}
+
+	// If this month is shown, mark today
+	if (CCalendarWindow::c_TodaysDate.wMonth == month &&
+	    CCalendarWindow::c_TodaysDate.wDay == day && 
+	    CCalendarWindow::c_TodaysDate.wYear == year) 
+	{
+		type |= TODAY;
+	}
+
+	return type;
 }
 
 UINT CItem::GetDaysInMonth(int year, int month)

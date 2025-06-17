@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Image.cpp,v 1.2 2002/11/25 17:03:57 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Image.cpp,v 1.3 2003/06/15 09:48:45 Rainy Exp $
 
   $Log: Image.cpp,v $
+  Revision 1.3  2003/06/15 09:48:45  Rainy
+  Uses AlphaBlend for all stretching.
+
   Revision 1.2  2002/11/25 17:03:57  rainy
   Small fixes.
 
@@ -346,20 +349,8 @@ void CImage::Resize(int w, int h, IMAGE_RESIZE_TYPE type)
 
 	if (type == IMAGE_RESIZE_TYPE_STRETCH)
 	{
-		if (m_Alpha)
-		{
-			BLENDFUNCTION blendPixelFunction= {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
-			AlphaBlend(newDC, 0, 0, w, h, currentDC, 0, 0, m_Width, m_Height, blendPixelFunction);
-		}
-		else
-		{
-			SetStretchBltMode(currentDC, HALFTONE);
-			SetStretchBltMode(newDC, HALFTONE);
-			SetBrushOrgEx(currentDC, 0, 0, NULL);
-			SetBrushOrgEx(newDC, 0, 0, NULL);
-
-			StretchBlt(newDC, 0, 0, w, h, currentDC, 0, 0, m_Width, m_Height, SRCCOPY);
-		}
+		BLENDFUNCTION blendPixelFunction= {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
+		AlphaBlend(newDC, 0, 0, w, h, currentDC, 0, 0, m_Width, m_Height, blendPixelFunction);
 	}
 	else	// TILE
 	{

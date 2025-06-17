@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemDays.h,v 1.4 2002/11/12 18:11:41 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemDays.h,v 1.5 2003/06/15 09:49:12 Rainy Exp $
 
   $Log: ItemDays.h,v $
+  Revision 1.5  2003/06/15 09:49:12  Rainy
+  Added support for multiple calendars.
+
   Revision 1.4  2002/11/12 18:11:41  rainy
   The interface of Paint changed a little.
 
@@ -45,17 +48,13 @@ public:
 	virtual ~CItemDays();
 
 	void Initialize();
-	void ResetDayTypes();
-	void Paint(CImage& background);
+	void Paint(CImage& background, POINT offset);
 	int HitTest(int x, int y);
 
 	int GetX();
 	int GetY();
 	int GetW();
 	int GetH();
-
-private:
-	int m_DaysInMonth;
 };
 
 #endif

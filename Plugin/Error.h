@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Error.h,v 1.4 2002/08/24 11:12:32 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Error.h,v 1.5 2003/06/15 09:46:06 Rainy Exp $
 
   $Log: Error.h,v $
+  Revision 1.5  2003/06/15 09:46:06  Rainy
+  Strings are read from CLanguage class.
+
   Revision 1.4  2002/08/24 11:12:32  rainy
   Errors are also written to the log file.
 
@@ -59,8 +62,6 @@ enum RAINERROR
 	ERR_WINDOWCLASS,
 	ERR_WINDOW,
 	ERR_BACKGROUND,
-	ERR_BACKGROUNDALPHASIZE,
-	ERR_ALPHASIZE,
 	ERR_CREATEFONT,
 	ERR_TEXTDIMENSIONS,
 	ERR_NULLPARAMETER
@@ -84,8 +85,6 @@ private:
 	int m_Line;
 	const char* m_File;
 	RAINERROR m_Error;
-
-	static const char* c_ErrorStrings[];
 };
 
 #endif

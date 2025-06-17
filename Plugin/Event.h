@@ -16,9 +16,18 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Event.h,v 1.7 2002/11/25 17:10:21 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Event.h,v 1.10 2003/05/26 18:44:40 Rainy Exp $
 
   $Log: Event.h,v $
+  Revision 1.10  2003/05/26 18:44:40  Rainy
+  Added more consts.
+
+  Revision 1.9  2003/05/25 18:09:20  Rainy
+  Gets are now consts
+
+  Revision 1.8  2003/05/07 19:13:49  rainy
+  Added permanent and timestamp.
+
   Revision 1.7  2002/11/25 17:10:21  rainy
   Added SetID()
 
@@ -59,39 +68,47 @@ enum EVENT_TYPE
 class CEventMessage  
 {
 public:
-	CEventMessage();
+	CEventMessage(bool Permanent = true);
 	CEventMessage(const CEventMessage& event);
 	~CEventMessage();
 
-	const std::string& GetMessage() { return m_Message; };
-	void SetMessage(const std::string& Message );
+	const std::string& GetMessage() const { return m_Message; };
+	void SetMessage(const std::string& Message);
 
-	const std::string& GetProfile() { return m_Profile; };
 	void SetProfile(const std::string& Profile ) { m_Profile=Profile; };
-	EVENT_TYPE GetType() { return m_Type; };
 	void SetType(EVENT_TYPE Type ) { m_Type=Type; };
-	int GetEveryNth() { return m_EveryNth; };
 	void SetEveryNth(int EveryNth ) { m_EveryNth=EveryNth; };
-	int GetValidUntil() { return m_ValidUntil; };
 	void SetValidUntil(int ValidUntil ) { m_ValidUntil=ValidUntil; };
-	int GetDate() { return m_Date; };
 	void SetDate(int Date ) { m_Date=Date; };
-	int GetCount() { return m_Count; };
-	void SetCount(int Count ) { m_Count=Count; };
-	bool IsDeleted() { return m_Deleted; };
+    void SetCount(int Count ) { m_Count=Count; };
 	void SetDeleted() { m_Deleted=true; };
-	int GetID() { return m_ID; };
 	void SetID(int ID) { m_ID = ID; };
+	void SetTimeStamp(time_t timeStamp) { m_TimeStamp = timeStamp; };
 
-	const char* GetTypeText();
+    const std::string& GetProfile() const { return m_Profile; };
+	EVENT_TYPE GetType() const { return m_Type; };
+	int GetEveryNth() const { return m_EveryNth; };
+	int GetValidUntil() const { return m_ValidUntil; };
+	int GetDate() const { return m_Date; };
+	int GetCount() const { return m_Count; };
+	bool IsDeleted() const { return m_Deleted; };
+	int GetID() const { return m_ID; };
+	int IsPermanent() const { return m_Permanent; };
+	int GetTimeStamp() const { return m_TimeStamp; };
+
+	const char* GetTypeText() const;
+	const char* GetDateText() const;
 
 	CEventMessage& operator=(const CEventMessage& event);
 
 	static int DateToValue(int day, int month, int year);
 	static void ValueToDate(int value, int* day, int* month, int* year);
 	static int CalculateNumOfDays(int startValue, int endValue);
+    static void GetDate(double dtSrc, int *year, int *month, int *day, int *hour, int *minute, int *second);
 
 private:
+    void UpdateTimeStamp();
+
 	std::string m_Message;
 	std::string m_Profile;
 	int m_ValidUntil;
@@ -101,6 +118,8 @@ private:
 	int m_ID;
 	EVENT_TYPE m_Type;
 	bool m_Deleted;
+	bool m_Permanent;
+    time_t m_TimeStamp;
 
 	static int c_CurrentID;
 };

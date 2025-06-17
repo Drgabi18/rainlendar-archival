@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/EventManager.cpp,v 1.3 2002/08/24 11:12:15 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/EventManager.cpp,v 1.5 2003/05/25 18:10:11 Rainy Exp $
 
   $Log: EventManager.cpp,v $
+  Revision 1.5  2003/05/25 18:10:11  Rainy
+  The GetEvent() returns now a sorted vector.
+
+  Revision 1.4  2003/05/07 19:11:44  rainy
+  The timestamp is not updated every time.
+
   Revision 1.3  2002/08/24 11:12:15  rainy
   Added some trimming support.
 
@@ -34,6 +40,7 @@
 #include "RainlendarDLL.h"
 #include <time.h>
 #include <set>
+#include <algorithm>
 
 CEventManager::CEventManager()
 {
@@ -130,6 +137,9 @@ void CEventManager::ReadEvents()
 		// Type
 		event.SetType((EVENT_TYPE)GetPrivateProfileInt(pos, "Type", EVENT_SINGLE, IniPath));
 
+		// TimeStamp (this must be the last)
+		event.SetTimeStamp(GetPrivateProfileInt(pos, "TimeStamp", 0, IniPath));
+
 		m_AllEvents.push_back(event);
 
 		count++;
@@ -143,6 +153,11 @@ void CEventManager::ReadEvents()
 	LSLog(LOG_DEBUG, "Rainlendar", tmpSz);
 }
 
+bool CompareEvents(const CEventMessage* arg1, const CEventMessage* arg2)
+{
+   return arg1->GetCount() < arg2->GetCount(); 
+}
+
 /*
 **
 ** GetEvents
@@ -150,9 +165,9 @@ void CEventManager::ReadEvents()
 ** Gets all events for the given day. This returns even deleted events.
 **
 */
-std::list<CEventMessage*> CEventManager::GetEvents(int day, int month, int year)
+std::vector<CEventMessage*> CEventManager::GetEvents(int day, int month, int year)
 {
-	std::list<CEventMessage*> eventList;
+	std::vector<CEventMessage*> eventVector;
 	int value = CEventMessage::DateToValue(day, month, year);
 	int eventDay, eventMonth, eventYear;
 	int days;
@@ -170,7 +185,7 @@ std::list<CEventMessage*> CEventManager::GetEvents(int day, int month, int year)
 			case EVENT_SINGLE:
 				if (day == eventDay && month == eventMonth && year == eventYear)
 				{
-					eventList.push_back(&(*j));
+					eventVector.push_back(&(*j));
 				}
 				break;
 
@@ -178,7 +193,7 @@ std::list<CEventMessage*> CEventManager::GetEvents(int day, int month, int year)
 				days = CEventMessage::CalculateNumOfDays((*j).GetDate(), value);
 				if (days % (*j).GetEveryNth() == 0)
 				{
-					eventList.push_back(&(*j));
+					eventVector.push_back(&(*j));
 				}
 				break;
 
@@ -186,7 +201,7 @@ std::list<CEventMessage*> CEventManager::GetEvents(int day, int month, int year)
 				days = CEventMessage::CalculateNumOfDays((*j).GetDate(), value);
 				if (days == 0 || (days % 7 == 0 && ((days / 7) % (*j).GetEveryNth() == 0)))
 				{
-					eventList.push_back(&(*j));
+					eventVector.push_back(&(*j));
 				}
 				break;
 
@@ -196,7 +211,7 @@ std::list<CEventMessage*> CEventManager::GetEvents(int day, int month, int year)
 					days = (eventYear * 12 + eventMonth) - (year * 12 + month);
 					if (days == 0 || days % (*j).GetEveryNth() == 0)
 					{
-						eventList.push_back(&(*j));
+						eventVector.push_back(&(*j));
 					}
 				}
 				break;
@@ -206,7 +221,7 @@ std::list<CEventMessage*> CEventManager::GetEvents(int day, int month, int year)
 				{
 					if ((eventYear - year) % (*j).GetEveryNth() == 0)
 					{
-						eventList.push_back(&(*j));
+						eventVector.push_back(&(*j));
 					}
 				}
 				break;
@@ -214,7 +229,10 @@ std::list<CEventMessage*> CEventManager::GetEvents(int day, int month, int year)
 		}
 	}
 
-	return eventList;
+	// Sort the vector so that the count increases
+	std::sort(eventVector.begin(), eventVector.end(), CompareEvents);
+
+	return eventVector;
 }
 
 CEventMessage* CEventManager::GetEvent(int ID)
@@ -285,9 +303,9 @@ void CEventManager::AddEvent(CEventMessage& event)
 
 void CEventManager::WriteEvents(int day, int month, int year)
 {
-	std::list<CEventMessage*> eventList = GetEvents(day, month, year);
+	std::vector<CEventMessage*> eventList = GetEvents(day, month, year);
 
-	std::list<CEventMessage*>::iterator i = eventList.begin();
+	std::vector<CEventMessage*>::iterator i = eventList.begin();
 	for( ; i != eventList.end(); i++)
 	{
 		WriteEvent(*(*i));
@@ -301,6 +319,8 @@ void CEventManager::WriteEvent(CEventMessage& event)
 	std::string message = event.GetMessage();
 	const char* IniPath = CCalendarWindow::c_Config.GetEventsPath().c_str();
 	int day, month, year;
+
+   	if (!event.IsPermanent()) return; // No need to write read only events
 
 	CEventMessage::ValueToDate(event.GetDate(), &day, &month, &year);
 	sprintf(Date, "%i-%i-%i", day, month, year);
@@ -343,8 +363,6 @@ void CEventManager::WriteEvent(CEventMessage& event)
 	WritePrivateProfileString( Date, "Deleted", event.IsDeleted()?"1":"0", IniPath );
 
 	// Write timestamp to know when this was last modified
-	time_t ltime;
-	time(&ltime);
-	sprintf(tmpSz, "%ld", ltime);
+	sprintf(tmpSz, "%ld", event.GetTimeStamp());
 	WritePrivateProfileString( Date, "TimeStamp", tmpSz, IniPath );
 }

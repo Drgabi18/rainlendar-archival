@@ -1,4 +1,4 @@
-/*
+ /*
   Copyright (C) 2000 Kimmo Pekkola
 
   This program is free software; you can redistribute it and/or
@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Background.cpp,v 1.11 2002/11/25 17:12:24 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Background.cpp,v 1.13 2003/06/15 09:42:41 Rainy Exp $
 
   $Log: Background.cpp,v $
+  Revision 1.13  2003/06/15 09:42:41  Rainy
+  Added support for multiple calendars.
+
+  Revision 1.12  2003/05/07 19:18:29  rainy
+  The member variables are initialized correctly.
+
   Revision 1.11  2002/11/25 17:12:24  rainy
   Now uses the AddPath method
 
@@ -90,9 +96,12 @@ CBackground::~CBackground()
 */
 void CBackground::Initialize()
 {
+    m_Filename = "";
 	m_Width = 0;
 	m_Height = 0;
 	m_Alpha = false;
+	m_Image.Clear();
+	m_BGImage.Clear();
 }
 
 /* 
@@ -179,26 +188,28 @@ bool CBackground::Create(int X, int Y, int Width, int Height)
 
 		if (m_BGImage.GetWidth() < Width || m_BGImage.GetHeight() < Height)
 		{
-			m_Width = max(Width, m_BGImage.GetWidth());
-			m_Height = max(Height, m_BGImage.GetHeight());
-
 			// We need to resize the image to match the desired windowsize
 			if(CCalendarWindow::c_Config.GetBackgroundMode() == MODE_TILE)
 			{
+				// If we're tiling, we use the bg-image as one calendar
+				m_Width = max(Width, m_BGImage.GetWidth() * CCalendarWindow::c_Config.GetHorizontalCount());
+				m_Height = max(Height, m_BGImage.GetHeight() * CCalendarWindow::c_Config.GetVerticalCount());
 				m_BGImage.Resize(m_Width, m_Height, IMAGE_RESIZE_TYPE_TILE);
 			}
 			else 
 			{
+				m_Width = max(Width, m_BGImage.GetWidth());
+				m_Height = max(Height, m_BGImage.GetHeight());
 				m_BGImage.Resize(m_Width, m_Height, IMAGE_RESIZE_TYPE_STRETCH);
 			}
 		}
-
-		if (m_BGImage.GetWidth() > Width || m_BGImage.GetHeight() > Height)
+		else
 		{
 			m_Width = max(Width, m_BGImage.GetWidth());
 			m_Height = max(Height, m_BGImage.GetHeight());
-			resize = true;
 		}
+		resize = true;
+
 		m_Alpha = m_BGImage.HasAlpha();
 	}
 

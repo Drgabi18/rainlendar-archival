@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemWeekdays.cpp,v 1.6 2002/11/12 18:11:34 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemWeekdays.cpp,v 1.7 2003/06/15 09:49:13 Rainy Exp $
 
   $Log: ItemWeekdays.cpp,v $
+  Revision 1.7  2003/06/15 09:49:13  Rainy
+  Added support for multiple calendars.
+
   Revision 1.6  2002/11/12 18:11:34  rainy
   The interface of Paint changed a little.
 
@@ -46,101 +49,4 @@
 #include "RasterizerFont.h"
 #include "CalendarWindow.h"
 
-#define NUMOFCOMPONENTS 7
-
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-CItemWeekdays::CItemWeekdays()
-{
-
-}
-
-CItemWeekdays::~CItemWeekdays()
-{
-
-}
-
-/* 
-** Initialize
-**
-** 
-**
-*/
-void CItemWeekdays::Initialize()
-{
-	if( CCalendarWindow::c_Config.GetWeekdaysEnable() && 
-		CCalendarWindow::c_Config.GetWeekdaysRasterizer()!=CRasterizer::TYPE_NONE)
-	{
-		switch(CCalendarWindow::c_Config.GetWeekdaysRasterizer()) {
-		case CRasterizer::TYPE_BITMAP:
-			CRasterizerBitmap* BMRast;
-
-			BMRast=new CRasterizerBitmap;
-			if(BMRast==NULL) THROW(ERR_OUTOFMEM);
-
-			BMRast->Load(CCalendarWindow::c_Config.GetWeekdaysBitmapName());
-			BMRast->SetNumOfComponents(NUMOFCOMPONENTS);
-
-			BMRast->SetAlign(CCalendarWindow::c_Config.GetWeekdaysAlign());
-			SetRasterizer(BMRast);
-			break;
-
-		case CRasterizer::TYPE_FONT:
-			CRasterizerFont* FNRast;
-
-			FNRast=new CRasterizerFont;
-			if(FNRast==NULL) THROW(ERR_OUTOFMEM);
-
-			FNRast->SetFont(CCalendarWindow::c_Config.GetWeekdaysFont());
-			FNRast->CreateStringTable(CCalendarWindow::c_Config.GetWeekdayNames(), NUMOFCOMPONENTS);
-			FNRast->SetAlign(CCalendarWindow::c_Config.GetWeekdaysAlign());
-			FNRast->SetColor(CCalendarWindow::c_Config.GetWeekdaysFontColor());
-			FNRast->UpdateDimensions();
-			SetRasterizer(FNRast);
-			break;
-		}
-	}
-}
-
-/* 
-** Paint
-**
-** Paints the weekdays in correct place (over the days)
-**
-*/
-void CItemWeekdays::Paint(CImage& background)
-{
-	int X, Y, W, H;
-	int i;
-
-	W = CCalendarWindow::c_Config.GetDaysW() / 7;	// 7 Columns
-	H = CCalendarWindow::c_Config.GetDaysH() / 6;	// 6 Rows
-
-	if(m_Rasterizer != NULL) 
-	{
-		Y = CCalendarWindow::c_Config.GetDaysY() - H;
-
-		for(i = 0; i < 7; i++) 
-		{
-			X = CCalendarWindow::c_Config.GetDaysX() + i * W;
-	
-			if(CCalendarWindow::c_Config.GetStartFromMonday()) 
-			{
-				if(i == 6) 
-				{
-					m_Rasterizer->Paint(background, X, Y, W, H, 0);
-				} 
-				else 
-				{
-					m_Rasterizer->Paint(background, X, Y, W, H, i + 1);
-				}
-			}
-			else 
-			{
-				m_Rasterizer->Paint(background, X, Y, W, H, i);
-			}
-		}
-	}
-}
+#define NUMOine NUMOine NUMOine NUMOine NUMOine NUMOine NUMOine NUMOine NUMOin

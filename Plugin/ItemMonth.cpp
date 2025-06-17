@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/ItemMonth.cpp,v 1.8 2002/11/12 18:11:35 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemMonth.cpp,v 1.9 2003/06/15 09:49:12 Rainy Exp $
 
   $Log: ItemMonth.cpp,v $
+  Revision 1.9  2003/06/15 09:49:12  Rainy
+  Added support for multiple calendars.
+
   Revision 1.8  2002/11/12 18:11:35  rainy
   The interface of Paint changed a little.
 
@@ -190,7 +193,7 @@ void CItemMonth::Initialize()
 ** Paints the Month in correct place
 **
 */
-void CItemMonth::Paint(CImage& background)
+void CItemMonth::Paint(CImage& background, POINT offset)
 {
 	int X, Y, W, H;
 
@@ -228,6 +231,9 @@ void CItemMonth::Paint(CImage& background)
 			Y = CCalendarWindow::c_Config.GetMonthY() - H;
 			break;
 		};
+
+		X += offset.x;
+		Y += offset.y;
 
 		m_Rasterizer->Paint(background, X, Y, W, H, CCalendarWindow::c_MonthsFirstDate.wMonth - 1);
 	}
