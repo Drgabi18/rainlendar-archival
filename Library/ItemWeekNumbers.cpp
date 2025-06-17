@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/ItemWeekNumbers.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/ItemWeekNumbers.cpp,v 1.2 2005/10/14 17:05:29 rainy Exp $
 
   $Log: ItemWeekNumbers.cpp,v $
+  Revision 1.2  2005/10/14 17:05:29  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -204,7 +207,14 @@ int weekno(int d, int m, int y)
 {
 	int n1, n2, w;
 	n1 = julian(d, m, y);
-    n2 = 7 * (n1 / 7) + 10;
+	if(!CConfig::Instance().GetStartFromMonday()) 
+	{
+	    n2 = 7 * (n1 / 7) + 9;
+	}
+	else
+	{
+	    n2 = 7 * (n1 / 7) + 10;
+	}
 	y = y + 1;
 	while ((w = (n2 - julian(1, 1, y)) / 7) <= 0) 
     {
@@ -288,6 +298,8 @@ void CItemWeekNumbers::Paint(CImage& background, POINT offset)
 			X = days->GetDaysX() - W;
 			X += offset.x;
 
+			weeksFirstDay = weeksFirstDay + 7 * CConfig::Instance().GetWeekNumberDelta();
+
 			for(i = 0; i < lines; i++) 
 			{
 				Y = days->GetDaysY() + i * H;
@@ -301,7 +313,6 @@ void CItemWeekNumbers::Paint(CImage& background, POINT offset)
 				{
         			base = weekno(i * 7 + weeksFirstDay, sysTime.wMonth, sysTime.wYear);
 				}
-				base = (base + CConfig::Instance().GetWeekNumberDelta()) % 54;
 				if (base <= 0) base += 53;
 
 				m_Rasterizer->Paint(background, X, Y, W, H, base);

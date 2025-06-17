@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/ItemEvent.h,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/ItemEvent.h,v 1.2 2005/09/08 16:09:12 rainy Exp $
 
   $Log: ItemEvent.h,v $
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -102,6 +105,7 @@ public:
 	COLORREF GetEventFontColor2() { return m_EventFontColor2; };
     const std::string& GetEventFont2() { return m_EventFont2; };
 	int GetEventSeparation() { return m_EventSeparation; };
+	bool GetEventIconEnable() { return m_EventIconEnable; };	// Mitul
 
 	void SetEventFont(const std::string& EventFont ) { m_EventFont=EventFont; };
 	void SetEventAlign(CRasterizer::ALIGN EventAlign ) { m_EventAlign=EventAlign; };
@@ -113,6 +117,7 @@ public:
 	void SetEventFont2(const std::string& EventFont2 ) { m_EventFont2=EventFont2; };
 	void SetEventFontColor2(COLORREF EventFontColor2 ) { m_EventFontColor2=EventFontColor2; };
 	void SetEventSeparation(int separation) { m_EventSeparation = separation; };
+	void SetEventIconEnable(bool EventIconEnable ) { m_EventIconEnable=EventIconEnable; };	// Mitul
 
 protected:
 	void DrawIcon(CImage& background, int day, int month, int year, int X, int Y, int W, int H);
@@ -132,6 +137,7 @@ protected:
 	std::string m_EventFont2;
 	COLORREF m_EventFontColor2;
 	int m_EventSeparation;		// Separation between components
+	bool m_EventIconEnable;	// Mitul
 };
 
 #endif

@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/Background.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/Background.cpp,v 1.2 2005/10/14 17:05:41 rainy Exp $
 
   $Log: Background.cpp,v $
+  Revision 1.2  2005/10/14 17:05:41  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -201,26 +204,45 @@ bool CBackground::Create(BackgroundCreateStruct& bcs)
 
 		if (m_BGImage.GetWidth() < m_Width || m_BGImage.GetHeight() < m_Height)
 		{
-			m_Image.Create(m_BGImage.GetWidth(), m_BGImage.GetHeight(), 0);
-			m_Image.Blit(m_BGImage, 0, 0, 0, 0, m_BGImage.GetWidth(), m_BGImage.GetHeight());
-
 			// We need to resize the image to match the desired windowsize
 			switch (bcs.mode) 
 			{
 			case MODE_TILE:
-				// If we're tiling, we use the bg-image as one calendar
-				m_Width = max(m_Width, m_BGImage.GetWidth() * (int)CConfig::Instance().GetHorizontalCount());
-				m_Height = max(m_Height, m_BGImage.GetHeight() * (int)CConfig::Instance().GetVerticalCount());
-				m_Image.Resize(m_Width, m_Height, IMAGE_RESIZE_TYPE_TILE, NULL);
+				{
+					// If we're tiling, we use the bg-image as one calendar
+					m_Width = max(m_Width, m_BGImage.GetWidth() * (int)CConfig::Instance().GetHorizontalCount());
+					m_Height = max(m_Height, m_BGImage.GetHeight() * (int)CConfig::Instance().GetVerticalCount());
+					m_Image.Create(m_Width, m_Height, 0);
+
+					POINT offset;
+
+					for (int j = 0; j < CConfig::Instance().GetVerticalCount(); j++)
+					{
+						offset.y = j * m_Height / CConfig::Instance().GetVerticalCount();
+
+						for (int i = 0; i < CConfig::Instance().GetHorizontalCount(); i++)
+						{
+							offset.x = i * m_Width / CConfig::Instance().GetHorizontalCount();
+
+							if (CConfig::Instance().GetGridMonth(j, i) < 0) continue;
+
+							m_Image.Blit(m_BGImage, offset.x, offset.y, 0, 0, m_BGImage.GetWidth(), m_BGImage.GetHeight());
+						}
+					}
+				}
 				break;
 
 			case MODE_STRETCH:
+				m_Image.Create(m_BGImage.GetWidth(), m_BGImage.GetHeight(), 0);
+				m_Image.Blit(m_BGImage, 0, 0, 0, 0, m_BGImage.GetWidth(), m_BGImage.GetHeight());
 				m_Width = max(m_Width, m_BGImage.GetWidth());
 				m_Height = max(m_Height, m_BGImage.GetHeight());
 				m_Image.Resize(m_Width, m_Height, IMAGE_RESIZE_TYPE_STRETCH, NULL);
 				break;
 
 			case MODE_RECT:
+				m_Image.Create(m_BGImage.GetWidth(), m_BGImage.GetHeight(), 0);
+				m_Image.Blit(m_BGImage, 0, 0, 0, 0, m_BGImage.GetWidth(), m_BGImage.GetHeight());
 				m_Width = max(m_Width, m_BGImage.GetWidth());
 				m_Height = max(m_Height, m_BGImage.GetHeight());
 				m_Image.Resize(m_Width, m_Height, IMAGE_RESIZE_TYPE_STRETCH, &bcs.resizeRect);

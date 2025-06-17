@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/RainlendarDLL.h,v 1.2 2005/07/20 16:34:16 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/RainlendarDLL.h,v 1.3 2005/09/08 16:09:12 rainy Exp $
 
   $Log: RainlendarDLL.h,v $
+  Revision 1.3  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.2  2005/07/20 16:34:16  rainy
   no message
 
@@ -124,8 +127,8 @@
 #define MAKE_VER(major, minor) major * 1000 + minor
 
 #define APPNAME "Rainlendar"
-#define VERSION "0.21.2"
-#define RAINLENDAR_VERSION MAKE_VER(21, 2)
+#define VERSION "0.22"
+#define RAINLENDAR_VERSION MAKE_VER(22, 0)
 
 #define WM_NOTIFYICON WM_USER + 101
 
@@ -162,6 +165,7 @@ void RainlendarShowItem(HWND caller, const char* arg);
 void RainlendarHideItem(HWND caller, const char* arg);
 void RainlendarToggleItem(HWND caller, const char* arg);
 void RainlendarChangeSkin(HWND caller, const char* arg);
+void RainlendarShowTodaysEvent(HWND caller, const char* arg);	// Mitul
 
 class CRainlendar
 {

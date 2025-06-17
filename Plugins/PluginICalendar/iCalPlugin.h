@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Plugins/PluginICalendar/iCalPlugin.h,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugins/PluginICalendar/iCalPlugin.h,v 1.2 2005/10/14 17:05:41 rainy Exp $
 
   $Log: iCalPlugin.h,v $
+  Revision 1.2  2005/10/14 17:05:41  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -27,8 +30,8 @@
 
 */
 
-#ifndef _INIPLUGIN_H_
-#define _INIPLUGIN_H_
+#ifndef _ICALPLUGIN_H_
+#define _ICALPLUGIN_H_
 
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>

@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Server/RainlendarServer.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Server/RainlendarServer.cpp,v 1.2 2005/10/14 17:05:29 rainy Exp $
 
   $Log: RainlendarServer.cpp,v $
+  Revision 1.2  2005/10/14 17:05:29  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -103,7 +106,7 @@ void CRainlendarServer::processSingleMsg(PacketMessage* pmsg)
 				{
 					PacketBuffer reply(pcIncorrectVersion);
 					sendPacket(psocket, reply);
-					LOG("The client is using wrong protocol version.");
+					LOG("The client is using wrong protocol version. Please upgrade!");
 				}
 				else if (m_Busy)
 				{
@@ -197,7 +200,7 @@ void CRainlendarServer::processSingleMsg(PacketMessage* pmsg)
 				{
 					PacketBuffer reply(pcIncorrectVersion);
 					sendPacket(psocket, reply);
-					LOG("The client is using wrong protocol version.");
+					LOG("The client is using wrong protocol version. Please upgrade!");
 				}
 				else if (m_Busy)
 				{
@@ -293,7 +296,7 @@ void CRainlendarServer::processSingleMsg(PacketMessage* pmsg)
 		break;
 
 	default:
-		printf("Unknown event %i\n", ppacket->getCmd());
+		LOG("Unknown event %i", ppacket->getCmd());
 		break;
 	}
 	

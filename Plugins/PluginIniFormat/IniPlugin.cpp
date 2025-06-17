@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Plugins/PluginIniFormat/IniPlugin.cpp,v 1.2 2005/07/11 18:29:06 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugins/PluginIniFormat/IniPlugin.cpp,v 1.3 2005/10/14 17:05:41 rainy Exp $
 
   $Log: IniPlugin.cpp,v $
+  Revision 1.3  2005/10/14 17:05:41  rainy
+  no message
+
   Revision 1.2  2005/07/11 18:29:06  rainy
   no message
 
@@ -113,7 +116,7 @@ LPCTSTR Plugin_GetAuthor()
 
 UINT Plugin_GetVersion()
 {
-	return 1003;	// Rainlendar 0.21.1
+	return 1005;	// Rainlendar 0.22
 }
 
 void Plugin_ItemNotification(GUID** guid)
@@ -199,6 +202,32 @@ bool Plugin_ShowConfig(HWND hwndParent, LPCTSTR configFile)
 	return false;
 }
 
+void FixPath(std::tstring& strPath)
+{
+	// Check for absolute path
+	if(-1 == strPath.find(':')) 
+	{
+		char tmpName[MAX_PATH];
+
+		// Get the DLL's directory
+		HMODULE module = GetModuleHandle("Rainlendar.dll");
+		GetModuleFileName(module, tmpName, MAX_PATH);
+		char* Slash = strrchr(tmpName, '\\');
+		*(Slash + 1) = 0;	// Cut the Rainlendar.dll from the name
+		strPath.insert(0, tmpName);
+	}
+}
+
+FILETIME GetTimeNow()
+{
+	FILETIME time, time2;
+	GetSystemTimeAsFileTime(&time);
+	if (FileTimeToLocalFileTime(&time, &time2) != 0)
+		return time2;
+	else
+		return time;
+}
+
 void Plugin_ExportItems(LPCTSTR eventFile, GUID** guids, RAINLENDAR_TYPE type)
 {
 	std::tstring file = eventFile;
@@ -263,8 +292,10 @@ void Plugin_ExportItems(LPCTSTR eventFile, GUID** guids, RAINLENDAR_TYPE type)
 void ExportEvents(LPCTSTR eventFile, RainlendarItem** events)
 {
 	// TODO: Make writing more robust (take a copy first)
+	std::tstring strPath(eventFile);
+	FixPath(strPath);
 
-	HANDLE fileHandle = CreateFile(eventFile, GENERIC_WRITE, NULL, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE fileHandle = CreateFile(strPath.c_str(), GENERIC_WRITE, NULL, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (fileHandle && events)
 	{
 		DWORD written;
@@ -400,7 +431,7 @@ void ExportEvents(LPCTSTR eventFile, RainlendarItem** events)
 				}
 
 				// TimeStamp
-				_stprintf(buffer, _T("TimeStamp=%u\n"), event->timeStamp);
+				_stprintf(buffer, _T("TimeStamp=%u:%u\n"), event->timeStamp.dwHighDateTime,  event->timeStamp.dwLowDateTime);
 				WriteFile(fileHandle, buffer, _tcslen(buffer), &written, NULL);
 			}
 
@@ -428,7 +459,10 @@ void ExportEvents(LPCTSTR eventFile, RainlendarItem** events)
 
 void ExportTodos(LPCTSTR todoFile, RainlendarItem** todos)
 {
-	HANDLE fileHandle = CreateFile(todoFile, GENERIC_WRITE, NULL, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	std::tstring strPath(todoFile);
+	FixPath(strPath);
+
+	HANDLE fileHandle = CreateFile(strPath.c_str(), GENERIC_WRITE, NULL, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (fileHandle && todos)
 	{
 		char buffer[256];
@@ -490,7 +524,7 @@ void ExportTodos(LPCTSTR todoFile, RainlendarItem** todos)
 				}
 
 				// TimeStamp
-				_stprintf(buffer, _T("TimeStamp=%u\n"), todo->timeStamp);
+				_stprintf(buffer, _T("TimeStamp=%u:%u\n"), todo->timeStamp.dwHighDateTime,  todo->timeStamp.dwLowDateTime);
 				WriteFile(fileHandle, buffer, _tcslen(buffer), &written, NULL);
 
 				// Profile
@@ -567,7 +601,10 @@ bool ImportEvents(LPCTSTR eventFile, bool readOnly, bool setID)
 
 	int version = 0;
 
-	HANDLE fileHandle = CreateFile(eventFile, GENERIC_READ, NULL, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	std::tstring strPath(eventFile);
+	FixPath(strPath);
+
+	HANDLE fileHandle = CreateFile(strPath.c_str(), GENERIC_READ, NULL, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (fileHandle != INVALID_HANDLE_VALUE)
 	{
 		DWORD fileSize = GetFileSize(fileHandle, 0);
@@ -656,7 +693,7 @@ bool ImportEvents(LPCTSTR eventFile, bool readOnly, bool setID)
 							newEvent->size = sizeof(RainlendarEvent);
 							newEvent->readOnly = readOnly;
 							newEvent->type = RAINLENDAR_TYPE_EVENT;
-							time(&newEvent->timeStamp);
+							newEvent->timeStamp = GetTimeNow();
 							CoCreateGuid(&newEvent->guid);	// Create GUID just in case it's not in the file
 
 							newRecurrency = new RainlendarRecurrency;
@@ -674,6 +711,9 @@ bool ImportEvents(LPCTSTR eventFile, bool readOnly, bool setID)
 					} 
 					else if (newEvent)
 					{
+						std::string tmpString;
+						int n;
+
 						if (CSTR_EQUAL == CompareString(LOCALE_USER_DEFAULT, NORM_IGNORECASE, pos, 5, _T("GUID="), -1))
 						{
 							DecodeGUID(&newEvent->guid, pos + 5);
@@ -693,9 +733,9 @@ bool ImportEvents(LPCTSTR eventFile, bool readOnly, bool setID)
 						else if (CSTR_EQUAL == CompareString(LOCALE_USER_DEFAULT, NORM_IGNORECASE, pos, 8, _T("Message="), -1))
 						{
 							// replace \n with newline
-							std::string tmpString = pos + 8;
+							tmpString = pos + 8;
 							
-							int n = tmpString.find("\\");
+							n = tmpString.find("\\");
 							while (n != -1)
 							{
 								if (tmpString[n + 1] == '\\') 
@@ -782,7 +822,19 @@ bool ImportEvents(LPCTSTR eventFile, bool readOnly, bool setID)
 						{
 							if (setID)
 							{
-								newEvent->timeStamp = _ttoi(pos + 10);
+								//Let's check for the old time_t style time stamps
+								tmpString = pos + 10;
+								
+								n = tmpString.find(":");
+								if (n != -1)
+									_stscanf(pos + 10, _T("%u:%u"), &newEvent->timeStamp.dwHighDateTime, &newEvent->timeStamp.dwLowDateTime);
+								else
+								{
+									DWORD t = _ttoi(pos + 10);
+									LONGLONG ll = Int32x32To64(t, 10000000) + 116444736000000000;
+									newEvent->timeStamp.dwLowDateTime = (DWORD) ll;
+									newEvent->timeStamp.dwHighDateTime = ll >>32;
+								}
 							}
 							// Else use current time for the stamp
 						}
@@ -962,7 +1014,10 @@ bool ImportTodos(LPCTSTR todoFile, bool readOnly, bool setID)
 		return false;
 	}
 
-	HANDLE fileHandle = CreateFile(todoFile, GENERIC_READ, NULL, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	std::tstring strPath(todoFile);
+	FixPath(strPath);
+
+	HANDLE fileHandle = CreateFile(strPath.c_str(), GENERIC_READ, NULL, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (fileHandle != INVALID_HANDLE_VALUE)
 	{
 		DWORD fileSize = GetFileSize(fileHandle, 0);
@@ -1024,7 +1079,7 @@ bool ImportTodos(LPCTSTR todoFile, bool readOnly, bool setID)
 						newTodo->size = sizeof(RainlendarTodo);
 						newTodo->readOnly = readOnly;
 						newTodo->type = RAINLENDAR_TYPE_TODO;
-						time(&newTodo->timeStamp);
+						newTodo->timeStamp = GetTimeNow();
 						CoCreateGuid(&newTodo->guid);	// Create GUID just in case it's not in the file
 
 						valid = false;
@@ -1060,7 +1115,19 @@ bool ImportTodos(LPCTSTR todoFile, bool readOnly, bool setID)
 						{
 							if (setID)
 							{
-								newTodo->timeStamp = _ttoi(pos + 10);
+								//Let's check for the old time_t style time stamps
+								std::string tmpString = pos + 10;
+								
+								int n = tmpString.find(":");
+								if (n != -1)
+									_stscanf(pos + 10, _T("%u:%u"), &newTodo->timeStamp.dwHighDateTime, &newTodo->timeStamp.dwLowDateTime);
+								else
+								{
+									DWORD t = _ttoi(pos + 10);
+									LONGLONG ll = Int32x32To64(t, 10000000) + 116444736000000000;
+									newTodo->timeStamp.dwLowDateTime = (DWORD) ll;
+									newTodo->timeStamp.dwHighDateTime = ll >>32;
+								}
 							}
 							// else Use current time for the stamp
 						}
@@ -1139,6 +1206,7 @@ void ReadSettings(LPCTSTR configFile)
 
 			_stprintf(buffer, _T("EventReadOnly%i"), i + 1);
 			iniFileName.readOnly = (1 == GetPrivateProfileInt(PLUGIN_NAME, buffer, 0, configFile));
+
 
 			g_EventFiles.push_back(iniFileName);
 		}

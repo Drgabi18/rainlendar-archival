@@ -146,5 +146,29 @@ SOURCE=.\resource.h
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # End Group
+# Begin Source File
+
+SOURCE=.\AUTHORS
+# End Source File
+# Begin Source File
+
+SOURCE=.\ChangeLog
+# End Source File
+# Begin Source File
+
+SOURCE=.\COPYING
+# End Source File
+# Begin Source File
+
+SOURCE=.\INSTALL
+# End Source File
+# Begin Source File
+
+SOURCE=.\NEWS
+# End Source File
+# Begin Source File
+
+SOURCE=.\README
+# End Source File
 # End Target
 # End Project

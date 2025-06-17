@@ -354,6 +354,9 @@ below for more info about the fonts.<p>
 <b>EventFontColor2</b><br>
 Color of the font defined as BGR hex-value (e.g. WeekdaysFontColor=44AAFF)<p>
 
+<b>EventIconEnable<br>
+</b>If set to 0 the icons are not shown.<p>
+
 <b>WeekNumbersEnable</b><br>
 0 = Do not show week numbers in calendar<br>
 1 = Show week numbers in calendar<p>
@@ -517,7 +520,18 @@ The vertical separation between the header and the items (i.e. how close/far the
 placed from each other).<p>
 
 <b>EventListHeaderFormat</b><br>
-The header format. Check <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vclib/html/_crt_strftime.2c_.wcsftime.asp">here</a> for the format codes.<p>
+The header format. Check <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vclib/html/_crt_strftime.2c_.wcsftime.asp">here</a> for the format codes. 
+There are also a special code that can be used in the header: %D displays the 
+number of days the events are from today.<p>
+
+<b>EventListItemMargin</b><br>
+The horizontal margin for the event list items.<p>
+
+<b>EventListItemIconEnable</b><br>
+If set to 1 the event icon is also shown in the event list.<p>
+
+<b>EventListDaySeparation</b><br>
+Defines the space between the days in the event list.
 
 <p><b><font size="4">Buttons</font></b></p>
 It's also possible to add buttons to the skins. This can be only done in the skin's ini-file as there is no GUI for the buttons.
@@ -543,7 +557,16 @@ The command that is executed when the button is pressed. It can be a normal appl
 <b>Enable</b><br>
 Set to 0, to disable the item.
 
-<pre>
+<p>
+
+<b>Repeat<br>
+</b>0=The item is drawn only once.<br>
+1=The item is draw on all calendars.<br>
+2=The item is drawn only on the current month.<br>
+3=The item is drawn only on the viewed month.<p>
+
+<b>IncludeSize<br>
+</b>If this is set to 1, the item is included in the calendar size calculation.<pre>
 [Button1]
 Window=0
 X=5
@@ -553,13 +576,15 @@ Command=!RainlendarShowPrev
 </pre>
 
 <p><b><font size="4">Time items</font></b></p>
-Time items show the current date or time in the calendar. They can be used to e.g. show a clock or current day.
+Time items show the current date or time in the calendar. It's also possible 
+to show the time in the tooltip. They can be used to e.g. show a clock or current day.
 Note that the window is updated only once per minute so you cannot use seconds in the clock (or you can but it's rather pointless).
 To add a time item you need to create a new section called [TimeN] where the N is a number (it can be any number as long as no other time item is using it).
 The time items can have these values:<p>
 
 <b>Window</b><br>
-Defines the window where the button is placed. 0 = Calendar, 1 = Todo, 2 = MessageBox, 3 = EventList.<p>
+Defines the window where the button is placed. 0 = Calendar, 1 = Todo, 2 = MessageBox, 3 = EventList, 
+5 = Tooltip.<p>
 
 <b>X</b><br>
 X-coordinate of the button. You can also give negative values in which case the button location is calculated from the 
@@ -610,7 +635,20 @@ Check <a href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/
 <b>Enable</b><br>
 Set to 0, to disable the item.
 
-<pre>
+<p>
+
+<b>Repeat<br>
+</b>0=The item is drawn only once.<br>
+1=The item is draw on all calendars.<br>
+2=The item is drawn only on the current month.<br>
+3=The item is drawn only on the viewed month.<p>
+
+<b>IncludeSize<br>
+</b>If this is set to 1, the item is included in the calendar size calculation.<p>
+
+<b>Location<br>
+</b>This defines time zone. It must be defined exactly like the time zones are 
+listed in the Windows Date and Time Properties. See below for example.<pre>
 [Time1]
 Window=0
 X=-50
@@ -619,7 +657,7 @@ Rasterizer=FONT
 Font=-17/0/0/0/700/0/0/0/0/3/2/1/34/Arial
 FontColor=FFFFFF
 Format=%d
-</pre>
+Location=(GMT-09:00) Alaska</pre>
 
 <p><b><font size="4">Images</font></b></p>
 The images are similar as buttons and time items except that they do not do anything. An image is just drawn in the window.
@@ -642,7 +680,16 @@ The name of the image.<p>
 <b>Enable</b><br>
 Set to 0, to disable the item.
 
-<pre>
+<p>
+
+<b>Repeat<br>
+</b>0=The item is drawn only once.<br>
+1=The item is draw on all calendars.<br>
+2=The item is drawn only on the current month.<br>
+3=The item is drawn only on the viewed month.<p>
+
+<b>IncludeSize<br>
+</b>If this is set to 1, the item is included in the calendar size calculation.<pre>
 [Image1]
 Window=0
 X=0
@@ -704,9 +751,10 @@ Other keys that can be in the profile section are:<p>
 <li>EventIconAlign</li>
 <li>EventDrawAlways</li>
 <li>EventListFontColor</li>
-<li>Priority</li><p>
+<li>Priority</li>
+<li>RecurringPostfixString</li>
 
-The values for the keys are exactly the same as defined above. The profile 
+<p>The values for the keys are exactly the same as defined above. The profile 
 settings override the default skin settings, so for example if the default
 ToolTipFontColor value is black and you create a profile that defines it
 white, all events that use that profile will draw the tooltip texts white.
@@ -736,6 +784,9 @@ The profile's priority value is added to this to determine the actual priority
 for the event. If you don't want that the recurrence pattern affects the priorities
 of the events you can define them so that they are >50 apart from each other. E.g.
 100, 200, 300, etc.<p>
+
+The RecurringPostfixString will append the given text to the end of the events that use 
+the profile. Note that the text will be added only to recurring events.<p>
 
 Currently it is not possible to create/edit the profiles from the GUI. 
 You need to create by hand with a text editor.<p>

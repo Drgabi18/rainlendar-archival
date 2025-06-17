@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/EventManager.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/EventManager.cpp,v 1.2 2005/10/14 17:05:41 rainy Exp $
 
   $Log: EventManager.cpp,v $
+  Revision 1.2  2005/10/14 17:05:41  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -161,7 +164,7 @@ bool CEventManager::AddItem(CEntryItem* newItem, bool buffer)
 		if (item)
 		{
 			// Item is already in the manager, check if the new one is newer
-			if (item->GetTimeStamp() < newItem->GetTimeStamp())
+			if (CompareFileTime(&item->GetTimeStamp(), &newItem->GetTimeStamp()) == -1)
 			{
 				// Replace and delete the old one
 				RemoveItem(item);
@@ -254,7 +257,7 @@ bool CEventManager::FlushBufferedItems(bool sendToAll)
 			if (item)
 			{
 				// Event is already in the manager, check if the new one is newer
-				if (item->GetTimeStamp() < m_BufferedAddItems[i]->GetTimeStamp())
+				if (CompareFileTime(&item->GetTimeStamp(), &m_BufferedAddItems[i]->GetTimeStamp()) == -1)
 				{
 					// Replace and delete the old one
 					RemoveItem(item);

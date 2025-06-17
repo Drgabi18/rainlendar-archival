@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/RainlendarAPI.h,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/RainlendarAPI.h,v 1.2 2005/10/12 15:47:02 rainy Exp $
 
   $Log: RainlendarAPI.h,v $
+  Revision 1.2  2005/10/12 15:47:02  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -145,7 +148,7 @@ struct RainlendarItem
 	GUID guid;
 	BYTE deleted;
 	BYTE readOnly;				// Items are not sent for saving
-    time_t timeStamp;	
+    FILETIME timeStamp;
 };
 
 struct RainlendarTodo : public RainlendarItem

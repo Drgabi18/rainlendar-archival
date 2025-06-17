@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/FileTime.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/FileTime.cpp,v 1.2 2005/09/08 16:09:12 rainy Exp $
 
   $Log: FileTime.cpp,v $
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -41,6 +44,7 @@
 #include "FileTime.h"
 #include "Litestep.h"
 #include "CalendarWindow.h"
+#include "TimeZones.h"
 #include <tchar.h>
 #include <stdio.h>
 #include <math.h>
@@ -265,7 +269,7 @@ int CFileTime::GetDaysInMonth()
 
 	UINT dates[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
-	if (sysTime.wMonth == 2 && ((((sysTime.wYear % 4) == 0) && ((sysTime.wYear % 100) != 0)) || (sysTime.wYear % 400) == 0))
+	if (sysTime.wMonth == 2 && IsLeapYear(sysTime.wYear))
 	{
 		return 29;
 	}
@@ -273,11 +277,18 @@ int CFileTime::GetDaysInMonth()
 	return dates[sysTime.wMonth - 1];
 }
 
+bool CFileTime::IsLeapYear(int y)
+{
+	if ( ( ((y % 4) == 0) && ((y % 100) != 0) ) || ((y % 400) == 0) )
+		return true;
+	return false;
+}
+
 bool CFileTime::IsLeapYear()
 {
 	const SYSTEMTIME& sysTime = GetSystemTime();
 
-	if (sysTime.wMonth == 2 && ((((sysTime.wYear % 4) == 0) && ((sysTime.wYear % 100) != 0)) || (sysTime.wYear % 400) == 0))
+	if (sysTime.wMonth == 2 && IsLeapYear(sysTime.wYear))
 	{
 		return true;
 	}
@@ -335,7 +346,7 @@ bool CFileTime::FromTime(LPCTSTR str)
 	SYSTEMTIME sysTime = GetSystemTime();
 
 	bool ok = false;
-	int hour, min;
+	int hour = 0, min = 0;
 	std::string tmpString = str;
 
 	// Extract the time
@@ -402,3 +413,235 @@ LPCTSTR CFileTime::ToTimeAndDateString(bool noYear)
 	return buffer;
 }
 
+// Mitul{
+
+int CFileTime::GetYear()
+{
+	const SYSTEMTIME& sysTime = GetSystemTime();
+	return sysTime.wYear;
+}
+
+int CFileTime::DifferenceInYears(CFileTime& dt)
+{
+	return abs(GetYear() - dt.GetYear());
+}
+
+bool CFileTime::IsSameDate(CFileTime& dt)
+{
+	const SYSTEMTIME& sysTime1 = GetSystemTime();
+	const SYSTEMTIME& sysTime2 = dt.GetSystemTime();
+
+	return ((sysTime1.wYear == sysTime2.wYear) && (sysTime1.wMonth == sysTime2.wMonth) && (sysTime1.wDay == sysTime2.wDay));
+}
+
+CFileTime* GetDSTDate(SYSTEMTIME& sysTime, int yr)
+{
+	CFileTime* ft;
+	SYSTEMTIME st;
+	if (sysTime.wYear > 0)
+	{
+		ft = new CFileTime(sysTime.wDay, sysTime.wMonth, yr, sysTime.wHour, sysTime.wMinute, sysTime.wSecond);
+	}
+	else
+	{
+		ft = new CFileTime(1, sysTime.wMonth, yr, sysTime.wHour, sysTime.wMinute, sysTime.wSecond);
+		
+		st =  ft->GetSystemTime();
+		if (sysTime.wDayOfWeek >= st.wDayOfWeek)
+			ft->Add ( (sysTime.wDayOfWeek - st.wDayOfWeek) * 24 * 3600 );
+		else
+			ft->Add ( (7 - st.wDayOfWeek) * 24 * 3600 );
+		
+		for (int i=1; i < sysTime.wDay; i++)
+			ft->Add(7 * 24 * 3600 );
+		
+		st =  ft->GetSystemTime();
+		while (st.wMonth != sysTime.wMonth)
+		{
+			ft->Substract(7 * 24 * 3600 );
+			st =  ft->GetSystemTime();
+		}
+	}
+	
+	return ft;
+}
+
+int isDst(SYSTEMTIME& sysTime, TIME_ZONE_INFORMATION& tzInfo)
+{
+	if ( (tzInfo.DaylightDate.wMonth == 0) || (tzInfo.StandardDate.wMonth == 0)
+		|| (tzInfo.DaylightDate.wDay == 0) || (tzInfo.StandardDate.wDay == 0) )
+		return 0;
+
+	CFileTime* ftS = GetDSTDate(tzInfo.StandardDate, sysTime.wYear);
+	CFileTime* ftD = GetDSTDate(tzInfo.DaylightDate, sysTime.wYear);
+
+	/*
+	SYSTEMTIME st = ftS->GetSystemTime();
+	DebugLog("Stnadard Time: %i/%i/%i %i:%i:%i %i", st.wMonth,st.wDay,st.wYear,st.wHour,st.wMinute,st.wSecond,st.wDayOfWeek);
+	
+	st = ftD->GetSystemTime();
+	DebugLog("Stnadard Time: %i/%i/%i %i:%i:%i %i", st.wMonth,st.wDay,st.wYear,st.wHour,st.wMinute,st.wSecond,st.wDayOfWeek);
+	*/
+	
+	CFileTime* ft = new CFileTime(sysTime);
+	if (ftS->Compare(*ftD) == -1)
+	{
+		if (!((ft->Compare(*ftS) >= 0) && (ft->Compare(*ftD) == -1)))
+			return 2;
+		else
+			return 1;
+	}
+	else if (ftS->Compare(*ftD) == 1)
+	{
+		if ((ft->Compare(*ftD) >= 0) && (ft->Compare(*ftS) == -1))
+			return 2;
+		else
+			return 1;
+	}
+	else
+		return 0;
+}
+
+void CFileTime::SetWorldTimeAt(const char* place)
+{
+	TIME_ZONE_INFORMATION tzInfo;
+	TIME_ZONE_INFORMATION tzLocal;
+	
+	/*
+	TzSpecificLocalTimeToSystemTime
+	SystemTimeToTzSpecificLocalTime
+	GetTimeZoneInformation
+	http://support.microsoft.com/kb/221542
+	*/
+
+	CTimeZones::Instance().GetTimeZoneInformation(place, tzInfo);
+	int dst = GetTimeZoneInformation(&tzLocal);
+	if ((&tzInfo) && (dst != TIME_ZONE_ID_INVALID) )
+	{
+		if (CCalendarWindow::Is2k())
+		{
+			SYSTEMTIME timeGMT = GetSystemTime();
+			SYSTEMTIME timeOther = GetSystemTime();
+			//TzSpecificLocalTimeToSystemTime(NULL, &timeOther, &timeGMT);
+			tzLocal.Bias *= -1;
+			tzLocal.DaylightBias *= -1;
+			tzLocal.StandardBias *= -1;
+			SystemTimeToTzSpecificLocalTime(&tzLocal, &timeOther, &timeGMT);
+			SystemTimeToTzSpecificLocalTime(&tzInfo, &timeGMT, &timeOther);
+			m_Valid = SystemTimeToFileTime(&timeOther, &m_FileTime) != 0;
+		}
+		else
+		{
+			ULONGLONG secs;
+			if (dst == 2) 
+				secs = abs(tzLocal.Bias + tzLocal.DaylightBias) * 60;
+			else if (dst == 1)
+				secs = abs(tzLocal.Bias + tzLocal.StandardBias) * 60;
+			else
+				secs = abs(tzLocal.Bias) * 60;
+
+			if (tzLocal.Bias<0)
+				Substract(secs);
+			else
+				Add(secs);
+			
+			secs = abs(tzInfo.Bias) * 60;
+			if (tzInfo.Bias < 0)
+				Add(secs);
+			else
+				Substract(secs);
+
+			SYSTEMTIME time = GetSystemTime();
+			dst = isDst(time, tzInfo);
+			if (dst == 2)
+			{
+				secs = abs(tzInfo.DaylightBias) * 60;
+				if (tzInfo.DaylightBias < 0)
+					Add(secs);
+				else
+					Substract(secs);
+			}
+			else if (dst == 1)
+			{
+				secs = abs(tzInfo.StandardBias) * 60;
+				if (tzInfo.StandardBias < 0)
+					Add(secs);
+				else
+					Substract(secs);
+			}
+		}
+	}
+}
+
+void CFileTime::Get_tm(struct tm &ret)
+{
+	SYSTEMTIME timeGMT = GetSystemTime();
+
+	int x;
+	int monthday[12] = {0,31,59,90,120,151,181,212,243,273,304,334};
+
+	x = monthday[(int)timeGMT.wMonth-1] + (int)timeGMT.wDay;
+	if ( (timeGMT.wMonth>2) && (IsLeapYear(timeGMT.wYear)) )
+		x++;
+	
+	//static struct tm* ret = {(int)timeGMT.wSecond, (int)timeGMT.wMinute, (int)timeGMT.wHour, (int)timeGMT.wDay, (int)timeGMT.wMonth - 1, (int)timeGMT.wYear - 1900, (int)timeGMT.wDayOfWeek, x};
+	ret.tm_hour = (int)timeGMT.wHour;
+	ret.tm_isdst = 0;
+	ret.tm_mday = (int)timeGMT.wDay;
+	ret.tm_min = (int)timeGMT.wMinute;
+	ret.tm_mon = (int)timeGMT.wMonth - 1;
+	ret.tm_sec = (int)timeGMT.wSecond;
+	ret.tm_wday = (int)timeGMT.wDayOfWeek;
+	ret.tm_yday = x;
+	ret.tm_year = (int)timeGMT.wYear - 1900;
+
+	//return &ret;
+}
+
+void CFileTime::ConvertToGMT()
+{
+	TIME_ZONE_INFORMATION tzLocal;
+	//SYSTEMTIME timeGMT = GetSystemTime();
+	//SYSTEMTIME timeOther = GetSystemTime();
+
+	int dst = GetTimeZoneInformation(&tzLocal);
+	ULONGLONG secs;
+	if (dst == 2) 
+		secs = abs(tzLocal.Bias + tzLocal.DaylightBias) * 60;
+	else if (dst == 1)
+		secs = abs(tzLocal.Bias + tzLocal.StandardBias) * 60;		
+	else
+		secs = abs(tzLocal.Bias) * 60;
+
+	if (tzLocal.Bias<0)
+		Substract(secs);
+	else
+		Add(secs);
+	//TzSpecificLocalTimeToSystemTime(NULL, &timeOther, &timeGMT);
+	//timeGMT = GetSystemTime();
+	//m_Valid = SystemTimeToFileTime(&timeGMT, &m_FileTime) != 0;
+}
+
+void CFileTime::ConvertToLocal()
+{
+	TIME_ZONE_INFORMATION tzLocal;
+	//SYSTEMTIME timeGMT = GetSystemTime();
+	//SYSTEMTIME timeOther = GetSystemTime();
+
+	int dst = GetTimeZoneInformation(&tzLocal);
+	ULONGLONG secs;
+	if (dst == 2) 
+		secs = abs(tzLocal.Bias + tzLocal.DaylightBias) * 60;
+	else if (dst == 1)
+		secs = abs(tzLocal.Bias + tzLocal.StandardBias) * 60;		
+	else
+		secs = abs(tzLocal.Bias) * 60;
+
+	if (tzLocal.Bias<0)
+		Add(secs);
+	else
+		Substract(secs);
+	//SystemTimeToTzSpecificLocalTime(NULL, &timeGMT, &timeOther);
+	//m_Valid = SystemTimeToFileTime(&timeOther, &m_FileTime) != 0;
+}
+// Mitul}

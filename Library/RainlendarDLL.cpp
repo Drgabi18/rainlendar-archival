@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/RainlendarDLL.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/RainlendarDLL.cpp,v 1.3 2005/10/14 17:05:29 rainy Exp $
 
   $Log: RainlendarDLL.cpp,v $
+  Revision 1.3  2005/10/14 17:05:29  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -90,6 +96,7 @@
 #include "Error.h"
 #include "Tooltip.h"
 #include "EditEvent.h"
+#include "TimeZones.h"
 
 CRainlendar* Rainlendar = NULL; // The module
 bool CRainlendar::c_DummyLitestep=false;
@@ -252,9 +259,9 @@ void RainlendarConfig(HWND, const char* arg)
 }
 
 /*
-** RainlendarSkinConfig
+** RainlendarEditSkin
 **
-** Callback for the !RainlendarConfig bang
+** Callback for the !RainlendarEditSkin bang
 **
 */
 void RainlendarEditSkin(HWND, const char* arg)
@@ -654,6 +661,19 @@ void RainlendarAddEvent(HWND, const char* arg)
 	Rainlendar->AddEvent(day, month, year);
 }
 
+// Mitul{
+/*
+** RainlendarShowTodaysEvent
+**
+** Callback for the !RainlendarShowTodaysEvent bang
+**
+*/
+void RainlendarShowTodaysEvent(HWND, const char* arg)
+{
+	Rainlendar->GetCalendarWindow().ShowTodaysEvents();
+}
+// Mitul}
+
 static _CrtMemState g_MemoryState;
 
 /* 
@@ -738,6 +758,7 @@ int CRainlendar::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		AddBangCommand("!RainlendarHideItem", RainlendarHideItem);
 		AddBangCommand("!RainlendarToggleItem", RainlendarToggleItem);
 		AddBangCommand("!RainlendarChangeSkin", RainlendarChangeSkin);
+		AddBangCommand("!RainlendarShowTodaysEvent", RainlendarShowTodaysEvent);	// Mitul
 	}
 
 	return Result;	// Alles OK
@@ -790,11 +811,13 @@ void CRainlendar::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainlendarHideItem");
 		RemoveBangCommand("!RainlendarToggleItem");
 		RemoveBangCommand("!RainlendarChangeSkin");
+		RemoveBangCommand("!RainlendarShowTodaysEvent");	// Mitul
 	}
 
 	delete this;
 
 	CConfig::DeleteInstance();
+	CTimeZones::DeleteInstance();
 
 	FinalizeLitestep();
 
@@ -870,21 +893,32 @@ void CRainlendar::ToggleWindow(bool visible)
 		}
 		if (state & (1 << (int)RAINWINDOW_TYPE_TODO))
 		{
-			m_Calendar.GetTodoWindow().ToggleWindow();
+			if (!m_Calendar.GetTodoWindow().GetSmartlyHidden()) 
+			{
+				m_Calendar.GetTodoWindow().ToggleWindow();
+			}
 			CConfig::Instance().SetTodoEnable(!CConfig::Instance().GetTodoEnable());
 		}
 		if (state & (1 << (int)RAINWINDOW_TYPE_EVENTLIST))
 		{
-			m_Calendar.GetEventListWindow().ToggleWindow();
+			if (!m_Calendar.GetEventListWindow().GetSmartlyHidden()) 
+			{
+				m_Calendar.GetEventListWindow().ToggleWindow();
+			}
 			CConfig::Instance().SetEventListEnable(!CConfig::Instance().GetEventListEnable());
 		}
 	}
 	else
 	{
 		m_Calendar.ToggleWindow(); 
-		m_Calendar.GetTodoWindow().ToggleWindow();
-		m_Calendar.GetEventListWindow().ToggleWindow();
-
+		if (!m_Calendar.GetTodoWindow().GetSmartlyHidden()) 
+		{
+			m_Calendar.GetTodoWindow().ToggleWindow();
+		}
+		if (!m_Calendar.GetEventListWindow().GetSmartlyHidden()) 
+		{
+			m_Calendar.GetEventListWindow().ToggleWindow();
+		}
 		CConfig::Instance().SetCalendarEnable(!CConfig::Instance().GetCalendarEnable());
 		CConfig::Instance().SetTodoEnable(!CConfig::Instance().GetTodoEnable());
 		CConfig::Instance().SetEventListEnable(!CConfig::Instance().GetEventListEnable());

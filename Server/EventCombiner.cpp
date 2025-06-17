@@ -16,9 +16,39 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Server/EventCombiner.cpp,v 1.2 2005/07/11 16:16:34 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Server/EventCombiner.cpp,v 1.12 2005/10/14 15:18:42 rainy Exp $
 
   $Log: EventCombiner.cpp,v $
+  Revision 1.12  2005/10/14 15:18:42  rainy
+  no message
+
+  Revision 1.11  2005/10/12 16:14:10  rainy
+  no message
+
+  Revision 1.10  2005/10/12 16:12:30  rainy
+  no message
+
+  Revision 1.9  2005/10/12 16:07:07  rainy
+  *** empty log message ***
+
+  Revision 1.8  2005/10/12 16:03:37  rainy
+  no message
+
+  Revision 1.7  2005/10/12 16:02:35  rainy
+  no message
+
+  Revision 1.6  2005/10/12 15:55:05  rainy
+  no message
+
+  Revision 1.5  2005/10/12 15:45:31  rainy
+  no message
+
+  Revision 1.4  2005/09/08 16:45:39  rainy
+  no message
+
+  Revision 1.3  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.2  2005/07/11 16:16:34  rainy
   *** empty log message ***
 
@@ -93,7 +123,9 @@ using namespace ssobjects;
 
 #ifndef _WIN32
 #define _strdup strdup
-#endif
+#define LONGLONG long long
+#define Int32x32To64(a, b) ((LONGLONG)((long)(a)) * (LONGLONG)((long)(b)))
+#endif 
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -181,7 +213,26 @@ bool CEventCombiner::ReadEvents(const char* filename)
 				data = file.GetSectionData(i, "timeStamp");
 				if (data)
 				{
-					item->timeStamp = atoi(data);
+
+					//Let's check for the old time_t style time stamps
+					std::string tmpString = data;
+					
+					int n = tmpString.find(":");
+					if (n != -1)
+						sscanf(data, "%u:%u", &item->timeStamp.dwHighDateTime, &item->timeStamp.dwLowDateTime);
+					else
+					{
+						DWORD t = atoi(data);
+#ifdef _WIN32
+						LONGLONG ll = Int32x32To64(t, 10000000) + 116444736000000000i64;
+#else
+						LONGLONG ll = Int32x32To64(t, 10000000) + 116444736000000000LL;
+#endif
+						item->timeStamp.dwLowDateTime = (DWORD) ll;
+						item->timeStamp.dwHighDateTime = ll >>32;
+					}
+
+					sscanf(data, "%u:%u", &item->timeStamp.dwHighDateTime, &item->timeStamp.dwLowDateTime);
 				}
 
 				data = file.GetSectionData(i, "createdBy");
@@ -377,7 +428,7 @@ bool CEventCombiner::WriteEvents(const char* filename)
 			sprintf(buffer, "%i", info->item->deleted);
 			file.AddSectionData(index, "deleted", buffer);
 
-			sprintf(buffer, "%i", info->item->timeStamp);
+			sprintf(buffer, "%u:%u", info->item->timeStamp.dwHighDateTime, info->item->timeStamp.dwLowDateTime);
 			file.AddSectionData(index, "timeStamp", buffer);
 
 			file.AddSectionData(index, "createdBy", info->createdBy.GetString());
@@ -464,6 +515,28 @@ bool CEventCombiner::WriteEvents(const char* filename)
 	return true;
 }
 
+int CEventCombiner::CompareFileTime(FILETIME* ft1, FILETIME* ft2)
+{
+	LONGLONG i1 = ft1->dwHighDateTime;
+	i1 <<= 32;
+	i1 |= ft1->dwLowDateTime;
+
+	LONGLONG i2 = ft2->dwHighDateTime;
+	i2 <<= 32;
+	i2 |= ft2->dwLowDateTime;
+
+	if (i1 == i2) 
+	{
+		return 0;
+	}
+	else if (i1 > i2) 
+	{
+		return 1;
+	}
+
+	return -1;
+}
+
 bool CEventCombiner::AddEvent(EventInfo* newEvent)
 {
 	if (newEvent && newEvent->item)
@@ -473,7 +546,8 @@ bool CEventCombiner::AddEvent(EventInfo* newEvent)
 		if (i != m_Events.end())
 		{
 			// The event is already in the map
-			if ((*i).second->item->timeStamp < newEvent->item->timeStamp)
+			int res = CompareFileTime(&(*i).second->item->timeStamp, &newEvent->item->timeStamp);
+			if (res == -1)
 			{
 				// Overwrite the event cooz it's newer
 				newEvent->createdBy = (*i).second->createdBy;	// Preserve the created by value
@@ -483,6 +557,11 @@ bool CEventCombiner::AddEvent(EventInfo* newEvent)
 			}
 			else
 			{
+				if (res == 1) 
+				{
+					LOG("The event %s was ignored because it is older than what the server has.", GuidToString(newEvent->item->guid));
+				}
+
 				// Event's timestamp is less or equal -> Delete it
 				DeleteEvent(newEvent);
 				return false;
@@ -565,9 +644,11 @@ PacketBuffer* CEventCombiner::EncodePacket(EventInfo* info, CIPFilter* filter, U
 				(*newPacket) << (unsigned32)event->size;
 				(*newPacket) << (unsigned32)event->type;
 				newPacket->append((unsigned8*)&event->guid, sizeof(GUID));
-				(*newPacket) << (unsigned32)event->timeStamp;
+				(*newPacket) << (unsigned32)event->timeStamp.dwHighDateTime;
+				(*newPacket) << (unsigned32)event->timeStamp.dwLowDateTime;
 				(*newPacket) << (unsigned32)event->readOnly;
 				(*newPacket) << (unsigned32)event->deleted;
+				(*newPacket) << (unsigned32)event->allDayEvent;
 				(*newPacket) << (unsigned32)event->startTime.dwHighDateTime;
 				(*newPacket) << (unsigned32)event->startTime.dwLowDateTime;
 				(*newPacket) << (unsigned32)event->endTime.dwHighDateTime;
@@ -630,7 +711,8 @@ PacketBuffer* CEventCombiner::EncodePacket(EventInfo* info, CIPFilter* filter, U
 
 				(*newPacket) << (unsigned32)todo->size;
 				(*newPacket) << (unsigned32)todo->type;
-				(*newPacket) << (unsigned32)todo->timeStamp;
+				(*newPacket) << (unsigned32)todo->timeStamp.dwHighDateTime;
+				(*newPacket) << (unsigned32)todo->timeStamp.dwLowDateTime;
 				newPacket->append((unsigned8*)&todo->guid, sizeof(GUID));
 				(*newPacket) << (unsigned32)todo->todoType;
 				(*newPacket) << (unsigned32)todo->readOnly;
@@ -710,11 +792,15 @@ bool CEventCombiner::DecodePacket(PacketBuffer* packet, CIPFilter* filter, ULONG
 			}
 
 			(*packet) >> value;
-			newEvent->timeStamp = value;
+			newEvent->timeStamp.dwHighDateTime = value;
+			(*packet) >> value;
+			newEvent->timeStamp.dwLowDateTime = value;
 			(*packet) >> value;
 			newEvent->readOnly = value;
 			(*packet) >> value;
 			newEvent->deleted = value;
+			(*packet) >> value;
+			newEvent->allDayEvent = value;
 			(*packet) >> value;
 			newEvent->startTime.dwHighDateTime = value;
 			(*packet) >> value;
@@ -801,7 +887,9 @@ bool CEventCombiner::DecodePacket(PacketBuffer* packet, CIPFilter* filter, ULONG
 			(*packet) >> value;
 			newTodo->type = (RAINLENDAR_TYPE)value;
 			(*packet) >> value;
-			newTodo->timeStamp = value;
+			newTodo->timeStamp.dwHighDateTime = value;
+			(*packet) >> value;
+			newTodo->timeStamp.dwLowDateTime = value;
 
 			for (int i = 0; i < sizeof(GUID); i++)
 			{
@@ -818,6 +906,8 @@ bool CEventCombiner::DecodePacket(PacketBuffer* packet, CIPFilter* filter, ULONG
 			newTodo->position = value;
 			(*packet) >> value;
 			newTodo->checked = value;
+
+			// TODO: all day event
 
 			// Copy the strings;
 			CStr tempStr;

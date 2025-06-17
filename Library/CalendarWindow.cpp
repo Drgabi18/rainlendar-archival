@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/CalendarWindow.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/CalendarWindow.cpp,v 1.3 2005/10/14 17:05:41 rainy Exp $
 
   $Log: CalendarWindow.cpp,v $
+  Revision 1.3  2005/10/14 17:05:41  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -173,6 +179,7 @@
 #pragma warning(disable: 4996)
 
 #include <windows.h>
+#include <math.h>
 #include "RainlendarDLL.h"
 #include "CalendarWindow.h"
 #include "Config.h"
@@ -230,6 +237,11 @@ CCalendarWindow::CCalendarWindow() : CRainWindow()
 
 	m_Docked = true;
 	m_QuitSet = false;
+	
+	m_CurrentMonthOffset.x = 0;		// Mitul
+	m_CurrentMonthOffset.y = 0;		// Mitul
+	m_ViewMonthOffset.x = 0;
+	m_ViewMonthOffset.y = 0;
 
 	ResetSettings();
 }
@@ -509,11 +521,11 @@ bool CCalendarWindow::Initialize(HWND Parent, HINSTANCE Instance)
 		{
 			FadeWindow(true, false);
 		}
-		if (CConfig::Instance().GetTodoEnable()) 
+		if (CConfig::Instance().GetTodoEnable() && !CConfig::Instance().GetSmartTodo()) 
 		{
 			m_TodoWindow.FadeWindow(true, false);
 		}
-		if (CConfig::Instance().GetEventListEnable()) 
+		if (CConfig::Instance().GetEventListEnable() && !CConfig::Instance().GetSmartEventList()) 
 		{
 			m_EventListWindow.FadeWindow(true, false);
 		}
@@ -783,36 +795,47 @@ SIZE CCalendarWindow::CalcWindowSize()
 {
 	SIZE size = CRainWindow::CalcWindowSize();
 
-	if (m_Days->IsEnabled()) 
+	if (m_Days && m_Days->IsEnabled()) 
 	{
 		size.cx = max(size.cx, m_Days->GetX() + m_Days->GetW());
 		size.cy = max(size.cy, m_Days->GetY() + m_Days->GetH());
 	}
-	if (m_Weekdays->IsEnabled()) 
+	if (m_Weekdays && m_Weekdays->IsEnabled()) 
 	{
 		size.cx = max(size.cx, m_Weekdays->GetX() + m_Weekdays->GetW());
 		size.cy = max(size.cy, m_Weekdays->GetY() + m_Weekdays->GetH());
 	}
-	if (m_WeekNumbers->IsEnabled()) 
+	if (m_WeekNumbers && m_WeekNumbers->IsEnabled()) 
 	{
 		size.cx = max(size.cx, m_WeekNumbers->GetX() + m_WeekNumbers->GetW());
 		size.cy = max(size.cy, m_WeekNumbers->GetY() + m_WeekNumbers->GetH());
 	}
-	if (m_Month->IsEnabled()) 
+	if (m_Month && m_Month->IsEnabled()) 
 	{
 		size.cx = max(size.cx, m_Month->GetX() + m_Month->GetW());
 		size.cy = max(size.cy, m_Month->GetY() + m_Month->GetH());
 	}
-	if (m_Year->IsEnabled()) 
+	if (m_Year && m_Year->IsEnabled()) 
 	{
 		size.cx = max(size.cx, m_Year->GetX() + m_Year->GetW());
 		size.cy = max(size.cy, m_Year->GetY() + m_Year->GetH());
 	}
-	if (m_Today->IsEnabled()) 
+	if (m_Today && m_Today->IsEnabled()) 
 	{
 		size.cx = max(size.cx, m_Today->GetX() + m_Today->GetW());
 		size.cy = max(size.cy, m_Today->GetY() + m_Today->GetH());
 	}
+
+	// Mitul{ : Also consider the dynamic Items
+	for (int i = 0; i < m_DynamicSkinItems.size(); i++)
+	{
+		if ( (m_DynamicSkinItems[i]->IsIncludeSize()) && (m_DynamicSkinItems[i]->IsEnabled()) )
+		{
+			size.cx = max(size.cx, m_DynamicSkinItems[i]->GetX() + m_DynamicSkinItems[i]->GetW());
+			size.cy = max(size.cy, m_DynamicSkinItems[i]->GetY() + m_DynamicSkinItems[i]->GetH());
+		}
+	}
+	// Mitul}
 
 	// Background already knows about vert & horz counts.
 	if (GetBackgroundMode() != MODE_STRETCH)
@@ -861,7 +884,7 @@ void CCalendarWindow::RedrawAll()
 	RemoveTrayIcon();
 	if (CConfig::Instance().GetShowTrayIcon()) 
 	{
-		AddTrayIcon();
+		AddUpdateTrayIcon(NIM_ADD, false, 1);
 	}
 }
 
@@ -1052,7 +1075,7 @@ void CCalendarWindow::ReadSkinSettings()
 				item = button;
 				dynamic = true;		// All following images are dynamic
 			}
-			else if (0 == strnicmp(pos, "Time", 4))
+			else if ( (0 == strnicmp(pos, "Time", 4)) || (0 == strnicmp(pos, "WorldTime", 9)) )
 			{
 				CItemTime* time = new CItemTime;
 				time->ReadSettings(filename.c_str(), pos);
@@ -1081,9 +1104,13 @@ void CCalendarWindow::ReadSkinSettings()
 				case RAINWINDOW_TYPE_TODO:
 					m_TodoWindow.AddSkinItem(item, dynamic);
 					break;
+
+				case RAINWINDOW_TYPE_BALLOONTIP:  // Just keep in m_DynamicItems
+                     break;                       // because balloon tip window 
+                                                  // is not created by us
 				}
 
-				m_DynamicItems.push_back(item);
+				m_DynamicItems.push_back((CItemDynamic*)item);		// Mitul
 			}
 
 			pos = pos + strlen(pos) + 1;
@@ -1194,7 +1221,7 @@ void CCalendarWindow::Refresh()
 		RemoveTrayIcon();
 		if (CConfig::Instance().GetShowTrayIcon()) 
 		{
-			AddTrayIcon();
+			AddUpdateTrayIcon(NIM_ADD, false, 1);
 		}
 			
 		CBackground::PollWallpaper(true);
@@ -1216,6 +1243,7 @@ void CCalendarWindow::Refresh()
 */
 void CCalendarWindow::Redraw()
 {
+	//CConfig::Instance().BuildMonthGrid();	// Mitul
 	CRainWindow::RedrawBegin();
 
 	BackgroundCreateStruct bcs;
@@ -1237,15 +1265,31 @@ void CCalendarWindow::Redraw()
 //
 // Tray icon
 //
-BOOL CCalendarWindow::AddTrayIcon() 
-{ 
-    BOOL res = FALSE; 
-    NOTIFYICONDATA tnid; 
-	
+//http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/commctls/tooltip/usingtooltips.asp
+//
+// Mitul{
+BOOL CCalendarWindow::AddUpdateTrayIcon(DWORD addmodi, bool balloon, int timeout) 
+{
+	if (!CConfig::Instance().GetShowTrayIcon()) return FALSE;
+
+    NOTIFYICONDATA tnid;
+
+	BOOL res;
+    DWORD dwInfoFlags = NIIF_INFO;
+				// Flag Description 
+			// - NIIF_ERROR     An error icon. 
+			// - NIIF_INFO      An information icon. 
+			// - NIIF_NONE      No icon. 
+			// - NIIF_WARNING   A warning icon. 
+			// - NIIF_ICON_MASK Version 6.0. Reserved. 
+			// - NIIF_NOSOUND   Version 6.0. Do not play the associated sound. Applies only to balloon ToolTips 
 	// Load the tray icon from resources
 	CImage trayImage;
 	CImage trayNumbersImage;
-	if (trayImage.LoadResource(m_Instance, IDB_TRAY))
+	
+	if (!trayImage.LoadResource(m_Instance, IDB_TRAY))
+	   res = FALSE;
+	else
 	{
 		// Draw the current date into the bitmap
 		if (trayNumbersImage.LoadResource(m_Instance, IDB_TRAY_NUMBERS))
@@ -1266,13 +1310,9 @@ BOOL CCalendarWindow::AddTrayIcon()
 			}
 		}
 
-		OSVERSIONINFO version;
-		version.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-		GetVersionEx(&version);
-
 		HICON trayIcon;
 
-		if (version.dwPlatformId == VER_PLATFORM_WIN32_NT && version.dwMajorVersion > 4)
+		if (CCalendarWindow::Is2k())
 		{
 			ICONINFO iconInfo;
 			iconInfo.fIcon = TRUE;
@@ -1284,21 +1324,58 @@ BOOL CCalendarWindow::AddTrayIcon()
 		{
 			trayIcon = LoadIcon(m_Instance, MAKEINTRESOURCE(IDI_TRAY));
 		}
-
-		if (trayIcon)
+	
+		if (!trayIcon)
 		{
-			tnid.cbSize = sizeof(NOTIFYICONDATA); 
-			tnid.hWnd = m_Window; 
-			tnid.uID = IDB_TRAY;
-			tnid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP; 
-			tnid.uCallbackMessage = WM_NOTIFYICON; 
-			tnid.hIcon = trayIcon;
-			lstrcpyn(tnid.szTip, "Rainlendar", sizeof(tnid.szTip)); 
-			
-			res = Shell_NotifyIcon(NIM_ADD, &tnid);
+		   res = FALSE;
 		}
-	}
-    return res; 
+		else
+		{
+            std::string szMsg, szTitle, tpFmt;            
+            szTitle = "Rainlendar";
+            
+			for (int index = 0; index < m_DynamicItems.size(); index++)
+			{
+				if ( (m_DynamicItems[index]->IsEnabled()) && (m_DynamicItems[index]->GetWinType() == RAINWINDOW_TYPE_BALLOONTIP) )
+				{
+					if (m_DynamicItems[index]->ToString() != NULL)
+					{
+						if (!szMsg.empty()) szMsg += "\n";
+						szMsg += m_DynamicItems[index]->ToString();
+					}
+				}
+			}
+            
+           	tnid.cbSize = sizeof(NOTIFYICONDATA);
+        	tnid.hWnd = m_Window; 
+        	tnid.uID = IDB_TRAY;
+        	tnid.uCallbackMessage = WM_NOTIFYICON; 
+        	tnid.hIcon = trayIcon;
+            strncpy(tnid.szTip, szMsg.empty() ? szTitle.c_str() : (szTitle + "\n" + szMsg).c_str(), sizeof(tnid.szTip) - 1);
+			tnid.szTip[sizeof(tnid.szTip) - 1] = 0;
+
+			tnid.uFlags = NIF_ICON | NIF_MESSAGE;
+        	if (balloon)
+        	{
+        		tnid.uFlags |= NIF_INFO;      		
+	        	tnid.dwInfoFlags = dwInfoFlags;         // Icon
+	            tnid.uTimeout = timeout;                   // 5 seconds
+	            strncpy(tnid.szInfo, szMsg.c_str(), sizeof(tnid.szInfo) - 1);
+				tnid.szInfo[sizeof(tnid.szInfo) - 1] = 0;
+	            strncpy(tnid.szInfoTitle, szTitle.c_str(), sizeof(tnid.szInfoTitle) - 1);
+				tnid.szInfoTitle[sizeof(tnid.szInfoTitle) - 1] = 0;
+			}
+			else
+				tnid.uFlags |= NIF_TIP;
+			res = TRUE;
+		}
+		
+    }
+
+	if (res)
+	    return Shell_NotifyIcon(addmodi, &tnid);		//NIM_ADD, NIM_MODIFY
+    else
+    	return FALSE;
 }
 
 BOOL CCalendarWindow::RemoveTrayIcon() 
@@ -1314,7 +1391,6 @@ BOOL CCalendarWindow::RemoveTrayIcon()
     res = Shell_NotifyIcon(NIM_DELETE, &tnid);
     return res; 
 } 
-
 
 /*
 ** ExecuteEventCommand
@@ -1534,7 +1610,8 @@ void CCalendarWindow::ChangeMonth(int numOfMonths)
 */
 void CCalendarWindow::DrawWindow()
 {
-	const SYSTEMTIME& sysTime = c_MonthsFirstDate.GetSystemTime();
+	SYSTEMTIME sysToday = c_TodaysDate.GetSystemTime();
+	SYSTEMTIME sysTime = c_MonthsFirstDate.GetSystemTime();
 	UINT i, j;
 	int thisMonth = sysTime.wMonth;
 	int thisYear = sysTime.wYear;
@@ -1542,9 +1619,13 @@ void CCalendarWindow::DrawWindow()
 	int startMonth = thisMonth - CConfig::Instance().GetPreviousMonths();
 	int startYear = thisYear;
 
+	int tmpMonth;
+	int tmpYear;
+
 	if (CConfig::Instance().GetStartFromJanuary())
 	{
 		startMonth = 1;
+		startYear = thisYear;
 	}
 
 	while (startMonth <= 0)
@@ -1552,6 +1633,21 @@ void CCalendarWindow::DrawWindow()
 		startYear--;
 		startMonth += 12;
 	}
+
+	tmpMonth = startMonth + CConfig::Instance().GetMaxGridMonth();
+	tmpYear = startYear;
+	while (tmpMonth > 12)
+	{
+		tmpYear++;
+		tmpMonth -= 12;
+	}
+	bool b = ( ((sysToday.wYear + ((sysToday.wMonth - 1) / 12.0))  < (startYear + ((startMonth - 1) / 12.0))) ||
+				((sysToday.wYear + ((sysToday.wMonth - 1) / 12.0))  > (tmpYear + ((tmpMonth - 1) / 12.0))) );
+
+	m_CurrentMonthOffset.x = -1;
+	m_CurrentMonthOffset.y = -1;
+	m_ViewMonthOffset.x = -1;
+	m_ViewMonthOffset.y = -1;
 
 	CToolTip::Instance().DeleteAllToolTips();
 
@@ -1569,16 +1665,23 @@ void CCalendarWindow::DrawWindow()
 			{
 				offset.x = i * m_Width / CConfig::Instance().GetHorizontalCount();
 
-				ChangeMonth(startMonth, startYear);
-				startMonth++;
-				if (startMonth == 13)
+				// Mitul{
+				tmpMonth = startMonth;
+				tmpYear = startYear;
+				if (CConfig::Instance().GetGridMonth(j, i, tmpMonth, tmpYear) < 0) continue;
+				ChangeMonth(tmpMonth, tmpYear);
+				if ( (tmpMonth == sysToday.wMonth) && ((tmpYear == sysToday.wYear) || (b)) )
 				{
-					startYear++;
-					startMonth = 1;
+					m_CurrentMonthOffset = offset;
+				}
+
+				if ( (tmpMonth == sysTime.wMonth) && ((tmpYear == sysTime.wYear)) )
+				{
+					m_ViewMonthOffset = offset;
 				}
 
 				// Reset the tooltips for the new month(s) (this also removes the old tips)
-				m_Event->AddToolTips(this, offset);
+				if (m_Event) m_Event->AddToolTips(this, offset);
 
 				for (int k = 0; k < m_StaticSkinItems.size(); k++)
 				{
@@ -1587,49 +1690,76 @@ void CCalendarWindow::DrawWindow()
 						m_StaticSkinItems[k]->Paint(m_DoubleBuffer, offset);
 					}
 				}
-			}
-		}
 
-		// Draw the icons last so the they will be on top of everything
-		startMonth = thisMonth - CConfig::Instance().GetPreviousMonths();
-		startYear = thisYear;
-
-		if (CConfig::Instance().GetStartFromJanuary())
-		{
-			startMonth = 1;
-		}
-		
-		while (startMonth <= 0)
-		{
-			startYear--;
-			startMonth += 12;
-		}
-
-		if (m_Event->IsEnabled())
-		{
-			for (j = 0; j < CConfig::Instance().GetVerticalCount(); j++)
-			{
-				offset.y = j * m_Height / CConfig::Instance().GetVerticalCount();
-				
-				for (i = 0; i < CConfig::Instance().GetHorizontalCount(); i++)
+				// Mitul : I don't know why you have two smae loops. 
+				//          So I have moved this from the bottom loop
+				//          to here. 
+				if (m_Event && m_Event->GetEventIconEnable() && m_Event->IsEnabled())
 				{
-					offset.x = i * m_Width / CConfig::Instance().GetHorizontalCount();
-					
-					ChangeMonth(startMonth, startYear);
-					startMonth++;
-					if (startMonth == 13)
-					{
-						startYear++;
-						startMonth = 1;
-					}
 					m_Event->PaintIcons(m_DoubleBuffer, offset);
 				}
+				// Mitul}
 			}
 		}
 	}
 
 	// Reset the values
 	ChangeMonth(thisMonth, thisYear);
+}
+
+void CCalendarWindow::DrawDynamic()
+{
+	m_DynamicBuffer.Clear();
+	m_NeedsUpdating = false;
+
+	POINT offset = {0, 0};
+	for (int index = 0; index < m_DynamicSkinItems.size(); index++)
+	{
+		if (m_DynamicSkinItems[index]->IsEnabled())
+		{
+			m_NeedsUpdating = m_NeedsUpdating || m_DynamicSkinItems[index]->NeedsUpdating();
+
+			if (m_DynamicBuffer.GetBitmap() == NULL)
+			{
+				m_DynamicBuffer.Create(m_Width, m_Height, 0);
+			}
+
+			if (m_DynamicSkinItems[index]->GetRepeatType() == REPEAT_TYPE_NO)
+			{
+				offset.x = 0;
+				offset.y = 0;
+				m_DynamicSkinItems[index]->Paint(m_DynamicBuffer, offset);
+			}
+			else if (m_DynamicSkinItems[index]->GetRepeatType() == REPEAT_TYPE_CURRENT_MONTH)
+			{
+				if ((m_CurrentMonthOffset.x != -1) && (m_CurrentMonthOffset.y != -1))
+					m_DynamicSkinItems[index]->Paint(m_DynamicBuffer, m_CurrentMonthOffset);
+			}
+			else if (m_DynamicSkinItems[index]->GetRepeatType() == REPEAT_TYPE_VIEW_MONTH)
+			{
+				if ((m_ViewMonthOffset.x != -1) && (m_ViewMonthOffset.y != -1))
+					m_DynamicSkinItems[index]->Paint(m_DynamicBuffer, m_ViewMonthOffset);
+			}
+			else
+			{
+				for (int j = 0; j < CConfig::Instance().GetVerticalCount(); j++)
+				{
+					offset.y = j * m_Height / CConfig::Instance().GetVerticalCount();
+
+					for (int i = 0; i < CConfig::Instance().GetHorizontalCount(); i++)
+					{
+						if (CConfig::Instance().GetGridMonth(j, i) < 0) continue;
+
+						offset.x = i * m_Width / CConfig::Instance().GetHorizontalCount();
+
+						m_DynamicSkinItems[index]->Paint(m_DynamicBuffer, offset);
+					}
+				}
+			}
+		}
+	}
+	
+	AddUpdateTrayIcon(NIM_MODIFY, false, 1);
 }
 
 void CCalendarWindow::RegisterHotkeys()
@@ -2812,6 +2942,12 @@ LRESULT CCalendarWindow::OnCopyData(WPARAM wParam, LPARAM lParam)
     			RainlendarShow(m_Window, NULL);
             }
 		}
+		// Mitul{
+		else if (stricmp(bang.c_str(), "!RainlendarShowTodaysEvent") == 0)
+		{
+			RainlendarShowTodaysEvent(m_Window, arg.c_str());
+		}
+		// Mitul}
 		else if (stricmp(bang.c_str(), "!Execute") == 0)
 		{
 			// Special case for multibang execution
@@ -2892,6 +3028,18 @@ LRESULT CCalendarWindow::OnNotifyIcon(WPARAM wParam, LPARAM lParam)
 	case WM_RBUTTONDBLCLK:
 		bang = CConfig::Instance().GetTrayExecuteDR();
 		break;
+
+	case NIN_BALLOONTIMEOUT:		// Don't know if these are supported
+	case NIN_BALLOONUSERCLICK:		// in Pre-XP windows or not. As per
+	case NIN_BALLOONHIDE:			// MSDN - NO :(
+		AddUpdateTrayIcon(NIM_MODIFY, false, 1);
+		break;
+		
+	case WM_CONTEXTMENU:			// Keyboard - Shortcut key
+	case NIN_KEYSELECT:				// Keyboard - Spacebar or Enter
+	case NIN_SELECT:				// Mouse - Enter key
+		uMouseMsg = WM_RBUTTONDOWN;
+		break;
 	}
 
 	if (!bang.empty())
@@ -2903,6 +3051,10 @@ LRESULT CCalendarWindow::OnNotifyIcon(WPARAM wParam, LPARAM lParam)
 		copyData.lpData = (void*)bang.c_str();
 	
 		OnCopyData(NULL, (LPARAM)&copyData);
+	}
+	else if	(uMouseMsg == WM_LBUTTONDOWN)
+	{
+		AddUpdateTrayIcon(NIM_MODIFY, true, 1000);
 	}
 	else if	(uMouseMsg == WM_RBUTTONDOWN)
 	{
@@ -3058,9 +3210,9 @@ LRESULT CALLBACK CCalendarWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
 				return TRUE;
 		}
 
-		if (Window->m_ToolBarMessage == uMsg && CConfig::Instance().GetShowTrayIcon())
+		if (Window->m_ToolBarMessage == uMsg)
 		{
-			Window->AddTrayIcon();
+			Window->AddUpdateTrayIcon(NIM_ADD, false, 1);
 		}
 	}
 

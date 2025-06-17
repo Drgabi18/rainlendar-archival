@@ -26,8 +26,32 @@
 			<div align="left">
 
 <!-- CLIP -->
+      <p>25 OCT 2005 (Version 0.22 ß)</p>
+      <ul>
+        <li>Fixed timestamp issue with iCalendar events.</li>
+        <li>"All day event" wasn't sent to the server. Fixed.</li>
+        <li>The buttons in the event list are updated better now.</li>
+        <li>Event texts drawn into the calendar stay inside the day rectangle.</li>
+        <li>Different layouts can be used when multiple calendars are shown.</li>
+        <li>GridLeftToRight, GridTopToBottom, GridAcrossAndDown can be used to define how the months flow on the layouts.</li>
+        <li>New options for the skins: EventIconEnable, EventListItemMargin, EventListItemIconEnable</li>
+        <li>The separation between the days in the event list can be set with EventListDaySeparation.</li>
+        <li>Event list headers can use %D to display the number of days remaining to today.</li>
+        <li>%YN and %OT can be used to in event subject and message to display the number of years between now and start date of the event</li>
+        <li>New bang: !RainlendarShowTodaysEvent</li>
+        <li>The list windows can be hidden when there are no items with SmartTodoList and SmartEventList.</li>
+        <li>Birthday and Anniversary profiles use yearly recurrence by default.</li>
+        <li>Outlook message stores are identified by their ID instead of the name.</li>
+        <li>Snapping works also in the middle of the work area.</li>
+        <li>It's possible to use relative paths in the ini-format and ical plugins (the path must be added manually into the ini-file).</li>
+        <li>Images and buttons can be drawn on each calendar when multiple calendars are displayed.</li>
+        <li>RecurringPostfixString can be used in the profiles to add strings to the recurring events.</li>
+        <li>Time items can show world clock. Use Location in the items to define the place.</li>
+        <li>The time item can be shown in a balloontip/tooltip. The balloontip can be opened from the tray icon if there are no !bangs assigned to it.</li>
+        <li>Changed the way WeekNumberDelta is implemented. There numbering should be continuous now.</li>
+      </ul>
 
-      <p>20 JUL 2005 (Version 0.21.2 ß)</p>
+      <p>22 JUL 2005 (Version 0.21.2 ß)</p>
       <ul>
         <li>All day events that lasted forever were not shown correctly in the all events dialog. Fixed</li>
         <li>!RainlendarEditSkin didn't work. Fixed</li>
@@ -50,6 +74,7 @@
         <li>Todo-list positions are stored also to the ics-files.</li>
         <li>The alarm time is taken from the Outlook appointment.</li>
         <li>Added NumOfComponents to the time item.</li>
+        <li>The parameter for !RainlendarShowNext and !RainlendarShowPrev didn't work. Fixed.</li>
       </ul>
 
       <p>25 MAR 2005 (Version 0.21.1 ß)</p>

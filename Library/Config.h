@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/Config.h,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/Config.h,v 1.3 2005/10/14 17:05:41 rainy Exp $
 
   $Log: Config.h,v $
+  Revision 1.3  2005/10/14 17:05:41  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -132,6 +138,7 @@ struct Profile
 	CImage icon;
 	bool drawAlways;
 	int priority;
+	std::string postfixString;
 };
 
 class CConfig
@@ -222,6 +229,12 @@ public:
 	void SetTodoLocked(bool TodoLocked ) { m_TodoLocked=TodoLocked; };
 	bool GetEventListLocked() { return m_EventListLocked; };
 	void SetEventListLocked(bool EventListLocked ) { m_EventListLocked=EventListLocked; };
+	// Mitul{
+	bool GetSmartTodo() { return m_SmartTodo; };
+	void SetSmartTodo(bool SmartTodo ) { m_SmartTodo=SmartTodo; };
+	bool GetSmartEventList() { return m_SmartEventList; };
+	void SetSmartEventList(bool SmartEventList ) { m_SmartEventList=SmartEventList; };
+	// Mitul}
 
 	int GetVisibleWindows() { return m_VisibleWindows; };
 	void SetVisibleWindows(int VisibleWindows) { m_VisibleWindows=VisibleWindows; };
@@ -284,10 +297,10 @@ public:
 	void SetWindowPos(WINDOWPOS WindowPos) { m_WindowPos=WindowPos; };
 	void SetMovable(bool Movable) { m_Movable=Movable; };
 	void SetMouseHide(bool MouseHide) { m_MouseHide=MouseHide; };
-	void SetVerticalCount(UINT VerticalCount) { m_VerticalCount=VerticalCount; };
-	void SetHorizontalCount(UINT HorizontalCount) { m_HorizontalCount=HorizontalCount; };
+	void SetVerticalCount(UINT VerticalCount) { m_VerticalCount=VerticalCount; BuildMonthGrid();};
+	void SetHorizontalCount(UINT HorizontalCount) { m_HorizontalCount=HorizontalCount; BuildMonthGrid();};
 	void SetPreviousMonths(UINT PreviousMonths) { m_PreviousMonths=PreviousMonths; };
-	void SetStartFromJanuary(bool StartFromJanuary) { m_StartFromJanuary=StartFromJanuary; };
+	void SetStartFromJanuary(bool StartFromJanuary) { m_StartFromJanuary=StartFromJanuary;};
 	void SetEventListDays(UINT EventListDays) { m_EventListDays=EventListDays; };
 	void SetSubstituteDays(bool SubstituteDays) { m_SubstituteDays=SubstituteDays; };
 	void SetGrowUpwards(UINT GrowUpwards) { m_GrowUpwards=GrowUpwards; };
@@ -437,6 +450,22 @@ public:
 	static CRasterizer::TYPE ConvertRasterizer(const char* String);
 	static const char* ConvertRasterizer(CRasterizer::TYPE Type);
 
+	// Mitul{
+	char GetGridLayoutType() { return m_GridLayoutType; };
+	void SetGridLayoutType(char GridLayoutType ) { m_GridLayoutType=GridLayoutType; BuildMonthGrid();};
+	bool GetGridLeftToRight() { return m_GridLeftToRight; };
+	void SetGridLeftToRight(bool GridLeftToRight ) { m_GridLeftToRight=GridLeftToRight; BuildMonthGrid();};
+	bool GetGridTopToBottom() { return m_GridTopToBottom; };
+	void SetGridTopToBottom(bool GridTopToBottom ) { m_GridTopToBottom=GridTopToBottom; BuildMonthGrid();};
+	bool GetGridAcrossAndDown() { return m_GridAcrossAndDown; };
+	void SetGridAcrossAndDown(bool GridAcrossAndDown ) { m_GridAcrossAndDown=GridAcrossAndDown; BuildMonthGrid();};
+
+	int GetGridMonth(int row, int col);
+	int GetGridMonth(int row, int col, int &startMonth, int &startYear);
+	int GetMaxGridMonth();
+	void BuildMonthGrid();
+	// Mitul}
+
 private:
 	static CConfig* c_Config;
 
@@ -471,6 +500,8 @@ private:
 	bool m_EventListEnable;
 	bool m_TodoLocked;
 	bool m_EventListLocked;
+	bool m_SmartTodo;			// Mitul
+	bool m_SmartEventList;		// Mitul
 	int m_VisibleWindows;
 
 	int m_X;					// Position of the main window
@@ -569,6 +600,15 @@ private:
 	DWORD m_ShowEventsHotkey;
 	DWORD m_ToggleEventsHotkey;
 	DWORD m_AddEventHotkey;
+
+	// Mitul{
+	char m_GridLayoutType;
+	bool m_GridLeftToRight;
+	bool m_GridTopToBottom;
+	bool m_GridAcrossAndDown;
+
+	std::vector< std::vector<int> > m_MonthGrid;
+	// Mitul}
 };
 
 #endif

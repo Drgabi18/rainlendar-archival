@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/ItemImage.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/ItemImage.cpp,v 1.3 2005/10/14 17:05:29 rainy Exp $
 
   $Log: ItemImage.cpp,v $
+  Revision 1.3  2005/10/14 17:05:29  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -43,11 +49,8 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CItemImage::CItemImage() : CItem()
+CItemImage::CItemImage() : CItemDynamic()
 {
-	m_X = 0;
-	m_Y = 0;
-	m_WinType = RAINWINDOW_TYPE_CALENDAR;
 }
 
 CItemImage::~CItemImage()
@@ -56,54 +59,17 @@ CItemImage::~CItemImage()
 
 void CItemImage::ReadSettings(const char* iniFile, const char* section)
 {
-	CItem::ReadSettings(iniFile, section);
+	CItemDynamic::ReadSettings(iniFile, section);
 
 	char tmpSz[MAX_LINE_LENGTH];
 
-	m_X = GetPrivateProfileInt( section, "X", 0, iniFile);
- 	m_Y = GetPrivateProfileInt( section, "Y", 0, iniFile);
-
-	m_WinType = (RAINWINDOW_TYPE)GetPrivateProfileInt(section, "Window", 0, iniFile);
-
 	if (GetPrivateProfileString(section, "BitmapName", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
-		m_BitmapName = tmpSz;
-	}
-	m_Enabled=(1==GetPrivateProfileInt( section, "Enable", 1, iniFile))?true:false;
-}
-
-void CItemImage::WriteSettings()
-{
-	char tmpSz[256];
-	std::string INIPath = m_SettingsFile;
-
-	// Only the enable/disable state need to be written since other settings cannot be edited
-	sprintf(tmpSz, "%i", m_Enabled);
-	WritePrivateProfileString( m_Section.c_str(), "Enable", tmpSz, INIPath.c_str() );
-}
-
-/* 
-** Initialize
-**
-** Initializes the items 
-**
-*/
-void CItemImage::Initialize()
-{
-	if (!m_BitmapName.empty())
-	{
-		CRasterizerBitmap* BMRast;
-
-		BMRast=new CRasterizerBitmap;
-		if(BMRast==NULL) THROW(ERR_OUTOFMEM);
-
-		BMRast->Load(m_BitmapName);
+		CRasterizerBitmap* BMRast = new CRasterizerBitmap;
+		BMRast->Load(tmpSz);
 		BMRast->SetNumOfComponents(1);
+		BMRast->SetAlign(CRasterizer::ALIGN_HCENTER | CRasterizer::ALIGN_VCENTER);
 		SetRasterizer(BMRast);
-	}
-	else
-	{
-		m_Enabled = false;
 	}
 }
 
@@ -120,16 +86,68 @@ void CItemImage::Paint(CImage& background, POINT offset)
 		int x = m_X;
 		int y = m_Y;
 
-		if (x < 0)
+		if ( (m_WinType == RAINWINDOW_TYPE_CALENDAR) && (m_RepeatType != REPEAT_TYPE_NO) )
 		{
-			x += background.GetWidth();
+			if (x < 0)
+			{
+				x += background.GetWidth() / CConfig::Instance().GetHorizontalCount();
+			}
+
+			if (y < 0)
+			{
+				y += background.GetHeight() / CConfig::Instance().GetVerticalCount();
+			}
+		}
+		else
+		{
+			if (x < 0)
+			{
+				x += background.GetWidth();
+			}
+
+			if (y < 0)
+			{
+				y += background.GetHeight();
+			}
 		}
 
-		if (y < 0)
-		{
-			y += background.GetHeight();
-		}
+		x += offset.x;
+		y += offset.y;
 
 		m_Rasterizer->Paint(background, x, y, 0, 0, 0);
 	}
+}
+
+int CItemImage::GetX()
+{
+	if(m_Rasterizer) 
+	{
+		if((m_Rasterizer->GetAlign() & 0x0F) == CRasterizer::ALIGN_LEFT)
+			return m_X;
+
+		if((m_Rasterizer->GetAlign() & 0x0F) == CRasterizer::ALIGN_HCENTER)
+			return m_X - GetW() / 2;
+
+		if((m_Rasterizer->GetAlign() & 0x0F) == CRasterizer::ALIGN_RIGHT)
+			return m_X - GetW();
+	}
+
+	return 0;
+}
+
+int CItemImage::GetY()
+{
+	if(m_Rasterizer) 
+	{
+		if((m_Rasterizer->GetAlign() & 0x0F0) == CRasterizer::ALIGN_TOP)
+			return m_Y;
+
+		if((m_Rasterizer->GetAlign() & 0x0F0) == CRasterizer::ALIGN_VCENTER)
+			return m_Y - GetH() / 2;
+
+		if((m_Rasterizer->GetAlign() & 0x0F0) == CRasterizer::ALIGN_BOTTOM)
+			return m_Y - GetH();
+	}
+
+	return 0;
 }

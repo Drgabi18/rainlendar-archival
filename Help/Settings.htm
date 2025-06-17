@@ -65,6 +65,11 @@ If enabled a message box will be opened when Rainlendar is started. The message 
       </b>This displays the current date in your system tray. Double clicking the 
       icon toggles the window visibility.</p>
 
+      <p><b>Hide event and todo lists when there are no items<br>
+      </b>When enabled the event list and todo list will be hidden automatically 
+		when they are empty. The list will appear again after a new event or 
+		todo item is added.</p>
+
       <p><b>Use native Windows transparency<br>
       </b>If selected the calendar will use the native Windows
 transparency for its alphablended window. Otherwise the alphablending is
@@ -96,35 +101,29 @@ means that instead of using the name of the day (e.g. Monday) in the event list 
 will be used.
 </p>
 
-<p><b>Other settings<br>
-      </b>If "Movable window" is selected, the calendar can be moved
+<p><b>Movable window<br>
+      </b>When selected, the calendar can be moved
 with the       mouse. Please note that if the background has an alpha
 mask and the desktop       is copied behind the calendar, the moving is
 really slow and can cause       problems with some graphics cards. So,
 I'd suggest to use this feature       only with non-alpha backgrounds or with 
       native transparency. </p>
 
-      <p>The "Hide on mouse over" hides the calendar when the mouse is
+      <p><b>Remember dialog positions<br>
+		</b>This will save the place (and size) where a 
+      dialog was closed last time and open it in the same location in the next 
+      time.</p>
+<p><b>Hide on mouse over</b><br>
+This hides the calendar when the mouse is
 over the       window. The calendar will reappear once the mouse is
 moved off the window.       You can disable this feature temporarily by
 holding Shift-key down while moving the mouse.</p>
 
-      <p>&quot;Remember dialog positions&quot; will save the place (and size) where a 
-      dialog was closed last time and open it in the same location in the next 
-      time.</p>
-      
-      <p>The "Click through" passes all the mouse events through the calendar. This means
+      <p><b>Click through<br>
+		</b>This passes all the mouse events through the calendar. This means
 that you cannot click the calendar (or the other windows except the message box). 
      You can disable this feature temporarily by
 holding Shift-key down while moving the mouse (It's not registered immediately so keep the key down for one sec before click through is disabled).</p>
-
-      <p><b>Multiple calendars<br>
-      </b>This defines how many months are shown in the calendar at the same 
-      time. You can set the horizontal and vertical count for the months as well 
-      as the the number of previous months are displayed. The &quot;Start from 
-      January&quot; option shows January always as the first month. This is useful if 
-      you want to show all year at the same time on the desktop.</p>
-
 <p><b>Opaque on mouse over</b><br>
 Changes the window to completely opaque when the mouse is moved over the calendar. The window should
 have some transparency assigned with the slider in the General-tab or otherwise this feature doesn't
@@ -134,6 +133,16 @@ do much.</p>
 Changes the window transparent when the mouse is moved over the calendar. The transparency level is
 set with the slider in the General-tab. Note that the window is always completely opaque when this
 setting is set and the mouse is not over the window.</p>
+
+      <p><b>Multiple calendars<br>
+      </b>This defines how many months are shown in the calendar at the same 
+      time. You can set the horizontal and vertical count for the months as well 
+      as the the number of previous months are displayed. The &quot;Start from 
+      January&quot; option shows January always as the first month. This is useful if 
+      you want to show all year at the same time on the desktop.</p>
+<p>The layout type defines how the calendars are placed on the grid. You can for 
+example have the calendars placed in checker style or in X-shape. Just try them 
+out to see how they look.</p>
 
 <p><b><font size="4">Hotkeys</font></b></p>
       <p>This page enables to add hotkeys to various actions. The hotkeys are 
@@ -207,13 +216,13 @@ Defines how many months are scrolled whit the mouse wheel. Set to 0 to disable t
 This setting makes the position to be interpret so that the negative coordinates are relative to the bottom right corner of the desktop. It's useful for example to keep the calendar there even if you change the screen resolutions. Note that if you have enabled &quot;Movable window&quot; the negative coordinates are converted to positive when the window is moved. If you have trouble keeping the calendar on a secondary monitor try setting this to 0.</p>
 
 <b>FadeDuration</b><br>
-The time in ms that defines how long the fading effects take. Set to 0 to disable the fading.</p>
-
+The time in ms that defines how long the fading effects take. Set to 0 to disable the fading.<p>
 <b>GrowUpwards</b><br>
 Normally when new items are added the event list and todo window grow downwards. That behaviour can be changed with this setting. You can set this to 2 if you want that the todo-window grows upwards, 8 if you want that the event list grows upwards or 10 if you want both windows to grow upwards. DO NOT USE ANY OTHER VALUES!!!</p>
+</p>
 
 <b>ShowContextMenu</b><br>
-If set to 1 a context menu instead of full menu is shown when right mouse button is pressed over one of the windows.</p>
+If set to 1 a context menu instead of full menu is shown when right mouse button is pressed over one of the windows.<p>
 
 <b>CalendarAction</b><br>
 Defines what happens when you double click the calendar:<br>
@@ -221,6 +230,7 @@ Defines what happens when you double click the calendar:<br>
 1=Edits the first event or creates a new event.<br>
 2=Always creates a new event.<br>
 3=Deletes the selected event(s).</p>
+</p>
 
 <b>TodoAction</b><br>
 Defines what happens when you double click the todo window:<br>
@@ -229,33 +239,26 @@ Defines what happens when you double click the todo window:<br>
 2=Opens the todo dialog and selects the item.<br>
 3=Opens the todo dialog.<br>
 4=Deletes the todo item.<br>
-5=Marks the todo item as done.</p>
-
-<b>EventListAction</b><br>
+5=Marks the todo item as done.<p><b>EventListAction</b><br>
 Defines what happens when you double click the event list window:<br>
 0=Default behaviour. If an event is selected opens it for editing.
 1=Creates a new event.<br>
 2=Deletes the selected event.</p>
+</p>
 
 <b>HideFromCalendar</b><br>
 List of profiles that you don't want to be visible in the calendar. Separate the list with ';'-char. E.g. HideFromCalendar=Birthday;Personal;Outlook
-</p>
-
-<b>HideFromEventList</b><br>
+<p><b>HideFromEventList</b><br>
 List of profiles that you don't want to be visible in the event list. Separate the list with ';'-char. E.g. HideFromEventList=Birthday;Personal;Outlook
 </p>
-
-<b>DisableKeyboardOverride</b><br>
+<p><b>DisableKeyboardOverride</b><br>
 Disables the Shift-key override with click through and hide on mouse over. Be careful with this one: it's quite hard
 to change the settings if you cannot click the windows anymore. Especially if you have hidden the tray icon too.</p>
-
-<b>ConfigEditor</b><br>
+<p><b>ConfigEditor</b><br>
 Define the editor that you want to use when advanced-button is clicked in the config or skin dialog. Do not use spaces in the path or filename.</p>
-
-<b>UseSkinCharSet</b><br>
+<p><b>UseSkinCharSet</b><br>
 Set to 1 if you want to use the charset defined in the skin's fonts. Otherwise the fonts use the default charset defined in Windows locale.</p>
-
-<b>WeekendDays</b><br>
+<p><b>WeekendDays</b><br>
 This defines which days are considered weekend days.<br>
 1=Sunday<br>
 2=Monday<br>
@@ -265,6 +268,10 @@ This defines which days are considered weekend days.<br>
 32=Friday<br>
 64=Saturday<br>
 You can add the numbers together to select several days. E.g. If you want the weekend to be defined as Friday and Saturday set it like this: WeekendDays=96
+</p>
+<p><b>GridLeftToRight, GridTopToBottom, GridAcrossAndDown<br>
+</b>These define which way the months flow in the different layouts when 
+multiple calendars are displayd.</p>
 </p>
 
 <!-- CLIP -->

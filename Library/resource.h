@@ -186,6 +186,7 @@
 #define IDC_SHOW_TRAYICON               1121
 #define IDC_DAYS_FONT_FRAME             1122
 #define IDC_NEGATIVE_COORDS             1122
+#define IDC_SMART_LISTS                 1122
 #define IDC_DAYS_BITMAP_STATIC          1123
 #define IDC_CLICKTROUGH                 1123
 #define IDC_DAYS_COMPONENTS_STATIC      1124
@@ -470,7 +471,9 @@
 #define IDC_EVENTLIST_ITEM_FONTNAME     1422
 #define IDC_TAB1                        1422
 #define IDC_EVENTLIST_ITEM_SELECT       1423
+#define IDC_LAYOUT_TYPE_COMBO           1423
 #define IDC_EVENTLIST_ITEM_FONTCOLOR    1424
+#define IDC_LAYOUT_TYPE_STATIC          1424
 #define IDC_EVENTLIST_ITEM_FONT_STATIC  1425
 #define IDC_EVENTLIST_ITEM_FONTCOLOR_STATIC 1426
 #define IDC_HOTKEYS_HIDE                10000
@@ -559,7 +562,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        1054
 #define _APS_NEXT_COMMAND_VALUE         32846
-#define _APS_NEXT_CONTROL_VALUE         1423
+#define _APS_NEXT_CONTROL_VALUE         1425
 #define _APS_NEXT_SYMED_VALUE           1000
 #endif
 #endif

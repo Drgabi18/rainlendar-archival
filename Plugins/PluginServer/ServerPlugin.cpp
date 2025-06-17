@@ -16,9 +16,21 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Plugins/PluginServer/ServerPlugin.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugins/PluginServer/ServerPlugin.cpp,v 1.5 2005/10/14 17:05:29 rainy Exp $
 
   $Log: ServerPlugin.cpp,v $
+  Revision 1.5  2005/10/14 17:05:29  rainy
+  no message
+
+  Revision 1.4  2005/09/08 16:45:39  rainy
+  no message
+
+  Revision 1.3  2005/09/08 16:13:51  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -103,7 +115,7 @@ void SendEventsToServer();
 PacketBuffer* EncodePacket(RainlendarItem* item);
 void ReadSettings(LPCTSTR configFile);
 
-const unsigned32 PROTOCOL_VERSION = 500;
+const unsigned32 PROTOCOL_VERSION = 800;
 
 LPCTSTR Plugin_GetName()
 {
@@ -117,8 +129,8 @@ LPCTSTR Plugin_GetAuthor()
 
 UINT Plugin_GetVersion()
 {
-	return 1003;	// Rainlendar 0.21.1
-}
+	return 1004;	// Rainlendar 0.22 RC1
+} 
 
 void Plugin_Initialize(HINSTANCE instance, LPCTSTR configFile, UINT id)
 {
@@ -224,7 +236,7 @@ void ReadSettings(LPCTSTR configFile)
 
 	if(GetPrivateProfileString(PLUGIN_NAME, _T("ServerAddress"), "localhost", buffer, MAX_PATH, configFile) > 0) 
 	{
-		g_ServerAddress = buffer;
+ 	g_ServerAddress = buffer;
 	}
 	else
 	{
@@ -445,7 +457,7 @@ void SendEventsToServer()
 				break;
 
 			case pcIncorrectVersion:
-				DebugLog("%s: ERROR: The server is using different protocol version than the client.", PLUGIN_NAME);
+				DebugLog("%s: ERROR: The server is using different protocol version than the client. Please upgrade!", PLUGIN_NAME);
 				break;
 
 			case pcServerBusy:
@@ -554,7 +566,7 @@ void RequestEventsFromServer(GUID* guid)
 		break;
 
 	case pcIncorrectVersion:
-		DebugLog("%s: ERROR: The server is using different protocol version than the client.", PLUGIN_NAME);
+		DebugLog("%s: ERROR: The server is using different protocol version than the client. Please upgrade!", PLUGIN_NAME);
 		break;
 
 	case pcServerBusy:
@@ -593,12 +605,14 @@ RainlendarItem* DecodePacket(PacketBuffer& packet)
 			packet >> ((unsigned8*)&newEvent->guid)[i];
 		}
 
-		packet >> value;
-		newEvent->timeStamp = value;
+		packet >> (unsigned32)newEvent->timeStamp.dwHighDateTime;
+		packet >> (unsigned32)newEvent->timeStamp.dwLowDateTime;
 		packet >> value;
 		newEvent->readOnly = value;
 		packet >> value;
 		newEvent->deleted = value;
+		packet >> value;
+		newEvent->allDayEvent = value;
 		packet >> (unsigned32)newEvent->startTime.dwHighDateTime;
 		packet >> (unsigned32)newEvent->startTime.dwLowDateTime;
 		packet >> (unsigned32)newEvent->endTime.dwHighDateTime;
@@ -674,8 +688,9 @@ RainlendarItem* DecodePacket(PacketBuffer& packet)
 
 		packet >> value;
 		newTodo->type = (RAINLENDAR_TYPE)value;
-		packet >> value;
-		newTodo->timeStamp = value;
+
+		packet >> (unsigned32)newTodo->timeStamp.dwHighDateTime;
+		packet >> (unsigned32)newTodo->timeStamp.dwLowDateTime;
 
 		for (int i = 0; i < sizeof(GUID); i++)
 		{
@@ -740,9 +755,11 @@ PacketBuffer* EncodePacket(RainlendarItem* item)
 			(*newPacket) << (unsigned32)event->size;
 			(*newPacket) << (unsigned32)event->type;
 			newPacket->append((unsigned8*)&event->guid, sizeof(GUID));
-			(*newPacket) << (unsigned32)event->timeStamp;
+			(*newPacket) << (unsigned32)event->timeStamp.dwHighDateTime;
+			(*newPacket) << (unsigned32)event->timeStamp.dwLowDateTime;
 			(*newPacket) << (unsigned32)event->readOnly;
 			(*newPacket) << (unsigned32)event->deleted;
+			(*newPacket) << (unsigned32)event->allDayEvent;
 			(*newPacket) << (unsigned32)event->startTime.dwHighDateTime;
 			(*newPacket) << (unsigned32)event->startTime.dwLowDateTime;
 			(*newPacket) << (unsigned32)event->endTime.dwHighDateTime;
@@ -804,7 +821,8 @@ PacketBuffer* EncodePacket(RainlendarItem* item)
 
 			(*newPacket) << (unsigned32)todo->size;
 			(*newPacket) << (unsigned32)todo->type;
-			(*newPacket) << (unsigned32)todo->timeStamp;
+			(*newPacket) << (unsigned32)todo->timeStamp.dwHighDateTime;
+			(*newPacket) << (unsigned32)todo->timeStamp.dwLowDateTime;
 			newPacket->append((unsigned8*)&todo->guid, sizeof(GUID));
 			(*newPacket) << (unsigned32)todo->todoType;
 			(*newPacket) << (unsigned32)todo->readOnly;

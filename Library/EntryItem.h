@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/EntryItem.h,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/EntryItem.h,v 1.2 2005/10/14 17:05:41 rainy Exp $
 
   $Log: EntryItem.h,v $
+  Revision 1.2  2005/10/14 17:05:41  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -47,7 +50,8 @@ public:
 	RAINLENDAR_TYPE GetType() { return m_Item->type; }
 
 	GUID* GetGUID() { return &m_Item->guid; }
-	time_t GetTimeStamp() { return m_Item->timeStamp; }
+	FILETIME GetTimeStamp() { return m_Item->timeStamp; }
+
 
 	void SetPluginID(UINT ID) { m_PluginID = ID; }
 	UINT GetPluginID() { return m_PluginID; }

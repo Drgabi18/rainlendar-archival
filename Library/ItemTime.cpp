@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/ItemTime.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/ItemTime.cpp,v 1.3 2005/10/14 17:05:29 rainy Exp $
 
   $Log: ItemTime.cpp,v $
+  Revision 1.3  2005/10/14 17:05:29  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -39,36 +45,39 @@
 #include "ItemTime.h"
 #include "RasterizerBitmap.h"
 #include "RasterizerFont.h"
+#include "TimeZones.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CItemTime::CItemTime() : CItem()
+CItemTime::CItemTime() : CItemDynamic()
 {
-	m_WinType = RAINWINDOW_TYPE_CALENDAR;
-	m_X = 0;
-	m_Y = 0;
+	m_NumOfComponents = 1;
 }
 
 CItemTime::~CItemTime()
 {
 }
 
+void CItemTime::Initialize()
+{ 
+	m_Enabled = ( (GetRasterizer() != NULL) || (GetWinType() == RAINWINDOW_TYPE_BALLOONTIP) ); 
+}
+
 void CItemTime::ReadSettings(const char* iniFile, const char* section)
 {
-	CItem::ReadSettings(iniFile, section);
+	CItemDynamic::ReadSettings(iniFile, section);
 
 	char tmpSz[MAX_LINE_LENGTH];
-
-	m_X = GetPrivateProfileInt( section, "X", 0, iniFile);
- 	m_Y = GetPrivateProfileInt( section, "Y", 0, iniFile);
-
-	m_WinType = (RAINWINDOW_TYPE)GetPrivateProfileInt(section, "Window", 0, iniFile);
 
 	if (GetPrivateProfileString(section, "Format", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
 		m_Format = tmpSz;
+	}
+	if(GetPrivateProfileString(section, "Location", m_Location.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_Location=tmpSz;
 	}
 
 	if (GetPrivateProfileString(section, "Rasterizer", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
@@ -94,8 +103,8 @@ void CItemTime::ReadSettings(const char* iniFile, const char* section)
 			int digits = GetPrivateProfileInt(section, "Digits", 0, iniFile);
 			BMRast->SetDigits(digits);
 
-			int components = GetPrivateProfileInt(section, "NumOfComponents", 10, iniFile);
-			BMRast->SetNumOfComponents(components);
+			m_NumOfComponents = GetPrivateProfileInt(section, "NumOfComponents", 10, iniFile);
+			BMRast->SetNumOfComponents(m_NumOfComponents);
 
 			SetRasterizer(BMRast);
 		} 
@@ -119,41 +128,11 @@ void CItemTime::ReadSettings(const char* iniFile, const char* section)
 				FNRast->SetColor(CConfig::ParseColor(tmpSz));
 			}
 
-			time_t aclock;
-			struct tm* newtime;
-			::time(&aclock);
-			newtime = localtime(&aclock);
-			strftime(tmpSz, MAX_LINE_LENGTH, m_Format.c_str(), newtime);
-
-			FNRast->UpdateDimensions(tmpSz);
+			FNRast->UpdateDimensions(ToString());
 			SetRasterizer(FNRast);
+
+			m_NumOfComponents = 1;
 		}
-	}
-
-	m_Enabled=(1==GetPrivateProfileInt( section, "Enable", 1, iniFile))?true:false;
-}
-
-void CItemTime::WriteSettings()
-{
-	char tmpSz[256];
-	std::string INIPath = m_SettingsFile;
-
-	// Only the enable/disable state need to be written since other settings cannot be edited
-	sprintf(tmpSz, "%i", m_Enabled);
-	WritePrivateProfileString( m_Section.c_str(), "Enable", tmpSz, INIPath.c_str() );
-}
-
-/* 
-** Initialize
-**
-** Initializes the item
-**
-*/
-void CItemTime::Initialize()
-{
-	if (!GetRasterizer())
-	{
-		m_Enabled = false;
 	}
 }
 
@@ -165,27 +144,40 @@ void CItemTime::Initialize()
 */
 void CItemTime::Paint(CImage& background, POINT offset)
 {
-	char tmpSz[MAX_LINE_LENGTH];
-	time_t aclock;
-	struct tm* newtime;
-	::time(&aclock);
-	newtime = localtime(&aclock);
 
 	int x = m_X;
 	int y = m_Y;
+	const char* tmpSz;
+	tmpSz = ToString();
 
-	if (x < 0)
+	if ( (m_WinType == RAINWINDOW_TYPE_CALENDAR) && (m_RepeatType != REPEAT_TYPE_NO) )
 	{
-		x += background.GetWidth();
+		if (x < 0)
+		{
+			x += background.GetWidth() / CConfig::Instance().GetHorizontalCount();
+		}
+
+		if (y < 0)
+		{
+			y += background.GetHeight() / CConfig::Instance().GetVerticalCount();
+		}
+	}
+	else
+	{
+		if (x < 0)
+		{
+			x += background.GetWidth();
+		}
+
+		if (y < 0)
+		{
+			y += background.GetHeight();
+		}
 	}
 
-	if (y < 0)
-	{
-		y += background.GetHeight();
-	}
-
-	strftime(tmpSz, MAX_LINE_LENGTH, m_Format.c_str(), newtime);
-
+	x += offset.x;
+	y += offset.y;
+	
 	if (GetRasterizer())
 	{
 		if (GetRasterizer()->GetType() == CRasterizer::TYPE_FONT)
@@ -197,4 +189,69 @@ void CItemTime::Paint(CImage& background, POINT offset)
 			GetRasterizer()->Paint(background, x, y, 0, 0, atoi(tmpSz));
 		}
 	}
+}
+
+LPCTSTR CItemTime::ToString()
+{
+	static char tmpSz[MAX_LINE_LENGTH];
+	std::string text = m_Format;
+
+	if (!m_Location.empty())
+	{
+		std::string::size_type start = text.find("%NM");
+		if (start != -1)
+		{
+			std::string st = CTimeZones::Instance().GetTimeZoneName(m_Location.c_str());
+			std::string::size_type start = text.find("%NM");
+			while (start != -1)
+			{
+				text.replace (start,3,st.c_str());
+				start = text.find("%NM");
+			}
+		}
+	}
+
+	CFileTime ft;
+	ft.SetToLocalTime();
+	if (!m_Location.empty())
+		ft.SetWorldTimeAt(m_Location.c_str());
+	struct tm newtime;
+	ft.Get_tm(newtime);
+	strftime(tmpSz, MAX_LINE_LENGTH, text.c_str(), &newtime);
+
+	return tmpSz;
+}
+
+int CItemTime::GetW()
+{
+	if(m_Rasterizer) 
+	{
+		if(m_Rasterizer->GetHeight() > m_Rasterizer->GetWidth()) 
+		{
+			return m_Rasterizer->GetWidth();
+		} 
+		else 
+		{
+			return m_Rasterizer->GetWidth() / m_NumOfComponents;
+		}
+	}
+
+	return 0;
+}
+
+int CItemTime::GetH()
+{
+	if(m_Rasterizer) 
+	{
+		if(m_Rasterizer->GetHeight() > m_Rasterizer->GetWidth()) 
+		{
+			return m_Rasterizer->GetHeight() / m_NumOfComponents;
+		} 
+		else 
+		{
+			return m_Rasterizer->GetHeight();
+		}
+	}
+
+	return 0;
 }

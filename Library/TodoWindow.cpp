@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/TodoWindow.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/TodoWindow.cpp,v 1.3 2005/10/14 17:05:29 rainy Exp $
 
   $Log: TodoWindow.cpp,v $
+  Revision 1.3  2005/10/14 17:05:29  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -309,6 +315,15 @@ SIZE CTodoWindow::CalcWindowSize()
 		size.cy = max(size.cy, m_TodoBackground.GetImageHeight());
 	}
 
+	for (int i = 0; i < m_DynamicSkinItems.size(); i++)
+	{
+		if (m_DynamicSkinItems[i]->IsIncludeSize() && m_DynamicSkinItems[i]->IsEnabled())
+		{
+			size.cx = max(size.cx, m_DynamicSkinItems[i]->GetX() + m_DynamicSkinItems[i]->GetW());
+			size.cy = max(size.cy, m_DynamicSkinItems[i]->GetY() + m_DynamicSkinItems[i]->GetH());
+		}
+	}
+	
 	return size;
 }
 
@@ -387,6 +402,23 @@ void CTodoWindow::DrawWindow()
 		m_ItemRasterizer->WriteText(m_DoubleBuffer, X, Y, W, H, text, true, list[i]->IsChecked());
 		Y += m_Heights[i] + GetTodoSeparation();
 	}
+
+	// Mitul{ : Make Todo window Smart; So if there is no Todo to display then Hide the window
+	if ((CConfig::Instance().GetSmartTodo()) && (CConfig::Instance().GetTodoEnable()))
+	{
+		if (list.begin() == list.end())
+		{
+			HideWindow();
+			SetSmartlyHidden(true);
+		}
+		else
+		{
+			ShowWindow(false);
+			SetSmartlyHidden(false);
+		}
+
+	}
+	// Mitul}
 
 	POINT offset = {0, 0};
 	for (int k = 0; k < m_StaticSkinItems.size(); k++)
@@ -790,7 +822,11 @@ LRESULT CALLBACK CTodoWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				return Window->OnEraseBkgnd(wParam, lParam);
 
 			case WM_MOUSEMOVE: 
+				Window->m_Message = WM_MOUSEMOVE;
+				return Window->OnMouseMove(wParam, lParam);
+
 			case WM_NCMOUSEMOVE: 
+				Window->m_Message = WM_NCMOUSEMOVE;
 				return Window->OnMouseMove(wParam, lParam);
 
 			case WM_LBUTTONDOWN: 

@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/FileTime.h,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/FileTime.h,v 1.3 2005/10/14 17:05:41 rainy Exp $
 
   $Log: FileTime.h,v $
+  Revision 1.3  2005/10/14 17:05:41  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -78,6 +84,8 @@ public:
 	int GetDaysInMonth();
 	int GetMonthsFirstWeekday();
 	bool IsLeapYear();
+	static bool IsLeapYear(int y);
+	int GetYear();	// Mitul
 
 	LPCTSTR ToString();
 	bool FromString(LPCTSTR str);
@@ -89,6 +97,17 @@ public:
 	LPCTSTR ToTimeAndDateString(bool noYear = false);
 
 	bool IsValid() { return m_Valid; }
+
+	// Mitul{
+	int DifferenceInYears(CFileTime& date);
+	bool IsSameDate(CFileTime& dt);
+
+	void SetWorldTimeAt(const char* place);
+	void Get_tm(struct tm &ret);
+	void ConvertToGMT();
+	void ConvertToLocal();
+	// Mitul}
+
 
 private:
 	FILETIME m_FileTime;

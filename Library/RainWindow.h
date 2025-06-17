@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/RainWindow.h,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/RainWindow.h,v 1.3 2005/10/14 17:05:29 rainy Exp $
 
   $Log: RainWindow.h,v $
+  Revision 1.3  2005/10/14 17:05:29  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -56,6 +62,7 @@
 #include "ItemTime.h"
 #include "ItemButton.h"
 #include "ItemImage.h"
+#include "FileTime.h"
 
 #define WINDOW_TIMER 1
 #define FADE_TIMER 2
@@ -67,7 +74,9 @@ enum RAINWINDOW_TYPE
 	RAINWINDOW_TYPE_CALENDAR,
 	RAINWINDOW_TYPE_TODO,
 	RAINWINDOW_TYPE_MESSAGEBOX,
-	RAINWINDOW_TYPE_EVENTLIST
+	RAINWINDOW_TYPE_EVENTLIST,
+	RAINWINDOW_TYPE_TODAY,
+	RAINWINDOW_TYPE_BALLOONTIP
 };
 
 class CRainWindow
@@ -126,6 +135,11 @@ public:
 
 	void AddSkinItem(CItem* item, bool dynamic);
 
+	// Mitul{
+	bool GetSmartlyHidden() { return m_SmartlyHidden; }	
+	void SetSmartlyHidden(bool SmartlyHidden) { m_SmartlyHidden = SmartlyHidden; };
+	// Mitul}
+
 protected:
 	void UpdateDynamic();
 	virtual void RedrawBegin();
@@ -137,7 +151,7 @@ protected:
 	bool InsideCheck(POINT pos);
 
 	void ShowWindowIfAppropriate();
-	void DrawDynamic();
+	virtual void DrawDynamic();
 	
 	void SnapToWindow(CRainWindow* window, LPWINDOWPOS wp);
 
@@ -145,7 +159,7 @@ protected:
 	std::string m_SettingsFile;
 
 	std::vector<CItem*> m_StaticSkinItems;			// Sorted list of CItems
-	std::vector<CItem*> m_DynamicSkinItems;			// Sorted list of CItems
+	std::vector<CItemDynamic*> m_DynamicSkinItems;			// Sorted list of CItemDynamic
 
 	HDC m_DC;									// DC used with drawing
 	CImage m_DoubleBuffer;						// Double buffer for flicker free drawing
@@ -167,13 +181,15 @@ protected:
 	bool m_Docked;
 	POINT m_DistanceFromMainWindow;
 
-	time_t m_LastUpdate;
+	CFileTime m_LastUpdate;
 
 	DWORD m_FadeStartTime;
 	int m_FadeStartValue;
 	int m_FadeEndValue;
 
 	WNDPROC m_WndProc;
+
+	bool m_SmartlyHidden;	// Mitul
 };
 
 #endif

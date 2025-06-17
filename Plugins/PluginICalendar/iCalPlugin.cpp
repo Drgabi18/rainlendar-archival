@@ -16,9 +16,18 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Plugins/PluginICalendar/iCalPlugin.cpp,v 1.2 2005/07/20 18:47:10 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugins/PluginICalendar/iCalPlugin.cpp,v 1.5 2005/10/14 17:05:41 rainy Exp $
 
   $Log: iCalPlugin.cpp,v $
+  Revision 1.5  2005/10/14 17:05:41  rainy
+  no message
+
+  Revision 1.4  2005/09/08 16:13:51  rainy
+  no message
+
+  Revision 1.3  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.2  2005/07/20 18:47:10  rainy
   no message
 
@@ -102,8 +111,8 @@ void Plugin_Finalize()
 {
 	EndMonitor();
 
-	CloseHandle(g_ThreadStopEvent);
-	CloseHandle(g_ThreadWaitEvent);
+	if (g_ThreadStopEvent) CloseHandle(g_ThreadStopEvent);
+	if (g_ThreadWaitEvent) CloseHandle(g_ThreadWaitEvent);
 }
 
 void Plugin_Enable()
@@ -145,7 +154,7 @@ LPCTSTR Plugin_GetAuthor()
 
 UINT Plugin_GetVersion()
 {
-	return 1004;	// Rainlendar 0.21.1
+	return 1009;	// Rainlendar 0.22
 }
 
 void Plugin_ItemNotification(GUID** guid)
@@ -209,6 +218,22 @@ bool Plugin_ImportItems(LPCTSTR eventFile, RAINLENDAR_TYPE type)
 		return ImportEvents(eventFile, false, false, IMPORT_TODOS);
 	}
 	return false;
+}
+
+void FixPath(std::tstring& strPath)
+{
+	// Check for absolute path
+	if(-1 == strPath.find(':')) 
+	{
+		char tmpName[MAX_PATH];
+
+		// Get the DLL's directory
+		HMODULE module = GetModuleHandle("Rainlendar.dll");
+		GetModuleFileName(module, tmpName, MAX_PATH);
+		char* Slash = strrchr(tmpName, '\\');
+		*(Slash + 1) = 0;	// Cut the Rainlendar.dll from the name
+		strPath.insert(0, tmpName);
+	}
 }
 
 void Plugin_ExportItems(LPCTSTR eventFile, GUID** guids, RAINLENDAR_TYPE type)
@@ -327,6 +352,16 @@ void WriteSettings(LPCTSTR configFile)
 	}
 }
 
+FILETIME GetTimeNow()
+{
+	FILETIME time, time2;
+	GetSystemTimeAsFileTime(&time);
+	if (FileTimeToLocalFileTime(&time, &time2) != 0)
+		return time2;
+	else
+		return time;
+}
+
 FILETIME CreateFileTime(icaltimetype* time)
 {
 	FILETIME fileTime;
@@ -381,37 +416,88 @@ icaltimetype* CreateFileTime(FILETIME fileTime)
 	return &icalTime;
 }
 
-time_t CreateTime(icaltimetype* time)
+FILETIME CreateTime(icaltimetype* time)
 {
-	// TODO: Convert to local time (if it's not already)
-	struct tm sysTime;
-	memset(&sysTime, 0, sizeof(tm));
+	SYSTEMTIME sysTime;
+	FILETIME fileTime;
+	memset(&sysTime, 0, sizeof(SYSTEMTIME));
 
-	sysTime.tm_mday = time->day;
-	sysTime.tm_mon = time->month - 1;
-	sysTime.tm_year = time->year - 1900;
-	sysTime.tm_hour = time->hour;
-	sysTime.tm_min = time->minute;
-	sysTime.tm_sec = time->second;
+	if (!time->is_utc)
+	{
 
-	return mktime(&sysTime);
+		sysTime.wDay = time->day;
+		sysTime.wMonth = time->month;
+		sysTime.wYear = time->year;
+		sysTime.wHour = time->hour;
+		sysTime.wMinute = time->minute;
+		sysTime.wSecond = time->second;
+		
+		SystemTimeToFileTime(&sysTime, &fileTime);
+
+		return fileTime;
+	}
+	else
+	{
+		FILETIME ftLocal = CreateFileTime(time);	// Convert to local
+		icaltimetype* localTime = CreateFileTime(ftLocal);
+		localTime->is_utc = false;
+		return CreateTime(localTime);
+
+// Local time to UTC
+//		FILETIME ftLocal = CreateFileTime(time);
+//
+//		icaltimetype fakeTime = *time;
+//		fakeTime.is_utc = true;
+//		FILETIME ftFake = CreateFileTime(&fakeTime);
+//
+//		// Check the difference and substract that from the local time
+//		ULARGE_INTEGER value1, value2;
+//
+//		value1.LowPart = ftLocal.dwLowDateTime;
+//		value1.HighPart = ftLocal.dwHighDateTime;
+//		value2.LowPart = ftFake.dwLowDateTime;
+//		value2.HighPart = ftFake.dwHighDateTime;
+//
+//		value2.QuadPart = value2.QuadPart - value1.QuadPart;
+//		value1.QuadPart = value1.QuadPart - value2.QuadPart;
+//
+//		ftLocal.dwLowDateTime = value1.LowPart;
+//		ftLocal.dwHighDateTime = value1.HighPart;
+//
+//		icaltimetype* utcTime = CreateFileTime(ftLocal);
+//		utcTime->is_utc = true;
+//		return CreateTime(utcTime);
+	}
 }
 
-icaltimetype* CreateTime(time_t time)
+icaltimetype* CreateTime(FILETIME time)
 {
 	static icaltimetype icalTime;
-
-	struct tm* sysTime;
-	sysTime = gmtime(&time);
-
 	memset(&icalTime, 0, sizeof(icaltimetype));
 
-	icalTime.day = sysTime->tm_mday;
-	icalTime.month = sysTime->tm_mon + 1;
-	icalTime.year = sysTime->tm_year + 1900;
-	icalTime.hour = sysTime->tm_hour;
-	icalTime.minute = sysTime->tm_min;
-	icalTime.second = sysTime->tm_sec;
+	SYSTEMTIME sysTime;
+	if (!FileTimeToSystemTime(&time, &sysTime))
+	{
+		DebugLog("Warning! FileTimeToSystemTime failed (%u:%u).", time.dwHighDateTime, time.dwLowDateTime);
+	}
+
+//
+// TzSpecificLocalTimeToSystemTime is XP-only so let's not use it. The timestamp
+// can be in local time too so it's not necessary to convert it.
+//
+//	// Convert to UTC time
+//	if ( ! TzSpecificLocalTimeToSystemTime(NULL, &sysTime, &localSysTime) )
+//	{
+//		localSysTime = sysTime;
+//	}
+
+	icalTime.day = sysTime.wDay;
+	icalTime.month = sysTime.wMonth;
+	icalTime.year = sysTime.wYear;
+	icalTime.hour = sysTime.wHour;
+	icalTime.minute = sysTime.wMinute;
+	icalTime.second = sysTime.wSecond;
+	icalTime.is_utc = 0;
 
 	return &icalTime;
 }
@@ -482,7 +568,7 @@ RainlendarEvent* ScanEvent(icalcomponent* component, bool readOnly, bool setID)
 
 	if (icaltime_is_null_time(timeStamp))
 	{
-		time(&newEvent->timeStamp);
+		newEvent->timeStamp = GetTimeNow();
 	}
 	else
 	{
@@ -706,7 +792,7 @@ RainlendarTodo* ScanTodo(icalcomponent* component, bool readOnly, bool setID)
 
 	if (icaltime_is_null_time(timeStamp))
 	{
-		time(&newTodo->timeStamp);
+		newTodo->timeStamp = GetTimeNow();
 	}
 	else
 	{
@@ -783,7 +869,7 @@ int ScanEvent(icalcomponent* component, bool readOnly, bool setID, RAINLENDAR_TY
 		{
 			if (!setID)
 			{
-				time(&newEvent->timeStamp);
+				newEvent->timeStamp = GetTimeNow();
 			}
 			Rainlendar_SetItem(newEvent, setID ? g_ID : 0);
 			Rainlendar_DeleteItem(newEvent);
@@ -797,7 +883,7 @@ int ScanEvent(icalcomponent* component, bool readOnly, bool setID, RAINLENDAR_TY
 		{
 			if (!setID)
 			{
-				time(&newTodo->timeStamp);
+				newTodo->timeStamp = GetTimeNow();
 			}
 			Rainlendar_SetItem(newTodo, setID ? g_ID : 0);
 			Rainlendar_DeleteItem(newTodo);
@@ -833,7 +919,10 @@ bool ImportEvents(LPCTSTR eventFile, bool readOnly, bool setID, int items)
 		return false;
 	}
 
-	icalset* store = icalfileset_new_reader(eventFile);
+	std::tstring strPath(eventFile);
+	FixPath(strPath);
+
+	icalset* store = icalfileset_new_reader(strPath.c_str());
 	if (store)
 	{
 		int eventCount = 0;
@@ -1192,7 +1281,10 @@ bool ExportEvents(LPCTSTR eventFile, RainlendarItem** items, bool merge)
 		DeleteFile(eventFile);
 	}
 
-	store = icalfileset_new(eventFile);
+	std::tstring strPath(eventFile);
+	FixPath(strPath);
+
+	store = icalfileset_new(strPath.c_str());
 	if (store)
 	{
 		int eventCount = 0;

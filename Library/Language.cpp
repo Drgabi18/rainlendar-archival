@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/Language.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/Language.cpp,v 1.3 2005/10/14 17:05:29 rainy Exp $
 
   $Log: Language.cpp,v $
+  Revision 1.3  2005/10/14 17:05:29  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -67,6 +73,7 @@
 #include "Litestep.h"
 #include "RainlendarDLL.h"
 #include <algorithm>
+#include <math.h>
 
 const char* g_DefaultGeneralStrings[] = {		// General
 	"OK",
@@ -224,6 +231,7 @@ const char* g_DefaultGeneralConfigGUIStrings[] = {		// GeneralConfigGUI
 	"Show Log",
 	"Advanced Edit",
 	"Advanced",
+	"Hide event and todo lists when there are no items",
     NULL
 };
 
@@ -255,6 +263,8 @@ const char* g_DefaultLayoutConfigGUIStrings[] = {		// LayoutConfigGUI
 	"Event list window",
 	"Opaque on mouse over",
 	"Transparent on mouse over",
+	"Layout %c",
+	"Layout type:",
 	NULL
 };
 
@@ -518,6 +528,7 @@ void CLanguage::Clear()
 	m_ProfileMap.clear();
 	m_Languages.clear();
 	m_Path.erase();
+	m_OrdinalNums.clear();
 }
 
 bool CLanguage::ScanLanguages(const char* path)
@@ -585,6 +596,34 @@ bool CLanguage::ChangeLanguage(int index)
 					pos2 = pos2 + strlen(pos2) + 1;
 				}
 			}
+			else if (strcmp(pos, "OrdinalNumbers") == 0)
+			{
+				m_OrdinalNums.clear();
+				m_OrdinalsDefined = true;
+				while(strlen(pos2) > 0)
+				{
+					GetPrivateProfileString(pos, pos2, NULL, buffer3, MAX_LINE_LENGTH, language.c_str());
+					if (strcmp(pos2, "Default") == 0)
+					{
+						m_DefaultOrdinal.Reminder = 0;
+						m_DefaultOrdinal.Divider = 1;
+						m_DefaultOrdinal.EndText = buffer3;
+					}
+					else
+					{
+						OrdinalNumber ON;
+						ON.Reminder = atoi(pos2);
+						if (pos2[strlen(pos2)-1] == '%')
+							ON.Divider = 1;
+						else
+							ON.Divider = pow (10, strlen(pos2));
+						ON.EndText = buffer3;
+						m_OrdinalNums.push_back(ON);
+					}
+					
+					pos2 = pos2 + strlen(pos2) + 1;
+				}
+			}
 			else
 			{
 				while(strlen(pos2) > 0)
@@ -631,6 +670,47 @@ void CLanguage::SetDefaultLanguage()
     m_Strings.clear();
     m_IndexMap.clear();
 	m_ProfileMap.clear();
+
+	// Mitul{
+	m_OrdinalNums.clear();
+	m_OrdinalsDefined = false;
+
+	// The default is English
+	m_DefaultOrdinal.Reminder = 0;
+	m_DefaultOrdinal.Divider = 1;
+	m_DefaultOrdinal.EndText = "th";
+
+	OrdinalNumber ON;
+	ON.Reminder = 1;
+	ON.Divider = 10;
+	ON.EndText = "st";
+	m_OrdinalNums.push_back(ON);
+
+	ON.Reminder = 2;
+	ON.Divider = 10;
+	ON.EndText = "nd";
+	m_OrdinalNums.push_back(ON);
+
+	ON.Reminder = 3;
+	ON.Divider = 10;
+	ON.EndText = "rd";
+	m_OrdinalNums.push_back(ON);
+
+	ON.Reminder = 11;
+	ON.Divider = 100;
+	ON.EndText = "th";
+	m_OrdinalNums.push_back(ON);
+
+	ON.Reminder = 12;
+	ON.Divider = 100;
+	ON.EndText = "th";
+	m_OrdinalNums.push_back(ON);
+
+	ON.Reminder = 13;
+	ON.Divider = 100;
+	ON.EndText = "th";
+	m_OrdinalNums.push_back(ON);
+	// Mitul}
 
     i = 0;
     while (g_DefaultGeneralStrings[i] != NULL)
@@ -821,3 +901,21 @@ void CLanguage::SetString(const char* section, int index, const char* string)
 		(*m_Strings[sectionIndex])[index] = tmpString;
 	}
 }
+
+//Mitul{
+const char* CLanguage::GetOrdinalString(int Num)
+{
+//	DebugLog("Testing: Number received: %i", Num);
+	for (int index = (int)m_OrdinalNums.size() - 1; index >=0; index--)
+	{
+//		DebugLog("Testing: Divider: %i   Reminder: %i", m_OrdinalNums[index].Divider, m_OrdinalNums[index].Reminder);
+
+		if ((m_OrdinalNums[index].Divider == 1) && (m_OrdinalNums[index].Reminder == Num))
+			return m_OrdinalNums[index].EndText.c_str();
+		else if (Num % m_OrdinalNums[index].Divider == m_OrdinalNums[index].Reminder)
+			return m_OrdinalNums[index].EndText.c_str();
+	}
+
+	return m_DefaultOrdinal.EndText.c_str();
+}
+// Mitul}

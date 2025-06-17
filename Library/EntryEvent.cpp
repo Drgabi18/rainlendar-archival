@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/EntryEvent.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/EntryEvent.cpp,v 1.3 2005/10/14 17:05:41 rainy Exp $
 
   $Log: EntryEvent.cpp,v $
+  Revision 1.3  2005/10/14 17:05:41  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -181,9 +187,23 @@ CFileTime CEntryEvent::GetEnd()
 
 void CEntryEvent::GetBriefMessage(std::string& message, int len, bool addTime, bool longFormat)
 {
+	std::string postfix;
+
+	if (GetRainlendarEvent()->profile != NULL)
+	{
+		const Profile* profile = CConfig::Instance().GetProfile(GetRainlendarEvent()->profile);
+		if (profile) 
+		{
+			if (GetRainlendarEvent()->recurrency && GetRainlendarEvent()->recurrency->type != RECURRENCY_TYPE_SINGLE) 
+			{
+				postfix = profile->postfixString;
+			}
+		}
+	}
+
 	if (GetRainlendarEvent()->header != NULL && strlen(GetRainlendarEvent()->header) > 0)
 	{
-		message = GetRainlendarEvent()->header;
+		message = GetRainlendarEvent()->header + postfix;
 
 		if (longFormat && (GetRainlendarEvent()->message != NULL && strlen(GetRainlendarEvent()->message) > 0))
 		{
@@ -195,7 +215,7 @@ void CEntryEvent::GetBriefMessage(std::string& message, int len, bool addTime, b
 	{
 		if (GetRainlendarEvent()->message != NULL)
 		{
-			message = GetRainlendarEvent()->message;
+			message = GetRainlendarEvent()->message + postfix;
 		}
 	}
 
@@ -244,6 +264,9 @@ void CEntryEvent::GetBriefMessage(std::string& message, int len, bool addTime, b
 			message = time + " " + message;
 		}
 	}
+
+	// Mitul : Replace custom tags
+	ReplaceCustomTags(message, GetStartTime());	
 
 	if (len > 0 && (int)message.size() > len)
 	{
@@ -317,3 +340,44 @@ void CEntryEvent::SetRecurrency(RainlendarRecurrency* recurrency)
 		GetRainlendarEvent()->recurrency = newRecur;
 	}
 }
+
+// Mitul{
+void CEntryEvent::ReplaceCustomTags(std::string& text, CFileTime startTime)
+{
+	// Let's handle our custom tag first
+	// %YN	- # of years in numbers
+	// %YT	- # of years in th format
+
+	CFileTime now = CCalendarWindow::c_MonthsFirstDate;
+	int y = now.DifferenceInYears(startTime);
+
+	char tmpSz[MAX_LINE_LENGTH];
+	std::string st;
+
+	sprintf(tmpSz, "%i", y);
+	st = CCalendarWindow::c_Language.GetOrdinalString(y);
+
+	std::string::size_type start = text.find("%YN");
+	while (start != -1)
+	{
+		text.replace (start,3,tmpSz);
+		start = text.find("%YN");
+	}
+
+	/*
+	start = text.find("%YT");
+	while (start != -1)
+	{
+		text.replace (start,3,st);
+		start = text.find("%YT");
+	}
+	*/
+
+	start = text.find("%OT");
+	while (start != -1)
+	{
+		text.replace (start,3,st);
+		start = text.find("%OT");
+	}
+}
+// Mitul}

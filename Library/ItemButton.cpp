@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/ItemButton.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/ItemButton.cpp,v 1.3 2005/10/14 17:05:41 rainy Exp $
 
   $Log: ItemButton.cpp,v $
+  Revision 1.3  2005/10/14 17:05:41  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -49,11 +55,8 @@ enum BUTTON_STATE
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CItemButton::CItemButton() : CItem()
+CItemButton::CItemButton() : CItemDynamic()
 {
-	m_X = 0;
-	m_Y = 0;
-	m_WinType = RAINWINDOW_TYPE_CALENDAR;
 	m_State = 0;
 	m_Clicked = false;
 }
@@ -64,14 +67,9 @@ CItemButton::~CItemButton()
 
 void CItemButton::ReadSettings(const char* iniFile, const char* section)
 {
-	CItem::ReadSettings(iniFile, section);
+	CItemDynamic::ReadSettings(iniFile, section);
 
 	char tmpSz[MAX_LINE_LENGTH];
-
-	m_X = GetPrivateProfileInt( section, "X", 0, iniFile);
- 	m_Y = GetPrivateProfileInt( section, "Y", 0, iniFile);
-
-	m_WinType = (RAINWINDOW_TYPE)GetPrivateProfileInt(section, "Window", 0, iniFile);
 
 	if (GetPrivateProfileString(section, "Command", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
@@ -86,143 +84,145 @@ void CItemButton::ReadSettings(const char* iniFile, const char* section)
 		BMRast->SetAlign(CRasterizer::ALIGN_TOP | CRasterizer::ALIGN_LEFT);
 		SetRasterizer(BMRast);
 	}
-
-	m_Enabled=(1==GetPrivateProfileInt( section, "Enable", 1, iniFile))?true:false;
-}
-
-void CItemButton::WriteSettings()
-{
-	char tmpSz[256];
-	std::string INIPath = m_SettingsFile;
-
-	// Only the enable/disable state need to be written since other settings cannot be edited
-	sprintf(tmpSz, "%i", m_Enabled);
-	WritePrivateProfileString( m_Section.c_str(), "Enable", tmpSz, INIPath.c_str() );
-}
-
-/* 
-** Initialize
-**
-** Initializes the items 
-**
-*/
-void CItemButton::Initialize()
-{
-	if (!GetRasterizer())
-	{
-		m_Enabled = false;
-	}
 }
 
 bool CItemButton::MouseUp(POINT pos, CRainWindow* window)
 {
-	int x = m_X;
-	int y = m_Y;
-
-	if (x < 0)
-	{
-		x += window->GetWidth();
-	}
-
-	if (y < 0)
-	{
-		y += window->GetHeight();
-	}
-
-	if (m_State == BUTTON_STATE_DOWN)
-	{
-		if (m_Clicked &&
-			pos.x >= x && pos.x <= x + GetRasterizer()->GetWidth() / FRAMES &&
-			pos.y >= y && pos.y <= y + GetRasterizer()->GetHeight())
-		{
-			window->ExecuteCommand(m_Command.c_str());
-		}
-		m_State = BUTTON_STATE_NORMAL;
-		m_Clicked = false;
-		return true;
-	}
-	m_Clicked = false;
-
-	return false;
+	return HandleMouseEvent(pos, window, BUTTON_MOUSE_EVENT_UP);
 }
 
 bool CItemButton::MouseDown(POINT pos, CRainWindow* window)
 {
-	int x = m_X;
-	int y = m_Y;
-
-	if (x < 0)
-	{
-		x += window->GetWidth();
-	}
-
-	if (y < 0)
-	{
-		y += window->GetHeight();
-	}
-
-	if (pos.x >= x && pos.x <= x + GetRasterizer()->GetWidth() / FRAMES &&
-		pos.y >= y && pos.y <= y + GetRasterizer()->GetHeight())
-	{
-		m_State = BUTTON_STATE_DOWN;
-		m_Clicked = true;
-		return true;
-	}
-	return false;
+	return HandleMouseEvent(pos, window, BUTTON_MOUSE_EVENT_DOWN);
 }
 
 bool CItemButton::MouseMove(POINT pos, CRainWindow* window)
 {
+	return HandleMouseEvent(pos, window, BUTTON_MOUSE_EVENT_MOVE);
+}
+
+bool CItemButton::HandleMouseEvent(POINT pos, CRainWindow* window, BUTTON_MOUSE_EVENT event)
+{
+	bool isInside = false;
+	int divX = 1, divY = 1;
 	int x = m_X;
 	int y = m_Y;
 
-	if (x < 0)
+	if ( (window->GetType() == RAINWINDOW_TYPE_CALENDAR) && (m_RepeatType == REPEAT_TYPE_ALL) )
 	{
-		x += window->GetWidth();
+		divX = CConfig::Instance().GetHorizontalCount();
+		divY = CConfig::Instance().GetVerticalCount();
+		POINT offset = {0};
+		offset.x = window->GetWidth() / divX;	// Width
+		offset.y = window->GetHeight() / divY;	// Height
+		if (offset.x != 0)
+		{
+			offset.x = (pos.x / offset.x) * offset.x;	// Offset X
+		}
+		if (offset.y != 0)
+		{
+			offset.y = (pos.y / offset.y) * offset.y;	// Offset Y
+		}
+		pos.x -=  offset.x;
+		pos.y -=  offset.y;
 	}
+	else if ( (window->GetType() == RAINWINDOW_TYPE_CALENDAR) && (m_RepeatType == REPEAT_TYPE_CURRENT_MONTH) )
+	{
+		divX = CConfig::Instance().GetHorizontalCount();
+		divY = CConfig::Instance().GetVerticalCount();
+		POINT offset = ((CCalendarWindow *)window)->GetCurrentMonthOffset();
+		if (offset.x == -1 && offset.y == -1) 
+		{
+			return false;		// Not visible
+		}
+
+		pos.x -=  offset.x;
+		pos.y -=  offset.y;
+	}
+	else if ( (window->GetType() == RAINWINDOW_TYPE_CALENDAR) && (m_RepeatType == REPEAT_TYPE_VIEW_MONTH) )
+	{
+		divX = CConfig::Instance().GetHorizontalCount();
+		divY = CConfig::Instance().GetVerticalCount();
+		POINT offset = ((CCalendarWindow *)window)->GetViewMonthOffset();
+		if (offset.x == -1 && offset.y == -1) 
+		{
+			return false;		// Not visible
+		}
+
+		pos.x -=  offset.x;
+		pos.y -=  offset.y;
+	}
+
+	if (x < 0)
+		x += window->GetWidth() / divX;
 
 	if (y < 0)
-	{
-		y += window->GetHeight();
-	}
+		y += window->GetHeight() / divY;
 
-	if (m_Clicked == true)
+	isInside = ( (pos.x >= x && pos.x <= x + GetRasterizer()->GetWidth() / FRAMES) &&
+				(pos.y >= y && pos.y <= y + GetRasterizer()->GetHeight()) );
+
+	if (event == BUTTON_MOUSE_EVENT_UP) 
 	{
-		if (pos.x >= x && pos.x <= x + GetRasterizer()->GetWidth() / FRAMES &&
-			pos.y >= y && pos.y <= y + GetRasterizer()->GetHeight())
+		if (m_State == BUTTON_STATE_DOWN)
 		{
-			if (m_State == BUTTON_STATE_NORMAL)
+			if (m_Clicked && isInside)
 			{
-				m_State = BUTTON_STATE_DOWN;
-				return true;
+				window->ExecuteCommand(m_Command.c_str());
 			}
+			m_State = BUTTON_STATE_NORMAL;
+			m_Clicked = false;
+			return true;
 		}
-		else
+		m_Clicked = false;
+	}
+	else if (event == BUTTON_MOUSE_EVENT_DOWN) 
+	{
+		if (isInside)
 		{
-			if (m_State == BUTTON_STATE_DOWN)
-			{
-				m_State = BUTTON_STATE_NORMAL;
-				return true;
-			}
+			m_State = BUTTON_STATE_DOWN;
+			m_Clicked = true;
+			return true;
 		}
 	}
-	else
+	else if (event == BUTTON_MOUSE_EVENT_MOVE) 
 	{
-		if (pos.x >= x && pos.x <= x + GetRasterizer()->GetWidth() / FRAMES &&
-			pos.y >= y && pos.y <= y + GetRasterizer()->GetHeight())
+		if (m_Clicked == true)
 		{
-			if (m_State == BUTTON_STATE_NORMAL)
+			if (isInside)
 			{
-				m_State = BUTTON_STATE_HOVER;
-				return true;
+				if (m_State == BUTTON_STATE_NORMAL)
+				{
+					m_State = BUTTON_STATE_DOWN;
+					return true;
+				}
+			}
+			else
+			{
+				if (m_State == BUTTON_STATE_DOWN)
+				{
+					m_State = BUTTON_STATE_NORMAL;
+					return true;
+				}
 			}
 		}
 		else
 		{
-			if (m_State == BUTTON_STATE_HOVER)
+			if (isInside)
 			{
-				m_State = BUTTON_STATE_NORMAL;
-				return true;
+				if (m_State == BUTTON_STATE_NORMAL)
+				{
+					m_State = BUTTON_STATE_HOVER;
+					return true;
+				}
+			}
+			else
+			{
+				if (m_State == BUTTON_STATE_HOVER)
+				{
+					m_State = BUTTON_STATE_NORMAL;
+					return true;
+				}
 			}
 		}
 	}
@@ -237,18 +237,40 @@ bool CItemButton::MouseMove(POINT pos, CRainWindow* window)
 */
 void CItemButton::Paint(CImage& background, POINT offset)
 {
-	int x = m_X;
-	int y = m_Y;
-
-	if (x < 0)
+	if (GetRasterizer())
 	{
-		x += background.GetWidth();
-	}
+		int x = m_X;
+		int y = m_Y;
 
-	if (y < 0)
-	{
-		y += background.GetHeight();
-	}
+		if ( (m_WinType == RAINWINDOW_TYPE_CALENDAR) && (m_RepeatType != REPEAT_TYPE_NO) )
+		{
+			if (x < 0)
+			{
+				x += background.GetWidth() / CConfig::Instance().GetHorizontalCount();
+			}
 
-	GetRasterizer()->Paint(background, x, y, 0, 0, m_State);
+			if (y < 0)
+			{
+				y += background.GetHeight() / CConfig::Instance().GetVerticalCount();
+			}
+		}
+		else
+		{
+			if (x < 0)
+			{
+				x += background.GetWidth();
+			}
+
+			if (y < 0)
+			{
+				y += background.GetHeight();
+			}
+		}
+
+		x += offset.x;
+		y += offset.y;
+
+		GetRasterizer()->Paint(background, x, y, 0, 0, m_State);
+	}
 }
+

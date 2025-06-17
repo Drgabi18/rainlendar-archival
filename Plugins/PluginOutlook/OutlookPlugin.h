@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Plugins/PluginOutlook/OutlookPlugin.h,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugins/PluginOutlook/OutlookPlugin.h,v 1.2 2005/09/08 16:09:12 rainy Exp $
 
   $Log: OutlookPlugin.h,v $
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -40,6 +43,7 @@
 
 #include <string>
 #include <vector>
+#include <mapidefs.h>
 
 #define PLUGIN_NAME _T("OutlookPlugin")
 
@@ -49,7 +53,9 @@ void DebugLog(const char* format, ... );
 struct MessageStoreName
 {
 	std::string name;	
+	std::string storeID;
 	std::vector<std::string> folders;
+	std::vector<std::string> folderIDs;
 };
 
 #endif

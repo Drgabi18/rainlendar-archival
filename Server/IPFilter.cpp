@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Server/IPFilter.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Server/IPFilter.cpp,v 1.3 2005/10/14 15:18:43 rainy Exp $
 
   $Log: IPFilter.cpp,v $
+  Revision 1.3  2005/10/14 15:18:43  rainy
+  no message
+
+  Revision 1.2  2005/10/12 15:45:31  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -40,8 +46,9 @@
 
 using namespace ssobjects;
 
-CIPFilter::CIPFilter()
+CIPFilter::CIPFilter(const ssobjects::CStr& filterFile)
 {
+	m_FilterFile = filterFile;
 }
 
 CIPFilter::~CIPFilter()
@@ -65,7 +72,7 @@ CIPFilter::~CIPFilter()
 	}
 }
 
-bool CIPFilter::Parse(const CStr& filterFile)
+bool CIPFilter::Parse()
 {
 	enum STATE
 	{
@@ -80,12 +87,13 @@ bool CIPFilter::Parse(const CStr& filterFile)
 
 	state = STATE_NONE;
 
-	FILE* file = fopen(filterFile, "r");
+	FILE* file = fopen(m_FilterFile, "r");
 
 	if (file)
 	{
 		while(!feof(file))
 		{
+			buffer[0] = 0;
 			fgets(buffer, 1024, file);
 			if (buffer[0] == ';' || buffer[0] == '#') continue; // Comment
 			if (buffer[0] == '[') state = STATE_NONE; // New state
@@ -140,16 +148,21 @@ bool CIPFilter::Parse(const CStr& filterFile)
 
 			if (ferror(file))
 			{
-				printf("Error reading the filter file.\n");
+				LOG("Error reading the filter file.");
 				fclose(file);
 				return false;
 			}
 		}
 		fclose(file);
+
+		LOG("Read %i rules from the file \"%s\".", 
+			m_AcceptIncoming.getNumEntries() + m_DenyIncoming.getNumEntries() +
+			m_AcceptOutgoing.getNumEntries() + m_DenyOutgoing.getNumEntries(),
+			(char*)m_FilterFile);
 	}
 	else
 	{
-		printf("Unable to open the filter file.\n");
+		LOG("Unable to open the filter file.");
 		return false;
 	}
 

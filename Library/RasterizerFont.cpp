@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/RasterizerFont.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/RasterizerFont.cpp,v 1.2 2005/10/14 17:05:29 rainy Exp $
 
   $Log: RasterizerFont.cpp,v $
+  Revision 1.2  2005/10/14 17:05:29  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -355,7 +358,7 @@ void CRasterizerFont::WriteText(CImage& background, int X, int Y, int W, int H, 
 	RECT r = rect;
 	GetTextSize(text, &r, multiline);
 
-	CreateBuffers(r.right, r.bottom);
+	CreateBuffers(r.right+3, r.bottom+2);
 
 	SelectObject(dc, c_ColorBuffer.GetBitmap());
 	DrawText(dc, text, strlen(text), &rect, format);

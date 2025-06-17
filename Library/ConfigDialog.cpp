@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/ConfigDialog.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/ConfigDialog.cpp,v 1.2 2005/09/08 16:09:12 rainy Exp $
 
   $Log: ConfigDialog.cpp,v $
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -279,6 +282,10 @@ BOOL OnInitGeneralDialog(HWND window)
 	state = CConfig::Instance().GetShowTrayIcon() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_SHOW_TRAYICON, state);
 
+	state = CConfig::Instance().GetSmartEventList() ? BST_CHECKED : BST_UNCHECKED;
+	state |= CConfig::Instance().GetSmartTodo() ? BST_CHECKED : BST_UNCHECKED;
+	CheckDlgButton(window, IDC_SMART_LISTS, state);
+
 	state = CConfig::Instance().GetNativeTransparency() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_NATIVE_TRANSPARENCY, state);
 
@@ -313,6 +320,8 @@ BOOL OnInitGeneralDialog(HWND window)
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("GeneralConfigGUI", 22));
 	widget = GetDlgItem(window, IDC_SHOW_TRAYICON);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("GeneralConfigGUI", 25));
+	widget = GetDlgItem(window, IDC_SMART_LISTS);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("GeneralConfigGUI", 35));
 
 	widget = GetDlgItem(window, IDC_TRANSPARENCY_GROUP);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("GeneralConfigGUI", 26));
@@ -382,6 +391,9 @@ BOOL OnOKGeneralDialog(HWND window)
 	CConfig::Instance().SetTooltipSeparator(state);
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_SHOW_TRAYICON));
 	CConfig::Instance().SetShowTrayIcon(state);
+	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_SMART_LISTS));
+	CConfig::Instance().SetSmartEventList(state);
+	CConfig::Instance().SetSmartTodo(state);
 
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_NATIVE_TRANSPARENCY));
 	CConfig::Instance().SetNativeTransparency(state);
@@ -562,6 +574,8 @@ void UpdateLayoutWidgets(HWND window)
 	}
 }
 
+char* g_Layouts = "cCdDhHiIlLnNoOpPrRtTuUWxXZ";
+
 BOOL OnInitLayoutDialog(HWND window) 
 {
 	char tmpSz[256];
@@ -605,6 +619,8 @@ BOOL OnInitLayoutDialog(HWND window)
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("LayoutConfigGUI", 12));
 	widget = GetDlgItem(window, IDC_LAYOUT_JANUARY);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("LayoutConfigGUI", 13));
+	widget = GetDlgItem(window, IDC_LAYOUT_TYPE_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("LayoutConfigGUI", 28));
 	
 	widget = GetDlgItem(window, IDC_EVENTLIST_DAYS_STATIC);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("LayoutConfigGUI", 21));
@@ -684,6 +700,19 @@ BOOL OnInitLayoutDialog(HWND window)
 
 	state = CConfig::Instance().GetSubstituteDays() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_EVENTLIST_SUBSTITUTE, state);
+
+	// Fill in the layout combo
+	int i = 0;
+	while (g_Layouts[i] != 0) 
+	{
+		sprintf(tmpSz, CCalendarWindow::c_Language.GetString("LayoutConfigGUI", 27), g_Layouts[i]);
+		SendDlgItemMessage(window, IDC_LAYOUT_TYPE_COMBO, CB_ADDSTRING, NULL, (LPARAM)tmpSz);
+		if (CConfig::Instance().GetGridLayoutType() == g_Layouts[i]) 
+		{
+			SendMessage(GetDlgItem(window, IDC_LAYOUT_TYPE_COMBO), CB_SETCURSEL, i, 0);
+		}
+		i++;
+	}
 
 	UpdateLayoutWidgets(window);
 
@@ -778,6 +807,9 @@ BOOL OnOKLayoutDialog(HWND window)
 
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_EVENTLIST_SUBSTITUTE));
 	CConfig::Instance().SetSubstituteDays(state);
+
+	int sel = SendDlgItemMessage(window, IDC_LAYOUT_TYPE_COMBO, CB_GETCURSEL, NULL, (LPARAM)tmpSz);
+	CConfig::Instance().SetGridLayoutType(g_Layouts[sel]);
 
 	return TRUE;
 }

@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/EventListWindow.h,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/EventListWindow.h,v 1.2 2005/09/08 16:09:12 rainy Exp $
 
   $Log: EventListWindow.h,v $
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -72,14 +75,19 @@ public:
     const std::string& GetEventListFont() { return m_EventListFont; };
 	COLORREF GetEventListFontColor() { return m_EventListFontColor; };
 	int GetEventListSeparation() { return m_EventListSeparation; };
-    const std::string& GetEventListHeaderFont() { return m_EventListHeaderFont; };
-	COLORREF GetEventListHeaderFontColor() { return m_EventListHeaderFontColor; };
+	int GetEventListDaySeparation() { return m_EventListDaySeparation; };		// Mitul
 	int GetEventListHeaderSeparation() { return m_EventListHeaderSeparation; };
 	int GetEventListHeaderSeparation2() { return m_EventListHeaderSeparation2; };
+    const std::string& GetEventListHeaderFont() { return m_EventListHeaderFont; };
+	COLORREF GetEventListHeaderFontColor() { return m_EventListHeaderFontColor; };
     const std::string& GetEventListHeaderItemBitmapName() { return m_EventListHeaderItemBitmapName; };
 	POINT GetEventListHeaderItemOffset() { return m_EventListHeaderItemOffset; };
 	CRasterizer::ALIGN GetEventListHeaderItemAlign() { return m_EventListHeaderItemAlign; };
     const std::string& GetEventListHeaderFormat() { return m_EventListHeaderFormat; };
+	// Mitul{
+	int GetEventListItemMargin() { return m_EventListItemMargin; };
+	bool GetEventListItemIconEnable() { return m_EventListItemIconEnable; };
+	// Mitul}
 
 	void SetEventListBitmapName(const std::string& EventListBitmapName ) { m_EventListBitmapName=EventListBitmapName; };
 	void SetEventListBitmapMargins(RECT EventListBitmapMargins) { m_EventListBitmapMargins=EventListBitmapMargins; };
@@ -90,12 +98,17 @@ public:
 	void SetEventListHeaderFont(const std::string& EventListFont ) { m_EventListHeaderFont=EventListFont; };
 	void SetEventListHeaderFontColor(COLORREF EventListFontColor ) { m_EventListHeaderFontColor=EventListFontColor; };
 	void SetEventListSeparation(int EventListSeparation) { m_EventListSeparation=EventListSeparation; };
+	void SetEventListDaySeparation(int EventListSeparation) { m_EventListDaySeparation=EventListSeparation; };	// Mitul
 	void SetEventListHeaderSeparation(int EventListSeparation) { m_EventListHeaderSeparation=EventListSeparation; };
-	void SetEventListHeaderSeparation2(int EventListSeparation2) { m_EventListHeaderSeparation2=EventListSeparation2; };
+	void SetEventListHeaderSeparation2(int EventListSeparation) { m_EventListHeaderSeparation2=EventListSeparation; };
 	void SetEventListHeaderItemBitmapName(const std::string& EventListItemBitmapName) { m_EventListHeaderItemBitmapName=EventListItemBitmapName; };
 	void SetEventListHeaderItemOffset(POINT EventListItemOffset) { m_EventListHeaderItemOffset=EventListItemOffset; };
 	void SetEventListHeaderItemAlign(CRasterizer::ALIGN EventListItemAlign) { m_EventListHeaderItemAlign=EventListItemAlign; };
 	void SetEventListHeaderFormat(const std::string& EventListHeaderFormat ) { m_EventListHeaderFormat=EventListHeaderFormat; };
+	// Mitul{
+	void SetEventListItemMargin(int EventListItemMargin) { m_EventListItemMargin=EventListItemMargin; };
+	void SetEventListItemIconEnable(bool EventListItemIconEnable) { m_EventListItemIconEnable=EventListItemIconEnable; };
+	// Mitul}
 
 	void ResetSettings();
 
@@ -120,7 +133,7 @@ private:
 	{
 		std::string header;
 		std::vector<std::string> items;
-		std::vector<COLORREF> colors;
+		std::vector<LPCTSTR> profiles;		// Mitul
 		std::vector<GUID> guids;
 	};
 	std::vector<EVENTLISTITEM> m_EventListItems;
@@ -139,12 +152,17 @@ private:
 	COLORREF m_EventListHeaderFontColor;
 	std::string m_EventListHeaderFont;
 	int m_EventListSeparation;
+	int m_EventListDaySeparation;		// Mitul
 	int m_EventListHeaderSeparation;
 	int m_EventListHeaderSeparation2;
 	std::string m_EventListHeaderFormat;
 	std::string m_EventListHeaderItemBitmapName;
 	POINT m_EventListHeaderItemOffset;
 	CRasterizer::ALIGN m_EventListHeaderItemAlign;
+	// Mitul{
+	int m_EventListItemMargin;
+	bool m_EventListItemIconEnable;
+	// Mitul}
 };
 
 #endif

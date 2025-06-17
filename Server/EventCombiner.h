@@ -16,9 +16,21 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Server/EventCombiner.h,v 1.2 2005/07/11 16:16:37 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Server/EventCombiner.h,v 1.6 2005/10/12 15:55:05 rainy Exp $
 
   $Log: EventCombiner.h,v $
+  Revision 1.6  2005/10/12 15:55:05  rainy
+  no message
+
+  Revision 1.5  2005/10/12 15:45:31  rainy
+  no message
+
+  Revision 1.4  2005/09/08 16:13:51  rainy
+  no message
+
+  Revision 1.3  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.2  2005/07/11 16:16:37  rainy
   *** empty log message ***
 
@@ -79,7 +91,7 @@
 #include "IPNumber.h"
 #include "../Library/RainlendarAPI.h"
 
-const unsigned32 PROTOCOL_VERSION = 500;
+const unsigned32 PROTOCOL_VERSION = 800;
 
 class CIPFilter;
 
@@ -151,6 +163,8 @@ private:
 
 	const char* GuidToString(GUID guid);
 	GUID GuidFromString(const char* str);
+
+	int CompareFileTime(FILETIME* ft1, FILETIME* ft2);
 
 	std::map<GUID, EventInfo*, GUIDComparator> m_Events;
 	std::list<ssobjects::PacketBuffer*> m_Packets;

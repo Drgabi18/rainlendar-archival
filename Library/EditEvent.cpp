@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/EditEvent.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/EditEvent.cpp,v 1.3 2005/10/14 17:05:41 rainy Exp $
 
   $Log: EditEvent.cpp,v $
+  Revision 1.3  2005/10/14 17:05:41  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -390,11 +396,11 @@ static BOOL OnInitDialog(HWND window)
 	// Fill the start times
 	int i;
 	CFileTime time(1, 1, 2000);
-	for (i = 0; i < 24; i++)
+	for (i = 0; i < 48; i++)
 	{
 		LPCTSTR timeStr = time.ToTime();
 		SendDlgItemMessage(window, IDC_EDITEVENT_START, CB_ADDSTRING, NULL, (LPARAM)timeStr);
-		time.Add(60 * 60);
+		time.Add(30 * 60);
 	}
 
 	for (i = 0; i < sizeof(g_DurationTable) / sizeof(Duration); i++)
@@ -548,9 +554,9 @@ static void UpdateEvent(HWND window)
 	CFileTime time(sysTime.wDay, sysTime.wMonth, sysTime.wYear);
 
 	int index = SendDlgItemMessage(window, IDC_EDITEVENT_START, CB_GETCURSEL, NULL, NULL);
-	if (index >= 0 && index < 24)
+	if (index >= 0 && index < 48)
 	{
-		time = CFileTime(sysTime.wDay, sysTime.wMonth, sysTime.wYear, index * 1, 0, 0);
+		time = CFileTime(sysTime.wDay, sysTime.wMonth, sysTime.wYear, index / 2, 30 * (index % 2), 0);
 	}
 	else
 	{
@@ -615,9 +621,32 @@ static void UpdateEvent(HWND window)
 	if (len > 0)
 	{
 		TCHAR* text = new TCHAR[len + 1];
+
 		if (GetWindowText(widget, text, len + 1) > 0)
 		{
 			g_Event->SetProfile(CCalendarWindow::c_Language.GetOriginalProfile(text));
+
+			// Mitul{ : Let's update the recurrency for Birthday and Anniversary profiles
+			// TODO: It should match regardless of case
+			if (stricmp(CCalendarWindow::c_Language.GetOriginalProfile(text), "Birthday") == 0 ||
+				stricmp(CCalendarWindow::c_Language.GetOriginalProfile(text), "Anniversary") == 0 ||
+				stricmp(CCalendarWindow::c_Language.GetOriginalProfile(text), "Birthday\\Anniversary") == 0 ||
+				stricmp(CCalendarWindow::c_Language.GetOriginalProfile(text), "Birthday/Anniversary") == 0)
+			{
+				if (!(g_Event->GetRecurrency()))	// Update recurrency ONLY if it was not setup
+				{
+					g_Recurrency = new RainlendarRecurrency;
+					memset(g_Recurrency, 0, sizeof(RainlendarRecurrency));
+					g_Recurrency->size = sizeof(RainlendarRecurrency);
+					//*g_Recurrency = *(g_Event->GetRecurrency());	// Copy recurrency data
+					g_Recurrency->type = RECURRENCY_TYPE_YEARLY;
+					g_Recurrency->frequency = 1;
+					g_Recurrency->repeatType = RECURRENCY_REPEAT_FOREVER;
+					g_Event->SetRecurrency(g_Recurrency);
+					delete g_Recurrency;
+				}
+			}
+			// Mitul}
 
 			// Save the selected profile
 			CConfig::Instance().SetCurrentProfile(CCalendarWindow::c_Language.GetOriginalProfile(text));
@@ -1055,7 +1084,16 @@ static BOOL OnInitRecurrencyDialog(HWND window)
 	int pos = entry.find("%1");
 	if (pos != -1)
 	{
-		entry.replace(pos, 2, CCalendarWindow::c_Language.GetString("Numbers", sysTime.wDay - 1));
+		if (CCalendarWindow::c_Language.AreOrdinalsDefined()) 
+		{
+			sprintf(buffer, "%i%s", sysTime.wDay, CCalendarWindow::c_Language.GetOrdinalString(sysTime.wDay));
+			entry.replace(pos, 2, buffer);
+		}
+		else
+		{
+			// Fallback
+			entry.replace(pos, 2, CCalendarWindow::c_Language.GetString("Numbers", sysTime.wDay - 1));
+		}
 	}
 	SendDlgItemMessage(window, IDC_RECURRENCY_MONTH_COMBO, CB_ADDSTRING, NULL, (LPARAM)entry.c_str());
 

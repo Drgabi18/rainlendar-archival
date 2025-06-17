@@ -16,9 +16,18 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Server/main.cpp,v 1.2 2005/07/21 15:01:10 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Server/main.cpp,v 1.5 2005/10/14 15:18:43 rainy Exp $
 
   $Log: main.cpp,v $
+  Revision 1.5  2005/10/14 15:18:43  rainy
+  no message
+
+  Revision 1.4  2005/09/08 16:45:39  rainy
+  no message
+
+  Revision 1.3  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.2  2005/07/21 15:01:10  rainy
   no message
 
@@ -86,7 +95,7 @@
 
 using namespace ssobjects;
 
-#define VERSION "0.8"
+#define VERSION "0.9"
 #define SERVICENAME "RainlendarServer"
 #define SERVICEDISPLAYNAME "Rainlendar Server"
 
@@ -108,6 +117,10 @@ static char** g_Argv = NULL;
 
 int main(int argc, char* argv[])
 {
+#ifdef _WIN32
+	pthread_win32_process_attach_np();
+#endif
+
 	g_Argc = argc;
 	g_Argv = argv;
 
@@ -145,7 +158,13 @@ int main(int argc, char* argv[])
 	}
 #endif
 
-	return RunServer();
+	int ret = RunServer();
+
+#ifdef _WIN32
+	pthread_win32_process_detach_np();
+#endif
+
+	return ret;
 }
 
 int RunServer()
@@ -226,12 +245,7 @@ int RunServer()
 				return 0;
 			}
 
-			filter = new CIPFilter();
-			if (!filter->Parse(g_Argv[i]))
-			{
-				delete filter;
-				filter = NULL;
-			}
+			filter = new CIPFilter(g_Argv[i]);
 		}
 		else if(!strcmp(a, "-t") || !strcmp(a, "--target"))
 		{
@@ -257,7 +271,7 @@ int RunServer()
 		h = CreateMutex(NULL, TRUE, "RAINLENDARSERVER_IS_RUNNING_MUTEX" );
 		if (!h)
 		{
-			printf("Unable to create mutex.\n");
+			LOG("Unable to create mutex.");
 			// We'll continue anyway
 		}
 		else
@@ -266,13 +280,11 @@ int RunServer()
 			{
 				// already an instance running.
 				CloseHandle(h);
-				printf("RainlendarServer is already running. Exiting.\n");
+				LOG("RainlendarServer is already running. Exiting.");
 				return 0;
 			}
 		}
 	}
-
-	pthread_win32_process_attach_np();
 #endif
 
 	// Note that this SockAddr is okay here, as we are not specifying an ip address.
@@ -328,6 +340,13 @@ int RunServer()
 #endif
 		}
 
+		// Parse the IP filter
+		if (filter && !filter->Parse()) 
+		{
+			delete filter;
+			filter = NULL;
+		}
+
 		// In win32 it's important to construct the server BEFORE calling canBind, or any
 		// other socket operation, as the server constructor contains a call to WSAStartup,
 		// the required call to initialize windows socket layer.
@@ -340,18 +359,18 @@ int RunServer()
 		}
 		else
 		{
-			logs::log("Server on port %d\n", port);
+			LOG("Server on port %d", port);
 			
 #ifndef _WIN32
 			if(daemonize)
 			{
-				logs::logln("Switching to daemon process...");
+				LOG("Switching to daemon process...");
 				initDaemon();
 			}
 #endif            
 			server.startServer();               // server will now listen for connections
 			
-			logs::logln("server is finished.");
+			LOG("server is finished.");
 		}
 	}
 	catch(GeneralException& e)
@@ -363,9 +382,9 @@ int RunServer()
 	delete filter;
 
 	filter = NULL;
+
 #ifdef _WIN32
     if(h) CloseHandle(h);
-	pthread_win32_process_detach_np();
 #endif
 
 	return 0;

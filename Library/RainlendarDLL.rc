@@ -157,7 +157,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 272
         TOPMARGIN, 7
-        BOTTOMMARGIN, 223
+        BOTTOMMARGIN, 234
     END
 
     IDD_DAYS, DIALOG
@@ -339,12 +339,12 @@ END
 // Dialog
 //
 
-IDD_GENERAL DIALOG DISCARDABLE  0, 0, 279, 230
+IDD_GENERAL DIALOG DISCARDABLE  0, 0, 279, 241
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "#General#"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "#General settings#",IDC_OTHER_GROUP,7,7,265,129
+    GROUPBOX        "#General settings#",IDC_OTHER_GROUP,7,7,265,140
     CONTROL         "#Show event message in tooltip#",IDC_EVENT_TOOLTIP,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,17,253,10
     CONTROL         "#Show message alarms#",IDC_EVENT_SHOW_SINGLE,"Button",
@@ -362,21 +362,24 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,108,253,10
     CONTROL         "#Show tray icon#",IDC_SHOW_TRAYICON,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,13,121,253,10
-    GROUPBOX        "#Transparency#",IDC_TRANSPARENCY_GROUP,7,138,265,44
+    GROUPBOX        "#Transparency#",IDC_TRANSPARENCY_GROUP,7,150,265,44
     CONTROL         "#Use native Windows transparency (Win2k/XP only)#",
                     IDC_NATIVE_TRANSPARENCY,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,13,149,253,10
-    RTEXT           "#Transparent#",IDC_TRANSPARENT_STATIC2,11,166,77,8
+                    WS_TABSTOP,13,161,253,10
+    RTEXT           "#Transparent#",IDC_TRANSPARENT_STATIC2,11,178,77,8
     CONTROL         "Slider1",IDC_TRANSPARENCY_SLIDER,"msctls_trackbar32",
-                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,89,162,100,15
-    LTEXT           "#Opaque#",IDC_TRANSPARENT_STATIC,189,166,72,8
-    GROUPBOX        "#Log#",IDC_LOG_GROUP,7,183,176,40
-    PUSHBUTTON      "#Enable Log#",IDC_ENABLE_LOG_BUTTON,15,198,77,14
-    PUSHBUTTON      "#Show log#",IDC_SHOW_LOG_BUTTON,99,198,77,14
-    GROUPBOX        "#Advanced edit#",IDC_ADVANCED_GROUP,188,183,84,40
-    PUSHBUTTON      "#Advanced#",IDC_ADVANCED_BUTTON,195,198,67,14
+                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,89,174,100,15
+    LTEXT           "#Opaque#",IDC_TRANSPARENT_STATIC,189,178,72,8
+    GROUPBOX        "#Log#",IDC_LOG_GROUP,7,195,176,40
+    PUSHBUTTON      "#Enable Log#",IDC_ENABLE_LOG_BUTTON,15,210,77,14
+    PUSHBUTTON      "#Show log#",IDC_SHOW_LOG_BUTTON,99,210,77,14
+    GROUPBOX        "#Advanced edit#",IDC_ADVANCED_GROUP,188,195,84,40
+    PUSHBUTTON      "#Advanced#",IDC_ADVANCED_BUTTON,195,210,67,14
     CONTROL         "#Show today's events on startup#",IDC_EVENT_SHOW_ALL,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,43,253,10
+    CONTROL         "#Hide event and todo lists when there are no items#",
+                    IDC_SMART_LISTS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,
+                    134,253,10
 END
 
 IDD_DAYS DIALOG DISCARDABLE  0, 0, 280, 254
@@ -742,6 +745,9 @@ BEGIN
     CONTROL         "#Transparent on mouse over#",
                     IDC_TRANSPARENT_ON_MOUSE_OVER,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,14,143,253,10
+    COMBOBOX        IDC_LAYOUT_TYPE_COMBO,205,172,56,67,CBS_DROPDOWN | 
+                    WS_VSCROLL | WS_TABSTOP
+    RTEXT           "#Layout type:#",IDC_LAYOUT_TYPE_STATIC,127,174,73,8
 END
 
 IDD_HOTKEYS DIALOGEX 0, 0, 279, 211

@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/CalendarWindow.h,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/CalendarWindow.h,v 1.3 2005/10/14 17:05:41 rainy Exp $
 
   $Log: CalendarWindow.h,v $
+  Revision 1.3  2005/10/14 17:05:41  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -197,7 +203,6 @@ public:
 
 	static void ChangeMonth(int Month, int Year);
     static void ChangeMonth(int numOfMonths);
-	static void AddCurrentPath(std::string& filename);
 
 	static CFileTime c_TodaysDate;			// Today
 	static CFileTime c_MonthsFirstDate;		// Month that is displayed in the calendar
@@ -248,16 +253,20 @@ public:
 	CItemYear* GetItemYear() { return m_Year; }
 
 	void ResetSettings();
-private:
+	void ShowTodaysEvents();	// Mitul : Made public
+	POINT GetCurrentMonthOffset() { return m_CurrentMonthOffset; }	// Mitul
+	POINT GetViewMonthOffset() { return m_ViewMonthOffset; }
+
+protected:
 	virtual SIZE CalcWindowSize();
 	virtual void DrawWindow();
+	virtual void DrawDynamic();
 	void ExecuteEventCommand(const std::string& text);
 	void ReadSkinSettings();
 
 	BOOL RemoveTrayIcon();
-	BOOL AddTrayIcon();
+	BOOL AddUpdateTrayIcon(DWORD addmodi, bool balloon, int timeout);	// Mitul
 
-	void ShowTodaysEvents();
 	void RegisterHotkeys();
 	void ReadSkins();
 
@@ -271,7 +280,7 @@ private:
 
 	CBackground m_Background;
 
-	std::vector<CItem*> m_DynamicItems;			// Dynamically allocated CItems
+	std::vector<CItemDynamic*> m_DynamicItems;			// Dynamically allocated CItems	// Mitul
 
 	std::vector<CONFIG> m_ConfigStrings;	    // All configs found in the given folder
 
@@ -296,6 +305,9 @@ private:
 	BACKGROUND_MODE m_BackgroundMode;
 	COLORREF m_BackgroundSolidColor;
 	bool m_BackgroundBevel;
+
+	POINT m_CurrentMonthOffset;		// Mitul
+	POINT m_ViewMonthOffset;
 
 	bool m_QuitSet;
 };

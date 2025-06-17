@@ -269,6 +269,7 @@ BOOL BrowseFile(HWND hwndDlg, std::vector<ICALFILENAME>& list)
 	ofn.hwndOwner = hwndDlg;
 	ofn.lpstrFile = file;
 	ofn.nMaxFile = _MAX_PATH;
+	ofn.lpstrDefExt = ".ics";
 	ofn.lpstrFilter = _T("iCal Calendar File (*.ics)\0*.ics\0");
 //	ofn.Flags = OFN_FILEMUSTEXIST;
 

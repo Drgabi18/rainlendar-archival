@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/RainWindow.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/RainWindow.cpp,v 1.3 2005/10/14 17:05:29 rainy Exp $
 
   $Log: RainWindow.cpp,v $
+  Revision 1.3  2005/10/14 17:05:29  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -61,6 +67,7 @@
 #include <time.h>
 #include <mmsystem.h>
 #include <shellapi.h>
+#include <shlwapi.h>
 
 #define ULW_ALPHA               0x00000002
 #define WS_EX_LAYERED           0x00080000
@@ -88,7 +95,6 @@ CRainWindow::CRainWindow()
 	m_WindowName = NULL;
 	m_WndProc = NULL;
 
-	m_LastUpdate = 0;
 	m_WindowMoved = true;
 	m_Docked = false;
 	m_DistanceFromMainWindow.x = 0;
@@ -100,6 +106,7 @@ CRainWindow::CRainWindow()
 	m_NeedsUpdating = false;
 
 	m_Section = "Rainlendar";
+	m_SmartlyHidden = false;
 }
 
 /* 
@@ -122,7 +129,7 @@ void CRainWindow::AddSkinItem(CItem* item, bool dynamic)
 {
 	if (dynamic)
 	{
-		m_DynamicSkinItems.push_back(item); 
+		m_DynamicSkinItems.push_back((CItemDynamic*)item);	// Mitul
 	}
 	else
 	{
@@ -365,7 +372,7 @@ void CRainWindow::SetWindowZPos(CConfig::WINDOWPOS pos)
 	case CConfig::WINDOWPOS_ONBOTTOM:
 		 winPos = HWND_BOTTOM;
 		 break;
-
+		 
 	case CConfig::WINDOWPOS_ONDESKTOP:
 		// Set the window's parent to progman, so it stays always on desktop
 		HWND ProgmanHwnd = FindWindow("Progman", "Program Manager");
@@ -556,6 +563,14 @@ bool CRainWindow::InsideCheck(POINT pos)
 
 void CRainWindow::FadeLinkedWindows(bool fadeIn, bool opaque)
 {
+	// Mitul{
+	if (GetSmartlyHidden())
+	{
+		HideWindow();
+		return;
+	}
+	// Mitul}
+
 	FadeWindow(fadeIn, opaque);
 
 	if (IsDocked())
@@ -810,10 +825,24 @@ LRESULT CRainWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam)
 			int w = workArea.right - m_Width;
 			int h = workArea.bottom - m_Height;
 
-			if((wp->x < SNAPDISTANCE + workArea.left) && (wp->x > workArea.left - SNAPDISTANCE)) wp->x = workArea.left;
-			if((wp->y < SNAPDISTANCE + workArea.top) && (wp->y > workArea.top - SNAPDISTANCE)) wp->y = workArea.top;
+			// Snap to edges
+			if ((wp->x < SNAPDISTANCE + workArea.left) && (wp->x > workArea.left - SNAPDISTANCE)) wp->x = workArea.left;
+			if ((wp->y < SNAPDISTANCE + workArea.top) && (wp->y > workArea.top - SNAPDISTANCE)) wp->y = workArea.top;
 			if ((wp->x < SNAPDISTANCE + w) && (wp->x > -SNAPDISTANCE + w)) wp->x = w;
 			if ((wp->y < SNAPDISTANCE + h) && (wp->y > -SNAPDISTANCE + h)) wp->y = h;
+
+			// Snap to middle
+			if ((wp->x > workArea.left + (workArea.right - workArea.left) / 2 - SNAPDISTANCE - m_Width / 2) && 
+				(wp->x < workArea.left + (workArea.right - workArea.left) / 2 + SNAPDISTANCE - m_Width / 2)) 
+			{
+				wp->x = workArea.left + (workArea.right - workArea.left) / 2 - m_Width / 2;
+			}
+
+			if ((wp->y > workArea.top + (workArea.bottom - workArea.top) / 2 - SNAPDISTANCE - m_Height / 2) && 
+				(wp->y < workArea.top + (workArea.bottom - workArea.top) / 2 + SNAPDISTANCE - m_Height / 2)) 
+			{
+				wp->y = workArea.top + (workArea.bottom - workArea.top) / 2 - m_Height / 2;
+			}
 
 			// Dock also to other windows
 			CRainWindow* window;
@@ -1195,22 +1224,22 @@ LRESULT CRainWindow::OnTimer(WPARAM wParam, LPARAM lParam)
 			UpdateDynamic();
 		}
 
-		time_t aclock;
-		::time(&aclock);
+		CFileTime tmp;
+		tmp.SetToLocalTime();
 	
-		if (m_LastUpdate == 0)
+		if (!m_LastUpdate.IsValid())
 		{
-			m_LastUpdate = aclock;
+			m_LastUpdate.SetToLocalTime();
 		}
 		else
 		{
-			if (aclock / 60 > m_LastUpdate / 60)
+			if (tmp.GetAsSeconds() / 60 > m_LastUpdate.GetAsSeconds()/ 60)
 			{
 				if (m_NeedsUpdating && m_DynamicBuffer.GetBitmap() != NULL)
 				{
 					UpdateDynamic();
 				}
-				m_LastUpdate = aclock;
+				m_LastUpdate.SetToLocalTime();
 			}
 		}
 

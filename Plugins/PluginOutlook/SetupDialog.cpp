@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Plugins/PluginOutlook/SetupDialog.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugins/PluginOutlook/SetupDialog.cpp,v 1.2 2005/09/08 16:09:12 rainy Exp $
 
   $Log: SetupDialog.cpp,v $
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -153,13 +156,31 @@ BOOL OnInitSetupDialog(HWND hwndDlg)
 
 				for (int k = 0; k < g_Stores.size(); k++)
 				{
-					if (g_Stores[k].name == g_AllStores[i].name)
+					if (g_AllStores[i].name.empty()) 
 					{
-						for (int l = 0; l < g_Stores[k].folders.size(); l++)
+						// Compare with names
+						if (g_Stores[k].name == g_AllStores[i].name)
 						{
-							if (g_Stores[k].folders[l] == g_AllStores[i].folders[j])
+							for (int l = 0; l < g_Stores[k].folders.size(); l++)
 							{
-								ListView_SetCheckState(widget, count, TRUE);
+								if (g_Stores[k].folders[l] == g_AllStores[i].folders[j])
+								{
+									ListView_SetCheckState(widget, count, TRUE);
+								}
+							}
+						}
+					}
+					else
+					{
+						// Compare with ids
+						if (g_Stores[k].storeID == g_AllStores[i].storeID)
+						{
+							for (int l = 0; l < g_Stores[k].folderIDs.size(); l++)
+							{
+								if (g_Stores[k].folderIDs[l] == g_AllStores[i].folderIDs[j])
+								{
+									ListView_SetCheckState(widget, count, TRUE);
+								}
 							}
 						}
 					}
@@ -193,12 +214,14 @@ void UpdateSettings(HWND hwndDlg)
 	{
 		MessageStoreName store;
 		store.name = g_AllStores[i].name;
+		store.storeID = g_AllStores[i].storeID;
 
 		for (int j = 0; j < g_AllStores[i].folders.size(); j++)
 		{
 			if (ListView_GetCheckState(widget, count++))
 			{
 				store.folders.push_back(g_AllStores[i].folders[j]);
+				store.folderIDs.push_back(g_AllStores[i].folderIDs[j]);
 			}
 		}
 

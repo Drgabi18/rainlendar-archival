@@ -16,9 +16,18 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Plugins/PluginOutlook/OutlookPlugin.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugins/PluginOutlook/OutlookPlugin.cpp,v 1.4 2005/10/14 17:05:29 rainy Exp $
 
   $Log: OutlookPlugin.cpp,v $
+  Revision 1.4  2005/10/14 17:05:29  rainy
+  no message
+
+  Revision 1.3  2005/09/08 16:13:51  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -88,6 +97,7 @@ CAdviseSink* g_AdviseSink = NULL;
 std::vector<LPMDB> g_AdvisedStores;
 std::vector<ULONG> g_AdvisedConnections;
 
+std::string IDToString(LPENTRYID id, ULONG size);
 int ShowException(int exNum, LPEXCEPTION_POINTERS exInfo);
 void SyncWithOutlook();
 void ReadSettings(LPCTSTR configFile);
@@ -111,7 +121,7 @@ LPCTSTR Plugin_GetAuthor()
 
 UINT Plugin_GetVersion()
 {
-	return 1005;	// test build
+	return 1008;	// Rainlendar 0.22 RC3
 }
 
 void Plugin_Initialize(HINSTANCE instance, LPCTSTR configFile, UINT id)
@@ -185,6 +195,7 @@ bool Plugin_ShowConfig(HWND hwndParent, LPCTSTR configFile)
 void ReadSettings(LPCTSTR configFile)
 {
 	TCHAR buffer[MAX_PATH];
+	TCHAR buffer2[4096];
 	TCHAR tmpSz2[256];
 
 	// Read settings from configFile
@@ -214,24 +225,44 @@ void ReadSettings(LPCTSTR configFile)
 	{
 		for (int i = 0; i < count; i++)
 		{
-			sprintf(tmpSz2, "MessageStore%i", i + 1);
-
-			if(GetPrivateProfileString(PLUGIN_NAME, tmpSz2, "", buffer, MAX_PATH, configFile) > 0) 
+			for (int j = 0; j < 2; j++) 
 			{
-				char* pos = strchr(buffer, '\\');
-				if (pos)
+				char* pos = NULL;
+				char* pos2 = NULL;
+
+				sprintf(tmpSz2, "MessageStore%i", i + 1);
+				if(GetPrivateProfileString(PLUGIN_NAME, tmpSz2, "", buffer, MAX_PATH, configFile) > 0) 
 				{
-					*pos = 0;
+					pos = strchr(buffer, '\\');
+					if (pos)
+					{
+						*pos = 0;
+					}
+				}
+
+				sprintf(tmpSz2, "MessageStoreID%i", i + 1);
+				if(GetPrivateProfileString(PLUGIN_NAME, tmpSz2, "", buffer2, 4096, configFile) > 0) 
+				{
+					pos2 = strchr(buffer2, '\\');
+					if (pos2)
+					{
+						*pos2 = 0;
+					}
+				}
+
+				if (pos && pos2) 
+				{
 					bool found = false;
 
 					// Find the correct store
 					for (int j = 0; j < g_Stores.size(); j++)
 					{
-						if (strcmp(buffer, g_Stores[j].name.c_str()) == 0)
+						if (strcmp(buffer, g_Stores[j].storeID.c_str()) == 0)
 						{
 							// Found
 							found = true;
 							g_Stores[j].folders.push_back(pos + 1);
+							g_Stores[j].folderIDs.push_back(pos2 + 1);
 						}
 					}
 
@@ -240,7 +271,9 @@ void ReadSettings(LPCTSTR configFile)
 						// Not found -> Create new
 						MessageStoreName store;
 						store.name = buffer;
+						store.storeID = buffer2;
 						store.folders.push_back(pos + 1);
+						store.folderIDs.push_back(pos2 + 1);
 						g_Stores.push_back(store);
 					}
 				}
@@ -251,8 +284,8 @@ void ReadSettings(LPCTSTR configFile)
 
 void WriteSettings(LPCTSTR configFile)
 {
-	TCHAR tmpSz[256];
-	TCHAR tmpSz2[256];
+	TCHAR tmpSz[4096];
+	TCHAR tmpSz2[4096];
 
 	WritePrivateProfileString(PLUGIN_NAME, _T("OutlookProfile"), g_OutlookProfile.c_str(), configFile);
 
@@ -279,6 +312,10 @@ void WriteSettings(LPCTSTR configFile)
 			count++;
 			sprintf(tmpSz2, "MessageStore%i", count);
 			sprintf(tmpSz, "%s\\%s", g_Stores[i].name.c_str(), g_Stores[i].folders[j].c_str());
+			WritePrivateProfileString(PLUGIN_NAME, tmpSz2, tmpSz, configFile);
+
+			sprintf(tmpSz2, "MessageStoreID%i", count);
+			sprintf(tmpSz, "%s\\%s", g_Stores[i].storeID.c_str(), g_Stores[i].folderIDs[j].c_str());
 			WritePrivateProfileString(PLUGIN_NAME, tmpSz2, tmpSz, configFile);
 		}
 	}
@@ -1212,12 +1249,27 @@ void ScanMessageFolders(LPMDB lpmdb, MessageStoreName* store)
 						bool found = false;
 						if (store)
 						{
-							for (int j = 0; j < store->folders.size(); j++)
+							if (store->storeID.empty()) 
 							{
-								if (store->folders[j] == pRowSet->aRow[i].lpProps[E_DATASTORE_NAME].Value.lpszA)
+								for (int j = 0; j < store->folders.size(); j++)
 								{
-									found = true;
-									break;
+									if (store->folders[j] == pRowSet->aRow[i].lpProps[E_DATASTORE_NAME].Value.lpszA)
+									{
+										found = true;
+										break;
+									}
+								}
+							}
+							else
+							{
+								for (int j = 0; j < store->folderIDs.size(); j++)
+								{
+									if (store->folderIDs[j] == IDToString((LPENTRYID)pRowSet->aRow[i].lpProps[E_DATASTORE_EID].Value.bin.lpb,
+																		  pRowSet->aRow[i].lpProps[E_DATASTORE_EID].Value.bin.cb))
+									{
+										found = true;
+										break;
+									}
 								}
 							}
 						}
@@ -1311,6 +1363,8 @@ void SyncWithOutlook()
 						addAdvises = true;
 					}
 
+					DebugLog("OUTLOOK: Found %i message stores.", prows->cRows);
+
 					for	(int i = 0; i < prows->cRows; i++)
 					{
 						LPMDB lpmdb = NULL;
@@ -1355,10 +1409,22 @@ void SyncWithOutlook()
 								int j = 0;
 								for (j = 0; j < g_Stores.size(); j++)
 								{
-									if (g_Stores[j].name == pvalProp->Value.lpszA)
+									if (g_Stores[j].storeID.empty()) 
 									{
-										found = true;
-										break;
+										if (g_Stores[j].name == pvalProp->Value.lpszA)
+										{
+											found = true;
+											break;
+										}
+									}
+									else
+									{
+										if (g_Stores[j].storeID == IDToString((LPENTRYID)prows->aRow[i].lpProps[E_ROOT_EID].Value.bin.lpb,
+																			prows->aRow[i].lpProps[E_ROOT_EID].Value.bin.cb))
+										{
+											found = true;
+											break;
+										}
 									}
 								}
 								if (found || g_EnableAll)
@@ -1393,6 +1459,10 @@ void SyncWithOutlook()
 			{
 				LogoutMAPI();
 			}
+		}
+		else
+		{
+			DebugLog("OUTLOOK: The g_Session is not set even though login succeeded. Weird.");
 		}
 	}
 }
@@ -1484,6 +1554,52 @@ void LogoutMAPI()
 	MAPIUninitialize();
 }
 
+std::string IDToString(LPENTRYID id, ULONG size)
+{
+	std::string value;
+	char buffer[4096];
+
+	if (size < 1024) 
+	{
+		sprintf(buffer, "%X ", size);
+		value += buffer;
+
+		for (int i = 0; i < size; i++)
+		{
+			if (i != 0) 
+			{
+				value += " ";
+			}
+			sprintf(buffer, "%02X", ((BYTE*)id)[i]);
+			value += buffer;
+		}
+	}
+
+	return value;
+}
+
+LPENTRYID StringToID(const std::string& value, ULONG& size)
+{
+	const char* szValue = value.c_str();
+	sscanf(szValue, "%X", &size);
+
+	if (size > 0) 
+	{
+		BYTE* pData = new BYTE[size];
+
+		for (int i = 0; i < size; i++) 
+		{
+			int data;
+			sscanf(szValue + (i + 1) * 3, "%X", &data);
+			pData[i] = (BYTE)data;
+		}
+		
+		return (LPENTRYID)pData;
+	}
+	return NULL;
+}
+
+
 void GetMessageStores(std::vector<MessageStoreName>& stores)
 {
 	stores.clear();
@@ -1524,6 +1640,8 @@ void GetMessageStores(std::vector<MessageStoreName>& stores)
 							if (SUCCEEDED(hr))
 							{
 								storeName.name = pvalProp->Value.lpszA;
+								storeName.storeID = IDToString((LPENTRYID)prows->aRow[i].lpProps[E_ROOT_EID].Value.bin.lpb, 
+																prows->aRow[i].lpProps[E_ROOT_EID].Value.bin.cb);
 								MAPIFreeBuffer(pvalProp);
 							}
 
@@ -1562,6 +1680,8 @@ void GetMessageStores(std::vector<MessageStoreName>& stores)
 													    strcmp(pRowSet->aRow[j].lpProps[E_DATASTORE_CONTAINER].Value.lpszA, "IPF.Task") == 0)
 													{
 														storeName.folders.push_back(pRowSet->aRow[j].lpProps[E_DATASTORE_NAME].Value.lpszA);
+														storeName.folderIDs.push_back(IDToString((LPENTRYID)pRowSet->aRow[j].lpProps[E_DATASTORE_EID].Value.bin.lpb,
+																								 pRowSet->aRow[j].lpProps[E_DATASTORE_EID].Value.bin.cb));
 													}
 												}
 											}

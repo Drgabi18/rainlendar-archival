@@ -105,7 +105,8 @@ RainlendarServer --start
 
 That's it. If you need to define command line arguments you can give them 
 at the same time as the --install. Also, make sure that the server works 
-by running it from the command line before installing it as a service. 
+by running it from the command line before installing it as a service. If 
+you are using the filter file you need to use absolute path to the file.
 
 To uninstall run from command line:
 
@@ -176,7 +177,10 @@ Compiling in Linux
 ------------------
 
 Everything that is needed to compile the server is included in the source
-package. Just uncompress it to a temporary folder. Go to the Server-folder 
+package. You might need to install some developer files (e.g. libstc++) if
+your Linux installation doesn't include them.
+
+Uncompress the package to a temporary folder. Go to the Server-folder 
 and run:
 
 ./configure
@@ -185,3 +189,7 @@ make
 If everything went fine you can then install the server:
 
 make install
+
+If you get a permission denied error when trying to run the configure
+script make sure that it has the execute flag (chmod a+x configure).
+Also make sure that the compiled rainlendarserver has the flag.

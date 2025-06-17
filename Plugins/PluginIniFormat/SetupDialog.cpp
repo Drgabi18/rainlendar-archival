@@ -319,6 +319,7 @@ BOOL BrowseFile(HWND hwndDlg, std::vector<INIFILENAME>& list)
 	ofn.hwndOwner = hwndDlg;
 	ofn.lpstrFile = file;
 	ofn.nMaxFile = _MAX_PATH;
+	ofn.lpstrDefExt = ".ini";
 	ofn.lpstrFilter = _T("Rainlendar Ini-file\0*.ini\0");
 	ofn.Flags = 0;
 	

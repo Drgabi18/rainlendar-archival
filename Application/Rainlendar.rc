@@ -28,7 +28,7 @@ LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_RAINLENDAR          ICON    DISCARDABLE     "res\Rainlendar.ico"
+IDI_RAINLENDAR          ICON    DISCARDABLE     "res\\Rainlendar.ico"
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -61,7 +61,7 @@ END
 // 24
 //
 
-1                       24      DISCARDABLE     "res\default1.bin"
+1                       24      DISCARDABLE     "res\\default1.bin"
 
 #ifndef _MAC
 /////////////////////////////////////////////////////////////////////////////
@@ -70,8 +70,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,21,1,0
- PRODUCTVERSION 0,21,1,0
+ FILEVERSION 0,22,0,0
+ PRODUCTVERSION 0,22,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -89,14 +89,14 @@ BEGIN
             VALUE "Comments", "Desktop calendar\0"
             VALUE "CompanyName", "Rainy\0"
             VALUE "FileDescription", "Rainlendar\0"
-            VALUE "FileVersion", "0, 21, 1, 0\0"
+            VALUE "FileVersion", "0, 22, 0, 0\0"
             VALUE "InternalName", "Rainlendar\0"
             VALUE "LegalCopyright", "Copyright © 2000 - 2005\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "Rainlendar.exe\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Rainlendar\0"
-            VALUE "ProductVersion", "0, 21, 1, 0\0"
+            VALUE "ProductVersion", "0, 22, 0, 0\0"
             VALUE "SpecialBuild", "\0"
         END
     END

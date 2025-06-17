@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Server/IPFilter.h,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Server/IPFilter.h,v 1.2 2005/10/14 15:18:43 rainy Exp $
 
   $Log: IPFilter.h,v $
+  Revision 1.2  2005/10/14 15:18:43  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -48,10 +51,10 @@ struct FilterItem
 class CIPFilter
 {
 public:
-	CIPFilter();
+	CIPFilter(const ssobjects::CStr& filterFile);
 	~CIPFilter();
 
-	bool Parse(const ssobjects::CStr& filterFile);
+	bool Parse();
 	bool CheckIncoming(const CIPNumber& ip, const char* profile);
 	bool CheckOutgoing(const CIPNumber& ip, const char* profile);
 	const char* GetRule();
@@ -60,6 +63,7 @@ private:
 	bool Check(const CIPNumber& ip, const char* profile, ssobjects::LinkedList<FilterItem>& accept, ssobjects::LinkedList<FilterItem>& deny);
 	FilterItem* ParseItem(const char* buffer);
 
+	ssobjects::CStr m_FilterFile;
 	ssobjects::CStr m_LastRule;
 	ssobjects::LinkedList<FilterItem> m_AcceptIncoming;
 	ssobjects::LinkedList<FilterItem> m_DenyIncoming;

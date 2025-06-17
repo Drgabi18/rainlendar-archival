@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/ItemEvent.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/ItemEvent.cpp,v 1.2 2005/09/08 16:09:12 rainy Exp $
 
   $Log: ItemEvent.cpp,v $
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -119,6 +122,7 @@ CItemEvent::CItemEvent()
 	m_EventFontColor=0;
 	m_EventFontColor2=0;
 	m_EventSeparation=0;
+	m_EventIconEnable=true;		// Mitul
 }
 
 CItemEvent::~CItemEvent()
@@ -166,6 +170,7 @@ void CItemEvent::ReadSettings(const char* iniFile, const char* section)
 		m_EventFontColor2 = CConfig::ParseColor(tmpSz);
 	}
 	m_EventSeparation=GetPrivateProfileInt( section, "EventSeparation", m_EventSeparation, iniFile);
+	m_EventIconEnable=(1==GetPrivateProfileInt( section, "EventIconEnable", m_EventIconEnable?1:0, iniFile))?true:false; // Mitul
 }
 
 void CItemEvent::WriteSettings()
@@ -193,6 +198,10 @@ void CItemEvent::WriteSettings()
 	WritePrivateProfileString( m_Section.c_str(), "EventFontColor2", tmpSz, INIPath.c_str() );
 	sprintf(tmpSz, "%i", m_EventSeparation);
 	WritePrivateProfileString( m_Section.c_str(), "EventSeparation", tmpSz, INIPath.c_str() );
+	// Mitul{
+	sprintf(tmpSz, "%i", m_EventIconEnable);
+	WritePrivateProfileString( m_Section.c_str(), "EventIconEnable", tmpSz, INIPath.c_str() );
+	// Mitul}
 }
 
 /* 
@@ -370,6 +379,8 @@ void CItemEvent::Paint(CImage& background, POINT offset)
 					OldFont = (HFONT)SelectObject(dc, m_InsideEventFont);
 					OldBitmap = (HBITMAP)SelectObject(dc, background.GetBitmap());
 
+					std::string text;
+
 					// First calculate the size of the texts
 					for(eventIter = eventList.begin();  eventIter != eventList.end(); eventIter++)
 					{
@@ -377,7 +388,11 @@ void CItemEvent::Paint(CImage& background, POINT offset)
 						(*eventIter)->GetBriefMessage(message, 100, true, false);
 						if (!message.empty())
 						{
-							DrawText(dc, message.c_str(), -1, &rect, DT_CENTER | DT_NOPREFIX | DT_CALCRECT);
+							rect.left = 0;
+							rect.right = W;
+							rect.top = 0;
+							rect.bottom = 0;
+							DrawText(dc, message.c_str(), -1, &rect, DT_NOPREFIX | DT_CALCRECT | DT_WORDBREAK);
 							height += rect.bottom - rect.top;
 							width = max (width, rect.right - rect.left);
 							heights.push_back(rect.bottom - rect.top);
@@ -388,8 +403,11 @@ void CItemEvent::Paint(CImage& background, POINT offset)
 
 					rect.top = Y + H / 2 - height / 2;
 					rect.bottom = rect.top + height;
-					rect.left = X + W / 2 - width / 2;
-					rect.right = rect.left + width;
+					rect.left = X;
+					rect.right = rect.left + W;
+
+					rect.top = max(rect.top, Y);
+					rect.bottom = min(rect.bottom, rect.top + H);
 
 					if (CCalendarWindow::Is2k() && CConfig::Instance().GetNativeTransparency())
 					{
@@ -419,16 +437,16 @@ void CItemEvent::Paint(CImage& background, POINT offset)
 							if (CCalendarWindow::Is2k() && CConfig::Instance().GetNativeTransparency())
 							{
 								SelectObject(dc, CRasterizerFont::GetColorBuffer().GetBitmap());
-								DrawText(dc, message.c_str(), -1, &rect, DT_CENTER | DT_NOPREFIX);
+								DrawText(dc, message.c_str(), -1, &rect, DT_NOPREFIX | DT_WORDBREAK);
 								
 								SelectObject(dc, CRasterizerFont::GetAlphaBuffer().GetBitmap());
 								SetTextColor(dc, RGB(255, 255, 255));
-								DrawText(dc, message.c_str(), -1, &rect, DT_CENTER | DT_NOPREFIX);
+								DrawText(dc, message.c_str(), -1, &rect, DT_NOPREFIX | DT_WORDBREAK);
 							}
 							else
 							{
 								// Just draw it normally
-								DrawText(dc, message.c_str(), -1, &rect, DT_CENTER | DT_NOPREFIX);
+								DrawText(dc, message.c_str(), -1, &rect, DT_NOPREFIX | DT_WORDBREAK);
 							}
 
 							rect.top += heights[count];
@@ -810,6 +828,7 @@ std::vector<CEntryEvent*>* CItemEvent::HitTest(int x, int y, CFileTime* startTim
 	if (CConfig::Instance().GetStartFromJanuary())
 	{
 		startMonth = 1;
+		startYear = thisYear;
 	}
 
 	while (startMonth <= 0)
@@ -831,12 +850,18 @@ std::vector<CEntryEvent*>* CItemEvent::HitTest(int x, int y, CFileTime* startTim
 	offset.x = (x / w) * w;
 	offset.y = (y / h) * h;
 
+	// Mitul{
+	if (CConfig::Instance().GetGridMonth((y / h), (x / w), startMonth, startYear) < 0) return NULL;
+
+	/*
 	startMonth += (y / h) * CConfig::Instance().GetHorizontalCount() + (x / w);
 	while (startMonth > 12)
 	{
 		startYear++;
 		startMonth -= 12;
 	}
+	*/
+	// Mitul}
 
 	CFileTime monthDate(1, startMonth, startYear);
 	int NumOfDays = monthDate.GetDaysInMonth();

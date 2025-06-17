@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/Config.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/Config.cpp,v 1.3 2005/10/14 17:05:41 rainy Exp $
 
   $Log: Config.cpp,v $
+  Revision 1.3  2005/10/14 17:05:41  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -158,6 +164,8 @@ void CConfig::Reset()
 	m_EventListEnable = true;
 	m_TodoLocked = false;
 	m_EventListLocked = false;
+	m_SmartTodo = false;		// Mitul
+	m_SmartEventList = false;	// Mitul
 	m_VisibleWindows = 0;
 
 	m_X=0;
@@ -293,6 +301,14 @@ void CConfig::Reset()
 		m_DialogPos[i].x = 0;
 		m_DialogPos[i].y = 0;
 	}
+
+	// Mitul{
+	m_GridLayoutType = 'Z';
+	m_GridLeftToRight = true;
+	m_GridTopToBottom = true;
+	m_GridAcrossAndDown = true;
+	BuildMonthGrid();
+	// Mitul}
 }
 
 CConfig::~CConfig()
@@ -375,11 +391,13 @@ void CConfig::ReadGeneralConfig(const char* iniFile)
 
 	m_TodoEnable=(1==GetPrivateProfileInt( "Rainlendar", "TodoEnable", m_TodoEnable?1:0, iniFile))?true:false;
 	m_TodoLocked=(1==GetPrivateProfileInt( "Rainlendar", "TodoLocked", m_TodoLocked?1:0, iniFile))?true:false;
+	m_SmartTodo=(1==GetPrivateProfileInt( "Rainlendar", "SmartTodo", m_SmartTodo?1:0, iniFile))?true:false;		// Mitul
 	m_TodoX=GetPrivateProfileInt( "Rainlendar", "TodoX", m_TodoX, iniFile);
 	m_TodoY=GetPrivateProfileInt( "Rainlendar", "TodoY", m_TodoY, iniFile);
 
 	m_EventListEnable=(1==GetPrivateProfileInt( "Rainlendar", "EventListEnable", m_EventListEnable?1:0, iniFile))?true:false;
 	m_EventListLocked=(1==GetPrivateProfileInt( "Rainlendar", "EventListLocked", m_EventListLocked?1:0, iniFile))?true:false;
+	m_SmartEventList=(1==GetPrivateProfileInt( "Rainlendar", "SmartEventList", m_SmartEventList?1:0, iniFile))?true:false;	// Mitul
 	m_EventListX=GetPrivateProfileInt( "Rainlendar", "EventListX", m_EventListX, iniFile);
 	m_EventListY=GetPrivateProfileInt( "Rainlendar", "EventListY", m_EventListY, iniFile);
 
@@ -537,6 +555,21 @@ void CConfig::ReadGeneralConfig(const char* iniFile)
 			sscanf(tmpSz, "%i,%i", &(m_DialogPos[i].x), &(m_DialogPos[i].y));
 		}
 	}
+
+	// Mitul{
+
+	if(GetPrivateProfileString( "MonthLayout", "GridLayoutType", NULL, tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_GridLayoutType = tmpSz[0];
+		//sscanf(tmpSz, "%c", &(m_GridLayoutType));
+	}
+	m_GridLeftToRight=(1==GetPrivateProfileInt( "MonthLayout", "GridLeftToRight", m_GridLeftToRight?1:0, iniFile))?true:false;
+	m_GridTopToBottom=(1==GetPrivateProfileInt( "MonthLayout", "GridTopToBottom", m_GridTopToBottom?1:0, iniFile))?true:false;
+	m_GridAcrossAndDown=(1==GetPrivateProfileInt( "MonthLayout", "GridAcrossAndDown", m_GridAcrossAndDown?1:0, iniFile))?true:false;
+
+	BuildMonthGrid();
+	// Mitul}
+
 }
 
 void CConfig::ReadProfiles(const char* iniFile)
@@ -626,6 +659,11 @@ void CConfig::ReadProfiles(const char* iniFile)
 			profile->drawAlways = GetPrivateProfileInt(pos, "EventDrawAlways", 0, iniFile) ? true : false;
 
 			profile->priority = GetPrivateProfileInt(pos, "Priority", 0, iniFile);
+
+			if(GetPrivateProfileString(pos, "RecurringPostfixString", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+			{
+				profile->postfixString = tmpSz;
+			}
 
 			// Load the images (if they are defined)
 			if (!profile->bitmapName.empty())
@@ -968,6 +1006,21 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			sprintf(tmpSz, "%i", m_AddEventHotkey);
 			WritePrivateProfileString( "Rainlendar", "AddEventHotkey", tmpSz, INIPath.c_str() );
 
+			// Mitul{
+			sprintf(tmpSz, "%i", m_SmartTodo);
+			WritePrivateProfileString( "Rainlendar", "SmartTodo", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_SmartEventList);
+			WritePrivateProfileString( "Rainlendar", "SmartEventList", tmpSz, INIPath.c_str() );
+
+			sprintf(tmpSz, "%c", m_GridLayoutType);
+			WritePrivateProfileString( "MonthLayout", "GridLayoutType", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_GridLeftToRight);
+			WritePrivateProfileString( "MonthLayout", "GridLeftToRight", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_GridTopToBottom);
+			WritePrivateProfileString( "MonthLayout", "GridTopToBottom", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_GridAcrossAndDown);
+			WritePrivateProfileString( "MonthLayout", "GridAcrossAndDown", tmpSz, INIPath.c_str() );
+			// Mitul}
 		}
 	}
 
@@ -1036,3 +1089,318 @@ void CConfig::SeparateProfiles(std::string& profiles, std::set<std::string>& res
 		}
 	} while(pos != -1);
 }
+
+// Mitul{
+
+void CConfig::BuildMonthGrid()
+{
+	int i, j, k;
+	int lc, lr;
+	int tc, tr;
+
+	lc = GetHorizontalCount() - 1;
+	lr = GetVerticalCount() - 1;
+
+	m_MonthGrid.resize(GetVerticalCount());
+	for (i = 0; i <= lr; i++)
+	{
+		m_MonthGrid[i].resize(GetHorizontalCount());
+	}
+
+	// Make grid tamplate. Put -1 where no months will be displayed
+	for (i = 0; i <= lr; i++)
+		for (j = 0; j <= lc; j++)
+			m_MonthGrid[i][j] = 0;
+
+	if (((lr < 1) && (lc < 1)) || (lr < 0) || (lc < 0))
+		return;
+
+	// tr, tc = a division of grid
+	tr = 0;
+	tc = 0;
+	if (m_GridLayoutType >= 'a')		// For all small case letter
+	{
+		if ((m_GridLayoutType == 'n') || (m_GridLayoutType == 't') || (m_GridLayoutType == 'u'))
+			tr = (int)((lr + 1) / 2.5) - 1;
+		else
+			tr = (int)((lr + 1) / 3) - 1;
+
+		if (m_GridLayoutType == 'c')
+			tc = lc - ((int)(lc / 2) + 1);
+		else if (m_GridLayoutType == 'd')
+			tc = (int)(lc / 2) + 1;
+		else
+			tc = (int)((lc + 1) / 3) - 1;
+	}
+	if (m_GridLayoutType == 'D')		// Special case
+		tc = lc;
+	
+	// Exception: These letter's are not case sensitive (at lease in some meaning).
+	if ((m_GridLayoutType == '+') || (m_GridLayoutType == 'l') || (m_GridLayoutType == 'r') || 
+		(m_GridLayoutType == 'w') || (m_GridLayoutType == 'x') || (m_GridLayoutType == 'z'))
+	{
+		tr = 0;
+		tc = 0;
+	}
+
+    if (tr < 0) tr = 0;
+    if (tc < 0) tc = 0;
+	
+	switch(m_GridLayoutType)
+	{
+	case NULL:
+	case ' ':
+	case 'z':
+	case 'Z':
+		break;
+	case 'p':
+	case '+':
+	case 'P':
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if ((i <= tr) && (j <= tc))
+					m_MonthGrid[i][j] = -1;
+				else if ((i <= tr) && (j >= (lc - tc)) && (lc != 1))
+					m_MonthGrid[i][j] = -1;
+				else if ((j <= tc) && (i >= (lr - tr)) && (lr != 1))
+					m_MonthGrid[i][j] = -1;
+				else if ((i >= lr) && (j >= (lc - tc)) && (lc != 1) && (lr != 1))
+					m_MonthGrid[i][j] = -1;
+		break;
+	case 'c':
+	case 'C':
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if ((j > tc) && (i > tr) && ((i < (lr - tr)) || (lr == 1)))
+					m_MonthGrid[i][j] = -1;
+		break;
+	case 'd':
+	case 'D':
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if ((j < tc) && (i > tr) && ((i < (lr - tr)) || (lr == 1)))
+					m_MonthGrid[i][j] = -1;
+		break;
+	case 'h':
+	case 'H':
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if (((i <= tr) || (i >= (lr - tr))) && (j > tc) && (j < (lc - tc)))
+					m_MonthGrid[i][j] = -1;
+		break;
+	case 'i':
+	case 'I':
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if (((j <= tc) || (j >= (lc - tc))) && (i > tr) && (i < (lr - tr)))
+					m_MonthGrid[i][j] = -1;
+		break;
+	case 'l':		// Lower case 'L' == Lower Left hand corner
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if ((j > 0) && (i < lr))
+					m_MonthGrid[i][j] = -1;
+		break;
+	case 'L':		// Upper case 'L' == Upper Left hand corner
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if ((j > 0) && (i > 0))
+					m_MonthGrid[i][j] = -1;
+		break;
+	case 'n':
+	case 'N':
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if (!((i <= tr) || (j <= tc) || (j >= (lc - tc))))
+					m_MonthGrid[i][j] = -1;
+		break;
+	case 'o':
+	case 'O':
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if ((i > tr) && (i < (lr - tr)) && (j > tc) && (j < (lc - tc)))
+					m_MonthGrid[i][j] = -1;
+		break;
+	case 'r':		// Lower case 'R' == Lower Right hand corner
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if ((j < lc) && (i < lr))
+					m_MonthGrid[i][j] = -1;
+		break;
+	case 'R':		// Upper case 'R' == Upper Right hand corner
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if ((j < lc) && (i > 0))
+					m_MonthGrid[i][j] = -1;
+		break;
+	case 't':
+	case 'T':
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if ((i > tr) && ((j <= tc) || (j >= (lc - tc))))
+					m_MonthGrid[i][j] = -1;
+		break;
+	case 'u':
+	case 'U':
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if (!((j <= tc) || (j >= (lc - tc)) || (i >= (lr - tc))))
+					m_MonthGrid[i][j] = -1;
+		break;
+	case 'x':
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if (!((((i == 0) || (i == lr)) && ((j == 0) || (j == lc))) || ((i > 0) && (i < lr) && (j > 0) && (j < lc))))
+					m_MonthGrid[i][j] = -1;
+		break;
+	case 'X':
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if (!((i == j) || (i == (lc - j))))
+					m_MonthGrid[i][j] = -1;
+		break;
+	case 'w':		// Checker - Odd
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if (i%2 != j%2)
+					m_MonthGrid[i][j] = -1;
+		break;
+	case 'W':		// Checker - Even
+		for (i = 0; i <= lr; i++)
+			for (j = 0; j <= lc; j++)
+				if (i%2 == j%2)
+					m_MonthGrid[i][j] = -1;
+		break;
+	}
+
+	//Put month number starting from 0; This is the number to add the the starting month.
+	k = 0;
+	if (GetGridAcrossAndDown())
+	{
+		if (GetGridLeftToRight())
+		{
+			if (GetGridTopToBottom())
+			{
+				// 1-1-1
+				for (i = 0; i <= lr; i++)
+					for (j = 0; j <= lc; j++)
+						if (m_MonthGrid[i][j] == 0)
+							m_MonthGrid[i][j] = k++;
+			}
+			else
+			{
+				// 1-1-0
+				for (i = lr; i >= 0; i--)
+					for (j = 0; j <= lc; j++)
+						if (m_MonthGrid[i][j] == 0)
+							m_MonthGrid[i][j] = k++;
+			}
+		}
+		else
+		{
+			if (GetGridTopToBottom())
+			{
+				// 1-0-1
+				for (i = 0; i <= lr; i++)
+					for (j = lc; j >= 0; j--)
+						if (m_MonthGrid[i][j] == 0)
+							m_MonthGrid[i][j] = k++;
+			}
+			else
+			{
+				// 1-0-0
+				for (i = lr; i >= 0; i--)
+					for (j = lc; j >= 0; j--)
+						if (m_MonthGrid[i][j] == 0)
+							m_MonthGrid[i][j] = k++;
+			}
+		}
+	}
+	else
+	{
+		if (GetGridLeftToRight())
+		{
+			if (GetGridTopToBottom())
+			{
+				// 0-1-1
+				for (j = 0; j <= lc; j++)
+					for (i = 0; i <= lr; i++)
+						if (m_MonthGrid[i][j] == 0)
+							m_MonthGrid[i][j] = k++;
+			}
+			else
+			{
+				// 0-1-0
+				for (j = 0; j <= lc; j++)
+					for (i = lr; i >= 0; i--)
+						if (m_MonthGrid[i][j] == 0)
+							m_MonthGrid[i][j] = k++;
+			}
+		}
+		else
+		{
+			if (GetGridTopToBottom())
+			{
+				// 0-0-1
+				for (j = lc; j >= 0; j--)
+					for (i = 0; i <= lr; i++)
+						if (m_MonthGrid[i][j] == 0)
+							m_MonthGrid[i][j] = k++;
+			}
+			else
+			{
+				// 0-0-0
+				for (j = lc; j >= 0; j--)
+					for (i = lr; i >= 0; i--)
+						if (m_MonthGrid[i][j] == 0)
+							m_MonthGrid[i][j] = k++;
+			}
+		}
+	}
+}
+
+int CConfig::GetGridMonth(int row, int col)
+{
+	return m_MonthGrid[row][col];
+}
+
+int CConfig::GetGridMonth(int row, int col, int &startMonth, int &startYear)
+{
+	int incMn = GetGridMonth(row, col);
+
+	if (incMn >=0)
+	{
+		startMonth += incMn;
+
+		while (startMonth > 12)
+		{
+			startMonth -= 12;
+			startYear++;
+		}
+
+		while (startMonth < 1)
+		{
+			startMonth += 12;
+			startYear--;
+		}
+	}
+
+	return incMn;
+}
+
+int CConfig::GetMaxGridMonth()
+{
+	int m = -1;
+	for (int i = 0; i < GetVerticalCount(); i++)
+	{
+		for (int j = 0; j < GetHorizontalCount(); j++)
+		{
+			if (m_MonthGrid[i][j] > m) m = m_MonthGrid[i][j];
+		}
+	}
+
+	return m;
+
+}
+
+// Mitul}

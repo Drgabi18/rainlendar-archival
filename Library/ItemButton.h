@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/ItemButton.h,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/ItemButton.h,v 1.3 2005/10/14 17:05:41 rainy Exp $
 
   $Log: ItemButton.h,v $
+  Revision 1.3  2005/10/14 17:05:41  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -33,35 +39,35 @@
 #ifndef __ITEMBUTTON_H__
 #define __ITEMBUTTON_H__
 
-#include "Item.h"
-#include <vector>
+#include "ItemDynamic.h"
 
-enum RAINWINDOW_TYPE;
 class CRasterizerBitmap;
 class CRainWindow;
 
-class CItemButton : public CItem
+enum BUTTON_MOUSE_EVENT
+{
+	BUTTON_MOUSE_EVENT_MOVE,
+	BUTTON_MOUSE_EVENT_DOWN,
+	BUTTON_MOUSE_EVENT_UP
+};
+
+class CItemButton : public CItemDynamic
 {
 public:
 	CItemButton();
 	virtual ~CItemButton();
 
-	virtual void Initialize();
 	virtual void ReadSettings(const char* filename, const char* section);
-	virtual void WriteSettings();
 
 	virtual void Paint(CImage& background, POINT offset);
-
-	RAINWINDOW_TYPE GetWinType() { return m_WinType; }
 
 	bool MouseUp(POINT pos, CRainWindow* window);
 	bool MouseDown(POINT pos, CRainWindow* window);
 	bool MouseMove(POINT pos, CRainWindow* window);
 
 protected:
-	RAINWINDOW_TYPE m_WinType;
-	int m_X;
-	int m_Y;
+	bool HandleMouseEvent(POINT pos, CRainWindow* window, BUTTON_MOUSE_EVENT event);
+
 	std::string m_Command;
 	int m_State;
 	bool m_Clicked;

@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Library/EventListWindow.cpp,v 1.1.1.1 2005/07/10 18:48:07 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Library/EventListWindow.cpp,v 1.3 2005/10/14 17:05:41 rainy Exp $
 
   $Log: EventListWindow.cpp,v $
+  Revision 1.3  2005/10/14 17:05:41  rainy
+  no message
+
+  Revision 1.2  2005/09/08 16:09:12  rainy
+  no message
+
   Revision 1.1.1.1  2005/07/10 18:48:07  rainy
   no message
 
@@ -96,11 +102,16 @@ void CEventListWindow::ResetSettings()
 	m_EventListHeaderFontColor = 0;
 	m_EventListHeaderFont = "-11/0/0/0/400/0/0/0/0/3/2/1/34/Arial";;
 	m_EventListSeparation = 0;
+	m_EventListDaySeparation = 10;		// Mitul
 	m_EventListHeaderSeparation = 5;
 	m_EventListHeaderFormat = "%A";
 	m_EventListHeaderItemBitmapName = "";
 	m_EventListHeaderItemOffset.x = m_EventListHeaderItemOffset.y = 0;
 	m_EventListHeaderItemAlign = CRasterizer::ALIGN_LEFT;
+	// Mitul{
+	m_EventListItemMargin=0;
+	m_EventListItemIconEnable=false;
+	// Mitul}
 }
 
 void CEventListWindow::ReadSettings(const char* iniFile, const char* section)
@@ -145,6 +156,7 @@ void CEventListWindow::ReadSettings(const char* iniFile, const char* section)
 		sscanf(tmpSz, "%i, %i", &m_EventListHeaderItemOffset.x, &m_EventListHeaderItemOffset.y);
 	}
 	m_EventListSeparation=GetPrivateProfileInt( section, "EventListSeparation", m_EventListSeparation, iniFile);
+	m_EventListDaySeparation=GetPrivateProfileInt( section, "EventListDaySeparation", m_EventListDaySeparation, iniFile);	// Mitul
 	m_EventListHeaderSeparation=GetPrivateProfileInt( section, "EventListHeaderSeparation", m_EventListHeaderSeparation, iniFile);
 	if(GetPrivateProfileString( section, "EventListHeaderItemBitmapName", m_EventListHeaderItemBitmapName.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
@@ -154,6 +166,10 @@ void CEventListWindow::ReadSettings(const char* iniFile, const char* section)
 	{
 		m_EventListHeaderFormat=tmpSz;
 	}
+	// Mitul{
+	m_EventListItemMargin=GetPrivateProfileInt( section, "EventListItemMargin", m_EventListItemMargin, iniFile);
+	m_EventListItemIconEnable=(1==GetPrivateProfileInt( section, "EventListItemIconEnable", m_EventListItemIconEnable?1:0, iniFile))?true:false;
+	// Mitul}
 }
 
 void CEventListWindow::WriteSettings()
@@ -175,6 +191,10 @@ void CEventListWindow::WriteSettings()
 	WritePrivateProfileString( m_Section.c_str(), "EventListFontColor", tmpSz, INIPath.c_str() );
 	sprintf(tmpSz, "%i", m_EventListSeparation);
 	WritePrivateProfileString( m_Section.c_str(), "EventListSeparation", tmpSz, INIPath.c_str() );
+	// Mitul{
+	sprintf(tmpSz, "%i", m_EventListDaySeparation);
+	WritePrivateProfileString( m_Section.c_str(), "EventListDaySeparation", tmpSz, INIPath.c_str() );
+	// Mitul}
 	sprintf(tmpSz, "%i", m_EventListHeaderSeparation);
 	WritePrivateProfileString( m_Section.c_str(), "EventListHeaderSeparation", tmpSz, INIPath.c_str() );
 	WritePrivateProfileString( m_Section.c_str(), "EventListHeaderFont", m_EventListHeaderFont.c_str(), INIPath.c_str() );
@@ -186,6 +206,12 @@ void CEventListWindow::WriteSettings()
 	sprintf(tmpSz, "%i", m_EventListHeaderItemAlign);
 	WritePrivateProfileString( m_Section.c_str(), "EventListHeaderItemAlign", tmpSz, INIPath.c_str() );
 	WritePrivateProfileString( m_Section.c_str(), "EventListHeaderFormat", m_EventListHeaderFormat.c_str(), INIPath.c_str() );
+	// Mitul{
+	sprintf(tmpSz, "%i", m_EventListItemMargin);
+	WritePrivateProfileString( m_Section.c_str(), "EventListItemMargin", tmpSz, INIPath.c_str() );
+	sprintf(tmpSz, "%i", m_EventListItemIconEnable);
+	WritePrivateProfileString( m_Section.c_str(), "EventListItemIconEnable", tmpSz, INIPath.c_str() );
+	// Mitul}
 }
 
 bool CEventListWindow::Initialize(HWND parent, HINSTANCE instance)
@@ -313,7 +339,14 @@ int CEventListWindow::CalcTextHeight()
 	m_HeaderItemRasterizer->GetTextSize("X", &rect, false);
 	m_HeaderHeight = rect.bottom;
 
-	for (UINT i = 0; i < CConfig::Instance().GetEventListDays(); i++)
+	// Mitul{
+	// Moved out & Also consider the the new text margin
+	RECT rc = GetEventListTextMargins();
+	int W = GetEventListW() - rc.left - rc.right - GetEventListItemMargin();
+	// Mitul}
+
+	bool firstEvent = true;
+	for (UINT j = 0; j < CConfig::Instance().GetEventListDays(); j++)
 	{
 		SYSTEMTIME sysTime = now.GetSystemTime();
 
@@ -325,18 +358,38 @@ int CEventListWindow::CalcTextHeight()
 			char buffer[MAX_LINE_LENGTH];
 			EVENTLISTITEM item;
 
+			if (!firstEvent) 
+			{
+				totalHeight += GetEventListDaySeparation();		// Mitul
+			}
+			firstEvent = false;
+
 			int oldTotalHeight = totalHeight;
 
-			time_t t = now.GetTime_t();
-			struct tm* time = gmtime(&t);
+			struct tm time;
+			now.Get_tm(time);
 
-			if (CConfig::Instance().GetSubstituteDays() && i <= 1)
+			if (CConfig::Instance().GetSubstituteDays() && j <= 1)
 			{
-				item.header = CCalendarWindow::c_Language.GetString("General", 22 + i);
+				item.header = CCalendarWindow::c_Language.GetString("General", 22 + j);
 			}
 			else
 			{
-				strftime(buffer, MAX_LINE_LENGTH, GetEventListHeaderFormat().c_str(), time);
+				// Mitul{ : Let's handle our custom tag first
+				// %D - Number of days remaining
+				std::string HF = GetEventListHeaderFormat();
+				std::string::size_type start = HF.find("%D");
+
+				char tmpSz[MAX_LINE_LENGTH];
+				sprintf(tmpSz, "%i", j);
+				while (start != -1)
+				{
+					HF.replace (start,2,tmpSz);
+					start = HF.find("%D");
+				}
+
+				strftime(buffer, MAX_LINE_LENGTH, HF.c_str(), &time);
+				// Mitul}
 				item.header = buffer;
 			}
 
@@ -352,10 +405,17 @@ int CEventListWindow::CalcTextHeight()
 					std::string text = message;
 					m_ItemRasterizer->GetTextSize(text.c_str(), &rect, false);
 
-					RECT rc = GetEventListTextMargins();
-					int W = GetEventListW() - rc.left - rc.right;
+					// Mitul{	: If bullet icon is enabled
+					int w = W;
+					if (GetEventListItemIconEnable())
+					{
+						const Profile* profile = CConfig::Instance().GetProfile(events[i]->GetProfile());
+						if (profile)
+							w = w - profile->icon.GetWidth();
+					}
+					// Mitul} : New w is used below
 
-					if (rect.right > W)
+					if (rect.right > w)
 					{
 						int len = 1;
 						do 
@@ -367,23 +427,16 @@ int CEventListWindow::CalcTextHeight()
 							
 							len++;
 
-						} while(rect.right < W);
+						} while(rect.right < w);
 
 						text = message.substr(0, len - 1);
 						text += "...";
 					}					
 
 					item.items.push_back(text);
-					
-					const Profile* profile = CConfig::Instance().GetProfile(events[i]->GetProfile());
-					if (profile)
-					{
-						item.colors.push_back(profile->eventColor);
-					}
-					else
-					{
-						item.colors.push_back(GetEventListFontColor());
-					}
+					// Mitul{
+					item.profiles.push_back(events[i]->GetProfile());
+					// Mitul}
 
 					item.guids.push_back(*(events[i]->GetGUID()));
 
@@ -417,7 +470,7 @@ int CEventListWindow::CalcTextHeight()
 		now.Add(24 * 60 * 60);	// Next day
 	}
 
-	RECT rc = GetEventListTextMargins();
+	rc = GetEventListTextMargins();
 
 	return totalHeight + rc.top + rc.bottom;
 }
@@ -434,6 +487,15 @@ SIZE CEventListWindow::CalcWindowSize()
 		// Check if the background image is bigger than the calculated window size
 		size.cx = max(size.cx, m_EventListBackground.GetImageWidth());
 		size.cy = max(size.cy, m_EventListBackground.GetImageHeight());
+	}
+
+	for (int i = 0; i < m_DynamicSkinItems.size(); i++)
+	{
+		if (m_DynamicSkinItems[i]->IsIncludeSize() && m_DynamicSkinItems[i]->IsEnabled())
+		{
+			size.cx = max(size.cx, m_DynamicSkinItems[i]->GetX() + m_DynamicSkinItems[i]->GetW());
+			size.cy = max(size.cy, m_DynamicSkinItems[i]->GetY() + m_DynamicSkinItems[i]->GetH());
+		}
 	}
 
 	return size;
@@ -455,15 +517,14 @@ void CEventListWindow::AddToolTip(RECT rect, CEntryEvent* event)
 	{
 		ttd.color = CToolTip::Instance().GetToolTipFontColor();
 	}
-
-	 event->GetBriefMessage(ttd.text, 0, true, true);
-
+	
+	event->GetBriefMessage(ttd.text, 0, true, true);
 	CToolTip::Instance().AddData(ID, ttd);
 }
 
 void CEventListWindow::DrawWindow()
 {
-	int X, Y, W, H;
+	int X, Y, W, H, x, y;
 
 	RECT rc = GetEventListTextMargins();
 
@@ -483,11 +544,11 @@ void CEventListWindow::DrawWindow()
 
 	for ( ; iter != m_EventListItems.end(); iter++)
 	{
-		// Draw the item image
+		// Draw the Header item image
 		if (m_HeaderItemImage.GetBitmap())
 		{
-			int x = X;
-			int y = Y;
+			x = X;
+			y = Y;
 
 			// Align the bitmap correctly
 			switch (GetEventListHeaderItemAlign() & 0x0F)
@@ -538,12 +599,55 @@ void CEventListWindow::DrawWindow()
 
 		for (int i = 0 ; i < (*iter).items.size(); i++)
 		{
-			m_ItemRasterizer->SetColor((*iter).colors[i]);
-			m_ItemRasterizer->WriteText(m_DoubleBuffer, X, Y, 0, 0, (*iter).items[i].c_str(), false, false);
-			Y += m_ItemHeight + GetEventListSeparation();
+			// Mitul{
+			x = X + m_EventListItemMargin;
+			const Profile* profile = CConfig::Instance().GetProfile((*iter).profiles[i]);
+
+			H = 0;
+			if (profile)
+			{
+				if (m_EventListItemIconEnable)
+				{
+					if (profile->icon.GetBitmap())
+					{
+						m_DoubleBuffer.Blit(profile->icon, x, Y, 0, 0, profile->icon.GetWidth(), profile->icon.GetHeight());
+					}
+
+//					H = profile->icon.GetHeight();		// TODO: The icon height must be added also in the CalcTextHeight()
+					x += profile->icon.GetWidth();
+				}
+
+				m_ItemRasterizer->SetColor(profile->eventColor);
+			}
+			else
+			{
+				m_ItemRasterizer->SetColor(GetEventListFontColor());
+			}
+			//m_ItemRasterizer->SetColor((*iter).colors[i]);
+			m_ItemRasterizer->WriteText(m_DoubleBuffer, x, Y, 0, 0, (*iter).items[i].c_str(), false, false);
+
+			Y += max(m_ItemHeight + GetEventListSeparation(), H);
+			// Mitul}
 		}
 		Y -= GetEventListSeparation();
+		Y += GetEventListDaySeparation();	// Mitul
 	}
+
+	// Mitul{ : Make Event window Smart; So if there is no event to display then Hide the window
+	if ((CConfig::Instance().GetSmartEventList()) && (CConfig::Instance().GetEventListEnable()))
+	{
+		if (m_EventListItems.begin() == m_EventListItems.end())
+		{
+			HideWindow();
+			SetSmartlyHidden(true);
+		}
+		else
+		{
+			ShowWindow(false);
+			SetSmartlyHidden(false);
+		}
+	}
+	// Mitul}
 
 	POINT offset = {0, 0};
 	for (int k = 0; k < m_StaticSkinItems.size(); k++)
@@ -602,6 +706,7 @@ GUID* CEventListWindow::HitTest(int x, int y, CFileTime* day)
 			curH += m_ItemHeight + GetEventListSeparation();
 		}
 		curH -= GetEventListSeparation();
+		curH += GetEventListDaySeparation();	// Mitul
 	}
 
 	return NULL; // Clicked somewhere else
@@ -767,7 +872,11 @@ LRESULT CALLBACK CEventListWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, 
 				return Window->OnEraseBkgnd(wParam, lParam);
 
 			case WM_MOUSEMOVE: 
+				Window->m_Message = WM_MOUSEMOVE;
+				return Window->OnMouseMove(wParam, lParam);
+
 			case WM_NCMOUSEMOVE: 
+				Window->m_Message = WM_NCMOUSEMOVE;
 				return Window->OnMouseMove(wParam, lParam);
 
 			case WM_LBUTTONDOWN: 
