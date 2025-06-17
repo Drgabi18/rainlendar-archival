@@ -16,23 +16,20 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: /home/cvsroot/Rainlendar/Plugin/AllEventsDialog.h,v 1.2 2004/04/24 11:16:25 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/TodoDialog.h,v 1.1 2003/10/27 17:34:54 Rainy Exp $
 
-  $Log: AllEventsDialog.h,v $
-  Revision 1.2  2004/04/24 11:16:25  rainy
-  Fixed a crash bug.
-
-  Revision 1.1  2003/05/26 18:44:27  Rainy
+  $Log: TodoDialog.h,v $
+  Revision 1.1  2003/10/27 17:34:54  Rainy
   Initial version.
 
 */
 
-#ifndef _ALLEVENTS_H_
-#define _ALLEVENTS_H_
+#ifndef _TODODIALOG_H_
+#define _TODODIALOG_H_
 
 #include "CalendarWindow.h"
 
-BOOL CALLBACK AllEventsProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
+void OpenTodoDialog(HWND hwndOwner, HINSTANCE instance, int index);
 
 #endif
 

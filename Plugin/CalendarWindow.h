@@ -16,9 +16,29 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/CalendarWindow.h,v 1.19 2003/10/04 14:47:54 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/CalendarWindow.h,v 1.24 2004/01/28 18:08:02 rainy Exp $
 
   $Log: CalendarWindow.h,v $
+  Revision 1.24  2004/01/28 18:08:02  rainy
+  no message
+
+  Revision 1.23  2004/01/25 09:58:58  rainy
+  Fixed refresh.
+  Added PLAY to execute.
+  Fixed icon drawing.
+
+  Revision 1.22  2004/01/10 15:17:29  rainy
+  Added tray and hotkey for todo.
+  Fixed message window.
+
+  Revision 1.21  2003/12/20 22:26:57  rainy
+  Added more debugging info.
+  Removed unnecessary functions.
+  Added new message box.
+
+  Revision 1.20  2003/10/27 19:50:20  Rainy
+  Derived from CRainWindow.
+
   Revision 1.19  2003/10/04 14:47:54  Rainy
   Languages path is the same as the DLL's
   Skins are rescanned during refresh.
@@ -117,6 +137,9 @@
 #include "ItemYear.h"
 #include "Resource.h"
 #include "Language.h"
+#include "RainWindow.h"
+#include "TodoWindow.h"
+#include "MessageWindow.h"
 #include <windows.h>
 #include <commctrl.h>
 #include <string>
@@ -125,83 +148,73 @@
 
 class CRainlendar;
 
-class CCalendarWindow
+class CCalendarWindow : public CRainWindow
 {
 public:
 	CCalendarWindow();
 	~CCalendarWindow();
 
-	int Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE Instance);
+	virtual bool Initialize(HWND parent, HINSTANCE instance);
+	virtual void Refresh(bool lite = false);
 
-	void RefreshWindow(bool lite = false) { Refresh(lite); };
-	void ShowConfig() { OnCommand(ID_CONFIG, NULL); };
-	void ShowEditSkin() { OnCommand(ID_EDIT_SKIN, NULL); };
-	void QuitRainlendar() { OnCommand(ID_QUIT, NULL); };
-	void HideWindow() { ::ShowWindow(m_Window, SW_HIDE); m_Hidden = true; };
-	void ShowWindow(bool activate = false);
-	void ToggleWindow();
-	void ShowNextMonth() { OnCommand(ID_POPUP_SELECTMONTH_NEXTMONTH, NULL); };
-	void ShowPrevMonth() { OnCommand(ID_POPUP_SELECTMONTH_PREVMONTH, NULL); };
-	void ShowCurrentMonth() { OnCommand(ID_POPUP_SELECTMONTH_CURRENTMONTH, NULL); };
-	void MoveWindow(int x, int y);
+	void ShowConfig() { OnCommand(ID_CONFIG, NULL); }
+	void ShowEditSkin() { OnCommand(ID_EDIT_SKIN, NULL); }
+	void QuitRainlendar() { OnCommand(ID_QUIT, NULL); }
+	void ShowNextMonth() { OnCommand(ID_POPUP_SELECTMONTH_NEXTMONTH, NULL); }
+	void ShowPrevMonth() { OnCommand(ID_POPUP_SELECTMONTH_PREVMONTH, NULL); }
+	void ShowCurrentMonth() { OnCommand(ID_POPUP_SELECTMONTH_CURRENTMONTH, NULL); }
 	void SetWindowZPos(CConfig::WINDOWPOS pos);
-
-	int GetWidth() { return m_Width; };
-	int GetHeight() { return m_Height; };
-
-	HDC GetDoubleBuffer() { return m_DC; };
-	HWND GetWindow() { return m_Window; };
-	int GetSelectedDate() { return m_SelectedDate; };
-
-	CEventManager* GetEventManager() { return m_Event->GetEventManager(); };
-
-	static void ChangeMonth(int Month, int Year);
-
-	static CConfig c_Config;
-	static SYSTEMTIME c_TodaysDate;
-	static SYSTEMTIME c_MonthsFirstDate;
+	void ShowEventMessage(std::vector<CEventMessage*>& eventList, bool messageBox);
 
 	void ConnectServer(int type);
 
-	static bool Is2k();
+	int GetSelectedDate() { return m_SelectedDate; }
+
+	CEventManager* GetEventManager() { return m_Event != 0 ? m_Event->GetEventManager() : NULL; }
+	CTodoManager& GetTodoManager() { return m_TodoWindow.GetTodoManager(); }
+	CTodoWindow& GetTodoWindow() { return m_TodoWindow; }
+	CMessageWindow& GetMessageWindow() { return m_MessageWindow; }
+
+	static void ChangeMonth(int Month, int Year);
+	static void AddCurrentPath(std::string& filename);
+
+	static SYSTEMTIME c_TodaysDate;
+	static SYSTEMTIME c_MonthsFirstDate;
 	static CLanguage c_Language;
 
-protected:
+	struct CONFIG 
+	{
+		std::string path;
+		std::vector<std::string> iniFiles;
+	};
+
+	virtual LRESULT OnContextMenu(WPARAM wParam, LPARAM lParam);
+	virtual LRESULT OnCommand(WPARAM wParam, LPARAM lParam);
+	virtual LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
+	virtual LRESULT OnGetRevID(WPARAM wParam, LPARAM lParam);
+	virtual LRESULT OnMove(WPARAM wParam, LPARAM lParam);
+	virtual LRESULT OnSettingsChange(WPARAM wParam, LPARAM lParam);
+	virtual LRESULT OnLButtonDblClk(WPARAM wParam, LPARAM lParam);
+	virtual LRESULT OnKeyUp(WPARAM wParam, LPARAM lParam);
+	virtual LRESULT OnSysKeyUp(WPARAM wParam, LPARAM lParam);
+	virtual LRESULT OnHotkey(WPARAM wParam, LPARAM lParam);
+	virtual LRESULT OnCopyData(WPARAM wParam, LPARAM lParam);
+	virtual LRESULT OnServerSyncFinished(WPARAM wParam, LPARAM lParam);
+	virtual LRESULT OnNotifyIcon(WPARAM wParam, LPARAM lParam);
+
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
-	LRESULT OnContextMenu(WPARAM wParam, LPARAM lParam);
-	LRESULT OnQuit(WPARAM wParam, LPARAM lParam);
-	LRESULT OnGetRevID(WPARAM wParam, LPARAM lParam);
-	LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
-	LRESULT OnWindowPosChanging(WPARAM wParam, LPARAM lParam);
-	LRESULT OnSettingsChange(WPARAM wParam, LPARAM lParam);
-	LRESULT OnLButtonDblClk(WPARAM wParam, LPARAM lParam);
-	LRESULT OnEraseBkgnd(WPARAM wParam, LPARAM lParam);
-	LRESULT OnKeyUp(WPARAM wParam, LPARAM lParam);
-	LRESULT OnSysKeyUp(WPARAM wParam, LPARAM lParam);
-	LRESULT OnCommand(WPARAM wParam, LPARAM lParam);
-	LRESULT OnNcHitTest(WPARAM wParam, LPARAM lParam);
-	LRESULT OnMove(WPARAM wParam, LPARAM lParam);
-	LRESULT OnMouseMove(WPARAM wParam, LPARAM lParam);
-	LRESULT OnNcMouseMove(WPARAM wParam, LPARAM lParam);
-	LRESULT OnDisplayChange(WPARAM wParam, LPARAM lParam);
-	LRESULT OnCopyData(WPARAM wParam, LPARAM lParam);
-	LRESULT OnServerSyncFinished(WPARAM wParam, LPARAM lParam);
-	LRESULT OnHotkey(WPARAM wParam, LPARAM lParam);
-	LRESULT OnPowerBroadcast(WPARAM wParam, LPARAM lParam);
-
 private:
+	virtual SIZE CalcWindowSize();
+	virtual void DrawWindow();
+
+	BOOL RemoveTrayIcon();
+	BOOL AddTrayIcon();
+
 	void RegisterHotkeys();
-	void UpdateTransparency();
 	void ReadSkins();
 	void PollWallpaper(bool set);
 	void FillMenu(HMENU Menu, int x, int y);
-	void Refresh(bool lite = false);
-	void CalcWindowSize();
-	void DrawCalendar();
-	void ShowWindowIfAppropriate();
-	void ShowEventMessage();
 
 	CItemDays* m_Days;
 	CItemEvent* m_Event;
@@ -212,35 +225,19 @@ private:
 	CItemYear* m_Year;
 
 	CBackground m_Background;
-	HDC m_DC;									// DC used with drawing
-	CImage m_DoubleBuffer;						// Double buffer for flicker free drawing
-	HWND m_Window;								// Handle to the Rainlendar window
-	HINSTANCE m_Instance;						// Handle to the main instance
 
-	struct CONFIG 
-	{
-		std::string path;
-		std::vector<std::string> iniFiles;
-	};
 	std::vector<CONFIG> m_ConfigStrings;	    // All configs found in the given folder
 
 	std::string m_WallpaperName;
 	FILETIME m_WallpaperTime;
 
-	int m_X;
-	int m_Y;
-	int m_Width;
-	int m_Height;
 	bool m_FirstExecute;
-	bool m_Hidden;
 	int m_SelectedDate;
 	int m_MenuSelectedDate;
 	unsigned int m_ConnectionCounter;
-	bool m_Refreshing;
 
-	UINT m_Message;								// The current window message
-
-	CRainlendar* m_Rainlendar;					// Pointer to the main object
+	CTodoWindow m_TodoWindow;
+	CMessageWindow m_MessageWindow;
 };
 
 #endif

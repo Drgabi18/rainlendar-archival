@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemDays.cpp,v 1.7 2003/06/15 09:49:12 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemDays.cpp,v 1.8 2003/10/27 17:37:51 Rainy Exp $
 
   $Log: ItemDays.cpp,v $
+  Revision 1.8  2003/10/27 17:37:51  Rainy
+  Config is now singleton.
+
   Revision 1.7  2003/06/15 09:49:12  Rainy
   Added support for multiple calendars.
 
@@ -70,22 +73,22 @@ CItemDays::~CItemDays()
 */
 int CItemDays::GetX()
 {
-	return CCalendarWindow::c_Config.GetDaysX();
+	return CConfig::Instance().GetDaysX();
 }
 
 int CItemDays::GetY()
 {
-	return CCalendarWindow::c_Config.GetDaysY();
+	return CConfig::Instance().GetDaysY();
 }
 
 int CItemDays::GetW()
 {
-	return CCalendarWindow::c_Config.GetDaysW();
+	return CConfig::Instance().GetDaysW();
 }
 
 int CItemDays::GetH()
 {
-	return CCalendarWindow::c_Config.GetDaysH();
+	return CConfig::Instance().GetDaysH();
 }
 
 
@@ -97,21 +100,21 @@ int CItemDays::GetH()
 */
 void CItemDays::Initialize()
 {
-	if( CCalendarWindow::c_Config.GetDaysEnable() && 
-		CCalendarWindow::c_Config.GetDaysRasterizer()!=CRasterizer::TYPE_NONE)
+	if( CConfig::Instance().GetDaysEnable() && 
+		CConfig::Instance().GetDaysRasterizer()!=CRasterizer::TYPE_NONE)
 	{
-		switch(CCalendarWindow::c_Config.GetDaysRasterizer()) {
+		switch(CConfig::Instance().GetDaysRasterizer()) {
 		case CRasterizer::TYPE_BITMAP:
 			CRasterizerBitmap* BMRast;
 
 			BMRast=new CRasterizerBitmap;
 			if(BMRast==NULL) THROW(ERR_OUTOFMEM);
 
-			BMRast->Load(CCalendarWindow::c_Config.GetDaysBitmapName());
-			BMRast->SetNumOfComponents(CCalendarWindow::c_Config.GetDaysNumOfComponents());
-			BMRast->SetSeparation(CCalendarWindow::c_Config.GetDaysSeparation());
+			BMRast->Load(CConfig::Instance().GetDaysBitmapName());
+			BMRast->SetNumOfComponents(CConfig::Instance().GetDaysNumOfComponents());
+			BMRast->SetSeparation(CConfig::Instance().GetDaysSeparation());
 
-			BMRast->SetAlign(CCalendarWindow::c_Config.GetDaysAlign());
+			BMRast->SetAlign(CConfig::Instance().GetDaysAlign());
 			SetRasterizer(BMRast);
 			break;
 
@@ -121,9 +124,9 @@ void CItemDays::Initialize()
 			FNRast=new CRasterizerFont;
 			if(FNRast==NULL) THROW(ERR_OUTOFMEM);
 
-			FNRast->SetFont(CCalendarWindow::c_Config.GetDaysFont());
-			FNRast->SetAlign(CCalendarWindow::c_Config.GetDaysAlign());
-			FNRast->SetColor(CCalendarWindow::c_Config.GetDaysFontColor());
+			FNRast->SetFont(CConfig::Instance().GetDaysFont());
+			FNRast->SetAlign(CConfig::Instance().GetDaysAlign());
+			FNRast->SetColor(CConfig::Instance().GetDaysFontColor());
 			FNRast->UpdateDimensions("XX");
 			SetRasterizer(FNRast);
 			break;
@@ -146,14 +149,14 @@ void CItemDays::Paint(CImage& background, POINT offset)
 	NumOfDays = GetDaysInMonth(CCalendarWindow::c_MonthsFirstDate.wYear, CCalendarWindow::c_MonthsFirstDate.wMonth);
 	FirstWeekday = CCalendarWindow::c_MonthsFirstDate.wDayOfWeek;
 
-	if(CCalendarWindow::c_Config.GetStartFromMonday()) 
+	if(CConfig::Instance().GetStartFromMonday()) 
 	{
 		FirstWeekday = (FirstWeekday - 1);
 		if(FirstWeekday == -1) FirstWeekday = 6;
 	} 
 
-	W = CCalendarWindow::c_Config.GetDaysW() / 7;	// 7 Columns
-	H = CCalendarWindow::c_Config.GetDaysH() / 6;	// 6 Rows
+	W = CConfig::Instance().GetDaysW() / 7;	// 7 Columns
+	H = CConfig::Instance().GetDaysH() / 6;	// 6 Rows
 
 	if(m_Rasterizer != NULL) 
 	{
@@ -163,11 +166,11 @@ void CItemDays::Paint(CImage& background, POINT offset)
 			DayType = GetDayType(i + 1, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 
 			// Don't show today or events if selected
-			if(!(CCalendarWindow::c_Config.GetDaysIgnoreToday() && (DayType&TODAY) ||
-			     CCalendarWindow::c_Config.GetDaysIgnoreEvent() && (DayType&EVENT))) 
+			if(!(CConfig::Instance().GetDaysIgnoreToday() && (DayType&TODAY) ||
+			     CConfig::Instance().GetDaysIgnoreEvent() && (DayType&EVENT))) 
 			{	
-				X = CCalendarWindow::c_Config.GetDaysX() + (Index % 7) * W;
-				Y = CCalendarWindow::c_Config.GetDaysY() + (Index / 7) * H;
+				X = CConfig::Instance().GetDaysX() + (Index % 7) * W;
+				Y = CConfig::Instance().GetDaysY() + (Index / 7) * H;
 	
 				X += offset.x;
 				Y += offset.y;
@@ -189,7 +192,7 @@ int CItemDays::HitTest(int x, int y)
 	int thisMonth = CCalendarWindow::c_MonthsFirstDate.wMonth;
 	int thisYear = CCalendarWindow::c_MonthsFirstDate.wYear;
 
-	int startMonth = thisMonth - CCalendarWindow::c_Config.GetPreviousMonths();
+	int startMonth = thisMonth - CConfig::Instance().GetPreviousMonths();
 	int startYear = thisYear;
 
 	while (startMonth <= 0)
@@ -200,13 +203,13 @@ int CItemDays::HitTest(int x, int y)
 
 	POINT offset;
 
-	int w = GetRainlendar()->GetCalendarWindow().GetWidth() / CCalendarWindow::c_Config.GetHorizontalCount();
-	int h = GetRainlendar()->GetCalendarWindow().GetHeight() / CCalendarWindow::c_Config.GetVerticalCount();
+	int w = GetRainlendar()->GetCalendarWindow().GetWidth() / CConfig::Instance().GetHorizontalCount();
+	int h = GetRainlendar()->GetCalendarWindow().GetHeight() / CConfig::Instance().GetVerticalCount();
 
 	offset.x = (x / w) * w;
 	offset.y = (y / h) * h;
 
-	startMonth += (y / h) * CCalendarWindow::c_Config.GetHorizontalCount() + (x / w);
+	startMonth += (y / h) * CConfig::Instance().GetHorizontalCount() + (x / w);
 	while (startMonth > 12)
 	{
 		startYear++;
@@ -222,17 +225,17 @@ int CItemDays::HitTest(int x, int y)
 	int FirstWeekday;
 	int X, Y, W, H, Day;
 
-	W = CCalendarWindow::c_Config.GetDaysW() / 7;	// 7 Columns
-	H = CCalendarWindow::c_Config.GetDaysH() / 6;	// 6 Rows
-	X = CCalendarWindow::c_Config.GetDaysX();
-	Y = CCalendarWindow::c_Config.GetDaysY();
+	W = CConfig::Instance().GetDaysW() / 7;	// 7 Columns
+	H = CConfig::Instance().GetDaysH() / 6;	// 6 Rows
+	X = CConfig::Instance().GetDaysX();
+	Y = CConfig::Instance().GetDaysY();
 
 	FirstWeekday = CCalendarWindow::c_MonthsFirstDate.wDayOfWeek;
 
 	// Reset the values
 	CCalendarWindow::ChangeMonth(thisMonth, thisYear);
 
-	if(CCalendarWindow::c_Config.GetStartFromMonday()) 
+	if(CConfig::Instance().GetStartFromMonday()) 
 	{
 		FirstWeekday = (FirstWeekday - 1);
 		if(FirstWeekday == -1) FirstWeekday = 6;

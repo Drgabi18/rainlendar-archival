@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemMonth.cpp,v 1.9 2003/06/15 09:49:12 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/ItemMonth.cpp,v 1.11 2004/01/25 10:00:55 rainy Exp $
 
   $Log: ItemMonth.cpp,v $
+  Revision 1.11  2004/01/25 10:00:55  rainy
+  Fixed size calculation.
+
+  Revision 1.10  2003/10/27 17:37:51  Rainy
+  Config is now singleton.
+
   Revision 1.9  2003/06/15 09:49:12  Rainy
   Added support for multiple calendars.
 
@@ -82,14 +88,14 @@ int CItemMonth::GetX()
 {
 	if(m_Rasterizer) 
 	{
-		if(m_Rasterizer->GetAlign() & 0x0F == CRasterizer::ALIGN_LEFT)
-			return CCalendarWindow::c_Config.GetMonthX();
+		if((m_Rasterizer->GetAlign() & 0x0F) == CRasterizer::ALIGN_LEFT)
+			return CConfig::Instance().GetMonthX();
 
-		if(m_Rasterizer->GetAlign() & 0x0F == CRasterizer::ALIGN_HCENTER)
-			return CCalendarWindow::c_Config.GetMonthX() - GetW() / 2;
+		if((m_Rasterizer->GetAlign() & 0x0F) == CRasterizer::ALIGN_HCENTER)
+			return CConfig::Instance().GetMonthX() - GetW() / 2;
 
-		if(m_Rasterizer->GetAlign() & 0x0F == CRasterizer::ALIGN_RIGHT)
-			return CCalendarWindow::c_Config.GetMonthX() - GetW();
+		if((m_Rasterizer->GetAlign() & 0x0F) == CRasterizer::ALIGN_RIGHT)
+			return CConfig::Instance().GetMonthX() - GetW();
 	}
 
 	return 0;
@@ -99,14 +105,14 @@ int CItemMonth::GetY()
 {
 	if(m_Rasterizer) 
 	{
-		if(m_Rasterizer->GetAlign() & 0x0F0 == CRasterizer::ALIGN_TOP)
-			return CCalendarWindow::c_Config.GetMonthY();
+		if((m_Rasterizer->GetAlign() & 0x0F0) == CRasterizer::ALIGN_TOP)
+			return CConfig::Instance().GetMonthY();
 
-		if(m_Rasterizer->GetAlign() & 0x0F0 == CRasterizer::ALIGN_VCENTER)
-			return CCalendarWindow::c_Config.GetMonthY() - GetH() / 2;
+		if((m_Rasterizer->GetAlign() & 0x0F0) == CRasterizer::ALIGN_VCENTER)
+			return CConfig::Instance().GetMonthY() - GetH() / 2;
 
-		if(m_Rasterizer->GetAlign() & 0x0F0 == CRasterizer::ALIGN_BOTTOM)
-			return CCalendarWindow::c_Config.GetMonthY() - GetH();
+		if((m_Rasterizer->GetAlign() & 0x0F0) == CRasterizer::ALIGN_BOTTOM)
+			return CConfig::Instance().GetMonthY() - GetH();
 	}
 
 	return 0;
@@ -154,19 +160,19 @@ int CItemMonth::GetH()
 */
 void CItemMonth::Initialize()
 {
-	if( CCalendarWindow::c_Config.GetMonthEnable() && 
-		CCalendarWindow::c_Config.GetMonthRasterizer()!=CRasterizer::TYPE_NONE)
+	if( CConfig::Instance().GetMonthEnable() && 
+		CConfig::Instance().GetMonthRasterizer()!=CRasterizer::TYPE_NONE)
 	{
-		switch(CCalendarWindow::c_Config.GetMonthRasterizer()) {
+		switch(CConfig::Instance().GetMonthRasterizer()) {
 		case CRasterizer::TYPE_BITMAP:
 			CRasterizerBitmap* BMRast;
 
 			BMRast=new CRasterizerBitmap;
 			if(BMRast==NULL) THROW(ERR_OUTOFMEM);
 
-			BMRast->Load(CCalendarWindow::c_Config.GetMonthBitmapName());
+			BMRast->Load(CConfig::Instance().GetMonthBitmapName());
 			BMRast->SetNumOfComponents(NUMOFCOMPONENTS);
-			BMRast->SetAlign(CCalendarWindow::c_Config.GetMonthAlign());
+			BMRast->SetAlign(CConfig::Instance().GetMonthAlign());
 			SetRasterizer(BMRast);
 			break;
 
@@ -176,10 +182,10 @@ void CItemMonth::Initialize()
 			FNRast=new CRasterizerFont;
 			if(FNRast==NULL) THROW(ERR_OUTOFMEM);
 
-			FNRast->SetFont(CCalendarWindow::c_Config.GetMonthFont());
-			FNRast->CreateStringTable(CCalendarWindow::c_Config.GetMonthNames(), NUMOFCOMPONENTS);
-			FNRast->SetAlign(CCalendarWindow::c_Config.GetMonthAlign());
-			FNRast->SetColor(CCalendarWindow::c_Config.GetMonthFontColor());
+			FNRast->SetFont(CConfig::Instance().GetMonthFont());
+			FNRast->CreateStringTable(CConfig::Instance().GetMonthNames(), NUMOFCOMPONENTS);
+			FNRast->SetAlign(CConfig::Instance().GetMonthAlign());
+			FNRast->SetColor(CConfig::Instance().GetMonthFontColor());
 			FNRast->UpdateDimensions();
 			SetRasterizer(FNRast);
 			break;
@@ -205,30 +211,30 @@ void CItemMonth::Paint(CImage& background, POINT offset)
 		switch (m_Rasterizer->GetAlign() & 0x0F)
 		{
 		case CRasterizer::ALIGN_LEFT:
-			X = CCalendarWindow::c_Config.GetMonthX();
+			X = CConfig::Instance().GetMonthX();
 			break;
 
 		case CRasterizer::ALIGN_HCENTER:
-			X = CCalendarWindow::c_Config.GetMonthX() - W / 2;
+			X = CConfig::Instance().GetMonthX() - W / 2;
 			break;
 
 		case CRasterizer::ALIGN_RIGHT:
-			X = CCalendarWindow::c_Config.GetMonthX() - W;
+			X = CConfig::Instance().GetMonthX() - W;
 			break;
 		};
 
 		switch (m_Rasterizer->GetAlign() & 0xF0)
 		{
 		case CRasterizer::ALIGN_TOP:
-				Y = CCalendarWindow::c_Config.GetMonthY();
+				Y = CConfig::Instance().GetMonthY();
 				break;
 
 		case CRasterizer::ALIGN_VCENTER:
-			Y = CCalendarWindow::c_Config.GetMonthY() - H / 2;
+			Y = CConfig::Instance().GetMonthY() - H / 2;
 			break;
 
 		case CRasterizer::ALIGN_BOTTOM:
-			Y = CCalendarWindow::c_Config.GetMonthY() - H;
+			Y = CConfig::Instance().GetMonthY() - H;
 			break;
 		};
 

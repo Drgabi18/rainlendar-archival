@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Background.h,v 1.7 2003/06/15 09:42:42 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/Background.h,v 1.9 2004/01/28 18:07:53 rainy Exp $
 
   $Log: Background.h,v $
+  Revision 1.9  2004/01/28 18:07:53  rainy
+  no message
+
+  Revision 1.8  2003/10/27 17:36:12  Rainy
+  Settings are not read directly from the config anymore.
+
   Revision 1.7  2003/06/15 09:42:42  Rainy
   Added support for multiple calendars.
 
@@ -49,29 +55,42 @@
 
 #include "Image.h"
 
+enum BACKGROUND_MODE  
+{
+	MODE_TILE,
+	MODE_COPY,
+	MODE_STRETCH,
+	MODE_SOLID,
+	MODE_RECT
+};
+
+struct BackgroundCreateStruct
+{
+	POINT pos;
+	SIZE size;
+	BACKGROUND_MODE mode;
+	COLORREF solidColor;
+	BOOL solidBevel;
+	std::string filename;
+	RECT resizeRect;
+};
+
 class CBackground
 {
 public:
-	enum MODE 
-	{
-		MODE_TILE,
-		MODE_COPY,
-		MODE_STRETCH,
-		MODE_SOLID
-	};
-
 	CBackground();
 	~CBackground();
 
-	bool Create(int X, int Y, int Width, int Height);
+	bool Create(BackgroundCreateStruct& bcs);
 	void Paint(CImage& background);
 
-	int GetWidth() { return m_Width; };
-	int GetHeight() { return m_Height; };
+	int GetWidth() { return m_Width; }
+	int GetHeight() { return m_Height; }
 
 	void Initialize();
 
-	bool HasAlpha() { return m_Alpha; };
+	bool IsValid() { return (m_Image.GetBitmap() != NULL) || (m_BGImage.GetBitmap() != NULL); }
+	bool HasAlpha() { return m_Alpha; }
 
 	void UpdateWallpaper(int X, int Y);
 

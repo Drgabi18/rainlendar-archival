@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/SkinDialog.cpp,v 1.5 2003/08/09 16:31:03 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/SkinDialog.cpp,v 1.7 2004/01/10 15:18:43 rainy Exp $
 
   $Log: SkinDialog.cpp,v $
+  Revision 1.7  2004/01/10 15:18:43  rainy
+  Added pages for todo and message box.
+
+  Revision 1.6  2003/10/27 17:40:01  Rainy
+  Config is now singleton.
+
   Revision 1.5  2003/08/09 16:31:03  Rainy
   Added support for "Remember dialog position"-feature.
 
@@ -44,7 +50,7 @@
 #include <Commdlg.h>
 #include <list>
 
-#define NUM_OF_TABS 8
+#define NUM_OF_TABS 10
 
 // Few globals
 COLORREF g_SolidColor = 0;
@@ -67,6 +73,10 @@ LOGFONT g_YearFont;
 COLORREF g_ToolTipFontColor = 0;
 COLORREF g_ToolTipBGColor = 0;
 LOGFONT g_ToolTipFont;
+COLORREF g_TodoFontColor = 0;
+LOGFONT g_TodoFont;
+COLORREF g_MessageBoxFontColor = 0;
+LOGFONT g_MessageBoxFont;
 
 BOOL CALLBACK BackgroundPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK DaysPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
@@ -76,6 +86,8 @@ BOOL CALLBACK WeekdaysPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 BOOL CALLBACK WeekNumbersPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK MonthPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK YearPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
+BOOL CALLBACK TodoPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
+BOOL CALLBACK MessageBoxPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 
 VOID OpenSkinDialog(HWND hwndOwner, HINSTANCE instance)
 {
@@ -140,6 +152,18 @@ VOID OpenSkinDialog(HWND hwndOwner, HINSTANCE instance)
 			psp[i].pfnDlgProc = YearPageProc;
 			psp[i].pszTitle = CCalendarWindow::c_Language.GetString("General", 14);
 			break;
+
+		case 8:
+			psp[i].pszTemplate = MAKEINTRESOURCE(IDD_TODO_CONFIG);
+			psp[i].pfnDlgProc = TodoPageProc;
+			psp[i].pszTitle = CCalendarWindow::c_Language.GetString("General", 16);
+			break;
+
+		case 9:
+			psp[i].pszTemplate = MAKEINTRESOURCE(IDD_MESSAGEBOX);
+			psp[i].pfnDlgProc = MessageBoxPageProc;
+			psp[i].pszTitle = CCalendarWindow::c_Language.GetString("General", 17);
+			break;
 		}
 	}
 
@@ -148,13 +172,13 @@ VOID OpenSkinDialog(HWND hwndOwner, HINSTANCE instance)
     psh.hwndParent = hwndOwner;
     psh.hInstance = instance;
     psh.pszIcon = NULL;
-    psh.pszCaption = (LPSTR)"Skin Config";
+    psh.pszCaption = (LPSTR)CCalendarWindow::c_Language.GetString("General", 18);
     psh.nPages = sizeof(psp) / sizeof(PROPSHEETPAGE);
     psh.nStartPage = 0;
     psh.ppsp = (LPCPROPSHEETPAGE) &psp;
     psh.pfnCallback = NULL;
 
-	if (CCalendarWindow::c_Config.GetCurrentSkin().empty() || CCalendarWindow::c_Config.GetCurrentSkinIni().empty())
+	if (CConfig::Instance().GetCurrentSkin().empty() || CConfig::Instance().GetCurrentSkinIni().empty())
 	{
 		//	"Sorry!\n\nSkin editing is only possible with separate skin configurations.\n\nWhat you need to do is to remove all the skinning stuff from Rainlendar.ini\nand put them in a separate ini-file inside a subfolder under Rainlendar's folder.\nConsult the documentation for more info.",
 		MessageBox(hwndOwner, CCalendarWindow::c_Language.GetString("Message", 6), "Rainlendar", MB_OK | MB_ICONEXCLAMATION);
@@ -163,7 +187,7 @@ VOID OpenSkinDialog(HWND hwndOwner, HINSTANCE instance)
 	{
 		if (PropertySheet(&psh) == IDOK)
 		{
-			CCalendarWindow::c_Config.WriteConfig(CConfig::WRITE_SKIN);
+			CConfig::Instance().WriteConfig(CConfig::WRITE_SKIN);
 			SendMessage(GetRainlendar()->GetCalendarWindow().GetWindow(), WM_COMMAND, ID_REFRESH, NULL);		// Refresh
 		}
 	}
@@ -221,20 +245,38 @@ int InitAlign(int align)
 
 void InitFont(const std::string& fontStr, LOGFONT* logFont)
 {
+	int nHeight;
+	int nWidth;
+	int nEscapement;
+	int nOrientation; 
+	int nWeight;
+	DWORD bItalic; 
+	DWORD bUnderline;
+	DWORD cStrikeOut; 
+	DWORD nCharSet;
+	DWORD nOutPrecision;
+	DWORD nClipPrecision; 
+	DWORD nQuality;
+	DWORD nPitchAndFamily;
+	
 	sscanf(fontStr.c_str(), "%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i", 
-		   &(logFont->lfHeight),
-		   &(logFont->lfWidth),
-		   &(logFont->lfEscapement),
-		   &(logFont->lfOrientation),
-		   &(logFont->lfWeight),
-		   &(logFont->lfItalic), 
-		   &(logFont->lfUnderline),
-		   &(logFont->lfStrikeOut), 
-		   &(logFont->lfCharSet),
-		   &(logFont->lfOutPrecision),
-		   &(logFont->lfClipPrecision), 
-		   &(logFont->lfQuality),
-		   &(logFont->lfPitchAndFamily));
+		&nHeight, &nWidth, &nEscapement, &nOrientation, &nWeight,
+		&bItalic, &bUnderline, &cStrikeOut, &nCharSet, &nOutPrecision, 
+		&nClipPrecision, &nQuality, &nPitchAndFamily);
+
+	logFont->lfHeight = nHeight;
+	logFont->lfWidth = nWidth;
+	logFont->lfEscapement = nEscapement;
+	logFont->lfOrientation = nOrientation;
+	logFont->lfWeight = nWeight;
+	logFont->lfItalic = bItalic;
+	logFont->lfUnderline = bUnderline;
+	logFont->lfStrikeOut = cStrikeOut;
+	logFont->lfCharSet = nCharSet;
+	logFont->lfOutPrecision = nOutPrecision;
+	logFont->lfClipPrecision =  nClipPrecision;
+	logFont->lfQuality = nQuality;
+	logFont->lfPitchAndFamily = nPitchAndFamily;
 
 	int pos = fontStr.rfind('/');
 	std::string typeface(fontStr.begin() + pos + 1, fontStr.end());	
@@ -469,42 +511,42 @@ BOOL OnInitBackgroundDialog(HWND window)
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 16));
 
 	widget = GetDlgItem(window, IDC_BACKGROUND_FILENAME);
-	SetWindowText(widget, CCalendarWindow::c_Config.GetBackgroundBitmapName().c_str());
+	SetWindowText(widget, CConfig::Instance().GetBackgroundBitmapName().c_str());
 
-	switch (CCalendarWindow::c_Config.GetBackgroundMode())
+	switch (CConfig::Instance().GetBackgroundMode())
 	{
-	case CBackground::MODE_TILE:
+	case MODE_TILE:
 		state = IDC_BACKGROUND_TILE;
 		break;
 
-	case CBackground::MODE_STRETCH:
+	case MODE_STRETCH:
 		state = IDC_BACKGROUND_STRETCH;
 		break;
 
-	case CBackground::MODE_SOLID:
+	case MODE_SOLID:
 		state = IDC_BACKGROUND_SOLID;
 		break;
 
-	case CBackground::MODE_COPY:
+	case MODE_COPY:
 	default:
 		state = IDC_BACKGROUND_COPYWALLPAPER;
 		break;
 	}
 	CheckRadioButton(window, IDC_BACKGROUND_TILE, IDC_BACKGROUND_SOLID, state);
 
-	g_SolidColor = CCalendarWindow::c_Config.GetBackgroundSolidColor();
-	g_ToolTipFontColor = CCalendarWindow::c_Config.GetToolTipFontColor();
-	g_ToolTipBGColor = CCalendarWindow::c_Config.GetToolTipBGColor();
-	InitFont(CCalendarWindow::c_Config.GetToolTipFont(), &g_ToolTipFont);
+	g_SolidColor = CConfig::Instance().GetBackgroundSolidColor();
+	g_ToolTipFontColor = CConfig::Instance().GetToolTipFontColor();
+	g_ToolTipBGColor = CConfig::Instance().GetToolTipBGColor();
+	InitFont(CConfig::Instance().GetToolTipFont(), &g_ToolTipFont);
 
-	state = CCalendarWindow::c_Config.GetBackgroundBevel() ? BST_CHECKED : BST_UNCHECKED;
+	state = CConfig::Instance().GetBackgroundBevel() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_BACKGROUND_BEVEL, state);
 
 	UpdateBackgroundWidgets(window);
 
-	if (CCalendarWindow::c_Config.GetRememberDialogPositions())
+	if (CConfig::Instance().GetRememberDialogPositions())
 	{
-		POINT pos = CCalendarWindow::c_Config.GetDialogPosition(CConfig::DIALOG_EDITSKIN);
+		POINT pos = CConfig::Instance().GetDialogPosition(CConfig::DIALOG_EDITSKIN);
 		SetWindowPos(GetParent(window), NULL, pos.x, pos.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
 	}
 
@@ -518,33 +560,33 @@ void OnOKBackgroundDialog(HWND window)
 
 	widget = GetDlgItem(window, IDC_BACKGROUND_FILENAME);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetBackgroundBitmapName(tmpSz);
+	CConfig::Instance().SetBackgroundBitmapName(tmpSz);
 
 	if (BST_CHECKED == IsDlgButtonChecked(window, IDC_BACKGROUND_STRETCH))
 	{
-		CCalendarWindow::c_Config.SetBackgroundMode(CBackground::MODE_STRETCH);
+		CConfig::Instance().SetBackgroundMode(MODE_STRETCH);
 	}
 	else if (BST_CHECKED == IsDlgButtonChecked(window, IDC_BACKGROUND_TILE))
 	{
-		CCalendarWindow::c_Config.SetBackgroundMode(CBackground::MODE_TILE);
+		CConfig::Instance().SetBackgroundMode(MODE_TILE);
 	}
 	else if (BST_CHECKED == IsDlgButtonChecked(window, IDC_BACKGROUND_SOLID))
 	{
-		CCalendarWindow::c_Config.SetBackgroundMode(CBackground::MODE_SOLID);
+		CConfig::Instance().SetBackgroundMode(MODE_SOLID);
 	}
 	else
 	{
-		CCalendarWindow::c_Config.SetBackgroundMode(CBackground::MODE_COPY);
+		CConfig::Instance().SetBackgroundMode(MODE_COPY);
 	}
 
-	CCalendarWindow::c_Config.SetBackgroundSolidColor(g_SolidColor);
-	CCalendarWindow::c_Config.SetToolTipFontColor(g_ToolTipFontColor);
-	CCalendarWindow::c_Config.SetToolTipBGColor(g_ToolTipBGColor);
+	CConfig::Instance().SetBackgroundSolidColor(g_SolidColor);
+	CConfig::Instance().SetToolTipFontColor(g_ToolTipFontColor);
+	CConfig::Instance().SetToolTipBGColor(g_ToolTipBGColor);
 	std::string fontStr = GetFontString(&g_ToolTipFont);
-	CCalendarWindow::c_Config.SetToolTipFont(fontStr);
+	CConfig::Instance().SetToolTipFont(fontStr);
 
 	bool state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_BACKGROUND_BEVEL));
-	CCalendarWindow::c_Config.SetBackgroundBevel(state);
+	CConfig::Instance().SetBackgroundBevel(state);
 }
 
 BOOL CALLBACK BackgroundPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
@@ -577,7 +619,7 @@ BOOL CALLBACK BackgroundPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 				OnOKBackgroundDialog(hwndDlg);
 				if (pshNotify->lParam != TRUE)
 				{
-					CCalendarWindow::c_Config.WriteConfig(CConfig::WRITE_SKIN);
+					CConfig::Instance().WriteConfig(CConfig::WRITE_SKIN);
 					SendMessage(GetRainlendar()->GetCalendarWindow().GetWindow(), WM_COMMAND, ID_REFRESH, NULL);				// Refresh
 					PropSheet_CancelToClose(GetParent(hwndDlg));
 				}
@@ -634,8 +676,8 @@ BOOL CALLBACK BackgroundPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 			{
 				RECT rc;
 				GetWindowRect(GetParent(hwndDlg), &rc);	// Get the sheet position (i.e. parent)
-				CCalendarWindow::c_Config.SetDialogPosition(CConfig::DIALOG_EDITSKIN, rc.left, rc.top);
-				CCalendarWindow::c_Config.WriteConfig(CConfig::WRITE_FULL);
+				CConfig::Instance().SetDialogPosition(CConfig::DIALOG_EDITSKIN, rc.left, rc.top);
+				CConfig::Instance().WriteConfig(CConfig::WRITE_FULL);
 			}
 			break;
 	}
@@ -800,29 +842,29 @@ BOOL OnInitDaysDialog(HWND window)
 	widget = GetDlgItem(window, IDC_DAYS_SELECT);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 16));
 
-	state = CCalendarWindow::c_Config.GetDaysEnable() ? BST_CHECKED : BST_UNCHECKED;
+	state = CConfig::Instance().GetDaysEnable() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_DAYS_ENABLE, state);
 
 	widget = GetDlgItem(window, IDC_DAYS_X);
-	itoa(CCalendarWindow::c_Config.GetDaysX(), tmpSz, 10);
+	itoa(CConfig::Instance().GetDaysX(), tmpSz, 10);
 	SetWindowText(widget, tmpSz);
 
 	widget = GetDlgItem(window, IDC_DAYS_Y);
-	itoa(CCalendarWindow::c_Config.GetDaysY(), tmpSz, 10);
+	itoa(CConfig::Instance().GetDaysY(), tmpSz, 10);
 	SetWindowText(widget, tmpSz);
 
 	widget = GetDlgItem(window, IDC_DAYS_W);
-	itoa(CCalendarWindow::c_Config.GetDaysW(), tmpSz, 10);
+	itoa(CConfig::Instance().GetDaysW(), tmpSz, 10);
 	SetWindowText(widget, tmpSz);
 
 	widget = GetDlgItem(window, IDC_DAYS_H);
-	itoa(CCalendarWindow::c_Config.GetDaysH(), tmpSz, 10);
+	itoa(CConfig::Instance().GetDaysH(), tmpSz, 10);
 	SetWindowText(widget, tmpSz);
 
-	state = CCalendarWindow::c_Config.GetDaysIgnoreToday() ? BST_CHECKED : BST_UNCHECKED;
+	state = CConfig::Instance().GetDaysIgnoreToday() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_DAYS_IGNORE_TODAY, state);
 
-	state = CCalendarWindow::c_Config.GetDaysIgnoreEvent() ? BST_CHECKED : BST_UNCHECKED;
+	state = CConfig::Instance().GetDaysIgnoreEvent() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_DAYS_IGNORE_EVENT, state);
 
 	// Fill the combos
@@ -839,16 +881,16 @@ BOOL OnInitDaysDialog(HWND window)
 	SendDlgItemMessage(window, IDC_DAYS_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 42));
 	SendDlgItemMessage(window, IDC_DAYS_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 43));
 
-	state = InitRasterizer(CCalendarWindow::c_Config.GetDaysRasterizer());
+	state = InitRasterizer(CConfig::Instance().GetDaysRasterizer());
 	SendDlgItemMessage(window, IDC_DAYS_RASTERIZER, CB_SETCURSEL, (WPARAM)state, NULL);
 
-	state = InitAlign(CCalendarWindow::c_Config.GetDaysAlign());
+	state = InitAlign(CConfig::Instance().GetDaysAlign());
 	SendDlgItemMessage(window, IDC_DAYS_ALIGN, CB_SETCURSEL, (WPARAM)state, NULL);
 
 	widget = GetDlgItem(window, IDC_DAYS_BITMAP);
-	SetWindowText(widget, CCalendarWindow::c_Config.GetDaysBitmapName().c_str());
+	SetWindowText(widget, CConfig::Instance().GetDaysBitmapName().c_str());
 
-	switch (CCalendarWindow::c_Config.GetDaysNumOfComponents())
+	switch (CConfig::Instance().GetDaysNumOfComponents())
 	{
 	case 10:
 		state = IDC_DAYS_COMPONENTS_10;
@@ -862,11 +904,11 @@ BOOL OnInitDaysDialog(HWND window)
 	CheckRadioButton(window, IDC_DAYS_COMPONENTS_10, IDC_DAYS_COMPONENTS_32, state);
 
 	widget = GetDlgItem(window, IDC_DAYS_SEPARATION);
-	itoa(CCalendarWindow::c_Config.GetDaysSeparation(), tmpSz, 10);
+	itoa(CConfig::Instance().GetDaysSeparation(), tmpSz, 10);
 	SetWindowText(widget, tmpSz);
 
-	g_DaysFontColor = CCalendarWindow::c_Config.GetDaysFontColor();
-	InitFont(CCalendarWindow::c_Config.GetDaysFont(), &g_DaysFont);
+	g_DaysFontColor = CConfig::Instance().GetDaysFontColor();
+	InitFont(CConfig::Instance().GetDaysFont(), &g_DaysFont);
 
 	UpdateDaysWidgets(window);
 
@@ -880,57 +922,57 @@ void OnOKDaysDialog(HWND window)
 	bool state;
 
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_DAYS_ENABLE));
-	CCalendarWindow::c_Config.SetDaysEnable(state);
+	CConfig::Instance().SetDaysEnable(state);
 
 	widget = GetDlgItem(window, IDC_DAYS_X);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetDaysX(atoi(tmpSz));
+	CConfig::Instance().SetDaysX(atoi(tmpSz));
 
 	widget = GetDlgItem(window, IDC_DAYS_Y);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetDaysY(atoi(tmpSz));
+	CConfig::Instance().SetDaysY(atoi(tmpSz));
 
 	widget = GetDlgItem(window, IDC_DAYS_W);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetDaysW(atoi(tmpSz));
+	CConfig::Instance().SetDaysW(atoi(tmpSz));
 
 	widget = GetDlgItem(window, IDC_DAYS_H);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetDaysH(atoi(tmpSz));
+	CConfig::Instance().SetDaysH(atoi(tmpSz));
 
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_DAYS_IGNORE_TODAY));
-	CCalendarWindow::c_Config.SetDaysIgnoreToday(state);
+	CConfig::Instance().SetDaysIgnoreToday(state);
 
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_DAYS_IGNORE_EVENT));
-	CCalendarWindow::c_Config.SetDaysIgnoreEvent(state);
+	CConfig::Instance().SetDaysIgnoreEvent(state);
 
 	widget = GetDlgItem(window, IDC_DAYS_BITMAP);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetDaysBitmapName(tmpSz);
+	CConfig::Instance().SetDaysBitmapName(tmpSz);
 
 	if (BST_CHECKED == IsDlgButtonChecked(window, IDC_DAYS_COMPONENTS_10))
 	{
-		CCalendarWindow::c_Config.SetDaysNumOfComponents(10);
+		CConfig::Instance().SetDaysNumOfComponents(10);
 	}
 	else
 	{
-		CCalendarWindow::c_Config.SetDaysNumOfComponents(32);
+		CConfig::Instance().SetDaysNumOfComponents(32);
 	}
 
 	widget = GetDlgItem(window, IDC_DAYS_SEPARATION);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetDaysSeparation(atoi(tmpSz));
+	CConfig::Instance().SetDaysSeparation(atoi(tmpSz));
 
 	CRasterizer::ALIGN align = GetAlign(window, IDC_DAYS_ALIGN);
-	CCalendarWindow::c_Config.SetDaysAlign(align);
+	CConfig::Instance().SetDaysAlign(align);
 	
 	CRasterizer::TYPE ras = GetRasterizer(window, IDC_DAYS_RASTERIZER);
-	CCalendarWindow::c_Config.SetDaysRasterizer(ras);
+	CConfig::Instance().SetDaysRasterizer(ras);
 
-	CCalendarWindow::c_Config.SetDaysFontColor(g_DaysFontColor);
+	CConfig::Instance().SetDaysFontColor(g_DaysFontColor);
 	
 	std::string fontStr = GetFontString(&g_DaysFont);
-	CCalendarWindow::c_Config.SetDaysFont(fontStr);
+	CConfig::Instance().SetDaysFont(fontStr);
 }
 
 BOOL CALLBACK DaysPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
@@ -948,7 +990,7 @@ BOOL CALLBACK DaysPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 				OnOKDaysDialog(hwndDlg);
 				if (pshNotify->lParam != TRUE)
 				{
-					CCalendarWindow::c_Config.WriteConfig(CConfig::WRITE_SKIN);
+					CConfig::Instance().WriteConfig(CConfig::WRITE_SKIN);
 					SendMessage(GetRainlendar()->GetCalendarWindow().GetWindow(), WM_COMMAND, ID_REFRESH, NULL);				// Refresh
 					PropSheet_CancelToClose(GetParent(hwndDlg));
 				}
@@ -1150,7 +1192,7 @@ BOOL OnInitTodayDialog(HWND window)
 	widget = GetDlgItem(window, IDC_TODAY_SELECT);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 16));
 
-	state = CCalendarWindow::c_Config.GetTodayEnable() ? BST_CHECKED : BST_UNCHECKED;
+	state = CConfig::Instance().GetTodayEnable() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_TODAY_ENABLE, state);
 
 	// Fill the combos
@@ -1167,16 +1209,16 @@ BOOL OnInitTodayDialog(HWND window)
 	SendDlgItemMessage(window, IDC_TODAY_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 42));
 	SendDlgItemMessage(window, IDC_TODAY_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 43));
 
-	state = InitRasterizer(CCalendarWindow::c_Config.GetTodayRasterizer());
+	state = InitRasterizer(CConfig::Instance().GetTodayRasterizer());
 	SendDlgItemMessage(window, IDC_TODAY_RASTERIZER, CB_SETCURSEL, (WPARAM)state, NULL);
 
-	state = InitAlign(CCalendarWindow::c_Config.GetTodayAlign());
+	state = InitAlign(CConfig::Instance().GetTodayAlign());
 	SendDlgItemMessage(window, IDC_TODAY_ALIGN, CB_SETCURSEL, (WPARAM)state, NULL);
 
 	widget = GetDlgItem(window, IDC_TODAY_BITMAP);
-	SetWindowText(widget, CCalendarWindow::c_Config.GetTodayBitmapName().c_str());
+	SetWindowText(widget, CConfig::Instance().GetTodayBitmapName().c_str());
 
-	switch (CCalendarWindow::c_Config.GetTodayNumOfComponents())
+	switch (CConfig::Instance().GetTodayNumOfComponents())
 	{
 	case 1:
 		state = IDC_TODAY_COMPONENTS_1;
@@ -1194,11 +1236,11 @@ BOOL OnInitTodayDialog(HWND window)
 	CheckRadioButton(window, IDC_TODAY_COMPONENTS_1, IDC_TODAY_COMPONENTS_32, state);
 
 	widget = GetDlgItem(window, IDC_TODAY_SEPARATION);
-	itoa(CCalendarWindow::c_Config.GetTodaySeparation(), tmpSz, 10);
+	itoa(CConfig::Instance().GetTodaySeparation(), tmpSz, 10);
 	SetWindowText(widget, tmpSz);
 
-	g_TodayFontColor = CCalendarWindow::c_Config.GetTodayFontColor();
-	InitFont(CCalendarWindow::c_Config.GetTodayFont(), &g_TodayFont);
+	g_TodayFontColor = CConfig::Instance().GetTodayFontColor();
+	InitFont(CConfig::Instance().GetTodayFont(), &g_TodayFont);
 
 	UpdateTodayWidgets(window);
 
@@ -1212,39 +1254,39 @@ void OnOKTodayDialog(HWND window)
 	bool state;
 
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_TODAY_ENABLE));
-	CCalendarWindow::c_Config.SetTodayEnable(state);
+	CConfig::Instance().SetTodayEnable(state);
 
 	widget = GetDlgItem(window, IDC_TODAY_BITMAP);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetTodayBitmapName(tmpSz);
+	CConfig::Instance().SetTodayBitmapName(tmpSz);
 
 	if (BST_CHECKED == IsDlgButtonChecked(window, IDC_TODAY_COMPONENTS_1))
 	{
-		CCalendarWindow::c_Config.SetTodayNumOfComponents(1);
+		CConfig::Instance().SetTodayNumOfComponents(1);
 	}
 	else if (BST_CHECKED == IsDlgButtonChecked(window, IDC_TODAY_COMPONENTS_10))
 	{
-		CCalendarWindow::c_Config.SetTodayNumOfComponents(10);
+		CConfig::Instance().SetTodayNumOfComponents(10);
 	}
 	else
 	{
-		CCalendarWindow::c_Config.SetTodayNumOfComponents(32);
+		CConfig::Instance().SetTodayNumOfComponents(32);
 	}
 
 	widget = GetDlgItem(window, IDC_TODAY_SEPARATION);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetTodaySeparation(atoi(tmpSz));
+	CConfig::Instance().SetTodaySeparation(atoi(tmpSz));
 
 	CRasterizer::ALIGN align = GetAlign(window, IDC_TODAY_ALIGN);
-	CCalendarWindow::c_Config.SetTodayAlign(align);
+	CConfig::Instance().SetTodayAlign(align);
 	
 	CRasterizer::TYPE ras = GetRasterizer(window, IDC_TODAY_RASTERIZER);
-	CCalendarWindow::c_Config.SetTodayRasterizer(ras);
+	CConfig::Instance().SetTodayRasterizer(ras);
 
-	CCalendarWindow::c_Config.SetTodayFontColor(g_TodayFontColor);
+	CConfig::Instance().SetTodayFontColor(g_TodayFontColor);
 	
 	std::string fontStr = GetFontString(&g_TodayFont);
-	CCalendarWindow::c_Config.SetTodayFont(fontStr);
+	CConfig::Instance().SetTodayFont(fontStr);
 }
 
 BOOL CALLBACK TodayPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
@@ -1262,7 +1304,7 @@ BOOL CALLBACK TodayPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lP
 				OnOKTodayDialog(hwndDlg);
 				if (pshNotify->lParam != TRUE)
 				{
-					CCalendarWindow::c_Config.WriteConfig(CConfig::WRITE_SKIN);
+					CConfig::Instance().WriteConfig(CConfig::WRITE_SKIN);
 					SendMessage(GetRainlendar()->GetCalendarWindow().GetWindow(), WM_COMMAND, ID_REFRESH, NULL);				// Refresh
 					PropSheet_CancelToClose(GetParent(hwndDlg));
 				}
@@ -1492,7 +1534,7 @@ BOOL OnInitEventDialog(HWND window)
 	widget = GetDlgItem(window, IDC_EVENT_SELECT2);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 16));
 
-	state = CCalendarWindow::c_Config.GetEventEnable() ? BST_CHECKED : BST_UNCHECKED;
+	state = CConfig::Instance().GetEventEnable() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_EVENT_ENABLE, state);
 
 	// Fill the combos
@@ -1509,16 +1551,16 @@ BOOL OnInitEventDialog(HWND window)
 	SendDlgItemMessage(window, IDC_EVENT_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 42));
 	SendDlgItemMessage(window, IDC_EVENT_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 43));
 
-	state = InitRasterizer(CCalendarWindow::c_Config.GetEventRasterizer());
+	state = InitRasterizer(CConfig::Instance().GetEventRasterizer());
 	SendDlgItemMessage(window, IDC_EVENT_RASTERIZER, CB_SETCURSEL, (WPARAM)state, NULL);
 
-	state = InitAlign(CCalendarWindow::c_Config.GetEventAlign());
+	state = InitAlign(CConfig::Instance().GetEventAlign());
 	SendDlgItemMessage(window, IDC_EVENT_ALIGN, CB_SETCURSEL, (WPARAM)state, NULL);
 
 	widget = GetDlgItem(window, IDC_EVENT_BITMAP);
-	SetWindowText(widget, CCalendarWindow::c_Config.GetEventBitmapName().c_str());
+	SetWindowText(widget, CConfig::Instance().GetEventBitmapName().c_str());
 
-	switch (CCalendarWindow::c_Config.GetEventNumOfComponents())
+	switch (CConfig::Instance().GetEventNumOfComponents())
 	{
 	case 1:
 		state = IDC_EVENT_COMPONENTS_1;
@@ -1536,17 +1578,17 @@ BOOL OnInitEventDialog(HWND window)
 	CheckRadioButton(window, IDC_EVENT_COMPONENTS_1, IDC_EVENT_COMPONENTS_32, state);
 
 	widget = GetDlgItem(window, IDC_EVENT_SEPARATION);
-	itoa(CCalendarWindow::c_Config.GetEventSeparation(), tmpSz, 10);
+	itoa(CConfig::Instance().GetEventSeparation(), tmpSz, 10);
 	SetWindowText(widget, tmpSz);
 
-	g_EventFontColor = CCalendarWindow::c_Config.GetEventFontColor();
-	InitFont(CCalendarWindow::c_Config.GetEventFont(), &g_EventFont);
+	g_EventFontColor = CConfig::Instance().GetEventFontColor();
+	InitFont(CConfig::Instance().GetEventFont(), &g_EventFont);
 
-	state = CCalendarWindow::c_Config.GetEventInCalendar() ? BST_CHECKED : BST_UNCHECKED;
+	state = CConfig::Instance().GetEventInCalendar() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_EVENT_CALENDAR, state);
 
-	g_EventFontColor2 = CCalendarWindow::c_Config.GetEventFontColor2();
-	InitFont(CCalendarWindow::c_Config.GetEventFont2(), &g_EventFont2);
+	g_EventFontColor2 = CConfig::Instance().GetEventFontColor2();
+	InitFont(CConfig::Instance().GetEventFont2(), &g_EventFont2);
 
 	UpdateEventWidgets(window);
 
@@ -1560,47 +1602,47 @@ void OnOKEventDialog(HWND window)
 	bool state;
 
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_EVENT_ENABLE));
-	CCalendarWindow::c_Config.SetEventEnable(state);
+	CConfig::Instance().SetEventEnable(state);
 
 	widget = GetDlgItem(window, IDC_EVENT_BITMAP);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetEventBitmapName(tmpSz);
+	CConfig::Instance().SetEventBitmapName(tmpSz);
 
 	if (BST_CHECKED == IsDlgButtonChecked(window, IDC_EVENT_COMPONENTS_1))
 	{
-		CCalendarWindow::c_Config.SetEventNumOfComponents(1);
+		CConfig::Instance().SetEventNumOfComponents(1);
 	}
 	else if (BST_CHECKED == IsDlgButtonChecked(window, IDC_EVENT_COMPONENTS_10))
 	{
-		CCalendarWindow::c_Config.SetEventNumOfComponents(10);
+		CConfig::Instance().SetEventNumOfComponents(10);
 	}
 	else
 	{
-		CCalendarWindow::c_Config.SetEventNumOfComponents(32);
+		CConfig::Instance().SetEventNumOfComponents(32);
 	}
 
 	widget = GetDlgItem(window, IDC_EVENT_SEPARATION);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetEventSeparation(atoi(tmpSz));
+	CConfig::Instance().SetEventSeparation(atoi(tmpSz));
 
 	CRasterizer::ALIGN align = GetAlign(window, IDC_EVENT_ALIGN);
-	CCalendarWindow::c_Config.SetEventAlign(align);
+	CConfig::Instance().SetEventAlign(align);
 	
 	CRasterizer::TYPE ras = GetRasterizer(window, IDC_EVENT_RASTERIZER);
-	CCalendarWindow::c_Config.SetEventRasterizer(ras);
+	CConfig::Instance().SetEventRasterizer(ras);
 
-	CCalendarWindow::c_Config.SetEventFontColor(g_EventFontColor);
+	CConfig::Instance().SetEventFontColor(g_EventFontColor);
 	
 	std::string fontStr = GetFontString(&g_EventFont);
-	CCalendarWindow::c_Config.SetEventFont(fontStr);
+	CConfig::Instance().SetEventFont(fontStr);
 
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_EVENT_CALENDAR));
-	CCalendarWindow::c_Config.SetEventInCalendar(state);
+	CConfig::Instance().SetEventInCalendar(state);
 
-	CCalendarWindow::c_Config.SetEventFontColor2(g_EventFontColor2);
+	CConfig::Instance().SetEventFontColor2(g_EventFontColor2);
 	
 	fontStr = GetFontString(&g_EventFont2);
-	CCalendarWindow::c_Config.SetEventFont2(fontStr);
+	CConfig::Instance().SetEventFont2(fontStr);
 }
 
 BOOL CALLBACK EventPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
@@ -1618,7 +1660,7 @@ BOOL CALLBACK EventPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lP
 				OnOKEventDialog(hwndDlg);
 				if (pshNotify->lParam != TRUE)
 				{
-					CCalendarWindow::c_Config.WriteConfig(CConfig::WRITE_SKIN);
+					CConfig::Instance().WriteConfig(CConfig::WRITE_SKIN);
 					SendMessage(GetRainlendar()->GetCalendarWindow().GetWindow(), WM_COMMAND, ID_REFRESH, NULL);				// Refresh
 					PropSheet_CancelToClose(GetParent(hwndDlg));
 				}
@@ -1797,7 +1839,7 @@ BOOL OnInitWeekdaysDialog(HWND window)
 	widget = GetDlgItem(window, IDC_WEEKDAYS_SELECT);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 16));
 
-	state = CCalendarWindow::c_Config.GetWeekdaysEnable() ? BST_CHECKED : BST_UNCHECKED;
+	state = CConfig::Instance().GetWeekdaysEnable() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_WEEKDAYS_ENABLE, state);
 
 	// Fill the combos
@@ -1814,17 +1856,17 @@ BOOL OnInitWeekdaysDialog(HWND window)
 	SendDlgItemMessage(window, IDC_WEEKDAYS_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 42));
 	SendDlgItemMessage(window, IDC_WEEKDAYS_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 43));
 
-	state = InitRasterizer(CCalendarWindow::c_Config.GetWeekdaysRasterizer());
+	state = InitRasterizer(CConfig::Instance().GetWeekdaysRasterizer());
 	SendDlgItemMessage(window, IDC_WEEKDAYS_RASTERIZER, CB_SETCURSEL, (WPARAM)state, NULL);
 
-	state = InitAlign(CCalendarWindow::c_Config.GetWeekdaysAlign());
+	state = InitAlign(CConfig::Instance().GetWeekdaysAlign());
 	SendDlgItemMessage(window, IDC_WEEKDAYS_ALIGN, CB_SETCURSEL, (WPARAM)state, NULL);
 
 	widget = GetDlgItem(window, IDC_WEEKDAYS_BITMAP);
-	SetWindowText(widget, CCalendarWindow::c_Config.GetWeekdaysBitmapName().c_str());
+	SetWindowText(widget, CConfig::Instance().GetWeekdaysBitmapName().c_str());
 
-	g_WeekdaysFontColor = CCalendarWindow::c_Config.GetWeekdaysFontColor();
-	InitFont(CCalendarWindow::c_Config.GetWeekdaysFont(), &g_WeekdaysFont);
+	g_WeekdaysFontColor = CConfig::Instance().GetWeekdaysFontColor();
+	InitFont(CConfig::Instance().GetWeekdaysFont(), &g_WeekdaysFont);
 
 	UpdateWeekdaysWidgets(window);
 
@@ -1838,22 +1880,22 @@ void OnOKWeekdaysDialog(HWND window)
 	bool state;
 
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_WEEKDAYS_ENABLE));
-	CCalendarWindow::c_Config.SetWeekdaysEnable(state);
+	CConfig::Instance().SetWeekdaysEnable(state);
 
 	widget = GetDlgItem(window, IDC_WEEKDAYS_BITMAP);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetWeekdaysBitmapName(tmpSz);
+	CConfig::Instance().SetWeekdaysBitmapName(tmpSz);
 
 	CRasterizer::ALIGN align = GetAlign(window, IDC_WEEKDAYS_ALIGN);
-	CCalendarWindow::c_Config.SetWeekdaysAlign(align);
+	CConfig::Instance().SetWeekdaysAlign(align);
 	
 	CRasterizer::TYPE ras = GetRasterizer(window, IDC_WEEKDAYS_RASTERIZER);
-	CCalendarWindow::c_Config.SetWeekdaysRasterizer(ras);
+	CConfig::Instance().SetWeekdaysRasterizer(ras);
 
-	CCalendarWindow::c_Config.SetWeekdaysFontColor(g_WeekdaysFontColor);
+	CConfig::Instance().SetWeekdaysFontColor(g_WeekdaysFontColor);
 	
 	std::string fontStr = GetFontString(&g_WeekdaysFont);
-	CCalendarWindow::c_Config.SetWeekdaysFont(fontStr);
+	CConfig::Instance().SetWeekdaysFont(fontStr);
 }
 
 BOOL CALLBACK WeekdaysPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
@@ -1871,7 +1913,7 @@ BOOL CALLBACK WeekdaysPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM
 				OnOKWeekdaysDialog(hwndDlg);
 				if (pshNotify->lParam != TRUE)
 				{
-					CCalendarWindow::c_Config.WriteConfig(CConfig::WRITE_SKIN);
+					CConfig::Instance().WriteConfig(CConfig::WRITE_SKIN);
 					SendMessage(GetRainlendar()->GetCalendarWindow().GetWindow(), WM_COMMAND, ID_REFRESH, NULL);				// Refresh
 					PropSheet_CancelToClose(GetParent(hwndDlg));
 				}
@@ -2060,7 +2102,7 @@ BOOL OnInitWeekNumbersDialog(HWND window)
 	widget = GetDlgItem(window, IDC_WEEKNUM_SELECT);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 16));
 
-	state = CCalendarWindow::c_Config.GetWeekNumbersEnable() ? BST_CHECKED : BST_UNCHECKED;
+	state = CConfig::Instance().GetWeekNumbersEnable() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_WEEKNUM_ENABLE, state);
 
 	// Fill the combos
@@ -2077,16 +2119,16 @@ BOOL OnInitWeekNumbersDialog(HWND window)
 	SendDlgItemMessage(window, IDC_WEEKNUM_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 42));
 	SendDlgItemMessage(window, IDC_WEEKNUM_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 43));
 
-	state = InitRasterizer(CCalendarWindow::c_Config.GetWeekNumbersRasterizer());
+	state = InitRasterizer(CConfig::Instance().GetWeekNumbersRasterizer());
 	SendDlgItemMessage(window, IDC_WEEKNUM_RASTERIZER, CB_SETCURSEL, (WPARAM)state, NULL);
 
-	state = InitAlign(CCalendarWindow::c_Config.GetWeekNumbersAlign());
+	state = InitAlign(CConfig::Instance().GetWeekNumbersAlign());
 	SendDlgItemMessage(window, IDC_WEEKNUM_ALIGN, CB_SETCURSEL, (WPARAM)state, NULL);
 
 	widget = GetDlgItem(window, IDC_WEEKNUM_BITMAP);
-	SetWindowText(widget, CCalendarWindow::c_Config.GetWeekNumbersBitmapName().c_str());
+	SetWindowText(widget, CConfig::Instance().GetWeekNumbersBitmapName().c_str());
 
-	switch (CCalendarWindow::c_Config.GetWeekNumbersNumOfComponents())
+	switch (CConfig::Instance().GetWeekNumbersNumOfComponents())
 	{
 	case 10:
 		state = IDC_WEEKNUM_COMPONENTS_10;
@@ -2100,11 +2142,11 @@ BOOL OnInitWeekNumbersDialog(HWND window)
 	CheckRadioButton(window, IDC_WEEKNUM_COMPONENTS_10, IDC_WEEKNUM_COMPONENTS_54, state);
 
 	widget = GetDlgItem(window, IDC_WEEKNUM_SEPARATION);
-	itoa(CCalendarWindow::c_Config.GetWeekNumbersSeparation(), tmpSz, 10);
+	itoa(CConfig::Instance().GetWeekNumbersSeparation(), tmpSz, 10);
 	SetWindowText(widget, tmpSz);
 
-	g_WeekNumbersFontColor = CCalendarWindow::c_Config.GetWeekNumbersFontColor();
-	InitFont(CCalendarWindow::c_Config.GetWeekNumbersFont(), &g_WeekNumbersFont);
+	g_WeekNumbersFontColor = CConfig::Instance().GetWeekNumbersFontColor();
+	InitFont(CConfig::Instance().GetWeekNumbersFont(), &g_WeekNumbersFont);
 
 	UpdateWeekNumbersWidgets(window);
 
@@ -2118,35 +2160,35 @@ void OnOKWeekNumbersDialog(HWND window)
 	bool state;
 
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_WEEKNUM_ENABLE));
-	CCalendarWindow::c_Config.SetWeekNumbersEnable(state);
+	CConfig::Instance().SetWeekNumbersEnable(state);
 
 	widget = GetDlgItem(window, IDC_WEEKNUM_BITMAP);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetWeekNumbersBitmapName(tmpSz);
+	CConfig::Instance().SetWeekNumbersBitmapName(tmpSz);
 
 	if (BST_CHECKED == IsDlgButtonChecked(window, IDC_WEEKNUM_COMPONENTS_10))
 	{
-		CCalendarWindow::c_Config.SetWeekNumbersNumOfComponents(10);
+		CConfig::Instance().SetWeekNumbersNumOfComponents(10);
 	}
 	else
 	{
-		CCalendarWindow::c_Config.SetWeekNumbersNumOfComponents(54);
+		CConfig::Instance().SetWeekNumbersNumOfComponents(54);
 	}
 
 	widget = GetDlgItem(window, IDC_WEEKNUM_SEPARATION);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetWeekNumbersSeparation(atoi(tmpSz));
+	CConfig::Instance().SetWeekNumbersSeparation(atoi(tmpSz));
 
 	CRasterizer::ALIGN align = GetAlign(window, IDC_WEEKNUM_ALIGN);
-	CCalendarWindow::c_Config.SetWeekNumbersAlign(align);
+	CConfig::Instance().SetWeekNumbersAlign(align);
 	
 	CRasterizer::TYPE ras = GetRasterizer(window, IDC_WEEKNUM_RASTERIZER);
-	CCalendarWindow::c_Config.SetWeekNumbersRasterizer(ras);
+	CConfig::Instance().SetWeekNumbersRasterizer(ras);
 
-	CCalendarWindow::c_Config.SetWeekNumbersFontColor(g_WeekNumbersFontColor);
+	CConfig::Instance().SetWeekNumbersFontColor(g_WeekNumbersFontColor);
 	
 	std::string fontStr = GetFontString(&g_WeekNumbersFont);
-	CCalendarWindow::c_Config.SetWeekNumbersFont(fontStr);
+	CConfig::Instance().SetWeekNumbersFont(fontStr);
 }
 
 BOOL CALLBACK WeekNumbersPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
@@ -2164,7 +2206,7 @@ BOOL CALLBACK WeekNumbersPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPA
 				OnOKWeekNumbersDialog(hwndDlg);
 				if (pshNotify->lParam != TRUE)
 				{
-					CCalendarWindow::c_Config.WriteConfig(CConfig::WRITE_SKIN);
+					CConfig::Instance().WriteConfig(CConfig::WRITE_SKIN);
 					SendMessage(GetRainlendar()->GetCalendarWindow().GetWindow(), WM_COMMAND, ID_REFRESH, NULL);				// Refresh
 					PropSheet_CancelToClose(GetParent(hwndDlg));
 				}
@@ -2336,15 +2378,15 @@ BOOL OnInitMonthDialog(HWND window)
 	widget = GetDlgItem(window, IDC_MONTH_SELECT);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 16));
 
-	state = CCalendarWindow::c_Config.GetMonthEnable() ? BST_CHECKED : BST_UNCHECKED;
+	state = CConfig::Instance().GetMonthEnable() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_MONTH_ENABLE, state);
 
 	widget = GetDlgItem(window, IDC_MONTH_X);
-	itoa(CCalendarWindow::c_Config.GetMonthX(), tmpSz, 10);
+	itoa(CConfig::Instance().GetMonthX(), tmpSz, 10);
 	SetWindowText(widget, tmpSz);
 
 	widget = GetDlgItem(window, IDC_MONTH_Y);
-	itoa(CCalendarWindow::c_Config.GetMonthY(), tmpSz, 10);
+	itoa(CConfig::Instance().GetMonthY(), tmpSz, 10);
 	SetWindowText(widget, tmpSz);
 
 	// Fill the combos
@@ -2361,17 +2403,17 @@ BOOL OnInitMonthDialog(HWND window)
 	SendDlgItemMessage(window, IDC_MONTH_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 42));
 	SendDlgItemMessage(window, IDC_MONTH_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 43));
 	
-	state = InitRasterizer(CCalendarWindow::c_Config.GetMonthRasterizer());
+	state = InitRasterizer(CConfig::Instance().GetMonthRasterizer());
 	SendDlgItemMessage(window, IDC_MONTH_RASTERIZER, CB_SETCURSEL, (WPARAM)state, NULL);
 
-	state = InitAlign(CCalendarWindow::c_Config.GetMonthAlign());
+	state = InitAlign(CConfig::Instance().GetMonthAlign());
 	SendDlgItemMessage(window, IDC_MONTH_ALIGN, CB_SETCURSEL, (WPARAM)state, NULL);
 
 	widget = GetDlgItem(window, IDC_MONTH_BITMAP);
-	SetWindowText(widget, CCalendarWindow::c_Config.GetMonthBitmapName().c_str());
+	SetWindowText(widget, CConfig::Instance().GetMonthBitmapName().c_str());
 
-	g_MonthFontColor = CCalendarWindow::c_Config.GetMonthFontColor();
-	InitFont(CCalendarWindow::c_Config.GetMonthFont(), &g_MonthFont);
+	g_MonthFontColor = CConfig::Instance().GetMonthFontColor();
+	InitFont(CConfig::Instance().GetMonthFont(), &g_MonthFont);
 
 	UpdateMonthWidgets(window);
 
@@ -2385,30 +2427,30 @@ void OnOKMonthDialog(HWND window)
 	bool state;
 
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_MONTH_ENABLE));
-	CCalendarWindow::c_Config.SetMonthEnable(state);
+	CConfig::Instance().SetMonthEnable(state);
 
 	widget = GetDlgItem(window, IDC_MONTH_X);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetMonthX(atoi(tmpSz));
+	CConfig::Instance().SetMonthX(atoi(tmpSz));
 
 	widget = GetDlgItem(window, IDC_MONTH_Y);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetMonthY(atoi(tmpSz));
+	CConfig::Instance().SetMonthY(atoi(tmpSz));
 
 	widget = GetDlgItem(window, IDC_MONTH_BITMAP);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetMonthBitmapName(tmpSz);
+	CConfig::Instance().SetMonthBitmapName(tmpSz);
 
 	CRasterizer::ALIGN align = GetAlign(window, IDC_MONTH_ALIGN);
-	CCalendarWindow::c_Config.SetMonthAlign(align);
+	CConfig::Instance().SetMonthAlign(align);
 	
 	CRasterizer::TYPE ras = GetRasterizer(window, IDC_MONTH_RASTERIZER);
-	CCalendarWindow::c_Config.SetMonthRasterizer(ras);
+	CConfig::Instance().SetMonthRasterizer(ras);
 
-	CCalendarWindow::c_Config.SetMonthFontColor(g_MonthFontColor);
+	CConfig::Instance().SetMonthFontColor(g_MonthFontColor);
 	
 	std::string fontStr = GetFontString(&g_MonthFont);
-	CCalendarWindow::c_Config.SetMonthFont(fontStr);
+	CConfig::Instance().SetMonthFont(fontStr);
 }
 
 BOOL CALLBACK MonthPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
@@ -2426,7 +2468,7 @@ BOOL CALLBACK MonthPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lP
 				OnOKMonthDialog(hwndDlg);
 				if (pshNotify->lParam != TRUE)
 				{
-					CCalendarWindow::c_Config.WriteConfig(CConfig::WRITE_SKIN);
+					CConfig::Instance().WriteConfig(CConfig::WRITE_SKIN);
 					SendMessage(GetRainlendar()->GetCalendarWindow().GetWindow(), WM_COMMAND, ID_REFRESH, NULL);				// Refresh
 					PropSheet_CancelToClose(GetParent(hwndDlg));
 				}
@@ -2605,15 +2647,15 @@ BOOL OnInitYearDialog(HWND window)
 	widget = GetDlgItem(window, IDC_YEAR_SELECT);
 	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 16));
 
-	state = CCalendarWindow::c_Config.GetYearEnable() ? BST_CHECKED : BST_UNCHECKED;
+	state = CConfig::Instance().GetYearEnable() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_YEAR_ENABLE, state);
 
 	widget = GetDlgItem(window, IDC_YEAR_X);
-	itoa(CCalendarWindow::c_Config.GetYearX(), tmpSz, 10);
+	itoa(CConfig::Instance().GetYearX(), tmpSz, 10);
 	SetWindowText(widget, tmpSz);
 
 	widget = GetDlgItem(window, IDC_YEAR_Y);
-	itoa(CCalendarWindow::c_Config.GetYearY(), tmpSz, 10);
+	itoa(CConfig::Instance().GetYearY(), tmpSz, 10);
 	SetWindowText(widget, tmpSz);
 
 	// Fill the combos
@@ -2630,21 +2672,21 @@ BOOL OnInitYearDialog(HWND window)
 	SendDlgItemMessage(window, IDC_YEAR_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 42));
 	SendDlgItemMessage(window, IDC_YEAR_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 43));
 
-	state = InitRasterizer(CCalendarWindow::c_Config.GetYearRasterizer());
+	state = InitRasterizer(CConfig::Instance().GetYearRasterizer());
 	SendDlgItemMessage(window, IDC_YEAR_RASTERIZER, CB_SETCURSEL, (WPARAM)state, NULL);
 
-	state = InitAlign(CCalendarWindow::c_Config.GetYearAlign());
+	state = InitAlign(CConfig::Instance().GetYearAlign());
 	SendDlgItemMessage(window, IDC_YEAR_ALIGN, CB_SETCURSEL, (WPARAM)state, NULL);
 
 	widget = GetDlgItem(window, IDC_YEAR_BITMAP);
-	SetWindowText(widget, CCalendarWindow::c_Config.GetYearBitmapName().c_str());
+	SetWindowText(widget, CConfig::Instance().GetYearBitmapName().c_str());
 
 	widget = GetDlgItem(window, IDC_YEAR_SEPARATION);
-	itoa(CCalendarWindow::c_Config.GetYearSeparation(), tmpSz, 10);
+	itoa(CConfig::Instance().GetYearSeparation(), tmpSz, 10);
 	SetWindowText(widget, tmpSz);
 
-	g_YearFontColor = CCalendarWindow::c_Config.GetYearFontColor();
-	InitFont(CCalendarWindow::c_Config.GetYearFont(), &g_YearFont);
+	g_YearFontColor = CConfig::Instance().GetYearFontColor();
+	InitFont(CConfig::Instance().GetYearFont(), &g_YearFont);
 
 	UpdateYearWidgets(window);
 
@@ -2658,34 +2700,34 @@ void OnOKYearDialog(HWND window)
 	bool state;
 
 	state = (BST_CHECKED == IsDlgButtonChecked(window, IDC_YEAR_ENABLE));
-	CCalendarWindow::c_Config.SetYearEnable(state);
+	CConfig::Instance().SetYearEnable(state);
 
 	widget = GetDlgItem(window, IDC_YEAR_X);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetYearX(atoi(tmpSz));
+	CConfig::Instance().SetYearX(atoi(tmpSz));
 
 	widget = GetDlgItem(window, IDC_YEAR_Y);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetYearY(atoi(tmpSz));
+	CConfig::Instance().SetYearY(atoi(tmpSz));
 
 	widget = GetDlgItem(window, IDC_YEAR_BITMAP);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetYearBitmapName(tmpSz);
+	CConfig::Instance().SetYearBitmapName(tmpSz);
 
 	widget = GetDlgItem(window, IDC_YEAR_SEPARATION);
 	GetWindowText(widget, tmpSz, 256);
-	CCalendarWindow::c_Config.SetYearSeparation(atoi(tmpSz));
+	CConfig::Instance().SetYearSeparation(atoi(tmpSz));
 
 	CRasterizer::ALIGN align = GetAlign(window, IDC_YEAR_ALIGN);
-	CCalendarWindow::c_Config.SetYearAlign(align);
+	CConfig::Instance().SetYearAlign(align);
 	
 	CRasterizer::TYPE ras = GetRasterizer(window, IDC_YEAR_RASTERIZER);
-	CCalendarWindow::c_Config.SetYearRasterizer(ras);
+	CConfig::Instance().SetYearRasterizer(ras);
 
-	CCalendarWindow::c_Config.SetYearFontColor(g_YearFontColor);
+	CConfig::Instance().SetYearFontColor(g_YearFontColor);
 	
 	std::string fontStr = GetFontString(&g_YearFont);
-	CCalendarWindow::c_Config.SetYearFont(fontStr);
+	CConfig::Instance().SetYearFont(fontStr);
 }
 
 BOOL CALLBACK YearPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
@@ -2703,7 +2745,7 @@ BOOL CALLBACK YearPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 				OnOKYearDialog(hwndDlg);
 				if (pshNotify->lParam != TRUE)
 				{
-					CCalendarWindow::c_Config.WriteConfig(CConfig::WRITE_SKIN);
+					CConfig::Instance().WriteConfig(CConfig::WRITE_SKIN);
 					SendMessage(GetRainlendar()->GetCalendarWindow().GetWindow(), WM_COMMAND, ID_REFRESH, NULL);				// Refresh
 					PropSheet_CancelToClose(GetParent(hwndDlg));
 				}
@@ -2754,6 +2796,390 @@ BOOL CALLBACK YearPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 			case IDC_YEAR_ALIGN:
 			case IDC_YEAR_SEPARATION:
 			case IDC_YEAR_BITMAP:
+				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
+			}
+			break;
+
+	}
+    return FALSE; 
+}
+
+/****************************************************************************\ 
+**
+**                           T O D O
+**
+\****************************************************************************/
+
+void UpdateTodoWidgets(HWND window)
+{
+	// Update font name
+	char tmpSz[256];
+	HWND widget = GetDlgItem(window, IDC_TODO_FONTNAME);
+	std::string name = g_TodoFont.lfFaceName;
+	name += " / ";
+	HDC dc = GetWindowDC(window);
+	int size = -MulDiv(g_TodoFont.lfHeight, 72, GetDeviceCaps(dc, LOGPIXELSY));
+	ReleaseDC(window, dc);
+	itoa(size, tmpSz, 10);
+	name += tmpSz;
+	SetWindowText(widget, name.c_str());
+}
+
+BOOL OnInitTodoDialog(HWND window) 
+{
+	char tmpSz[256];
+	HWND widget;
+	UINT state;
+	
+	widget = GetDlgItem(window, IDC_TODO_BITMAP_BACKGROUND_FRAME);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 21));
+	widget = GetDlgItem(window, IDC_TODO_WIDTH_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 44));
+	widget = GetDlgItem(window, IDC_TODO_BITMAP_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 11));
+	widget = GetDlgItem(window, IDC_TODO_BITMAP_MARGINS_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 45));
+	widget = GetDlgItem(window, IDC_TODO_TEXT_MARGINS_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 46));
+	widget = GetDlgItem(window, IDC_TODO_BROWSE);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 3));
+
+	widget = GetDlgItem(window, IDC_TODO_ITEM_FRAME);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 47));
+	widget = GetDlgItem(window, IDC_TODO_ITEM_ALIGN_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 9));
+	widget = GetDlgItem(window, IDC_TODO_ITEM_BITMAP_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 11));
+	widget = GetDlgItem(window, IDC_TODO_ITEM_OFFSET_X_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 48));
+	widget = GetDlgItem(window, IDC_TODO_ITEM_OFFSET_Y_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 5));
+	widget = GetDlgItem(window, IDC_TODO_ITEM_BITMAP_BROWSE);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 3));
+
+	widget = GetDlgItem(window, IDC_TODO_TEXT_FRAME);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 49));
+	widget = GetDlgItem(window, IDC_TODO_SELECT);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 16));
+	widget = GetDlgItem(window, IDC_TODO_FONT_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 15));
+	widget = GetDlgItem(window, IDC_TODO_FONTCOLOR_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 17));
+
+	widget = GetDlgItem(window, IDC_TODO_WIDTH);
+	itoa(CConfig::Instance().GetTodoW(), tmpSz, 10);
+	SetWindowText(widget, tmpSz);
+	
+	widget = GetDlgItem(window, IDC_TODO_BITMAP);
+	SetWindowText(widget, CConfig::Instance().GetTodoBitmapName().c_str());
+
+	RECT margins = CConfig::Instance().GetTodoBitmapMargins();
+	sprintf(tmpSz, "%i, %i, %i, %i", margins.left, margins.top, margins.right, margins.bottom);
+	widget = GetDlgItem(window, IDC_TODO_BITMAP_MARGINS);
+	SetWindowText(widget, tmpSz);
+
+	margins = CConfig::Instance().GetTodoTextMargins();
+	sprintf(tmpSz, "%i, %i, %i, %i", margins.left, margins.top, margins.right, margins.bottom);
+	widget = GetDlgItem(window, IDC_TODO_TEXT_MARGINS);
+	SetWindowText(widget, tmpSz);
+
+	// Fill the combos
+	SendDlgItemMessage(window, IDC_TODO_ITEM_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 35));
+	SendDlgItemMessage(window, IDC_TODO_ITEM_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 36));
+	SendDlgItemMessage(window, IDC_TODO_ITEM_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 37));
+	SendDlgItemMessage(window, IDC_TODO_ITEM_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 38));
+	SendDlgItemMessage(window, IDC_TODO_ITEM_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 39));
+	SendDlgItemMessage(window, IDC_TODO_ITEM_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 40));
+	SendDlgItemMessage(window, IDC_TODO_ITEM_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 41));
+	SendDlgItemMessage(window, IDC_TODO_ITEM_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 42));
+	SendDlgItemMessage(window, IDC_TODO_ITEM_ALIGN, CB_ADDSTRING, NULL, (LPARAM)CCalendarWindow::c_Language.GetString("SkinGUI", 43));
+
+	state = InitAlign(CConfig::Instance().GetTodoItemAlign());
+	SendDlgItemMessage(window, IDC_TODO_ITEM_ALIGN, CB_SETCURSEL, (WPARAM)state, NULL);
+
+	widget = GetDlgItem(window, IDC_TODO_ITEM_BITMAP);
+	SetWindowText(widget, CConfig::Instance().GetTodoItemBitmapName().c_str());
+
+	POINT offset = CConfig::Instance().GetTodoItemOffset();
+	widget = GetDlgItem(window, IDC_TODO_ITEM_OFFSET_X);
+	itoa(offset.x, tmpSz, 10);
+	SetWindowText(widget, tmpSz);
+
+	widget = GetDlgItem(window, IDC_TODO_ITEM_OFFSET_Y);
+	itoa(offset.y, tmpSz, 10);
+	SetWindowText(widget, tmpSz);
+
+	g_TodoFontColor = CConfig::Instance().GetTodoFontColor();
+	InitFont(CConfig::Instance().GetTodoFont(), &g_TodoFont);
+
+	UpdateTodoWidgets(window);
+
+	return TRUE;
+}
+
+void OnOKTodoDialog(HWND window) 
+{
+	char tmpSz[256];
+	HWND widget;
+	RECT margins;
+	POINT offset;
+
+	widget = GetDlgItem(window, IDC_TODO_WIDTH);
+	GetWindowText(widget, tmpSz, 256);
+	CConfig::Instance().SetTodoW(atoi(tmpSz));
+
+	widget = GetDlgItem(window, IDC_TODO_BITMAP);
+	GetWindowText(widget, tmpSz, 256);
+	CConfig::Instance().SetTodoBitmapName(tmpSz);
+
+	margins.left = margins.top = margins.right = margins.bottom = 0;
+	widget = GetDlgItem(window, IDC_TODO_BITMAP_MARGINS);
+	GetWindowText(widget, tmpSz, 256);
+	sscanf(tmpSz, "%i,%i,%i,%i", &margins.left, &margins.top, &margins.right, &margins.bottom);
+	CConfig::Instance().SetTodoBitmapMargins(margins);
+
+	margins.left = margins.top = margins.right = margins.bottom = 0;
+	widget = GetDlgItem(window, IDC_TODO_TEXT_MARGINS);
+	GetWindowText(widget, tmpSz, 256);
+	sscanf(tmpSz, "%i,%i,%i,%i", &margins.left, &margins.top, &margins.right, &margins.bottom);
+	CConfig::Instance().SetTodoTextMargins(margins);
+
+	CRasterizer::ALIGN align = GetAlign(window, IDC_TODO_ITEM_ALIGN);
+	CConfig::Instance().SetTodoItemAlign(align);
+
+	widget = GetDlgItem(window, IDC_TODO_ITEM_BITMAP);
+	GetWindowText(widget, tmpSz, 256);
+	CConfig::Instance().SetTodoItemBitmapName(tmpSz);
+	
+	widget = GetDlgItem(window, IDC_TODO_ITEM_OFFSET_X);
+	GetWindowText(widget, tmpSz, 256);
+	offset.x = atoi(tmpSz);
+
+	widget = GetDlgItem(window, IDC_TODO_ITEM_OFFSET_Y);
+	GetWindowText(widget, tmpSz, 256);
+	offset.y = atoi(tmpSz);
+	CConfig::Instance().SetTodoItemOffset(offset);
+
+	std::string fontStr = GetFontString(&g_TodoFont);
+	CConfig::Instance().SetTodoFont(fontStr);
+
+	CConfig::Instance().SetTodoFontColor(g_TodoFontColor);
+}
+
+BOOL CALLBACK TodoPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
+{
+    switch (message) 
+    { 
+        case WM_INITDIALOG:
+			return OnInitTodoDialog(hwndDlg);
+
+		case WM_NOTIFY:
+			switch (((NMHDR FAR *) lParam)->code) 
+			{
+			case PSN_APPLY:
+				LPPSHNOTIFY pshNotify = (LPPSHNOTIFY)lParam;
+				OnOKTodoDialog(hwndDlg);
+				if (pshNotify->lParam != TRUE)
+				{
+					CConfig::Instance().WriteConfig(CConfig::WRITE_SKIN);
+					SendMessage(GetRainlendar()->GetCalendarWindow().GetWindow(), WM_COMMAND, ID_REFRESH, NULL);				// Refresh
+					PropSheet_CancelToClose(GetParent(hwndDlg));
+				}
+				SetWindowLong(hwndDlg, DWL_MSGRESULT, PSNRET_NOERROR);
+				return TRUE;
+			}
+			break;
+
+        case WM_DRAWITEM:
+			if (wParam == IDC_TODO_FONTCOLOR)
+			{
+				return DrawItemFontColor(g_TodoFontColor, wParam, lParam);
+			}
+			return FALSE;
+
+		case WM_COMMAND:
+			switch (LOWORD(wParam))
+			{
+			case IDC_TODO_BROWSE:
+				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
+				return BrowseBitmap(hwndDlg, IDC_TODO_BITMAP);
+
+			case IDC_TODO_ITEM_BITMAP_BROWSE:
+				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
+				return BrowseBitmap(hwndDlg, IDC_TODO_ITEM_BITMAP);
+				
+			case IDC_TODO_SELECT:
+				SelectFont(hwndDlg, &g_TodoFont);
+				UpdateTodoWidgets(hwndDlg);
+				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
+				return TRUE;
+
+			case IDC_TODO_FONTCOLOR:
+				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
+				return SelectFontColor(hwndDlg, &g_TodoFontColor);
+
+			case IDC_TODO_BITMAP:
+			case IDC_TODO_ITEM_BITMAP:
+			case IDC_TODO_BITMAP_MARGINS:
+			case IDC_TODO_TEXT_MARGINS:
+			case IDC_TODO_ITEM_ALIGN:
+			case IDC_TODO_ITEM_OFFSET_X:
+			case IDC_TODO_ITEM_OFFSET_Y:
+			case IDC_TODO_WIDTH:
+				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
+			}
+			break;
+
+	}
+    return FALSE; 
+}
+
+/****************************************************************************\ 
+**
+**                       M E S S A G E B O X
+**
+\****************************************************************************/
+
+void UpdateMessageBoxWidgets(HWND window)
+{
+	// Update font name
+	char tmpSz[256];
+	HWND widget = GetDlgItem(window, IDC_MESSAGEBOX_FONTNAME);
+	std::string name = g_MessageBoxFont.lfFaceName;
+	name += " / ";
+	HDC dc = GetWindowDC(window);
+	int size = -MulDiv(g_MessageBoxFont.lfHeight, 72, GetDeviceCaps(dc, LOGPIXELSY));
+	ReleaseDC(window, dc);
+	itoa(size, tmpSz, 10);
+	name += tmpSz;
+	SetWindowText(widget, name.c_str());
+}
+
+BOOL OnInitMessageBoxDialog(HWND window) 
+{
+	char tmpSz[256];
+	HWND widget;
+	
+	widget = GetDlgItem(window, IDC_MESSAGEBOX_BITMAP_BACKGROUND_FRAME);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 21));
+	widget = GetDlgItem(window, IDC_MESSAGEBOX_BITMAP_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 11));
+	widget = GetDlgItem(window, IDC_MESSAGEBOX_BITMAP_MARGINS_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 45));
+	widget = GetDlgItem(window, IDC_MESSAGEBOX_TEXT_MARGINS_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 46));
+	widget = GetDlgItem(window, IDC_MESSAGEBOX_BROWSE);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 3));
+
+	widget = GetDlgItem(window, IDC_MESSAGEBOX_TEXT_FRAME);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 50));
+	widget = GetDlgItem(window, IDC_MESSAGEBOX_SELECT);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 16));
+	widget = GetDlgItem(window, IDC_MESSAGEBOX_FONT_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 15));
+	widget = GetDlgItem(window, IDC_MESSAGEBOX_FONTCOLOR_STATIC);
+	if (widget) SetWindowText(widget, CCalendarWindow::c_Language.GetString("SkinGUI", 17));
+
+	widget = GetDlgItem(window, IDC_MESSAGEBOX_BITMAP);
+	SetWindowText(widget, CConfig::Instance().GetMessageBoxBitmapName().c_str());
+
+	RECT margins = CConfig::Instance().GetMessageBoxBitmapMargins();
+	sprintf(tmpSz, "%i, %i, %i, %i", margins.left, margins.top, margins.right, margins.bottom);
+	widget = GetDlgItem(window, IDC_MESSAGEBOX_BITMAP_MARGINS);
+	SetWindowText(widget, tmpSz);
+
+	margins = CConfig::Instance().GetMessageBoxTextMargins();
+	sprintf(tmpSz, "%i, %i, %i, %i", margins.left, margins.top, margins.right, margins.bottom);
+	widget = GetDlgItem(window, IDC_MESSAGEBOX_TEXT_MARGINS);
+	SetWindowText(widget, tmpSz);
+
+	g_MessageBoxFontColor = CConfig::Instance().GetMessageBoxFontColor();
+	InitFont(CConfig::Instance().GetMessageBoxFont(), &g_MessageBoxFont);
+
+	UpdateMessageBoxWidgets(window);
+
+	return TRUE;
+}
+
+void OnOKMessageBoxDialog(HWND window) 
+{
+	char tmpSz[256];
+	HWND widget;
+	RECT margins;
+
+	widget = GetDlgItem(window, IDC_MESSAGEBOX_BITMAP);
+	GetWindowText(widget, tmpSz, 256);
+	CConfig::Instance().SetMessageBoxBitmapName(tmpSz);
+
+	margins.left = margins.top = margins.right = margins.bottom = 0;
+	widget = GetDlgItem(window, IDC_MESSAGEBOX_BITMAP_MARGINS);
+	GetWindowText(widget, tmpSz, 256);
+	sscanf(tmpSz, "%i,%i,%i,%i", &margins.left, &margins.top, &margins.right, &margins.bottom);
+	CConfig::Instance().SetMessageBoxBitmapMargins(margins);
+
+	margins.left = margins.top = margins.right = margins.bottom = 0;
+	widget = GetDlgItem(window, IDC_MESSAGEBOX_TEXT_MARGINS);
+	GetWindowText(widget, tmpSz, 256);
+	sscanf(tmpSz, "%i,%i,%i,%i", &margins.left, &margins.top, &margins.right, &margins.bottom);
+	CConfig::Instance().SetMessageBoxTextMargins(margins);
+
+	std::string fontStr = GetFontString(&g_MessageBoxFont);
+	CConfig::Instance().SetMessageBoxFont(fontStr);
+
+	CConfig::Instance().SetMessageBoxFontColor(g_MessageBoxFontColor);
+}
+
+BOOL CALLBACK MessageBoxPageProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
+{
+    switch (message) 
+    { 
+        case WM_INITDIALOG:
+			return OnInitMessageBoxDialog(hwndDlg);
+
+		case WM_NOTIFY:
+			switch (((NMHDR FAR *) lParam)->code) 
+			{
+			case PSN_APPLY:
+				LPPSHNOTIFY pshNotify = (LPPSHNOTIFY)lParam;
+				OnOKMessageBoxDialog(hwndDlg);
+				if (pshNotify->lParam != TRUE)
+				{
+					CConfig::Instance().WriteConfig(CConfig::WRITE_SKIN);
+					SendMessage(GetRainlendar()->GetCalendarWindow().GetWindow(), WM_COMMAND, ID_REFRESH, NULL);				// Refresh
+					PropSheet_CancelToClose(GetParent(hwndDlg));
+				}
+				SetWindowLong(hwndDlg, DWL_MSGRESULT, PSNRET_NOERROR);
+				return TRUE;
+			}
+			break;
+
+        case WM_DRAWITEM:
+			if (wParam == IDC_MESSAGEBOX_FONTCOLOR)
+			{
+				return DrawItemFontColor(g_MessageBoxFontColor, wParam, lParam);
+			}
+			return FALSE;
+
+		case WM_COMMAND:
+			switch (LOWORD(wParam))
+			{
+			case IDC_MESSAGEBOX_BROWSE:
+				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
+				return BrowseBitmap(hwndDlg, IDC_MESSAGEBOX_BITMAP);
+				
+			case IDC_MESSAGEBOX_SELECT:
+				SelectFont(hwndDlg, &g_MessageBoxFont);
+				UpdateMessageBoxWidgets(hwndDlg);
+				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
+				return TRUE;
+
+			case IDC_MESSAGEBOX_FONTCOLOR:
+				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
+				return SelectFontColor(hwndDlg, &g_MessageBoxFontColor);
+
+			case IDC_MESSAGEBOX_BITMAP:
+			case IDC_MESSAGEBOX_BITMAP_MARGINS:
+			case IDC_MESSAGEBOX_TEXT_MARGINS:
 				PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
 			}
 			break;

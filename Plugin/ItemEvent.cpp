@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemEvent.cpp,v 1.16 2003/10/04 14:50:41 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/ItemEvent.cpp,v 1.18 2004/01/25 10:00:37 rainy Exp $
 
   $Log: ItemEvent.cpp,v $
+  Revision 1.18  2004/01/25 10:00:37  rainy
+  Added separate method for icons.
+
+  Revision 1.17  2003/10/27 17:37:51  Rainy
+  Config is now singleton.
+
   Revision 1.16  2003/10/04 14:50:41  Rainy
   Added always drawn profiles and priority system.
 
@@ -102,20 +108,20 @@ CItemEvent::~CItemEvent()
 */
 void CItemEvent::Initialize()
 {
-	if( CCalendarWindow::c_Config.GetEventEnable() && 
-		CCalendarWindow::c_Config.GetEventRasterizer()!=CRasterizer::TYPE_NONE)
+	if( CConfig::Instance().GetEventEnable() && 
+		CConfig::Instance().GetEventRasterizer()!=CRasterizer::TYPE_NONE)
 	{
-		switch(CCalendarWindow::c_Config.GetEventRasterizer()) {
+		switch(CConfig::Instance().GetEventRasterizer()) {
 		case CRasterizer::TYPE_BITMAP:
 			CRasterizerBitmap* BMRast;
 
 			BMRast=new CRasterizerBitmap;
 			if(BMRast==NULL) THROW(ERR_OUTOFMEM);
 
-			BMRast->Load(CCalendarWindow::c_Config.GetEventBitmapName());
-			BMRast->SetNumOfComponents(CCalendarWindow::c_Config.GetEventNumOfComponents());
-			BMRast->SetSeparation(CCalendarWindow::c_Config.GetEventSeparation());
-			BMRast->SetAlign(CCalendarWindow::c_Config.GetEventAlign());
+			BMRast->Load(CConfig::Instance().GetEventBitmapName());
+			BMRast->SetNumOfComponents(CConfig::Instance().GetEventNumOfComponents());
+			BMRast->SetSeparation(CConfig::Instance().GetEventSeparation());
+			BMRast->SetAlign(CConfig::Instance().GetEventAlign());
 			SetRasterizer(BMRast);
 			break;
 
@@ -125,17 +131,17 @@ void CItemEvent::Initialize()
 			FNRast=new CRasterizerFont;
 			if(FNRast==NULL) THROW(ERR_OUTOFMEM);
 
-			FNRast->SetFont(CCalendarWindow::c_Config.GetEventFont());
-			FNRast->SetAlign(CCalendarWindow::c_Config.GetEventAlign());
-			FNRast->SetColor(CCalendarWindow::c_Config.GetEventFontColor());
+			FNRast->SetFont(CConfig::Instance().GetEventFont());
+			FNRast->SetAlign(CConfig::Instance().GetEventAlign());
+			FNRast->SetColor(CConfig::Instance().GetEventFontColor());
 			FNRast->UpdateDimensions("XX");
 			SetRasterizer(FNRast);
 			break;
 		}
 
-		if(CCalendarWindow::c_Config.GetEventInCalendar())
+		if(CConfig::Instance().GetEventInCalendar())
 		{
-			SetFont(CCalendarWindow::c_Config.GetEventFont2());
+			SetFont(CConfig::Instance().GetEventFont2());
 		}
 
 		// Check for the events
@@ -158,14 +164,14 @@ void CItemEvent::Paint(CImage& background, POINT offset)
 	NumOfDays = GetDaysInMonth(CCalendarWindow::c_MonthsFirstDate.wYear, CCalendarWindow::c_MonthsFirstDate.wMonth);
 	FirstWeekday = CCalendarWindow::c_MonthsFirstDate.wDayOfWeek;
 
-	if(CCalendarWindow::c_Config.GetStartFromMonday()) 
+	if(CConfig::Instance().GetStartFromMonday()) 
 	{
 		FirstWeekday = (FirstWeekday - 1);
 		if(FirstWeekday == -1) FirstWeekday = 6;
 	} 
 
-	W = CCalendarWindow::c_Config.GetDaysW() / 7;	// 7 Columns
-	H = CCalendarWindow::c_Config.GetDaysH() / 6;	// 6 Rows
+	W = CConfig::Instance().GetDaysW() / 7;	// 7 Columns
+	H = CConfig::Instance().GetDaysH() / 6;	// 6 Rows
 
 	if(m_Rasterizer!=NULL) 
 	{
@@ -174,8 +180,8 @@ void CItemEvent::Paint(CImage& background, POINT offset)
 			Index = i + FirstWeekday;
 			DayType = GetDayType(i + 1, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 
-			X = CCalendarWindow::c_Config.GetDaysX() + (Index % 7) * W;
-			Y = CCalendarWindow::c_Config.GetDaysY() + (Index / 7) * H;
+			X = CConfig::Instance().GetDaysX() + (Index % 7) * W;
+			Y = CConfig::Instance().GetDaysY() + (Index / 7) * H;
 
 			X += offset.x;
 			Y += offset.y;
@@ -185,7 +191,7 @@ void CItemEvent::Paint(CImage& background, POINT offset)
 
 			if (DayType & EVENT)
 			{
-				if (!((DayType & TODAY) && CCalendarWindow::c_Config.GetDaysIgnoreToday()))
+				if (!((DayType & TODAY) && CConfig::Instance().GetDaysIgnoreToday()))
 				{
 					m_Rasterizer->SetProfile(profile);
 					m_Rasterizer->Paint(background, X, Y, W, H, i + 1);
@@ -202,7 +208,7 @@ void CItemEvent::Paint(CImage& background, POINT offset)
 			{
 				if (!((*eventIter)->GetProfile().empty()) && !((*eventIter)->IsDeleted()))
 				{
-					const Profile* newProfile = CCalendarWindow::c_Config.GetProfile((*eventIter)->GetProfile().c_str());
+					const Profile* newProfile = CConfig::Instance().GetProfile((*eventIter)->GetProfile().c_str());
 
 					// Draw only once per profile
 					if (newProfile && newProfile->drawAlways && drawnProfiles.find(newProfile) == drawnProfiles.end())
@@ -216,11 +222,8 @@ void CItemEvent::Paint(CImage& background, POINT offset)
 
 			if (DayType & EVENT)
 			{
-				// Draw the icon if there is one
-				DrawIcon(background, i + 1, X, Y, W, H);
-
 				// Draw the event texts
-				if(CCalendarWindow::c_Config.GetEventInCalendar()) 
+				if(CConfig::Instance().GetEventInCalendar()) 
 				{
 					HDC dc = CreateCompatibleDC(NULL);
 					HFONT OldFont;
@@ -258,7 +261,7 @@ void CItemEvent::Paint(CImage& background, POINT offset)
 					{
 						if (!((*eventIter)->GetMessage().empty()))
 						{
-							const Profile* profile = CCalendarWindow::c_Config.GetProfile((*eventIter)->GetProfile().c_str());
+							const Profile* profile = CConfig::Instance().GetProfile((*eventIter)->GetProfile().c_str());
 
 							if (profile)
 							{
@@ -266,10 +269,10 @@ void CItemEvent::Paint(CImage& background, POINT offset)
 							}
 							else
 							{
-								SetTextColor(dc, CCalendarWindow::c_Config.GetEventFontColor2());
+								SetTextColor(dc, CConfig::Instance().GetEventFontColor2());
 							}
 
-							if (CCalendarWindow::Is2k() && CCalendarWindow::c_Config.GetNativeTransparency())
+							if (CCalendarWindow::Is2k() && CConfig::Instance().GetNativeTransparency())
 							{
 								// The font rasterizer has a buffer for us, where we can draw the text
 								CRasterizerFont::CreateBuffers(background.GetWidth(), background.GetHeight());
@@ -301,6 +304,43 @@ void CItemEvent::Paint(CImage& background, POINT offset)
 	}
 }
 
+void CItemEvent::PaintIcons(CImage& background, POINT offset)
+{
+	int FirstWeekday;
+	int X, Y, W, H, Index, DayType, NumOfDays, i;
+
+	// Calculate the number of days in this month
+	NumOfDays = GetDaysInMonth(CCalendarWindow::c_MonthsFirstDate.wYear, CCalendarWindow::c_MonthsFirstDate.wMonth);
+	FirstWeekday = CCalendarWindow::c_MonthsFirstDate.wDayOfWeek;
+
+	if(CConfig::Instance().GetStartFromMonday()) 
+	{
+		FirstWeekday = (FirstWeekday - 1);
+		if(FirstWeekday == -1) FirstWeekday = 6;
+	} 
+
+	W = CConfig::Instance().GetDaysW() / 7;	// 7 Columns
+	H = CConfig::Instance().GetDaysH() / 6;	// 6 Rows
+
+	for(i = 0; i < NumOfDays; i++) 
+	{
+		Index = i + FirstWeekday;
+		DayType = GetDayType(i + 1, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
+
+		X = CConfig::Instance().GetDaysX() + (Index % 7) * W;
+		Y = CConfig::Instance().GetDaysY() + (Index / 7) * H;
+
+		X += offset.x;
+		Y += offset.y;
+
+		if (DayType & EVENT)
+		{
+			// Draw the icon if there is one
+			DrawIcon(background, i + 1, X, Y, W, H);
+		}
+	}
+}
+
 void CItemEvent::DrawIcon(CImage& background, int day, int X, int Y, int W, int H)
 {
 	// Draw all icons 
@@ -316,7 +356,7 @@ void CItemEvent::DrawIcon(CImage& background, int day, int X, int Y, int W, int 
 
 			if (!((*i)->GetProfile().empty()) && !((*i)->IsDeleted()))
 			{
-				const Profile* profile = CCalendarWindow::c_Config.GetProfile((*i)->GetProfile().c_str());
+				const Profile* profile = CConfig::Instance().GetProfile((*i)->GetProfile().c_str());
 
 				if (profile  && profile->icon.GetBitmap() != NULL)
 				{
@@ -370,17 +410,17 @@ void CItemEvent::AddToolTips(CCalendarWindow* CalendarWnd, POINT offset)
 	int X, Y, W, H, i, j, Day;
 	RECT Rect;
 
-	W = CCalendarWindow::c_Config.GetDaysW() / 7;	// 7 Columns
-	H = CCalendarWindow::c_Config.GetDaysH() / 6;	// 6 Rows
-	X = CCalendarWindow::c_Config.GetDaysX();
-	Y = CCalendarWindow::c_Config.GetDaysY();
+	W = CConfig::Instance().GetDaysW() / 7;	// 7 Columns
+	H = CConfig::Instance().GetDaysH() / 6;	// 6 Rows
+	X = CConfig::Instance().GetDaysX();
+	Y = CConfig::Instance().GetDaysY();
 
 	X += offset.x;
 	Y += offset.y;
 
 	FirstWeekday = CCalendarWindow::c_MonthsFirstDate.wDayOfWeek;
 
-	if(CCalendarWindow::c_Config.GetStartFromMonday()) 
+	if(CConfig::Instance().GetStartFromMonday()) 
 	{
 		FirstWeekday = (FirstWeekday - 1);
 		if(FirstWeekday == -1) FirstWeekday = 6;
@@ -397,7 +437,7 @@ void CItemEvent::AddToolTips(CCalendarWindow* CalendarWnd, POINT offset)
 			Day = j * 7 + i + 1 - FirstWeekday;
 			if(Day > 0 && Day < 32) 
 			{
-				if(CCalendarWindow::c_Config.GetEventEnable() && CCalendarWindow::c_Config.GetEventToolTips()) 
+				if(CConfig::Instance().GetEventEnable() && CConfig::Instance().GetEventToolTips()) 
 				{
 					std::vector<CEventMessage*> eventList = m_EventManager.GetEvents(Day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 
@@ -410,7 +450,7 @@ void CItemEvent::AddToolTips(CCalendarWindow* CalendarWnd, POINT offset)
 						{
 							if (!((*eventIter)->GetMessage().empty()) && !((*eventIter)->IsDeleted()))
 							{
-								const Profile* profile = CCalendarWindow::c_Config.GetProfile((*eventIter)->GetProfile().c_str());
+								const Profile* profile = CConfig::Instance().GetProfile((*eventIter)->GetProfile().c_str());
 
 								CToolTip::ToolTipData ttd;
 
@@ -420,7 +460,7 @@ void CItemEvent::AddToolTips(CCalendarWindow* CalendarWnd, POINT offset)
 								}
 								else
 								{
-									ttd.color = CCalendarWindow::c_Config.GetToolTipFontColor();
+									ttd.color = CConfig::Instance().GetToolTipFontColor();
 								}
 
 								ttd.text = (*eventIter)->GetMessage();
@@ -469,7 +509,7 @@ const Profile* CItemEvent::GetEventProfile(int day)
 		{
 			if (!((*i)->GetProfile().empty()) && !((*i)->IsDeleted()))
 			{
-				const Profile* profile = CCalendarWindow::c_Config.GetProfile((*i)->GetProfile().c_str());
+				const Profile* profile = CConfig::Instance().GetProfile((*i)->GetProfile().c_str());
 
 				if (profile)
 				{
@@ -515,7 +555,7 @@ const Profile* CItemEvent::GetEventProfile(int day)
 			}
 		}
 
-		return CCalendarWindow::c_Config.GetProfile(currentProfile);
+		return CConfig::Instance().GetProfile(currentProfile);
 	}
 
 	return NULL;

@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Event.cpp,v 1.9 2003/06/15 09:46:19 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/Event.cpp,v 1.10 2004/01/10 15:16:05 rainy Exp $
 
   $Log: Event.cpp,v $
+  Revision 1.10  2004/01/10 15:16:05  rainy
+  The start time is parsed from the message.
+
   Revision 1.9  2003/06/15 09:46:19  Rainy
   Strings are read from CLanguage class.
 
@@ -66,6 +69,8 @@ CEventMessage::CEventMessage(bool Permanent)
 	m_Deleted = false;
 	m_Permanent = Permanent;
 	m_Profile = "Default";
+	m_StartTime = -1;		// This means that there is no start time
+	m_Shown = false;
     UpdateTimeStamp();
 }
 
@@ -97,6 +102,8 @@ CEventMessage& CEventMessage::operator=(const CEventMessage& event)
 	m_Deleted = event.m_Deleted;
 	m_Permanent = event.m_Permanent;
 	m_TimeStamp = event.m_TimeStamp;
+	m_StartTime = event.m_StartTime;
+	m_Shown = event.m_Shown;
 
 	return *this;
 }
@@ -141,6 +148,29 @@ void CEventMessage::SetMessage(const std::string& Message )
 	// Trim the message
 	m_Message.erase(m_Message.find_last_not_of(" ") + 1);
 
+	// Parse the start time
+	int hour = -1, min = -1;
+	sscanf(m_Message.c_str(), "%i:%i", &hour, &min);
+	
+	if (hour != -1 && min != -1)
+	{
+		int pos = m_Message.find_first_not_of(" 0123456789:");
+		if (pos != -1) 
+		{
+			if (strnicmp(m_Message.c_str() + pos, "AM", 2) == 0) 
+			{
+				if (hour == 12) hour = 0;
+			}
+			else if (strnicmp(m_Message.c_str() + pos, "PM", 2) == 0) 
+			{
+				if (hour == 12) hour = 0;
+				hour += 12;
+			}
+		}
+
+		m_StartTime = hour * 60 + min;
+	}
+
     UpdateTimeStamp();
 };
 
@@ -154,6 +184,12 @@ void CEventMessage::ValueToDate(int value, int* day, int* month, int* year)
 	*day = value % 100;
 	*month = (value / 100) % 100;
 	*year = value / 10000;
+
+	*day = max(1, *day);
+	*day = min(31, *day);
+
+	*month = max(1, *month);
+	*month = min(12, *month);
 }
 
 void CEventMessage::GetDate(double dtSrc, int *year, int *month, int *day, int *hour, int *minute, int *second)

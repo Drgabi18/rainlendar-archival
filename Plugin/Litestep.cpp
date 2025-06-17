@@ -16,9 +16,18 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/Litestep.cpp,v 1.4 2002/09/08 14:14:54 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/Litestep.cpp,v 1.7 2004/04/24 11:22:55 rainy Exp $
 
   $Log: Litestep.cpp,v $
+  Revision 1.7  2004/04/24 11:22:55  rainy
+  Fixed logging
+
+  Revision 1.6  2004/01/28 18:05:29  rainy
+  Todo is shown/hidden with OK.
+
+  Revision 1.5  2003/12/20 22:16:06  rainy
+  Added DebugLog
+
   Revision 1.4  2002/09/08 14:14:54  rainy
   The name of the log file is the same as the module's name.
 
@@ -37,6 +46,8 @@
 #include "Error.h"
 #include <shellapi.h>
 #include <crtdbg.h>
+#include <stdio.h>
+#include <stdarg.h>
 
 typedef BOOL (*FPADDBANGCOMMAND)(LPCSTR command, BangCommand f);
 FPADDBANGCOMMAND fpAddBangCommand = NULL;
@@ -408,18 +419,34 @@ void TransparentBltLS(HDC hdcDst, int nXDest, int nYDest, int nWidth, int nHeigh
 
 BOOL LSLog(int nLevel, LPCSTR pszModule, LPCSTR pszMessage)
 {
+	// Add timestamp
+	static DWORD startTime = 0;
+	
+	if (startTime == 0) 
+	{
+		startTime = GetTickCount();
+	}
+	DWORD time = GetTickCount();
+	char buffer[MAX_PATH];
+	sprintf(buffer, "(%02i:%02i:%02i.%03i) ", (time - startTime) / (1000 * 60* 60), ((time - startTime) / (1000 * 60)) % (1000 * 60 * 60), ((time - startTime) / 1000) % (1000 * 60), (time - startTime) % 1000);
+
+	std::string message(buffer);
+	message += pszMessage;
+
 	// Use the lsapi.dll version of the method if possible
-	if (fpLSLog) return fpLSLog(nLevel, pszModule, pszMessage);
+	if (fpLSLog) return fpLSLog(nLevel, pszModule, message.c_str());
 
 	_RPT0(_CRT_WARN, "DEBUG: ");
-	_RPT0(_CRT_WARN, pszMessage);
+	_RPT0(_CRT_WARN, message.c_str());
 	_RPT0(_CRT_WARN, "\n");
 
 	// The stub implementation
 	static int logFound = 0;
 	FILE* logFile;
-	std::string logfile = pszModule;
-	logfile += ".log";
+	GetModuleFileName(NULL, buffer, MAX_PATH);
+
+	std::string logfile(buffer);
+	logfile.replace(logfile.length() - 4, 4, ".log");
 
 	if (logFound == 0)
 	{
@@ -460,7 +487,7 @@ BOOL LSLog(int nLevel, LPCSTR pszModule, LPCSTR pszMessage)
 				fputs("DEBUG: ", logFile);
 				break;
 			}
-			fputs(pszMessage, logFile);
+			fputs(message.c_str(), logFile);
 			fputs("\n", logFile);
 			fclose(logFile);
 		}
@@ -468,3 +495,13 @@ BOOL LSLog(int nLevel, LPCSTR pszModule, LPCSTR pszMessage)
 
 	return TRUE;
 }
+
+void DebugLog(const char* format, ... )
+{
+	char buffer[4096];
+    va_list args;
+    va_start( args, format );
+    _vsnprintf( buffer, 4096, format, args );
+	LSLog(LOG_DEBUG, "Rainlendar", buffer);
+	va_end(args);
+};

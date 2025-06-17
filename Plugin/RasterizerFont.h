@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.h,v 1.5 2002/11/25 17:01:27 rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/RasterizerFont.h,v 1.6 2003/10/27 17:39:13 Rainy Exp $
 
   $Log: RasterizerFont.h,v $
+  Revision 1.6  2003/10/27 17:39:13  Rainy
+  Separated drawing so that it can be used outside this class.
+
   Revision 1.5  2002/11/25 17:01:27  rainy
   The buffers are now CImages instead of HBITMAPs.
 
@@ -54,22 +57,24 @@ public:
 	void CreateStringTable(const std::string& text, int count);
 
 	void UpdateDimensions(const char* defaultString = NULL);
+	void GetTextSize(const char* text, RECT* rect, bool multiline);
 
 	void Paint(CImage& background, int X, int Y, int W, int H, int Index);
+	void WriteText(CImage& background, int X, int Y, int W, int H, const char* text, bool multiline);
 
 	static HFONT CreateFont(const std::string& FontName);
-	static void ClearBuffers() { m_AlphaBuffer.Clear(); m_ColorBuffer.Clear(); };
+	static void ClearBuffers() { c_AlphaBuffer.Clear(); c_ColorBuffer.Clear(); };
 	static void CreateBuffers(int width, int height);
-	static CImage& GetAlphaBuffer() { return m_AlphaBuffer; };
-	static CImage& GetColorBuffer() { return m_ColorBuffer; };
+	static CImage& GetAlphaBuffer() { return c_AlphaBuffer; };
+	static CImage& GetColorBuffer() { return c_ColorBuffer; };
 
 protected:
 	std::vector<std::string> m_StringTable;
 	HFONT m_Font;
 	COLORREF m_Color;
 
-	static CImage m_AlphaBuffer;
-	static CImage m_ColorBuffer;
+	static CImage c_AlphaBuffer;
+	static CImage c_ColorBuffer;
 };
 
 #endif

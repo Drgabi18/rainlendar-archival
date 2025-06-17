@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemEvent.h,v 1.10 2003/08/09 16:36:05 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/ItemEvent.h,v 1.11 2004/01/25 10:00:37 rainy Exp $
 
   $Log: ItemEvent.h,v $
+  Revision 1.11  2004/01/25 10:00:37  rainy
+  Added separate method for icons.
+
   Revision 1.10  2003/08/09 16:36:05  Rainy
   Removed GetEventText()
 
@@ -71,6 +74,7 @@ public:
 	void Initialize();
 	void ResetDayTypes();
 	void Paint(CImage& background, POINT offset);
+	void PaintIcons(CImage& background, POINT offset);
 
 	void AddToolTips(CCalendarWindow* CalendarWnd, POINT offset);
 

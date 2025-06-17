@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Event.h,v 1.10 2003/05/26 18:44:40 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/Event.h,v 1.12 2004/04/24 11:19:35 rainy Exp $
 
   $Log: Event.h,v $
+  Revision 1.12  2004/04/24 11:19:35  rainy
+  SetEveryNth doesn't return 0 anymore.
+
+  Revision 1.11  2004/01/10 15:16:05  rainy
+  The start time is parsed from the message.
+
   Revision 1.10  2003/05/26 18:44:40  Rainy
   Added more consts.
 
@@ -77,7 +83,7 @@ public:
 
 	void SetProfile(const std::string& Profile ) { m_Profile=Profile; };
 	void SetType(EVENT_TYPE Type ) { m_Type=Type; };
-	void SetEveryNth(int EveryNth ) { m_EveryNth=EveryNth; };
+	void SetEveryNth(int EveryNth ) { m_EveryNth = max(1, EveryNth); };
 	void SetValidUntil(int ValidUntil ) { m_ValidUntil=ValidUntil; };
 	void SetDate(int Date ) { m_Date=Date; };
     void SetCount(int Count ) { m_Count=Count; };
@@ -95,6 +101,12 @@ public:
 	int GetID() const { return m_ID; };
 	int IsPermanent() const { return m_Permanent; };
 	int GetTimeStamp() const { return m_TimeStamp; };
+
+	// No setter for this since it's parsed from the message
+	int GetStartTime() const { return m_StartTime; };
+
+	bool IsShown() { return m_Shown; }
+	void SetShown(bool shown) { m_Shown = shown; }
 
 	const char* GetTypeText() const;
 	const char* GetDateText() const;
@@ -116,10 +128,13 @@ private:
 	int m_Date;
 	int m_Count;
 	int m_ID;
+	int m_StartTime;
 	EVENT_TYPE m_Type;
 	bool m_Deleted;
 	bool m_Permanent;
     time_t m_TimeStamp;
+
+	bool m_Shown;
 
 	static int c_CurrentID;
 };

@@ -16,9 +16,21 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Image.cpp,v 1.4 2003/08/09 16:36:25 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/Image.cpp,v 1.8 2004/04/24 11:18:51 rainy Exp $
 
   $Log: Image.cpp,v $
+  Revision 1.8  2004/04/24 11:18:51  rainy
+  Fixed alpha blend bug in WIn9x.
+
+  Revision 1.7  2004/01/10 15:15:26  rainy
+  Images can be loaded from resources too.
+
+  Revision 1.6  2003/12/05 15:46:13  Rainy
+  Changed image loading routines
+
+  Revision 1.5  2003/10/27 17:37:31  Rainy
+  Added new resize mode.
+
   Revision 1.4  2003/08/09 16:36:25  Rainy
   Added a check if the file exists.
 
@@ -37,6 +49,10 @@
 #include "Litestep.h"
 #include <png.h>
 #include <assert.h>
+#include <comutil.h>
+#include <comdef.h>
+#include <comutil.h>
+#include <comdef.h>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -76,13 +92,23 @@ void CImage::Clear()
 */
 bool CImage::Load(const std::string& filename)
 {
-	HBITMAP alpha = NULL;
-	HBITMAP m_Image = (HBITMAP)LoadImage(NULL, filename.c_str(), IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR | LR_LOADFROMFILE);
+	HBITMAP hBitmap = NULL;
+	HBITMAP hBitmapAlpha = NULL;
+	IPicture* pPicture;
+	IPicture* pPictureAlpha;
+	HRESULT hr;
 
-	if(m_Image == NULL) return LoadPNG(filename);
+	hr = ::OleLoadPicturePath(_bstr_t(filename.c_str()), NULL, 0, 0, IID_IPicture, (void**) &pPicture);
+	if (hr == S_OK) pPicture->get_Handle((OLE_HANDLE*)&hBitmap);
+
+	if(hBitmap == NULL) 
+	{
+		if (pPicture) pPicture->Release();
+		return LoadPNG(filename);
+	}
 
 	BITMAP bm;
-	GetObject(m_Image, sizeof(BITMAP), &bm);
+	GetObject(hBitmap, sizeof(BITMAP), &bm);
 	m_Width = bm.bmWidth;
 	m_Height = bm.bmHeight;
 
@@ -95,27 +121,44 @@ bool CImage::Load(const std::string& filename)
 		alphaName = filename;
 		alphaName.insert(pos, "-Alpha");
 
-		alpha = (HBITMAP)LoadImage(NULL, alphaName.c_str(), IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR | LR_LOADFROMFILE);
+		hr = ::OleLoadPicturePath(_bstr_t(alphaName.c_str()), NULL, 0, 0, IID_IPicture, (void**) &pPictureAlpha);
+		if (hr == S_OK) pPictureAlpha->get_Handle((OLE_HANDLE*)&hBitmapAlpha);
 
-		if(alpha != NULL) 
+		if(hBitmapAlpha != NULL) 
 		{
 			// Check that it is correct size
-			GetObject(alpha, sizeof(BITMAP), &bm);
+			GetObject(hBitmapAlpha, sizeof(BITMAP), &bm);
 			if (m_Width != bm.bmWidth || m_Height != bm.bmHeight)
 			{
-				DeleteObject(alpha);
+				if (pPictureAlpha) pPictureAlpha->Release();
 				return true;
 			}
 		}
 	}
 
 	char logMsg[1024];
-	sprintf(logMsg, "Loaded image: %s (W: %i, H: %i) %s", filename.c_str(), m_Width, m_Height, alpha?"Alpha":"No Alpha");
+	sprintf(logMsg, "Loaded image: %s (W: %i, H: %i) %s", filename.c_str(), m_Width, m_Height, hBitmapAlpha?"Alpha":"No Alpha");
 	LSLog(LOG_DEBUG, "Rainlendar", logMsg);
 
-	Create(m_Image, alpha, 0x0ff);
+	Create(hBitmap, hBitmapAlpha, 0x0ff);
+
+	if (pPicture) pPicture->Release();
+	if (pPictureAlpha) pPictureAlpha->Release();
 
 	return true;
+}
+
+bool CImage::LoadResource(HINSTANCE instance, int resourceID)
+{
+	HBITMAP hBitmap = LoadBitmap(instance, MAKEINTRESOURCE(resourceID));
+
+	if (hBitmap)
+	{
+		Create(hBitmap, NULL, 0x0ff);
+		DeleteObject(hBitmap);
+		return true;
+	}
+	return false;
 }
 
 bool CImage::LoadPNG(const std::string& filename)
@@ -317,7 +360,7 @@ bool CImage::LoadPNG(const std::string& filename)
 	}
 		
 	char logMsg[1024];
-	sprintf(logMsg, "Loaded image: %s (W: %i, H: %i) %s", filename.c_str(), m_Width, m_Height, m_Alpha?"Alpha":"No Alpha");
+	sprintf(logMsg, "Loaded image: %s (W: %i, H: %i) %s", filename.c_str(), width, height, m_Alpha?"Alpha":"No Alpha");
 	LSLog(LOG_DEBUG, "Rainlendar", logMsg);
 
 	return TRUE;
@@ -328,7 +371,7 @@ bool CImage::LoadPNG(const std::string& filename)
 **
 ** Resizes the image
 */
-void CImage::Resize(int w, int h, IMAGE_RESIZE_TYPE type)
+void CImage::Resize(int w, int h, IMAGE_RESIZE_TYPE type, RECT* margins)
 {
 	if (m_Image == NULL) return;
 
@@ -352,18 +395,46 @@ void CImage::Resize(int w, int h, IMAGE_RESIZE_TYPE type)
 	HBITMAP oldCurrentBitmap = (HBITMAP)SelectObject(currentDC, m_Image);
 	HBITMAP oldNewBitmap = (HBITMAP)SelectObject(newDC, bitmap);
 
-	if (type == IMAGE_RESIZE_TYPE_STRETCH)
+	if (margins)
 	{
-		BLENDFUNCTION blendPixelFunction= {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
-		AlphaBlend(newDC, 0, 0, w, h, currentDC, 0, 0, m_Width, m_Height, blendPixelFunction);
-	}
-	else	// TILE
-	{
-		for(int j = 0; j < h; j += m_Height) 
+		if (type == IMAGE_RESIZE_TYPE_STRETCH)
 		{
-			for(int i = 0; i < w; i += m_Width) 
+			// Corners
+			AlphaBlit(newDC, 0, 0, margins->left, margins->top, currentDC, 0, 0, margins->left, margins->top);
+			AlphaBlit(newDC, w - margins->right, 0, margins->right, margins->top, currentDC, m_Width - margins->right, 0, margins->right, margins->top);
+			AlphaBlit(newDC, w - margins->right, h - margins->bottom, margins->right, margins->bottom, currentDC, m_Width - margins->right, m_Height - margins->bottom, margins->right, margins->bottom);
+			AlphaBlit(newDC, 0, h - margins->bottom, margins->left, margins->bottom, currentDC, 0, m_Height - margins->bottom, margins->left, margins->bottom);
+
+			// Edges (N, E, S, W)
+			AlphaBlit(newDC, margins->left, 0, w - margins->right - margins->left, margins->top, 
+				       currentDC, margins->left, 0, m_Width - margins->right - margins->left, margins->top);
+			AlphaBlit(newDC, w - margins->right, margins->top, margins->right, h - margins->bottom - margins->top, 
+				       currentDC, m_Width - margins->right, margins->top, margins->right, m_Height - margins->bottom - margins->top);
+			AlphaBlit(newDC, margins->left, h - margins->bottom, w - margins->right - margins->left, margins->bottom, 
+				       currentDC, margins->left, m_Height - margins->bottom, m_Width - margins->right - margins->left, margins->bottom);
+			AlphaBlit(newDC, 0, margins->top, margins->left, h - margins->bottom - margins->top, 
+				       currentDC, 0, margins->top, margins->left, m_Height - margins->bottom - margins->top);
+
+			// Center
+			AlphaBlit(newDC, margins->left, margins->top, w - margins->right - margins->left, h - margins->bottom - margins->top, 
+				       currentDC, margins->left, margins->top, m_Width - margins->right - margins->left, m_Height - margins->bottom - margins->top);
+		}
+		// TODO: add support for TILE
+	}
+	else
+	{
+		if (type == IMAGE_RESIZE_TYPE_STRETCH)
+		{
+			AlphaBlit(newDC, 0, 0, w, h, currentDC, 0, 0, m_Width, m_Height);
+		}
+		else	// TILE
+		{
+			for(int j = 0; j < h; j += m_Height) 
 			{
-				BitBlt(newDC, i, j, min(m_Width, w - i), min(m_Height, h - j), currentDC, 0, 0, SRCCOPY);
+				for(int i = 0; i < w; i += m_Width) 
+				{
+					BitBlt(newDC, i, j, min(m_Width, w - i), min(m_Height, h - j), currentDC, 0, 0, SRCCOPY);
+				}
 			}
 		}
 	}
@@ -376,6 +447,8 @@ void CImage::Resize(int w, int h, IMAGE_RESIZE_TYPE type)
 
 	m_Image = bitmap;
 	m_Bits = (BYTE*)bits;
+	m_Height = h;
+	m_Width = w;
 }
 
 /*
@@ -424,6 +497,48 @@ void CImage::Blit(const CImage& source, int dx, int dy, int sx, int sy, int w, i
 	DeleteDC(destDC);
 }
 
+void CImage::AlphaBlit(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest,
+                       HDC hdcSrc, int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc)
+{
+	OSVERSIONINFO version;
+	version.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+	GetVersionEx(&version);
+
+	if (version.dwPlatformId == VER_PLATFORM_WIN32_NT && version.dwMajorVersion > 4)
+	{
+		BLENDFUNCTION blendPixelFunction= {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
+		AlphaBlend(hdcDest, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest, 
+			hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc, blendPixelFunction);
+	}
+	else
+	{
+		// Win98 does not alphablend very well, so we'll have to do the blending with DDBs
+		// msimg32.dll version 5.00.1693.1 crashes with AlphaBlend() if DIBs are used.
+		// Note: This creates quite much color artifacts 
+
+		HDC dc = CreateCompatibleDC(NULL);
+		HDC dc2 = CreateCompatibleDC(NULL);
+		HBITMAP bitmap = CreateBitmap(nWidthSrc, nHeightSrc, 1, 32, NULL);
+		HBITMAP bitmap2 = CreateBitmap(nWidthDest, nHeightDest, 1, 32, NULL);
+		HBITMAP oldBitmap = (HBITMAP)SelectObject(dc, bitmap);
+		HBITMAP oldBitmap2 = (HBITMAP)SelectObject(dc2, bitmap2);
+		BitBlt(dc, 0, 0, nWidthSrc, nHeightSrc, hdcSrc, nXOriginSrc, nYOriginSrc, SRCCOPY);
+		BitBlt(dc2, 0, 0, nWidthDest, nHeightDest, hdcDest, nXOriginDest, nYOriginDest, SRCCOPY);
+
+		BLENDFUNCTION blendPixelFunction= {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
+		AlphaBlend(dc2, 0, 0, nWidthDest, nHeightDest, 
+			dc, 0, 0, nWidthSrc, nHeightSrc, blendPixelFunction);
+
+		BitBlt(hdcDest, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest, dc2, 0, 0, SRCCOPY);
+
+		SelectObject(dc, oldBitmap);
+		SelectObject(dc2, oldBitmap2);
+		DeleteObject(bitmap);
+		DeleteObject(bitmap2);
+		DeleteDC(dc);
+		DeleteDC(dc2);
+	}
+}
 
 void CImage::AlphaBlit(const CImage& source, int dx, int dy, int sx, int sy, int w, int h)
 {
@@ -460,7 +575,6 @@ void CImage::AlphaBlit(const CImage& source, int dx, int dy, int sx, int sy, int
 		}
 	}
 }
-
 
 void CImage::Create(int width, int height, BYTE alphaValue)
 {

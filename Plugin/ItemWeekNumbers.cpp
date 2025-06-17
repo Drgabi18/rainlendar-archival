@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemWeekNumbers.cpp,v 1.8 2003/06/15 09:49:13 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemWeekNumbers.cpp,v 1.9 2003/10/27 17:37:51 Rainy Exp $
 
   $Log: ItemWeekNumbers.cpp,v $
+  Revision 1.9  2003/10/27 17:37:51  Rainy
+  Config is now singleton.
+
   Revision 1.8  2003/06/15 09:49:13  Rainy
   Added support for multiple calendars.
 
@@ -75,21 +78,21 @@ CItemWeekNumbers::~CItemWeekNumbers()
 */
 void CItemWeekNumbers::Initialize()
 {
-	if( CCalendarWindow::c_Config.GetWeekNumbersEnable() && 
-		CCalendarWindow::c_Config.GetWeekNumbersRasterizer()!=CRasterizer::TYPE_NONE)
+	if( CConfig::Instance().GetWeekNumbersEnable() && 
+		CConfig::Instance().GetWeekNumbersRasterizer()!=CRasterizer::TYPE_NONE)
 	{
-		switch(CCalendarWindow::c_Config.GetWeekNumbersRasterizer()) {
+		switch(CConfig::Instance().GetWeekNumbersRasterizer()) {
 		case CRasterizer::TYPE_BITMAP:
 			CRasterizerBitmap* BMRast;
 
 			BMRast=new CRasterizerBitmap;
 			if(BMRast==NULL) THROW(ERR_OUTOFMEM);
 
-			BMRast->Load(CCalendarWindow::c_Config.GetWeekNumbersBitmapName());
-			BMRast->SetNumOfComponents(CCalendarWindow::c_Config.GetWeekNumbersNumOfComponents());
-			BMRast->SetSeparation(CCalendarWindow::c_Config.GetWeekNumbersSeparation());
+			BMRast->Load(CConfig::Instance().GetWeekNumbersBitmapName());
+			BMRast->SetNumOfComponents(CConfig::Instance().GetWeekNumbersNumOfComponents());
+			BMRast->SetSeparation(CConfig::Instance().GetWeekNumbersSeparation());
 
-			BMRast->SetAlign(CCalendarWindow::c_Config.GetWeekNumbersAlign());
+			BMRast->SetAlign(CConfig::Instance().GetWeekNumbersAlign());
 			SetRasterizer(BMRast);
 			break;
 
@@ -99,9 +102,9 @@ void CItemWeekNumbers::Initialize()
 			FNRast=new CRasterizerFont;
 			if(FNRast==NULL) THROW(ERR_OUTOFMEM);
 
-			FNRast->SetFont(CCalendarWindow::c_Config.GetWeekNumbersFont());
-			FNRast->SetAlign(CCalendarWindow::c_Config.GetWeekNumbersAlign());
-			FNRast->SetColor(CCalendarWindow::c_Config.GetWeekNumbersFontColor());
+			FNRast->SetFont(CConfig::Instance().GetWeekNumbersFont());
+			FNRast->SetAlign(CConfig::Instance().GetWeekNumbersAlign());
+			FNRast->SetColor(CConfig::Instance().GetWeekNumbersFontColor());
 			FNRast->UpdateDimensions();
 			SetRasterizer(FNRast);
 			break;
@@ -136,7 +139,7 @@ int weekno2(int d, int m, int y)
 {
 	int n1, n2, w;
 	n1 = julian(d, m, y);
-	if(!CCalendarWindow::c_Config.GetStartFromMonday()) 
+	if(!CConfig::Instance().GetStartFromMonday()) 
     {
         n2 = 7 * (n1 / 7) + 12;
     }
@@ -165,14 +168,14 @@ void CItemWeekNumbers::Paint(CImage& background, POINT offset)
 	int X, Y, W, H;
 	int i, base, lines, weeksFirstDay = 1;
 
-	W = CCalendarWindow::c_Config.GetDaysW() / 7;	// 7 Columns
-	H = CCalendarWindow::c_Config.GetDaysH() / 6;	// 6 Rows
+	W = CConfig::Instance().GetDaysW() / 7;	// 7 Columns
+	H = CConfig::Instance().GetDaysH() / 6;	// 6 Rows
 
 	// Calculate if the last line (=6) contains days or not
 	NumOfDays = GetDaysInMonth(CCalendarWindow::c_MonthsFirstDate.wYear, CCalendarWindow::c_MonthsFirstDate.wMonth);
 	FirstWeekday = CCalendarWindow::c_MonthsFirstDate.wDayOfWeek;
 
-	if(CCalendarWindow::c_Config.GetStartFromMonday()) 
+	if(CConfig::Instance().GetStartFromMonday()) 
 	{
 		FirstWeekday = (FirstWeekday - 1);
 		if(FirstWeekday == -1) FirstWeekday = 6;
@@ -199,15 +202,15 @@ void CItemWeekNumbers::Paint(CImage& background, POINT offset)
 
   	if(m_Rasterizer != NULL) 
 	{
-		X = CCalendarWindow::c_Config.GetDaysX() - W;
+		X = CConfig::Instance().GetDaysX() - W;
 		X += offset.x;
 
 		for(i = 0; i < lines; i++) 
 		{
-			Y = CCalendarWindow::c_Config.GetDaysY() + i * H;
+			Y = CConfig::Instance().GetDaysY() + i * H;
 			Y += offset.y;
 
-            if (CCalendarWindow::c_Config.GetWeek1HasJanuary1st())
+            if (CConfig::Instance().GetWeek1HasJanuary1st())
             {
         		base = weekno2(i * 7 + weeksFirstDay, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
             }

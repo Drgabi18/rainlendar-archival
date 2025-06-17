@@ -16,9 +16,27 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Language.cpp,v 1.3 2003/08/23 09:14:50 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/Language.cpp,v 1.9 2004/04/24 11:23:18 rainy Exp $
 
   $Log: Language.cpp,v $
+  Revision 1.9  2004/04/24 11:23:18  rainy
+  3th -> 3rd
+
+  Revision 1.8  2004/01/25 10:01:05  rainy
+  Added new string.
+
+  Revision 1.7  2004/01/10 15:19:11  rainy
+  New strings added.
+
+  Revision 1.6  2003/12/20 22:22:52  rainy
+  Added some new strings
+
+  Revision 1.5  2003/12/05 15:46:43  Rainy
+  Changed some sentences.
+
+  Revision 1.4  2003/10/27 17:38:09  Rainy
+  Added todo strings.
+
   Revision 1.3  2003/08/23 09:14:50  Rainy
   Fixed some strings.
 
@@ -35,6 +53,7 @@
 #include "Language.h"
 #include "Litestep.h"
 #include "RainlendarDLL.h"
+#include <algorithm>
 
 const char* g_DefaultGeneralStrings[] = {
 	"OK",
@@ -47,12 +66,15 @@ const char* g_DefaultGeneralStrings[] = {
 	"Background",
 	"Days",
 	"Today",
-	"Event",
+	"Event",	// 10
 	"Weekdays",
 	"Week Numbers",
 	"Month",
 	"Year",
 	"Hotkeys",
+	"Todo",
+	"MessageBox",	// 17
+	"Skin Config",
     NULL
 };
 
@@ -62,8 +84,8 @@ const char* g_DefaultAboutStrings[] = {
 };
 
 const char* g_DefaultMessageStrings[] = {
-	"Are you sure you want to delete this event?",
-	"The event is read-only and cannot be deleted!",
+	"Are you sure you want to delete the event(s)?",
+	"Read-only events cannot be deleted!",
 	"Not all events were updated to the server.\nThe server has more up-to-date.",
 	"You can use only values positive starting from 1 values in the vertical and horizontal count fields.",
 	"%i? Are you mad? Please try to use some more reasonable value in the vertical and horizontal count fields.",
@@ -118,18 +140,27 @@ const char* g_DefaultMenuStrings[] = {
 	"Next Year\tUp",
     "Prev Year\tDown",
     "Update Outlook",
+    "Edit todo list...",
+    "Mark as done",		// 30
+	"Undo",
+	"Cut",
+	"Copy",
+	"Paste",
+	"Delete",
+	"Select All",
+	"Help",			// 37
     NULL
 };
 
 const char* g_DefaultGeneralConfigGUIStrings[] = {
 	"Show event message in tooltip",
-	"Show event message in a messagebox",
+	"*NotInUse*",
 	"Start hidden",
     "Start weekdays from Monday",
 	"Disable keyboard shortcuts",
 	"Use window name",
 	"Poll wallpaper changes",
-	"Event",
+	"Event Settings",
 	"Execute on event:",
 	"Other settings",
 	"Snap to screen edges",		// 10
@@ -140,8 +171,14 @@ const char* g_DefaultGeneralConfigGUIStrings[] = {
 	"Use separator in tooltips",
 	"Outlook Settings",
 	"Update every",
-	"seconds (0 = disable)",	// 18
+	"seconds (0 = disable)",
 	"It is not possible to use native transparency with OnDesktop setting.\nNative transparency is disabled.",
+	"Get Outlook events at startup",  // 20
+	"Max tooltip width:",
+	"Show all today's messages at startup",
+	"Show message alarms",
+	"Max message width:",
+	"Show tray icon",
     NULL
 };
 
@@ -150,7 +187,7 @@ const char* g_DefaultLayoutConfigGUIStrings[] = {
 	"Normal",
 	"OnTop",
 	"Movable window",
-	"Hide on mouse over",
+	"Hide on mouse over (hold shift down to deactivate)",
 	"X:",
 	"Y:",
 	"Position",
@@ -163,6 +200,8 @@ const char* g_DefaultLayoutConfigGUIStrings[] = {
 	"Remember dialog positions",	// 14
 	"Make negative coordinates relative to bottom right corner",	// 15
 	"The window's position cannot be set to OnDesktop if native transparency is used.\nThe position is changed to Normal.",
+	"Todo list",
+	"Show Todo list",
 	NULL
 };
 
@@ -181,6 +220,7 @@ const char* g_DefaultHotkeysConfigGUIStrings[] = {
 	"Next year",
 	"Previous year",
 	"Update Outlook",
+	"Show Todo list",
 	NULL
 };
 
@@ -209,7 +249,7 @@ const char* g_DefaultSkinGUIStrings[] = {
 	"H:",
 	"Rasterizer:",
 	"Align:",
-	"Bitmap",
+	"Bitmap",		// 10
 	"Bitmap:",
 	"Components:",
 	"Separation:",
@@ -219,7 +259,7 @@ const char* g_DefaultSkinGUIStrings[] = {
 	"Color:",
 	"Stretch",
 	"Tile",
-	"Transparent",
+	"Transparent",	// 20
 	"Background",
 	"Filename:",
 	"Text Color:",
@@ -229,7 +269,7 @@ const char* g_DefaultSkinGUIStrings[] = {
 	"Bevel edge",
 	"Enable Event Days",
 	"Show events in the calendar",
-	"Enable Today",
+	"Enable Today",		// 30
 	"Enable Weekdays",
 	"Enable Week Numbers",
 	"Enable Month",
@@ -239,10 +279,17 @@ const char* g_DefaultSkinGUIStrings[] = {
 	"Top Right",
 	"Left",
 	"Center",
-	"Right",
+	"Right",			// 40
 	"Bottom Left",
 	"Bottom Center",
 	"Bottom Right",
+	"Width:",
+	"Bitmap Margins:",
+	"Text Margins:",
+	"Todo Item",
+	"Offset X:",
+	"Todo Text",
+	"Message Text",		// 50
 	NULL
 };
   
@@ -267,6 +314,7 @@ const char* g_DefaultAllEventsGUIStrings[] = {
 	"Type",
 	"Profile",
 	"Text",
+	"All Events",
     NULL
 };
 
@@ -291,7 +339,7 @@ const char* g_DefaultNetStatusStrings[] = {
 const char* g_DefaultNumbersStrings[] = {
 	"1st",
 	"2nd",
-	"3th",
+	"3rd",
 	"4th",
 	"5th",
 	"6th",
@@ -301,6 +349,18 @@ const char* g_DefaultNumbersStrings[] = {
 	"10th",
 	"11th",
 	"12th",
+    NULL
+};
+
+const char* g_DefaultTodoStrings[] = {
+	"Todo",
+	"Done",
+	"Notes",
+	"New",
+	"Modify",
+	"Delete",
+	"Undo",
+	"Are you sure you want to delete the item?",
     NULL
 };
 
@@ -346,6 +406,9 @@ bool CLanguage::ScanLanguages(const char* path)
 	} while(FindNextFile(hSearch, &fileData));
 
     FindClose(hSearch);
+
+	// Sort the language list
+	std::sort(m_Languages.begin(), m_Languages.end());
 
 	return true;
 }
@@ -513,6 +576,13 @@ void CLanguage::SetDefaultLanguage()
     while (g_DefaultNumbersStrings[i] != NULL)
     {
         SetString("Numbers", i, g_DefaultNumbersStrings[i]);
+		i++;
+	} 
+
+    i = 0;
+    while (g_DefaultTodoStrings[i] != NULL)
+    {
+        SetString("Todo", i, g_DefaultTodoStrings[i]);
 		i++;
 	} 
 }

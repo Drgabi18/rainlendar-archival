@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Background.cpp,v 1.15 2003/08/09 16:38:55 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/Background.cpp,v 1.17 2004/01/28 18:04:10 rainy Exp $
 
   $Log: Background.cpp,v $
+  Revision 1.17  2004/01/28 18:04:10  rainy
+  no message
+
+  Revision 1.16  2003/10/27 17:36:11  Rainy
+  Settings are not read directly from the config anymore.
+
   Revision 1.15  2003/08/09 16:38:55  Rainy
   Added a check if the file exists.
 
@@ -110,6 +116,114 @@ void CBackground::Initialize()
 	m_BGImage.Clear();
 }
 
+ /* 
+** Create
+**
+** Creates the background image from the desktop and loaded image.
+** Width and height are from current window size.
+** Window's size must be correct when calling this.
+** Returns true, if the background image is larger than the Width and Height.
+*/
+bool CBackground::Create(BackgroundCreateStruct& bcs)
+{
+	HWND Desktop;
+	HDC DDC;
+	HDC BGDC;
+	HBITMAP OldBitmap;
+	bool resize = false;
+
+	m_Image.Clear();
+	m_BGImage.Clear();
+
+	m_Width = bcs.size.cx;
+	m_Height = bcs.size.cy;
+
+	// If the background is set as solid, we'll create a solid bitmap
+	if (bcs.mode == MODE_SOLID)
+	{
+		Desktop = GetDesktopWindow();
+		if(Desktop == NULL) THROW(ERR_BACKGROUND);
+
+		DDC = GetDC(Desktop);
+		if(DDC == NULL) THROW(ERR_BACKGROUND);
+			
+		BGDC = CreateCompatibleDC(DDC);
+		if(BGDC == NULL) THROW(ERR_BACKGROUND);
+
+		// Create background from solid color
+		HBITMAP background = CreateCompatibleBitmap(DDC, m_Width, m_Height);
+		if(background == NULL) THROW(ERR_BACKGROUND);
+		OldBitmap = (HBITMAP)SelectObject(BGDC, background);
+
+		ReleaseDC(Desktop, DDC);
+		
+		RECT r = { 0, 0, m_Width, m_Height };
+		HBRUSH brush = CreateSolidBrush(bcs.solidColor);
+		FillRect(BGDC, &r, brush);
+		DeleteObject(brush);
+
+		if (bcs.solidBevel)
+		{
+			// Draw bevel
+			DrawEdge(BGDC, &r, EDGE_RAISED, BF_RECT);
+		}
+
+		SelectObject(BGDC, OldBitmap);
+		DeleteDC(BGDC);
+
+		m_BGImage.Create(background, NULL, 0x0ff);
+
+		m_Alpha = false;
+	}
+	else if (!bcs.filename.empty() && bcs.mode != MODE_COPY)
+	{
+		// Otherwise we'll load the background image and grab a piece of wallpaper
+		Load(bcs.filename);
+
+		if (m_BGImage.GetWidth() < m_Width || m_BGImage.GetHeight() < m_Height)
+		{
+			// We need to resize the image to match the desired windowsize
+			switch (bcs.mode) 
+			{
+			case MODE_TILE:
+				// If we're tiling, we use the bg-image as one calendar
+				m_Width = max(m_Width, m_BGImage.GetWidth() * CConfig::Instance().GetHorizontalCount());
+				m_Height = max(m_Height, m_BGImage.GetHeight() * CConfig::Instance().GetVerticalCount());
+				m_BGImage.Resize(m_Width, m_Height, IMAGE_RESIZE_TYPE_TILE, NULL);
+				break;
+
+			case MODE_STRETCH:
+				m_Width = max(m_Width, m_BGImage.GetWidth());
+				m_Height = max(m_Height, m_BGImage.GetHeight());
+				m_BGImage.Resize(m_Width, m_Height, IMAGE_RESIZE_TYPE_STRETCH, NULL);
+				break;
+
+			case MODE_RECT:
+				m_Width = max(m_Width, m_BGImage.GetWidth());
+				m_Height = max(m_Height, m_BGImage.GetHeight());
+				m_BGImage.Resize(m_Width, m_Height, IMAGE_RESIZE_TYPE_STRETCH, &bcs.resizeRect);
+				break;
+			}
+		}
+		else
+		{
+			m_Width = max(m_Width, m_BGImage.GetWidth());
+			m_Height = max(m_Height, m_BGImage.GetHeight());
+		}
+		resize = true;
+
+		m_Alpha = m_BGImage.HasAlpha();
+	}
+
+	if (m_Alpha || bcs.mode == MODE_COPY)
+	{
+		// Take a copy of the BG
+		UpdateWallpaper(bcs.pos.x, bcs.pos.y);
+	}
+
+	return resize;
+}
+
 /* 
 ** Load
 **
@@ -129,106 +243,6 @@ void CBackground::Load(const std::string& filename)
 }
 
 /* 
-** Create
-**
-** Creates the background image from the desktop and loaded image.
-** Width and height are from current window size.
-** Window's size must be correct when calling this.
-** Returns true, if the background image is larger than the Width and Height.
-*/
-bool CBackground::Create(int X, int Y, int Width, int Height)
-{
-	HWND Desktop;
-	HDC DDC;
-	HDC BGDC;
-	HBITMAP OldBitmap;
-	bool resize = false;
-
-	m_Image.Clear();
-	m_BGImage.Clear();
-
-	m_Width = Width;
-	m_Height = Height;
-
-	// If the background is set as solid, we'll create a solid bitmap
-	if (CCalendarWindow::c_Config.GetBackgroundMode() == CBackground::MODE_SOLID)
-	{
-		Desktop = GetDesktopWindow();
-		if(Desktop == NULL) THROW(ERR_BACKGROUND);
-
-		DDC = GetDC(Desktop);
-		if(DDC == NULL) THROW(ERR_BACKGROUND);
-			
-		BGDC = CreateCompatibleDC(DDC);
-		if(BGDC == NULL) THROW(ERR_BACKGROUND);
-
-		// Create background from solid color
-		HBITMAP background = CreateCompatibleBitmap(DDC, Width, Height);
-		if(background == NULL) THROW(ERR_BACKGROUND);
-		OldBitmap = (HBITMAP)SelectObject(BGDC, background);
-
-		ReleaseDC(Desktop, DDC);
-		
-		RECT r = { 0, 0, Width, Height };
-		HBRUSH brush = CreateSolidBrush(CCalendarWindow::c_Config.GetBackgroundSolidColor());
-		FillRect(BGDC, &r, brush);
-		DeleteObject(brush);
-
-		if(CCalendarWindow::c_Config.GetBackgroundBevel())
-		{
-			// Draw bevel
-			DrawEdge(BGDC, &r, EDGE_RAISED, BF_RECT);
-		}
-
-		SelectObject(BGDC, OldBitmap);
-		DeleteDC(BGDC);
-
-		m_BGImage.Create(background, NULL, 0x0ff);
-
-		m_Alpha = false;
-	}
-	else if (!CCalendarWindow::c_Config.GetBackgroundBitmapName().empty() && CCalendarWindow::c_Config.GetBackgroundMode() != CBackground::MODE_COPY)
-	{
-		// Otherwise we'll load the background image and grab a piece of wallpaper
-		Load(CCalendarWindow::c_Config.GetBackgroundBitmapName());
-
-		if (m_BGImage.GetWidth() < Width || m_BGImage.GetHeight() < Height)
-		{
-			// We need to resize the image to match the desired windowsize
-			if(CCalendarWindow::c_Config.GetBackgroundMode() == MODE_TILE)
-			{
-				// If we're tiling, we use the bg-image as one calendar
-				m_Width = max(Width, m_BGImage.GetWidth() * CCalendarWindow::c_Config.GetHorizontalCount());
-				m_Height = max(Height, m_BGImage.GetHeight() * CCalendarWindow::c_Config.GetVerticalCount());
-				m_BGImage.Resize(m_Width, m_Height, IMAGE_RESIZE_TYPE_TILE);
-			}
-			else 
-			{
-				m_Width = max(Width, m_BGImage.GetWidth());
-				m_Height = max(Height, m_BGImage.GetHeight());
-				m_BGImage.Resize(m_Width, m_Height, IMAGE_RESIZE_TYPE_STRETCH);
-			}
-		}
-		else
-		{
-			m_Width = max(Width, m_BGImage.GetWidth());
-			m_Height = max(Height, m_BGImage.GetHeight());
-		}
-		resize = true;
-
-		m_Alpha = m_BGImage.HasAlpha();
-	}
-
-	if (m_Alpha || CCalendarWindow::c_Config.GetBackgroundMode() == CBackground::MODE_COPY)
-	{
-		// Take a copy of the BG
-		UpdateWallpaper(X, Y);
-	}
-
-	return resize;
-}
-
-/* 
 ** CopyBackground
 **
 ** Takes a copy of the desktop to use as background
@@ -240,12 +254,8 @@ HBITMAP CBackground::CopyBackground(int X, int Y, int Width, int Height)
 	HBITMAP wallpaper = NULL;
 	HDC WinDC;
 
-	if(GetRainlendar() && (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_WALLPAPER_ALWAYS ||
-						  (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_NORMAL && !(GetRainlendar()->IsWharf()))))
-	{
-		// The new way
-		wallpaper = GetWallpaper(X, Y, Width, Height);
-	}
+	// The new way
+	wallpaper = GetWallpaper(X, Y, Width, Height);
 
 	if(wallpaper == NULL)
 	{
@@ -261,7 +271,7 @@ HBITMAP CBackground::CopyBackground(int X, int Y, int Width, int Height)
 
 		// Fetch the background
 		OldBitmap = (HBITMAP)SelectObject(tmpDC, wallpaper);
-		BitBlt(tmpDC, 0, 0, Width, Height, WinDC, CCalendarWindow::c_Config.GetX(), CCalendarWindow::c_Config.GetY(), SRCCOPY);
+		BitBlt(tmpDC, 0, 0, Width, Height, WinDC, X, Y, SRCCOPY);
 		
 		ReleaseDC(GetDesktopWindow(), WinDC);
 
@@ -499,7 +509,7 @@ void CBackground::FlushWallpaper()
 */
 void CBackground::UpdateWallpaper(int X, int Y)
 {
-	if (!CCalendarWindow::Is2k() || !CCalendarWindow::c_Config.GetNativeTransparency())	// No need to mess with wallpaper if we're using real transparency
+	if (!CCalendarWindow::Is2k() || !CConfig::Instance().GetNativeTransparency())	// No need to mess with wallpaper if we're using real transparency
 	{
 		// Take a copy of the BG
 		HBITMAP wallpaper = CopyBackground(X, Y, m_Width, m_Height);

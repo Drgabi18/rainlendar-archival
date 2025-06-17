@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Litestep.h,v 1.4 2003/08/09 16:34:21 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/Litestep.h,v 1.5 2003/12/20 22:16:06 rainy Exp $
 
   $Log: Litestep.h,v $
+  Revision 1.5  2003/12/20 22:16:06  rainy
+  Added DebugLog
+
   Revision 1.4  2003/08/09 16:34:21  Rainy
   Comment changed
 
@@ -65,5 +68,6 @@ BOOL RemoveBangCommand(LPCSTR command);
 void TransparentBltLS (HDC dc, int nXDest, int nYDest, int nWidth, int nHeight, HDC tempDC, int nXSrc, int nYSrc, COLORREF colorTransparent);
 void VarExpansion(LPSTR buffer, LPCSTR value);
 BOOL LSLog(int nLevel, LPCSTR pszModule, LPCSTR pszMessage);
+void DebugLog(const char* message, ... );
 
 #endif

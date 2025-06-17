@@ -16,9 +16,18 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Tooltip.cpp,v 1.6 2003/10/04 14:52:36 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/Tooltip.cpp,v 1.9 2004/04/24 11:20:40 rainy Exp $
 
   $Log: Tooltip.cpp,v $
+  Revision 1.9  2004/04/24 11:20:40  rainy
+  Multimonitor fix
+
+  Revision 1.8  2004/01/10 15:17:43  rainy
+  no message
+
+  Revision 1.7  2003/10/27 17:40:01  Rainy
+  Config is now singleton.
+
   Revision 1.6  2003/10/04 14:52:36  Rainy
   Added word wrapping.
 
@@ -69,7 +78,7 @@ CToolTip::CToolTip()
 	m_Parent = NULL;
 	m_Instance = NULL;
 	m_Message = 0;
-	m_BackgroundColor = CCalendarWindow::c_Config.GetToolTipBGColor();
+	m_BackgroundColor = CConfig::Instance().GetToolTipBGColor();
 	m_CurrentTip = NULL;
 	m_ClickedAway = false;
 	m_Font = NULL;
@@ -160,7 +169,7 @@ void CToolTip::Initialize(HWND parent, HINSTANCE instance)
 		THROW(ERR_WINDOW);
 	}
 
-	m_Font = CRasterizerFont::CreateFont(CCalendarWindow::c_Config.GetToolTipFont());
+	m_Font = CRasterizerFont::CreateFont(CConfig::Instance().GetToolTipFont());
 
 	LSLog(LOG_DEBUG, "Rainlendar", "ToolTip Initialized.");
 }
@@ -312,12 +321,48 @@ bool CToolTip::ResizeTipWindow(const POINT& pos)
 		int x = pos.x - m_Offset.x;
 		int y = pos.y - height - m_Offset.y;
 
-		// Make sure that the tip is fully visible (TODO: Fix multimonitor support)
+		// Make sure that the tip is fully visible
 		GetClientRect(GetDesktopWindow(), &rect); 
-		if (rect.right < x + width)
+
+		// Check for multiple monitors
+		typedef HMONITOR (WINAPI * FPMONITORFROMPOINT)(POINT pt, DWORD dwFlags);
+		typedef BOOL (WINAPI * FPGETMONITORINFO)(HMONITOR hMonitor, LPMONITORINFO lpmi);
+		FPMONITORFROMPOINT fpMonitorFromPoint;
+		FPGETMONITORINFO fpGetMonitorInfo;
+
+		HINSTANCE lib = LoadLibrary("user32.dll");
+		
+		fpMonitorFromPoint = (FPMONITORFROMPOINT)GetProcAddress(lib, "MonitorFromPoint");
+		fpGetMonitorInfo = (FPGETMONITORINFO)GetProcAddress(lib, "GetMonitorInfoA");
+
+		if (fpMonitorFromPoint && fpGetMonitorInfo)
+		{
+			HMONITOR hMonitor;
+			MONITORINFO mi;
+
+			hMonitor = fpMonitorFromPoint(pos, MONITOR_DEFAULTTONULL);
+
+			if(hMonitor != NULL)
+			{
+				mi.cbSize = sizeof(mi);
+				fpGetMonitorInfo(hMonitor, &mi);
+				rect = mi.rcWork;
+			}
+		}
+		FreeLibrary(lib);
+
+		POINT center;
+		center.x = (rect.right - rect.left) / 2 + rect.left;
+		center.y = (rect.bottom - rect.top) / 2 + rect.top;
+
+		// The horizontal orientation depends on which side the mouse is
+		if (pos.x > center.x)
 		{
 			x = x - width + 2 * m_Offset.x;
-			if (rect.top > y - height)
+
+			// The tooltip is always on top of the mouse, unless it doesn't fit there 
+			// (in which case it'll depend on the position of the mouse)
+			if ((pos.y - height < rect.top) && (pos.y < center.y))
 			{
 				m_ArrowCorner = CORNER_TR;
 				y = y + height + 2 * m_Offset.y;
@@ -329,7 +374,7 @@ bool CToolTip::ResizeTipWindow(const POINT& pos)
 		}
 		else
 		{
-			if (rect.top > y - height)
+			if ((pos.y - height < rect.top) && (pos.y < center.y))
 			{
 				m_ArrowCorner = CORNER_TL;
 				y = y + height + 2 * m_Offset.y;

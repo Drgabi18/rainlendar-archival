@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Tooltip.h,v 1.5 2003/10/04 14:52:36 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/Tooltip.h,v 1.6 2004/01/10 15:12:39 rainy Exp $
 
   $Log: Tooltip.h,v $
+  Revision 1.6  2004/01/10 15:12:39  rainy
+  no message
+
   Revision 1.5  2003/10/04 14:52:36  Rainy
   Added word wrapping.
 

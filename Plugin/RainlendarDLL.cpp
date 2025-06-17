@@ -16,9 +16,24 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/RainlendarDLL.cpp,v 1.10 2003/08/09 15:26:26 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/RainlendarDLL.cpp,v 1.15 2004/01/28 18:06:39 rainy Exp $
 
   $Log: RainlendarDLL.cpp,v $
+  Revision 1.15  2004/01/28 18:06:39  rainy
+  Fixed few bangs.
+
+  Revision 1.14  2004/01/25 10:01:47  rainy
+  Added new bangs.
+
+  Revision 1.13  2004/01/10 15:13:21  rainy
+  Changed Toggle, Show and Hide to affect also the Todo window.
+
+  Revision 1.12  2003/10/27 19:51:11  Rainy
+  Fixed parameters to Initialize()
+
+  Revision 1.11  2003/10/27 17:38:32  Rainy
+  Removed wharf support.
+
   Revision 1.10  2003/08/09 15:26:26  Rainy
   DLL Instance is saved to global variable.
 
@@ -58,6 +73,7 @@
 #include "CalendarWindow.h"
 #include "Error.h"
 #include "Tooltip.h"
+#include "EditEvent.h"
 
 CRainlendar Rainlendar; // The module
 bool CRainlendar::c_DummyLitestep=false;
@@ -78,50 +94,6 @@ CRainlendar* GetRainlendar()
 };
 
 /*
-** initWharfModule
-**
-** This function is called when the plugin is initialized by wharf or lsbox.
-**
-*/
-int initWharfModule(HWND ParentWnd, HINSTANCE dllInst, void* wd)
-{
-	int Result=1;
-	
-	try 
-	{
-		Result = Rainlendar.Initialize(ParentWnd, dllInst, wd != NULL, NULL);
-	} 
-    catch(CError& error) 
-    {
-		MessageBox(NULL, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-	}
-
-	return Result;
-}
-
-/*
-** quitWharfModule
-**
-** This is called when the wharf plugin quits.
-**
-*/
-void quitWharfModule(HINSTANCE dllInst)
-{
-	quitModule(dllInst);
-}
-
-/*
-** getLSRegion
-**
-** Returns the window region for the wharf
-**
-*/
-HRGN getLSRegion(int xOffset, int yOffset)
-{
-	return Rainlendar.GetRegion(xOffset, yOffset);
-}
-
-/*
 ** initModuleEx
 **
 ** This is called when the plugin is initialized
@@ -134,7 +106,7 @@ int initModuleEx(HWND ParentWnd, HINSTANCE dllInst, LPCSTR szPath)
 	try 
 	{
 		LSLog(LOG_DEBUG, "Rainlendar", "The initialization started.");
-		Result = Rainlendar.Initialize(ParentWnd, dllInst, NULL, szPath);
+		Result = Rainlendar.Initialize(ParentWnd, dllInst, szPath);
 		LSLog(LOG_NOTICE, "Rainlendar", "The initialization finished.");
 	} 
     catch(CError& error) 
@@ -165,7 +137,11 @@ void quitModule(HINSTANCE dllInst)
 void Initialize(bool DummyLS, LPCSTR CmdLine)
 {
 	CRainlendar::SetDummyLitestep(DummyLS);
-	CRainlendar::SetCommandLine(CmdLine);
+	
+	if (CmdLine) 
+	{
+		CRainlendar::SetCommandLine(CmdLine);
+	}
 }
 
 /*
@@ -339,7 +315,7 @@ void RainlendarShowMonth(HWND, const char* arg)
 void RainlendarLsBoxHook(HWND, const char* arg)
 {
 	char* handle = strrchr(arg,' ');
-
+	
 	if (handle) 
 	{
 		HWND hWnd = (HWND)atoi(handle+1);
@@ -348,7 +324,6 @@ void RainlendarLsBoxHook(HWND, const char* arg)
 		{
 			SetWindowLong(hWndCal, GWL_STYLE, (GetWindowLong(hWndCal, GWL_STYLE) &~ WS_POPUP) | WS_CHILD);
 			SetParent(hWndCal, hWnd);
-			GetRainlendar()->SetWharf();
 		}
 	}
 }
@@ -384,6 +359,112 @@ void RainlendarZPos(HWND, const char* arg)
 	} 
 }
 
+/*
+** RainlendarTodo
+**
+** Callback for the !RainlendarTodo bang
+**
+*/
+void RainlendarTodo(HWND, const char* arg)
+{
+	Rainlendar.ShowTodo();
+}
+
+/*
+** RainlendarEditTodo
+**
+** Callback for the !RainlendarEditTodo bang
+**
+*/
+void RainlendarEditTodo(HWND, const char* arg)
+{
+	Rainlendar.EditTodo();
+}
+
+/*
+** RainlendarShowTodo
+**
+** Callback for the !RainlendarShowTodo bang
+**
+*/
+void RainlendarShowTodo(HWND, const char* arg)
+{
+	Rainlendar.ShowTodo();
+}
+
+/*
+** RainlendarHideTodo
+**
+** Callback for the !RainlendarHideTodo bang
+**
+*/
+void RainlendarHideTodo(HWND, const char* arg)
+{
+	Rainlendar.HideTodo();
+}
+
+/*
+** RainlendarToggleTodo
+**
+** Callback for the !RainlendarToggleTodo bang
+**
+*/
+void RainlendarToggleTodo(HWND, const char* arg)
+{
+	Rainlendar.ToggleTodo();
+}
+
+/*
+** RainlendarAddEvent
+**
+** Callback for the !RainlendarAddEvent bang
+**
+*/
+void RainlendarAddEvent(HWND, const char* arg)
+{
+	char Buffer[256];
+	char* Token;
+	int date;
+
+	if(arg!=NULL && arg[0]!='\0') 
+	{
+		strncpy(Buffer, arg, 255);
+		Buffer[255] = '\0';
+		Token = strtok(Buffer, " ");
+		
+		if(Token!=NULL) 
+		{
+			date = atoi(Token);
+			Token = strtok(NULL, " ");
+			
+			if(Token != NULL) 
+			{
+				Rainlendar.AddEvent(date, Token);
+				return;
+			}
+			else 
+			{
+				Rainlendar.AddEvent(date, NULL);
+				return;
+			}
+		}
+	} 
+
+	Rainlendar.AddEvent(0, NULL);
+}
+
+/*
+** RainlendarShowEvents
+**
+** Callback for the !RainlendarShowEvents bang
+**
+*/
+void RainlendarShowEvents(HWND, const char* arg)
+{
+	Rainlendar.ShowEvents();
+}
+
+
 /* 
 ** CRainlendar
 **
@@ -392,7 +473,6 @@ void RainlendarZPos(HWND, const char* arg)
 */
 CRainlendar::CRainlendar()
 {
-	m_Wharf = false;
 }
 
 /* 
@@ -412,21 +492,19 @@ CRainlendar::~CRainlendar()
 ** May throw CErrors !!!!
 **
 */
-int CRainlendar::Initialize(HWND Parent, HINSTANCE Instance, bool wd, LPCSTR szPath)
+int CRainlendar::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 {
 	int Result=0;
 
-	if(Parent==NULL || Instance==NULL) 
+	if (Parent==NULL || Instance==NULL) 
 	{
 		THROW(ERR_NULLPARAMETER);
 	}	
 
-	m_Wharf = wd;
-
 	if(!c_DummyLitestep) InitalizeLitestep();
 
 	// Create the meter window and initialize it
-	Result = m_Calendar.Initialize(*this, Parent, Instance);
+	Result = m_Calendar.Initialize(Parent, Instance);
 
 	// If we're running as Litestep's plugin, register the !bangs
 	if(!c_DummyLitestep) 
@@ -449,6 +527,12 @@ int CRainlendar::Initialize(HWND Parent, HINSTANCE Instance, bool wd, LPCSTR szP
 		AddBangCommand("!RainlendarLsBoxHook", RainlendarLsBoxHook);
 		AddBangCommand("!RainlendarMove", RainlendarMove);
 		AddBangCommand("!RainlendarZPos", RainlendarZPos);
+		AddBangCommand("!RainlendarEditTodo", RainlendarEditTodo);
+		AddBangCommand("!RainlendarShowTodo", RainlendarShowTodo);
+		AddBangCommand("!RainlendarHideTodo", RainlendarHideTodo);
+		AddBangCommand("!RainlendarToggleTodo", RainlendarToggleTodo);
+		AddBangCommand("!RainlendarAddEvent", RainlendarAddEvent);
+		AddBangCommand("!RainlendarShowEvents", RainlendarShowEvents);
 	}
 
 	return Result;	// Alles OK
@@ -485,19 +569,84 @@ void CRainlendar::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainlendarLsBoxHook");
 		RemoveBangCommand("!RainlendarMove");
 		RemoveBangCommand("!RainlendarZPos");
+		RemoveBangCommand("!RainlendarEditTodo");
+		RemoveBangCommand("!RainlendarShowTodo");
+		RemoveBangCommand("!RainlendarHideTodo");
+		RemoveBangCommand("!RainlendarToggleTodo");
+		RemoveBangCommand("!RainlendarAddEvent");
+		RemoveBangCommand("!RainlendarShowEvents");
 	}
 }
 
-/* 
-** GetRegion
-**
-** Function returns the window region for the Wharf. Probably should 
-** add the implementation to here for better combatibility with wharf 
-** and lsbox.
-**
-*/
-HRGN CRainlendar::GetRegion(int xOffset, int yOffset)
-{
-	return NULL;
+void CRainlendar::HideWindow()
+{ 
+	m_Calendar.HideWindow(); 
+	if (CConfig::Instance().GetTodoEnable()) 
+	{
+		m_Calendar.GetTodoWindow().HideWindow();
+	}
 }
 
+void CRainlendar::ShowWindow(bool activate) 
+{ 
+	m_Calendar.ShowWindow(activate); 
+	if (CConfig::Instance().GetTodoEnable()) 
+	{
+		m_Calendar.GetTodoWindow().ShowWindow(activate);
+	}
+}
+
+void CRainlendar::ToggleWindow() 
+{ 
+	m_Calendar.ToggleWindow(); 
+	if (CConfig::Instance().GetTodoEnable()) 
+	{
+		m_Calendar.GetTodoWindow().ToggleWindow();
+	}
+}
+
+void CRainlendar::AddEvent(int date, const char* message)
+{
+	if (message && message[0] != 0) 
+	{
+		int day, month, year;
+		CEventMessage event;
+		event.SetDate(date);
+		event.SetMessage(message);
+		m_Calendar.GetEventManager()->AddEvent(event);
+		CEventMessage::ValueToDate(date, &day, &month, &year);
+		m_Calendar.GetEventManager()->WriteEvents(day, month, year);
+		RefreshWindow();
+	} 
+	else
+	{
+		if (date == 0) 
+		{
+			SYSTEMTIME today;
+			GetLocalTime(&today);
+			date = CEventMessage::DateToValue(today.wDay, today.wMonth, today.wYear);
+		}
+
+		OpenEditEventDialog(m_Calendar.GetWindow(), CRainlendar::GetInstance(), date, 0);	
+	}
+}
+
+void CRainlendar::ShowEvents()
+{
+	SYSTEMTIME today;
+	GetLocalTime(&today);
+	std::vector<CEventMessage*> eventList = m_Calendar.GetEventManager()->GetEvents(today.wDay, today.wMonth, today.wYear);
+	
+	m_Calendar.GetMessageWindow().ClearEvents();
+	m_Calendar.ShowEventMessage(eventList, true);
+}
+
+void CRainlendar::SetWindowZPos(CConfig::WINDOWPOS pos)
+{ 
+	m_Calendar.SetWindowZPos(pos);
+
+	if (CConfig::Instance().GetTodoEnable())
+	{
+		m_Calendar.GetTodoWindow().SetWindowZPos(pos);
+	}
+};

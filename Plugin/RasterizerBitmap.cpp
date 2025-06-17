@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/RasterizerBitmap.cpp,v 1.12 2003/08/09 15:25:32 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/RasterizerBitmap.cpp,v 1.13 2003/10/27 17:40:01 Rainy Exp $
 
   $Log: RasterizerBitmap.cpp,v $
+  Revision 1.13  2003/10/27 17:40:01  Rainy
+  Config is now singleton.
+
   Revision 1.12  2003/08/09 15:25:32  Rainy
   Added an error message if bitmap is not found.
 
@@ -99,11 +102,11 @@ void CRasterizerBitmap::Load(const std::string& filename)
 	// Check for absolute path
 	if(-1 == name.find(':')) 
 	{
-		if (!CCalendarWindow::c_Config.GetCurrentSkin().empty())
+		if (!CConfig::Instance().GetCurrentSkin().empty())
 		{
-			name.insert(0, CCalendarWindow::c_Config.GetCurrentSkin() + "\\");
+			name.insert(0, CConfig::Instance().GetCurrentSkin() + "\\");
 		}
-		name.insert(0, CCalendarWindow::c_Config.GetSkinsPath());
+		name.insert(0, CConfig::Instance().GetSkinsPath());
 	}
 
 	if (!m_Image.Load(name.c_str()))

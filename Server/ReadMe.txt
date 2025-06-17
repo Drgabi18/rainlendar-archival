@@ -1,4 +1,4 @@
-RainlendarServer 0.4
+RainlendarServer 0.5
 --------------------
 
 This is the server part of the Rainlendar calendar. You only need this if you
@@ -21,7 +21,13 @@ Usage
 Just run RainlendarServer.exe (or ./rainlendarserver on Linux).
 
 The server takes few optional command line arguments.
-Use -h to find out more.
+
+ -h,--help                = this message
+ -p,--port <port>         = run server on port <port>
+ -d,--daemonize           = daemonize server (not available in win32)
+ -l,--log <folder>        = write log to a file instead to console
+ -f,--filter <filterfile> = use the given file as the ip-filter
+ -m,--multi               = allow multiple instances
 
 
 If you want to run RainlendarServer as a Windows NT service, here is
@@ -62,8 +68,15 @@ how to do that:
   you start your computer.
 
 
+
+... or you can get Firedaemon (http://www.firedaemon.com) and use that.
+
+
 History
 -------
+
+[21.4.2004] Version 0.5
+- Added -m flag
 
 [9.8.2003] Version 0.4
 - Added CreatedBy and LastModified fields to the events-file.

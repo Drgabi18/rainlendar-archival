@@ -16,9 +16,31 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Config.h,v 1.15 2003/10/04 14:48:26 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/Config.h,v 1.22 2004/04/24 11:17:36 rainy Exp $
 
   $Log: Config.h,v $
+  Revision 1.22  2004/04/24 11:17:36  rainy
+  Added outlook profiles.
+
+  Revision 1.21  2004/01/28 18:04:55  rainy
+  Added tray executes.
+
+  Revision 1.20  2004/01/25 09:59:27  rainy
+  Added new dialog position.
+
+  Revision 1.19  2004/01/10 15:16:36  rainy
+  Added tray and hotkey for todo.
+
+  Revision 1.18  2003/12/20 22:24:39  rainy
+  Added stuff for the message box.
+
+  Revision 1.17  2003/12/05 15:45:42  Rainy
+  Added Reset()
+
+  Revision 1.16  2003/10/27 17:36:51  Rainy
+  Config is now singleton.
+  Added todo stuff.
+
   Revision 1.15  2003/10/04 14:48:26  Rainy
   Added TooltipMaxWidth and priority for the profiles.
 
@@ -92,16 +114,20 @@ struct Profile
 	int priority;
 };
 
-class CConfig  
+class CConfig
 {
 public:
+	static CConfig& Instance() { return c_Config; };
+
 	enum WRITE_FLAGS
 	{
 		WRITE_POS = 1,
-		WRITE_CONFIG = 2,
-		WRITE_PROFILE = 4,
-		WRITE_FULL = 7,		// FULL is 1 + 2 + 4
-		WRITE_SKIN = 8
+		WRITE_TODOPOS = 2,
+		WRITE_CONFIG = 4,
+		WRITE_PROFILE = 8,
+		WRITE_DIALOG_POS = 16,
+		WRITE_FULL = 31,		// FULL is 1 + 2 + 4 + 8 + 16
+		WRITE_SKIN = 32
 	};
 
 	enum WINDOWPOS 
@@ -112,13 +138,6 @@ public:
 		WINDOWPOS_ONDESKTOP
 	};
 
-	enum BG_COPY_MODE
-	{
-		BG_NORMAL,
-		BG_COPY_ALWAYS,
-		BG_WALLPAPER_ALWAYS
-	};
-
 	enum DIALOG_TYPE
 	{
 		DIALOG_EDITSKIN,
@@ -126,6 +145,7 @@ public:
 		DIALOG_EDITEVENT,
 		DIALOG_ALLEVENTS,
 		DIALOG_ALLEVENTS_SIZE,
+		DIALOG_TODO,
 		DIALOG_LAST		// This must be last
 	};
 
@@ -145,11 +165,14 @@ public:
 		HOTKEY_CURRENT,
 		HOTKEY_ALL,
 		HOTKEY_OUTLOOK,
+		HOTKEY_TODO,
 		HOTKEY_LAST		// This must be last
 	};
 
 	CConfig();
 	~CConfig();
+
+	void Reset();
 
 	const std::string& GetPath() { return m_Path; };
 	void SetPath(const std::string& Path) { m_Path=Path; };
@@ -210,8 +233,21 @@ public:
 	bool GetWeek1HasJanuary1st() { return m_Week1HasJanuary1st; };
 	bool GetNegativeCoords() { return m_NegativeCoords; };
 	bool GetRememberDialogPositions() { return m_RememberDialogPositions; };
-	BG_COPY_MODE GetBGCopyMode() { return m_BGCopyMode; };
+	bool GetOutlookAppointmentsAtStartup() { return m_GetOutlookAppointmentsAtStartup; };
 	int GetToolTipMaxWidth() { return m_ToolTipMaxWidth; };
+	int GetMessageBoxMaxWidth() { return m_MessageBoxMaxWidth; };
+	bool GetShowAllEvents() { return m_ShowAllEvents; };
+	bool GetShowSingleEvent() { return m_ShowSingleEvent; };
+	int GetSnoozeTime() { return m_SnoozeTime; };
+	int GetPreshowTime() { return m_PreshowTime; };
+	bool GetShowTrayIcon() { return m_ShowTrayIcon; };
+
+    const std::string& GetTrayExecuteL() { return m_TrayExecuteL; };
+    const std::string& GetTrayExecuteR() { return m_TrayExecuteR; };
+    const std::string& GetTrayExecuteM() { return m_TrayExecuteM; };
+    const std::string& GetTrayExecuteDL() { return m_TrayExecuteDL; };
+    const std::string& GetTrayExecuteDR() { return m_TrayExecuteDR; };
+    const std::string& GetTrayExecuteDM() { return m_TrayExecuteDM; };
 
 	void SetStartFromMonday(bool StartFromMonday ) { m_StartFromMonday=StartFromMonday; };
 	void SetWeekdayNames(const std::string& WeekdayNames ) { m_WeekdayNames=WeekdayNames; };
@@ -229,15 +265,29 @@ public:
 	void SetWeek1HasJanuary1st(bool Week1HasJanuary1st) { m_Week1HasJanuary1st=Week1HasJanuary1st; };
 	void SetRememberDialogPositions(bool RememberDialogPositions) { m_RememberDialogPositions=RememberDialogPositions; };
 	void SetNegativeCoords(bool NegativeCoords) { m_NegativeCoords=NegativeCoords; };
-	void SetBGCopyMode(BG_COPY_MODE bgMode) { m_BGCopyMode=bgMode; };
+	void SetOutlookAppointmentsAtStartup(bool OutlookAppointmentsAtStartup) { m_GetOutlookAppointmentsAtStartup=OutlookAppointmentsAtStartup; };
 	void SetToolTipMaxWidth(UINT toolTipMaxWidth) { m_ToolTipMaxWidth=toolTipMaxWidth; };
+	void SetMessageBoxMaxWidth(int MessageBoxW ) { m_MessageBoxMaxWidth=MessageBoxW; };
+	void SetShowAllEvents(bool ShowAllEvents) { m_ShowAllEvents=ShowAllEvents; };
+	void SetShowSingleEvent(bool ShowSingleEvent) { m_ShowSingleEvent=ShowSingleEvent; };
+	void SetSnoozeTime(int SnoozeTime) { m_SnoozeTime=SnoozeTime; };
+	void SetPreshowTime(int PreshowTime) { m_PreshowTime=PreshowTime; };
+	void SetShowTrayIcon(bool ShowTrayIcon) { m_ShowTrayIcon=ShowTrayIcon; };
 
-	CBackground::MODE GetBackgroundMode() { return m_BackgroundMode; };
+    const std::string& GetOutlookProfile() { return m_OutlookProfile; };
+	void SetOutlookProfile(const std::string& OutlookProfile) { m_OutlookProfile=OutlookProfile; };
+	void SetOutlookLabels(bool OutlookLabels) { m_OutlookLabels=OutlookLabels; };
+	bool GetOutlookLabels() { return m_OutlookLabels; };
+	void SetOutlookKeepAlive(bool OutlookKeepAlive) { m_OutlookKeepAlive=OutlookKeepAlive; };
+	bool GetOutlookKeepAlive() { return m_OutlookKeepAlive; };
+
+
+	BACKGROUND_MODE GetBackgroundMode() { return m_BackgroundMode; };
     const std::string& GetBackgroundBitmapName() { return m_BackgroundBitmapName; };
 	bool GetBackgroundBevel() { return m_BackgroundBevel; };
 	COLORREF GetBackgroundSolidColor() { return m_BackgroundSolidColor; };
 
-	void SetBackgroundMode(CBackground::MODE BackgroundMode ) { m_BackgroundMode=BackgroundMode; };
+	void SetBackgroundMode(BACKGROUND_MODE BackgroundMode ) { m_BackgroundMode=BackgroundMode; };
 	void SetBackgroundBitmapName(const std::string& BackgroundBitmapName ) { m_BackgroundBitmapName=BackgroundBitmapName; };
 	void SetBackgroundBevel(bool BackgroundBevel ) { m_BackgroundBevel=BackgroundBevel; };
 	void SetBackgroundSolidColor(COLORREF BackgroundSolidColor ) { m_BackgroundSolidColor=BackgroundSolidColor; };
@@ -271,6 +321,8 @@ public:
 	void SetAllHotkey(DWORD AllHotkey) { m_AllHotkey=AllHotkey; };
 	DWORD GetOutlookHotkey() { return m_OutlookHotkey; };
 	void SetOutlookHotkey(DWORD OutlookHotkey) { m_OutlookHotkey=OutlookHotkey; };
+	DWORD GetTodoHotkey() { return m_TodoHotkey; };
+	void SetTodoHotkey(DWORD TodoHotkey) { m_TodoHotkey=TodoHotkey; };
 
 	// Days
 	bool GetDaysEnable() { return m_DaysEnable; };
@@ -386,7 +438,6 @@ public:
 	COLORREF GetEventFontColor() { return m_EventFontColor; };
     const std::string& GetEventFont() { return m_EventFont; };
 	bool GetEventToolTips() { return m_EventToolTips; };
-	bool GetEventMessageBox() { return m_EventMessageBox; };
     const std::string& GetEventExecute() { return m_EventExecute; };
 	bool GetEventInCalendar() { return m_EventInCalendar; };
 	COLORREF GetEventFontColor2() { return m_EventFontColor2; };
@@ -396,7 +447,6 @@ public:
 	void SetEventExecute(const std::string& EventExecute ) { m_EventExecute=EventExecute; };
 	void SetEventFont(const std::string& EventFont ) { m_EventFont=EventFont; };
 	void SetEventToolTips(bool EventToolTips ) { m_EventToolTips=EventToolTips; };
-	void SetEventMessageBox(bool EventMessageBox ) { m_EventMessageBox=EventMessageBox; };
 	void SetEventEnable(bool EventEnable ) { m_EventEnable=EventEnable; };
 	void SetEventAlign(CRasterizer::ALIGN EventAlign ) { m_EventAlign=EventAlign; };
 	void SetEventBitmapName(const std::string& EventBitmapName ) { m_EventBitmapName=EventBitmapName; };
@@ -426,6 +476,50 @@ public:
 	void SetWeekNumbersFontColor(COLORREF WeekNumbersFontColor ) { m_WeekNumbersFontColor=WeekNumbersFontColor; };
 	void SetWeekNumbersNumOfComponents(int WeekNumbersNumOfComponents ) { m_WeekNumbersNumOfComponents=WeekNumbersNumOfComponents; };
 	void SetWeekNumbersSeparation(int separation) { m_WeekNumbersSeparation = separation; };
+
+	// Todo
+	bool GetTodoEnable() { return m_TodoEnable; };
+    const std::string& GetTodoBitmapName() { return m_TodoBitmapName; };
+	RECT GetTodoBitmapMargins() { return m_TodoBitmapMargins; };
+	RECT GetTodoTextMargins() { return m_TodoTextMargins; };
+	int GetTodoX() { return m_TodoX; };
+	int GetTodoY() { return m_TodoY; };
+	int GetTodoW() { return m_TodoW; };
+    const std::string& GetTodoFont() { return m_TodoFont; };
+	COLORREF GetTodoFontColor() { return m_TodoFontColor; };
+	int GetTodoSeparation() { return m_TodoSeparation; };
+    const std::string& GetTodoItemBitmapName() { return m_TodoItemBitmapName; };
+	POINT GetTodoItemOffset() { return m_TodoItemOffset; };
+	CRasterizer::ALIGN GetTodoItemAlign() { return m_TodoItemAlign; };
+
+	void SetTodoEnable(bool TodoEnable ) { m_TodoEnable=TodoEnable; };
+	void SetTodoBitmapName(const std::string& TodoBitmapName ) { m_TodoBitmapName=TodoBitmapName; };
+	void SetTodoBitmapMargins(RECT TodoBitmapMargins) { m_TodoBitmapMargins=TodoBitmapMargins; };
+	void SetTodoTextMargins(RECT TodoTextMargins) { m_TodoTextMargins=TodoTextMargins; };
+	void SetTodoX(int TodoX ) { m_TodoX=TodoX; };
+	void SetTodoY(int TodoY ) { m_TodoY=TodoY; };
+	void SetTodoW(int TodoW ) { m_TodoW=TodoW; };
+	void SetTodoFont(const std::string& TodoFont ) { m_TodoFont=TodoFont; };
+	void SetTodoFontColor(COLORREF TodoFontColor ) { m_TodoFontColor=TodoFontColor; };
+	void SetTodoSeparation(int TodoSeparation) { m_TodoSeparation=TodoSeparation; };
+	void SetTodoItemBitmapName(const std::string& TodoItemBitmapName) { m_TodoItemBitmapName=TodoItemBitmapName; };
+	void SetTodoItemOffset(POINT TodoItemOffset) { m_TodoItemOffset=TodoItemOffset; };
+	void SetTodoItemAlign(CRasterizer::ALIGN TodoItemAlign) { m_TodoItemAlign=TodoItemAlign; };
+
+	// MessageBox
+    const std::string& GetMessageBoxBitmapName() { return m_MessageBoxBitmapName; };
+	RECT GetMessageBoxBitmapMargins() { return m_MessageBoxBitmapMargins; };
+	RECT GetMessageBoxTextMargins() { return m_MessageBoxTextMargins; };
+    const std::string& GetMessageBoxFont() { return m_MessageBoxFont; };
+	COLORREF GetMessageBoxFontColor() { return m_MessageBoxFontColor; };
+	int GetMessageBoxSeparation() { return m_MessageBoxSeparation; };
+	
+	void SetMessageBoxBitmapName(const std::string& MessageBoxBitmapName ) { m_MessageBoxBitmapName=MessageBoxBitmapName; };
+	void SetMessageBoxBitmapMargins(RECT MessageBoxBitmapMargins) { m_MessageBoxBitmapMargins=MessageBoxBitmapMargins; };
+	void SetMessageBoxTextMargins(RECT MessageBoxTextMargins) { m_MessageBoxTextMargins=MessageBoxTextMargins; };
+	void SetMessageBoxFont(const std::string& MessageBoxFont ) { m_MessageBoxFont=MessageBoxFont; };
+	void SetMessageBoxFontColor(COLORREF MessageBoxFontColor ) { m_MessageBoxFontColor=MessageBoxFontColor; };
+	void SetMessageBoxSeparation(int MessageBoxSeparation) { m_MessageBoxSeparation=MessageBoxSeparation; };
 
 	// Server
 	UINT GetServerFrequency() { return m_ServerFrequency; };
@@ -460,6 +554,9 @@ public:
 	const std::list<Profile*>& GetAllProfiles();
 
 	static void AddPath(std::string& filename);
+
+	static CConfig c_Config;
+
 private:
 	void GetIniTime(const std::string& filename);
 	bool CompareIniTime(const std::string& filename);
@@ -471,6 +568,8 @@ private:
 	CRasterizer::TYPE ConvertRasterizer(const char* String);
 	const char* ConvertRasterizer(CRasterizer::TYPE Type);
 	void SeparateMonths();
+
+	COLORREF ParseColor(const char* color);
 
 	std::list<Profile*> m_Profiles;
 
@@ -510,6 +609,7 @@ private:
 	bool m_NativeTransparency;
 	bool m_RefreshOnResolutionChange;
 	bool m_ShowOutlookAppointments;
+	bool m_GetOutlookAppointmentsAtStartup;
 	int m_OutlookUpdate;
 	bool m_Week1HasJanuary1st;
 	std::string m_MonthNames;
@@ -517,11 +617,24 @@ private:
 	int m_RefreshDelay;
 	std::string m_EventExecute;
 	bool m_EventToolTips;
-	bool m_EventMessageBox;
-	BG_COPY_MODE m_BGCopyMode;
 	std::string m_CurrentProfile;
+	UINT m_ToolTipMaxWidth;
+	UINT m_MessageBoxMaxWidth;
+	bool m_ShowAllEvents;
+	bool m_ShowSingleEvent;
+	UINT m_SnoozeTime;
+	UINT m_PreshowTime;
+	bool m_ShowTrayIcon;
+	std::string m_TrayExecuteL;
+	std::string m_TrayExecuteR;
+	std::string m_TrayExecuteM;
+	std::string m_TrayExecuteDL;
+	std::string m_TrayExecuteDR;
+	std::string m_TrayExecuteDM;
 
-	UINT m_ToolTipMaxWidth;		// TODO: Add GUI for this
+	std::string m_OutlookProfile;
+	bool m_OutlookLabels;
+	bool m_OutlookKeepAlive;
 
 	// Hotkey settings
 	DWORD m_HideHotkey;
@@ -538,6 +651,7 @@ private:
 	DWORD m_CurrentHotkey;
 	DWORD m_AllHotkey;
 	DWORD m_OutlookHotkey;
+	DWORD m_TodoHotkey;
 
 	// Server settings
 	bool m_ServerEnable;
@@ -550,7 +664,7 @@ private:
 
 	// Skinning settings
 	std::string m_BackgroundBitmapName;	// Name of the background picture
-	CBackground::MODE m_BackgroundMode;
+	BACKGROUND_MODE m_BackgroundMode;
 	COLORREF m_BackgroundSolidColor;
 	bool m_BackgroundBevel;
 
@@ -629,6 +743,27 @@ private:
 	COLORREF m_ToolTipBGColor;
 	std::string m_ToolTipFont;
 	bool m_TooltipSeparator;
+
+	bool m_TodoEnable;
+	std::string m_TodoBitmapName;
+	RECT m_TodoBitmapMargins;
+	RECT m_TodoTextMargins;
+	int m_TodoX;				// Position of the todos
+	int m_TodoY;
+	int m_TodoW;
+	COLORREF m_TodoFontColor;
+	std::string m_TodoFont;
+	int m_TodoSeparation;
+	std::string m_TodoItemBitmapName;
+	POINT m_TodoItemOffset;
+	CRasterizer::ALIGN m_TodoItemAlign;
+
+	std::string m_MessageBoxBitmapName;
+	RECT m_MessageBoxBitmapMargins;
+	RECT m_MessageBoxTextMargins;
+	COLORREF m_MessageBoxFontColor;
+	std::string m_MessageBoxFont;
+	int m_MessageBoxSeparation;
 };
 
 #endif

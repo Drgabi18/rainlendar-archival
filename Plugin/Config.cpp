@@ -16,9 +16,31 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Config.cpp,v 1.18 2003/10/04 14:48:25 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/Config.cpp,v 1.25 2004/04/24 11:17:36 rainy Exp $
 
   $Log: Config.cpp,v $
+  Revision 1.25  2004/04/24 11:17:36  rainy
+  Added outlook profiles.
+
+  Revision 1.24  2004/01/28 18:04:55  rainy
+  Added tray executes.
+
+  Revision 1.23  2004/01/25 09:59:27  rainy
+  Added new dialog position.
+
+  Revision 1.22  2004/01/10 15:16:36  rainy
+  Added tray and hotkey for todo.
+
+  Revision 1.21  2003/12/20 22:24:39  rainy
+  Added stuff for the message box.
+
+  Revision 1.20  2003/12/05 15:45:42  Rainy
+  Added Reset()
+
+  Revision 1.19  2003/10/27 17:36:51  Rainy
+  Config is now singleton.
+  Added todo stuff.
+
   Revision 1.18  2003/10/04 14:48:25  Rainy
   Added TooltipMaxWidth and priority for the profiles.
 
@@ -80,11 +102,18 @@
 #include "RainlendarDLL.h"
 #include "Config.h"
 
+CConfig CConfig::c_Config;
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
 CConfig::CConfig()
+{
+	Reset();
+}
+
+void CConfig::Reset()
 {
 	m_X=0;
 	m_Y=0;
@@ -93,28 +122,55 @@ CConfig::CConfig()
 	m_DisableHotkeys=false;
 	m_UseWindowName=false;
 	m_PollWallpaper=false;
-	m_Movable=false;
+	m_Movable=true;
 	m_MouseHide=false;
-	m_SnapEdges=false;
+	m_SnapEdges=true;
 	m_NativeTransparency=true;
 	m_RefreshOnResolutionChange=false;
 	m_RefreshDelay=100;
-	m_WindowPos=WINDOWPOS_ONBOTTOM;
+	m_WindowPos=WINDOWPOS_NORMAL;
 	m_CurrentProfile="Default";
-	m_BGCopyMode=BG_NORMAL;
-    m_ShowOutlookAppointments=false;
+
+	m_CurrentLanguage="";
+	m_CurrentSkin="Default";
+	m_CurrentSkinIni="Skin.ini";
+    
+	m_ShowOutlookAppointments=false;
     m_Week1HasJanuary1st=false;
-    m_TooltipSeparator=true;
     m_NegativeCoords=true;
 	m_OutlookUpdate=0;
+	m_MonthNames = "";
+	m_WeekdayNames = "";
+	m_EventExecute = "";
+	m_GetOutlookAppointmentsAtStartup = true;
+	m_ShowTrayIcon = true;
+
+	m_TrayExecuteL = "";
+	m_TrayExecuteR = "";
+	m_TrayExecuteM = "";
+	m_TrayExecuteDL = "!RainlendarToggle";
+	m_TrayExecuteDR = "";
+	m_TrayExecuteDM = "";
 	
+	m_OutlookProfile = "Outlook";
+	m_OutlookLabels = false;
+	m_OutlookKeepAlive = false;
+
+	m_MessageBoxMaxWidth = 0;
+	m_ShowAllEvents = true;
+	m_ShowSingleEvent = true;
+	m_SnoozeTime = 60;
+	m_PreshowTime = 0;
+	m_ToolTipMaxWidth = 0;
+
 	m_VerticalCount = 1;
 	m_HorizontalCount = 1;
 	m_PreviousMonths = 0;
 	m_StartFromJanuary = false;
 	m_RememberDialogPositions=false;
 
-	m_BackgroundMode=CBackground::MODE_TILE;
+	m_BackgroundBitmapName = "";
+	m_BackgroundMode=MODE_TILE;
 	m_BackgroundSolidColor=GetSysColor(COLOR_3DFACE);
 	m_BackgroundBevel=true;
 
@@ -123,6 +179,7 @@ CConfig::CConfig()
 	m_DaysY=0;
 	m_DaysW=100;
 	m_DaysH=100;
+	m_DaysBitmapName = "";
 	m_DaysNumOfComponents=1;
 	m_DaysAlign=CRasterizer::ALIGN_LEFT;
 	m_DaysRasterizer=CRasterizer::TYPE_NONE;
@@ -133,6 +190,7 @@ CConfig::CConfig()
 	m_DaysSeparation=0;
 
 	m_TodayEnable=false;
+	m_TodayBitmapName = "";
 	m_TodayAlign=CRasterizer::ALIGN_LEFT;
 	m_TodayNumOfComponents=1;
 	m_TodayRasterizer=CRasterizer::TYPE_NONE;
@@ -141,6 +199,7 @@ CConfig::CConfig()
 	m_TodaySeparation=0;
 
 	m_WeekdaysEnable=false;
+	m_WeekdaysBitmapName = "";
 	m_WeekdaysAlign=CRasterizer::ALIGN_LEFT;
 	m_WeekdaysRasterizer=CRasterizer::TYPE_NONE;
 	m_WeekdaysFont="-11/0/0/0/400/0/0/0/0/3/2/1/34/Arial";
@@ -148,6 +207,7 @@ CConfig::CConfig()
 	m_WeekdayNames = "SUN/MON/TUE/WED/THU/FRI/SAT";
 
 	m_MonthEnable=false;
+	m_MonthBitmapName = "";
 	m_MonthX=0;
 	m_MonthY=0;
 	m_MonthAlign=CRasterizer::ALIGN_LEFT;
@@ -157,6 +217,7 @@ CConfig::CConfig()
 	m_MonthNames="January/February/March/April/May/June/July/August/September/October/November/December";
 
 	m_YearEnable=false;
+	m_YearBitmapName = "";
 	m_YearX=0;
 	m_YearY=0;
 	m_YearAlign=CRasterizer::ALIGN_LEFT;
@@ -166,10 +227,10 @@ CConfig::CConfig()
 	m_YearSeparation=0;
 
 	m_EventEnable=false;
+	m_EventBitmapName = "";
 	m_EventAlign=CRasterizer::ALIGN_LEFT;
 	m_EventNumOfComponents=1;
 	m_EventToolTips=true;
-	m_EventMessageBox=true;
 	m_EventInCalendar=false;
 	m_EventRasterizer=CRasterizer::TYPE_NONE;
 	m_EventFont="-11/0/0/0/400/0/0/0/0/3/2/1/34/Arial";
@@ -179,6 +240,7 @@ CConfig::CConfig()
 	m_EventSeparation=0;
 		
 	m_WeekNumbersEnable = false;
+	m_WeekNumbersBitmapName = "";
 	m_WeekNumbersAlign = CRasterizer::ALIGN_LEFT;
 	m_WeekNumbersNumOfComponents = 10;
 	m_WeekNumbersRasterizer=CRasterizer::TYPE_NONE;
@@ -186,15 +248,39 @@ CConfig::CConfig()
 	m_WeekNumbersFontColor=0;
 	m_WeekNumbersSeparation=0;
 
+	m_TodoEnable = false;
+	m_TodoBitmapName = "";
+	m_TodoItemBitmapName = "";
+	m_TodoX = 0;
+	m_TodoY = 0;
+	m_TodoW = 200;
+	m_TodoFontColor = GetSysColor(COLOR_BTNTEXT);
+	m_TodoFont = "-11/0/0/0/400/0/0/0/0/3/2/1/34/Arial";
+	m_TodoBitmapMargins.left = m_TodoBitmapMargins.top = m_TodoBitmapMargins.right = m_TodoBitmapMargins.bottom = 0;
+	m_TodoTextMargins.left = m_TodoTextMargins.top = m_TodoTextMargins.right = m_TodoTextMargins.bottom = 8;
+	m_TodoSeparation = 5;
+	m_TodoItemOffset.x = m_TodoItemOffset.y = 0;
+	m_TodoItemAlign = CRasterizer::ALIGN_LEFT;
+
+	m_MessageBoxBitmapName = "";
+	m_MessageBoxBitmapMargins.left = m_MessageBoxBitmapMargins.top = m_MessageBoxBitmapMargins.right = m_MessageBoxBitmapMargins.bottom = 0;
+	m_MessageBoxTextMargins.left = m_MessageBoxTextMargins.top = m_MessageBoxTextMargins.right = m_MessageBoxTextMargins.bottom = 8;
+	m_MessageBoxFontColor = 0;
+	m_MessageBoxFont = "-17/0/0/0/800/0/0/0/0/3/2/1/34/Arial";
+	m_MessageBoxSeparation = 5;
+
 	m_ServerEnable = false;
 	m_ServerPort = 0;
 	m_ServerFrequency = 60;		// every hour
 	m_ServerStartup = false;
 	m_ServerSyncOnEdit = false;
+	m_ServerID = "";
+	m_ServerAddress = "";
 
 	m_ToolTipFontColor = GetSysColor(COLOR_INFOTEXT);
 	m_ToolTipBGColor = GetSysColor(COLOR_INFOBK);
 	m_ToolTipFont = "-11/0/0/0/400/0/0/0/0/3/2/1/34/Arial";
+	m_TooltipSeparator = true;
 
 	m_HideHotkey = 0;
 	m_ShowHotkey = 0;
@@ -210,8 +296,7 @@ CConfig::CConfig()
 	m_CurrentHotkey = 0;
 	m_AllHotkey = 0;
 	m_OutlookHotkey = 0;
-
-	m_ToolTipMaxWidth = 0;
+	m_TodoHotkey = 0;
 
 	for (int i = 0; i < DIALOG_LAST; i++)
 	{
@@ -260,12 +345,6 @@ void CConfig::GetIniTime(const std::string& filename)
 		GetFileTime(file, NULL, NULL, &m_WriteTime);
 		CloseHandle(file);
 	}
-	else
-	{
-		std::string err = "The ini-file not found: ";
-		err += filename;
-		THROW(err);
-	}
 }
 
 bool CConfig::CompareIniTime(const std::string& filename)
@@ -294,19 +373,23 @@ void CConfig::ReadConfig()
 	std::string INIPath;
 	INIPath = m_Path + "Rainlendar.ini";
 
+	Reset();
+
 	GetIniTime(INIPath);
 
 	ReadGeneralConfig(INIPath.c_str());
-	ReadSkinConfig(INIPath.c_str());
 
-	// Override the settings from the skin 
+	// Read the rest of the settings from the skin 
 	if (!m_CurrentSkin.empty() && !m_CurrentSkinIni.empty())
 	{
 		INIPath = m_SkinsPath + m_CurrentSkin + "/" + m_CurrentSkinIni;
-		ReadGeneralConfig(INIPath.c_str());
 		ReadSkinConfig(INIPath.c_str());
 		ReadProfiles(INIPath.c_str());
 	}
+
+	// DEBUG: Display some of the key settings
+	DebugLog("Hide=%i, Move=%i, Negative=%i, Hidden=%i, WinName=%i", m_MouseHide, m_Movable, m_NegativeCoords, m_StartHidden, m_UseWindowName);
+	DebugLog("Poll=%i, Transparency=%i, ResChange=%i, Outlook=%i, WinPos=%i", m_PollWallpaper, m_NativeTransparency, m_RefreshOnResolutionChange, m_ShowOutlookAppointments, m_WindowPos);
 }
 
 void CConfig::ReadGeneralConfig(const char* iniFile)
@@ -331,10 +414,43 @@ void CConfig::ReadGeneralConfig(const char* iniFile)
 	m_TooltipSeparator=(1==GetPrivateProfileInt( "Rainlendar", "TooltipSeparator", m_TooltipSeparator?1:0, iniFile))?true:false;
 	m_RefreshDelay=GetPrivateProfileInt( "Rainlendar", "RefreshDelay", m_RefreshDelay, iniFile);
 	m_WindowPos=(WINDOWPOS)GetPrivateProfileInt( "Rainlendar", "WindowPos", m_WindowPos, iniFile);
-	m_BGCopyMode=(BG_COPY_MODE)GetPrivateProfileInt( "Rainlendar", "BGCopyMode", m_BGCopyMode, iniFile);
 	m_OutlookUpdate=GetPrivateProfileInt( "Rainlendar", "OutlookUpdate", m_OutlookUpdate, iniFile);
 	m_RememberDialogPositions=(1==GetPrivateProfileInt( "Rainlendar", "RememberDialogPositions", m_RememberDialogPositions?1:0, iniFile))?true:false;
 	m_NegativeCoords=(1==GetPrivateProfileInt( "Rainlendar", "NegativeCoords", m_NegativeCoords?1:0, iniFile))?true:false;
+	m_GetOutlookAppointmentsAtStartup=(1==GetPrivateProfileInt( "Rainlendar", "GetOutlookAppointmentsAtStartup", m_GetOutlookAppointmentsAtStartup?1:0, iniFile))?true:false;
+	m_ShowTrayIcon=(1==GetPrivateProfileInt( "Rainlendar", "ShowTrayIcon", m_ShowTrayIcon?1:0, iniFile))?true:false;
+
+	if(GetPrivateProfileString( "Rainlendar", "TrayExecuteL", m_TrayExecuteL.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_TrayExecuteL=tmpSz;
+	}
+	if(GetPrivateProfileString( "Rainlendar", "TrayExecuteR", m_TrayExecuteR.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_TrayExecuteR=tmpSz;
+	}
+	if(GetPrivateProfileString( "Rainlendar", "TrayExecuteM", m_TrayExecuteM.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_TrayExecuteM=tmpSz;
+	}
+	if(GetPrivateProfileString( "Rainlendar", "TrayExecuteDL", m_TrayExecuteDL.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_TrayExecuteDL=tmpSz;
+	}
+	if(GetPrivateProfileString( "Rainlendar", "TrayExecuteDR", m_TrayExecuteDR.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_TrayExecuteDR=tmpSz;
+	}
+	if(GetPrivateProfileString( "Rainlendar", "TrayExecuteDM", m_TrayExecuteDM.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_TrayExecuteDM=tmpSz;
+	}
+
+	if(GetPrivateProfileString( "Rainlendar", "OutlookProfile", m_OutlookProfile.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_OutlookProfile=tmpSz;
+	}
+	m_OutlookLabels=(1==GetPrivateProfileInt( "Rainlendar", "OutlookLabels", m_OutlookLabels?1:0, iniFile))?true:false;
+	m_OutlookKeepAlive=(1==GetPrivateProfileInt( "Rainlendar", "OutlookKeepAlive", m_OutlookKeepAlive?1:0, iniFile))?true:false;
 
 	m_VerticalCount=GetPrivateProfileInt( "Rainlendar", "VerticalCount", m_VerticalCount, iniFile);
 	m_HorizontalCount=GetPrivateProfileInt( "Rainlendar", "HorizontalCount", m_HorizontalCount, iniFile);
@@ -355,6 +471,7 @@ void CConfig::ReadGeneralConfig(const char* iniFile)
 	m_CurrentHotkey=GetPrivateProfileInt( "Rainlendar", "CurrentHotkey", m_CurrentHotkey, iniFile);
 	m_AllHotkey=GetPrivateProfileInt( "Rainlendar", "AllHotkey", m_AllHotkey, iniFile);
 	m_OutlookHotkey=GetPrivateProfileInt( "Rainlendar", "OutlookHotkey", m_OutlookHotkey, iniFile);
+	m_TodoHotkey=GetPrivateProfileInt( "Rainlendar", "TodoHotkey", m_TodoHotkey, iniFile);
 
 	if(GetPrivateProfileString( "Rainlendar", "CurrentProfile", m_CurrentProfile.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
@@ -366,7 +483,6 @@ void CConfig::ReadGeneralConfig(const char* iniFile)
 		m_EventExecute=tmpSz;
 	}
 	m_EventToolTips=(1==GetPrivateProfileInt( "Rainlendar", "EventToolTips", m_EventToolTips?1:0, iniFile))?true:false;
-	m_EventMessageBox=(1==GetPrivateProfileInt( "Rainlendar", "EventMessageBox", m_EventMessageBox?1:0, iniFile))?true:false;
 
 	m_ServerEnable=(1==GetPrivateProfileInt( "Rainlendar", "ServerEnable", m_ServerEnable?1:0, iniFile))?true:false;
 	if(GetPrivateProfileString( "Rainlendar", "ServerAddress", m_ServerAddress.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
@@ -396,6 +512,16 @@ void CConfig::ReadGeneralConfig(const char* iniFile)
 	}
 	m_ToolTipMaxWidth=GetPrivateProfileInt( "Rainlendar", "ToolTipMaxWidth", m_ToolTipMaxWidth, iniFile);
 
+	m_TodoEnable=(1==GetPrivateProfileInt( "Rainlendar", "TodoEnable", m_TodoEnable?1:0, iniFile))?true:false;
+	m_TodoX=GetPrivateProfileInt( "Rainlendar", "TodoX", m_TodoX, iniFile);
+	m_TodoY=GetPrivateProfileInt( "Rainlendar", "TodoY", m_TodoY, iniFile);
+
+	m_MessageBoxMaxWidth=GetPrivateProfileInt( "Rainlendar", "MessageBoxMaxWidth", m_MessageBoxMaxWidth, iniFile);
+	m_SnoozeTime=GetPrivateProfileInt( "Rainlendar", "SnoozeTime", m_SnoozeTime, iniFile);
+	m_PreshowTime=GetPrivateProfileInt( "Rainlendar", "PreshowTime", m_PreshowTime, iniFile);
+	m_ShowAllEvents=(1==GetPrivateProfileInt( "Rainlendar", "ShowAllEvents", m_ShowAllEvents?1:0, iniFile))?true:false;
+	m_ShowSingleEvent=(1==GetPrivateProfileInt( "Rainlendar", "ShowSingleEvent", m_ShowSingleEvent?1:0, iniFile))?true:false;
+
 	// Read dialog positions
 	for (int i = 0; i < DIALOG_LAST; i++)
 	{
@@ -416,11 +542,11 @@ void CConfig::ReadSkinConfig(const char* iniFile)
 	{
 		m_BackgroundBitmapName=tmpSz;
 	}
-	m_BackgroundMode=(CBackground::MODE)GetPrivateProfileInt( "Rainlendar", "BackgroundMode", m_BackgroundMode, iniFile);
+	m_BackgroundMode=(BACKGROUND_MODE)GetPrivateProfileInt( "Rainlendar", "BackgroundMode", m_BackgroundMode, iniFile);
 	m_BackgroundBevel=(1==GetPrivateProfileInt( "Rainlendar", "BackgroundBevel", m_BackgroundBevel?1:0, iniFile))?true:false;
 	if(GetPrivateProfileString( "Rainlendar", "BackgroundSolidColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
-		sscanf(tmpSz, "%X", &m_BackgroundSolidColor);
+		m_BackgroundSolidColor = ParseColor(tmpSz);
 	}
 
 	// Day stuff
@@ -450,7 +576,7 @@ void CConfig::ReadSkinConfig(const char* iniFile)
 	}
 	if(GetPrivateProfileString( "Rainlendar", "DaysFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
-		sscanf(tmpSz, "%X", &m_DaysFontColor);
+		m_DaysFontColor = ParseColor(tmpSz);
 	}
 	m_DaysIgnoreToday=(1==GetPrivateProfileInt( "Rainlendar", "DaysIgnoreToday", m_DaysIgnoreToday?1:0, iniFile))?true:false;
 	m_DaysIgnoreEvent=(1==GetPrivateProfileInt( "Rainlendar", "DaysIgnoreEvent", m_DaysIgnoreEvent?1:0, iniFile))?true:false;
@@ -479,7 +605,7 @@ void CConfig::ReadSkinConfig(const char* iniFile)
 	}
 	if(GetPrivateProfileString( "Rainlendar", "TodayFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
-		sscanf(tmpSz, "%X", &m_TodayFontColor);
+		m_TodayFontColor = ParseColor(tmpSz);
 	}
 	m_TodaySeparation=GetPrivateProfileInt( "Rainlendar", "TodaySeparation", m_TodaySeparation, iniFile);
 
@@ -505,7 +631,7 @@ void CConfig::ReadSkinConfig(const char* iniFile)
 	}
 	if(GetPrivateProfileString( "Rainlendar", "WeekdaysFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
-		sscanf(tmpSz, "%X", &m_WeekdaysFontColor);
+		m_WeekdaysFontColor = ParseColor(tmpSz);
 	}
 	if(GetPrivateProfileString( "Rainlendar", "WeekdayNames", m_WeekdayNames.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
@@ -536,7 +662,7 @@ void CConfig::ReadSkinConfig(const char* iniFile)
 	}
 	if(GetPrivateProfileString( "Rainlendar", "MonthFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
-		sscanf(tmpSz, "%X", &m_MonthFontColor);
+		m_MonthFontColor = ParseColor(tmpSz);
 	}
 	if(GetPrivateProfileString( "Rainlendar", "MonthNames", m_MonthNames.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
@@ -566,7 +692,7 @@ void CConfig::ReadSkinConfig(const char* iniFile)
 	}
 	if(GetPrivateProfileString( "Rainlendar", "YearFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
-		sscanf(tmpSz, "%X", &m_YearFontColor);
+		m_YearFontColor = ParseColor(tmpSz);
 	}
 	m_YearSeparation=GetPrivateProfileInt( "Rainlendar", "YearSeparation", m_YearSeparation, iniFile);
 
@@ -592,7 +718,7 @@ void CConfig::ReadSkinConfig(const char* iniFile)
 	}
 	if(GetPrivateProfileString( "Rainlendar", "EventFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
-		sscanf(tmpSz, "%X", &m_EventFontColor);
+		m_EventFontColor = ParseColor(tmpSz);
 	}
 	m_EventInCalendar=(1==GetPrivateProfileInt( "Rainlendar", "EventInCalendar", m_EventInCalendar?1:0, iniFile))?true:false;
 	if(GetPrivateProfileString( "Rainlendar", "EventFont2", m_EventFont2.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
@@ -601,7 +727,7 @@ void CConfig::ReadSkinConfig(const char* iniFile)
 	}
 	if(GetPrivateProfileString( "Rainlendar", "EventFontColor2", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
-		sscanf(tmpSz, "%X", &m_EventFontColor2);
+		m_EventFontColor2 = ParseColor(tmpSz);
 	}
 	m_EventSeparation=GetPrivateProfileInt( "Rainlendar", "EventSeparation", m_EventSeparation, iniFile);
 
@@ -627,23 +753,80 @@ void CConfig::ReadSkinConfig(const char* iniFile)
 	}
 	if(GetPrivateProfileString( "Rainlendar", "WeekNumbersFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
-		sscanf(tmpSz, "%X", &m_WeekNumbersFontColor);
+		m_WeekNumbersFontColor = ParseColor(tmpSz);
 	}
 	m_WeekNumbersSeparation=GetPrivateProfileInt( "Rainlendar", "WeekNumbersSeparation", m_WeekNumbersSeparation, iniFile);
 
 	// ToolTip stuff
 	if(GetPrivateProfileString( "Rainlendar", "ToolTipFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
-		sscanf(tmpSz, "%X", &m_ToolTipFontColor);
+		m_ToolTipFontColor = ParseColor(tmpSz);
 	}
 	if(GetPrivateProfileString( "Rainlendar", "ToolTipBGColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
-		sscanf(tmpSz, "%X", &m_ToolTipBGColor);
+		m_ToolTipBGColor = ParseColor(tmpSz);
 	}
 	if(GetPrivateProfileString( "Rainlendar", "ToolTipFont", m_ToolTipFont.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 	{
 		m_ToolTipFont=tmpSz;
 	}
+
+	// Todo stuff
+	if(GetPrivateProfileString( "Rainlendar", "TodoBitmapName", m_TodoBitmapName.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_TodoBitmapName=tmpSz;
+	}
+	if(GetPrivateProfileString( "Rainlendar", "TodoBitmapMargins", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		sscanf(tmpSz, "%i, %i, %i, %i", &m_TodoBitmapMargins.left, &m_TodoBitmapMargins.top, &m_TodoBitmapMargins.right, &m_TodoBitmapMargins.bottom);
+	}
+	if(GetPrivateProfileString( "Rainlendar", "TodoTextMargins", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		sscanf(tmpSz, "%i, %i, %i, %i", &m_TodoTextMargins.left, &m_TodoTextMargins.top, &m_TodoTextMargins.right, &m_TodoTextMargins.bottom);
+	}
+	m_TodoW=GetPrivateProfileInt( "Rainlendar", "TodoW", m_TodoW, iniFile);
+	if(GetPrivateProfileString( "Rainlendar", "TodoFont", m_TodoFont.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_TodoFont=tmpSz;
+	}
+	if(GetPrivateProfileString( "Rainlendar", "TodoFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_TodoFontColor = ParseColor(tmpSz);
+	}
+	m_TodoItemAlign=(CRasterizer::ALIGN)GetPrivateProfileInt( "Rainlendar", "TodoItemAlign", m_TodoItemAlign, iniFile);
+	if(GetPrivateProfileString( "Rainlendar", "TodoItemOffset", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		sscanf(tmpSz, "%i, %i", &m_TodoItemOffset.x, &m_TodoItemOffset.y);
+	}
+	m_TodoSeparation=GetPrivateProfileInt( "Rainlendar", "TodoSeparation", m_TodoSeparation, iniFile);
+	if(GetPrivateProfileString( "Rainlendar", "TodoItemBitmapName", m_TodoItemBitmapName.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_TodoItemBitmapName=tmpSz;
+	}
+
+	// MessageBox stuff
+	if(GetPrivateProfileString( "Rainlendar", "MessageBoxBitmapName", m_MessageBoxBitmapName.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_MessageBoxBitmapName=tmpSz;
+	}
+	if(GetPrivateProfileString( "Rainlendar", "MessageBoxBitmapMargins", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		sscanf(tmpSz, "%i, %i, %i, %i", &m_MessageBoxBitmapMargins.left, &m_MessageBoxBitmapMargins.top, &m_MessageBoxBitmapMargins.right, &m_MessageBoxBitmapMargins.bottom);
+	}
+	if(GetPrivateProfileString( "Rainlendar", "MessageBoxTextMargins", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		sscanf(tmpSz, "%i, %i, %i, %i", &m_MessageBoxTextMargins.left, &m_MessageBoxTextMargins.top, &m_MessageBoxTextMargins.right, &m_MessageBoxTextMargins.bottom);
+	}
+	if(GetPrivateProfileString( "Rainlendar", "MessageBoxFont", m_MessageBoxFont.c_str(), tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_MessageBoxFont=tmpSz;
+	}
+	if(GetPrivateProfileString( "Rainlendar", "MessageBoxFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
+	{
+		m_MessageBoxFontColor = ParseColor(tmpSz);
+	}
+	m_MessageBoxSeparation=GetPrivateProfileInt( "Rainlendar", "MessageBoxSeparation", m_MessageBoxSeparation, iniFile);
+
 
 	SeparateMonths();
 }
@@ -687,7 +870,7 @@ void CConfig::ReadProfiles(const char* iniFile)
 
 			if(GetPrivateProfileString(pos, "EventFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 			{
-				sscanf(tmpSz, "%X", &profile->fontColor);
+				profile->fontColor = ParseColor(tmpSz);
 			}
 			else
 			{
@@ -696,7 +879,7 @@ void CConfig::ReadProfiles(const char* iniFile)
 
 			if(GetPrivateProfileString(pos, "EventFontColor2", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 			{
-				sscanf(tmpSz, "%X", &profile->fontColor2);
+				profile->fontColor2 = ParseColor(tmpSz);
 			}
 			else
 			{
@@ -705,7 +888,7 @@ void CConfig::ReadProfiles(const char* iniFile)
 
 			if(GetPrivateProfileString(pos, "ToolTipFontColor", "", tmpSz, MAX_LINE_LENGTH, iniFile) > 0) 
 			{
-				sscanf(tmpSz, "%X", &profile->toolTipColor);
+				profile->toolTipColor = ParseColor(tmpSz);
 			}
 			else
 			{
@@ -763,6 +946,24 @@ void CConfig::ReadProfiles(const char* iniFile)
 	delete [] profiles;
 }
 
+COLORREF CConfig::ParseColor(const char* color)
+{
+	char buffer[MAX_LINE_LENGTH];
+	COLORREF col;
+
+	if (!CRainlendar::GetDummyLitestep()) 
+	{
+		VarExpansion(buffer, color);
+		sscanf(buffer, "%X", &col);
+	}
+	else
+	{
+		sscanf(color, "%X", &col);
+	}
+
+	return col;
+}
+
 void CConfig::AddPath(std::string& filename)
 {
 	char buffer[MAX_LINE_LENGTH];
@@ -776,11 +977,11 @@ void CConfig::AddPath(std::string& filename)
 	// Check for absolute path
 	if(-1 == filename.find(':')) 
 	{
-		if (!CCalendarWindow::c_Config.GetCurrentSkin().empty())
+		if (!CConfig::Instance().GetCurrentSkin().empty())
 		{
-			filename.insert(0, CCalendarWindow::c_Config.GetCurrentSkin() + "\\");
+			filename.insert(0, CConfig::Instance().GetCurrentSkin() + "\\");
 		}
-		filename.insert(0, CCalendarWindow::c_Config.GetSkinsPath());
+		filename.insert(0, CConfig::Instance().GetSkinsPath());
 	}
 }
 
@@ -833,9 +1034,27 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			sprintf(tmpSz, "%i", m_Y);
 			WritePrivateProfileString( "Rainlendar", "Y", tmpSz, INIPath.c_str() );
 		}
+		if (flags & WRITE_TODOPOS)
+		{
+			sprintf(tmpSz, "%i", m_TodoX);
+			WritePrivateProfileString( "Rainlendar", "TodoX", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_TodoY);
+			WritePrivateProfileString( "Rainlendar", "TodoY", tmpSz, INIPath.c_str() );
+		}
 		if (flags & WRITE_PROFILE)
 		{
 			WritePrivateProfileString( "Rainlendar", "CurrentProfile", m_CurrentProfile.c_str(), INIPath.c_str() );
+		}
+		if (flags & WRITE_DIALOG_POS)
+		{
+			// Write dialog positions
+			for (int i = 0; i < DIALOG_LAST; i++)
+			{
+				char title[256];
+				sprintf(title, "DialogPos%i", i);
+				sprintf(tmpSz, "%i,%i", m_DialogPos[i].x, m_DialogPos[i].y);
+				WritePrivateProfileString( "Rainlendar", title, tmpSz, INIPath.c_str() );
+			}
 		}
 		if ((flags & WRITE_FULL) == WRITE_FULL)
 		{
@@ -871,15 +1090,35 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			WritePrivateProfileString( "Rainlendar", "RefreshDelay", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_WindowPos);
 			WritePrivateProfileString( "Rainlendar", "WindowPos", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_ShowTrayIcon);
+			WritePrivateProfileString( "Rainlendar", "ShowTrayIcon", tmpSz, INIPath.c_str() );
 			WritePrivateProfileString( "Rainlendar", "EventExecute", m_EventExecute.c_str(), INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_EventToolTips);
 			WritePrivateProfileString( "Rainlendar", "EventToolTips", tmpSz, INIPath.c_str() );
-			sprintf(tmpSz, "%i", m_EventMessageBox);
-			WritePrivateProfileString( "Rainlendar", "EventMessageBox", tmpSz, INIPath.c_str() );
-			sprintf(tmpSz, "%i", m_BGCopyMode);
-			WritePrivateProfileString( "Rainlendar", "BGCopyMode", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_OutlookUpdate);
 			WritePrivateProfileString( "Rainlendar", "OutlookUpdate", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_GetOutlookAppointmentsAtStartup);
+			WritePrivateProfileString( "Rainlendar", "GetOutlookAppointmentsAtStartup", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_ToolTipMaxWidth);
+			WritePrivateProfileString( "Rainlendar", "ToolTipMaxWidth", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_MessageBoxMaxWidth);
+			WritePrivateProfileString( "Rainlendar", "MessageBoxMaxWidth", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_ShowAllEvents);
+			WritePrivateProfileString( "Rainlendar", "ShowAllEvents", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_ShowSingleEvent);
+			WritePrivateProfileString( "Rainlendar", "ShowSingleEvent", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_PreshowTime);
+			WritePrivateProfileString( "Rainlendar", "PreshowTime", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_SnoozeTime);
+			WritePrivateProfileString( "Rainlendar", "SnoozeTime", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_TodoEnable);
+			WritePrivateProfileString( "Rainlendar", "TodoEnable", tmpSz, INIPath.c_str() );
+
+			WritePrivateProfileString( "Rainlendar", "OutlookProfile", m_OutlookProfile.c_str(), INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_OutlookLabels);
+			WritePrivateProfileString( "Rainlendar", "OutlookLabels", tmpSz, INIPath.c_str() );
+			sprintf(tmpSz, "%i", m_OutlookKeepAlive);
+			WritePrivateProfileString( "Rainlendar", "OutlookKeepAlive", tmpSz, INIPath.c_str() );
 
 			sprintf(tmpSz, "%i", m_VerticalCount);
 			WritePrivateProfileString( "Rainlendar", "VerticalCount", tmpSz, INIPath.c_str() );
@@ -933,15 +1172,8 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 			WritePrivateProfileString( "Rainlendar", "AllHotkey", tmpSz, INIPath.c_str() );
 			sprintf(tmpSz, "%i", m_OutlookHotkey);
 			WritePrivateProfileString( "Rainlendar", "OutlookHotkey", tmpSz, INIPath.c_str() );
-
-			// Write dialog positions
-			for (int i = 0; i < DIALOG_LAST; i++)
-			{
-				char title[256];
-				sprintf(title, "DialogPos%i", i);
-				sprintf(tmpSz, "%i,%i", m_DialogPos[i].x, m_DialogPos[i].y);
-				WritePrivateProfileString( "Rainlendar", title, tmpSz, INIPath.c_str() );
-			}
+			sprintf(tmpSz, "%i", m_TodoHotkey);
+			WritePrivateProfileString( "Rainlendar", "TodoHotkey", tmpSz, INIPath.c_str() );
 		}
 	}
 
@@ -1079,18 +1311,49 @@ void CConfig::WriteConfig(WRITE_FLAGS flags)
 		sprintf(tmpSz, "%i", m_WeekNumbersSeparation);
 		WritePrivateProfileString( "Rainlendar", "WeekNumbersSeparation", tmpSz, INIPath.c_str() );
 
+		// Tooltip
 		sprintf(tmpSz, "%X", m_ToolTipFontColor);
 		WritePrivateProfileString( "Rainlendar", "ToolTipFontColor", tmpSz, INIPath.c_str() );
 		sprintf(tmpSz, "%X", m_ToolTipBGColor);
 		WritePrivateProfileString( "Rainlendar", "ToolTipBGColor", tmpSz, INIPath.c_str() );
 		WritePrivateProfileString( "Rainlendar", "ToolTipFont", m_ToolTipFont.c_str(), INIPath.c_str() );
+
+		// Todo stuff
+		WritePrivateProfileString( "Rainlendar", "TodoBitmapName", m_TodoBitmapName.c_str(), INIPath.c_str() );
+		sprintf(tmpSz, "%i, %i, %i, %i", m_TodoBitmapMargins.left, m_TodoBitmapMargins.top, m_TodoBitmapMargins.right, m_TodoBitmapMargins.bottom);
+		WritePrivateProfileString( "Rainlendar", "TodoBitmapMargins", tmpSz, INIPath.c_str() );
+		sprintf(tmpSz, "%i, %i, %i, %i", m_TodoTextMargins.left, m_TodoTextMargins.top, m_TodoTextMargins.right, m_TodoTextMargins.bottom);
+		WritePrivateProfileString( "Rainlendar", "TodoTextMargins", tmpSz, INIPath.c_str() );
+		sprintf(tmpSz, "%i", m_TodoW);
+		WritePrivateProfileString( "Rainlendar", "TodoW", tmpSz, INIPath.c_str() );
+		WritePrivateProfileString( "Rainlendar", "TodoFont", m_TodoFont.c_str(), INIPath.c_str() );
+		sprintf(tmpSz, "%X", m_TodoFontColor);
+		WritePrivateProfileString( "Rainlendar", "TodoFontColor", tmpSz, INIPath.c_str() );
+		WritePrivateProfileString( "Rainlendar", "TodoItemBitmapName", m_TodoItemBitmapName.c_str(), INIPath.c_str() );
+		sprintf(tmpSz, "%i", m_TodoSeparation);
+		WritePrivateProfileString( "Rainlendar", "TodoSeparation", tmpSz, INIPath.c_str() );
+		sprintf(tmpSz, "%i, %i", m_TodoItemOffset.x, m_TodoItemOffset.y);
+		WritePrivateProfileString( "Rainlendar", "TodoItemOffset", tmpSz, INIPath.c_str() );
+		sprintf(tmpSz, "%i", m_TodoItemAlign);
+		WritePrivateProfileString( "Rainlendar", "TodoItemAlign", tmpSz, INIPath.c_str() );
+
+		// MessageBox stuff
+		WritePrivateProfileString( "Rainlendar", "MessageBoxBitmapName", m_MessageBoxBitmapName.c_str(), INIPath.c_str() );
+		sprintf(tmpSz, "%i, %i, %i, %i", m_MessageBoxBitmapMargins.left, m_MessageBoxBitmapMargins.top, m_MessageBoxBitmapMargins.right, m_MessageBoxBitmapMargins.bottom);
+		WritePrivateProfileString( "Rainlendar", "MessageBoxBitmapMargins", tmpSz, INIPath.c_str() );
+		sprintf(tmpSz, "%i, %i, %i, %i", m_MessageBoxTextMargins.left, m_MessageBoxTextMargins.top, m_MessageBoxTextMargins.right, m_MessageBoxTextMargins.bottom);
+		WritePrivateProfileString( "Rainlendar", "MessageBoxTextMargins", tmpSz, INIPath.c_str() );
+		WritePrivateProfileString( "Rainlendar", "MessageBoxFont", m_MessageBoxFont.c_str(), INIPath.c_str() );
+		sprintf(tmpSz, "%X", m_MessageBoxFontColor);
+		WritePrivateProfileString( "Rainlendar", "MessageBoxFontColor", tmpSz, INIPath.c_str() );
+		sprintf(tmpSz, "%i", m_MessageBoxSeparation);
+		WritePrivateProfileString( "Rainlendar", "MessageBoxSeparation", tmpSz, INIPath.c_str() );
 	}
 
 	WritePrivateProfileString( NULL, NULL, NULL, INIPath.c_str() );	// FLUSH
 
 	GetIniTime(INIPath);
 }
-
 
 /* 
 ** ConvertRasterizer

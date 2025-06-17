@@ -16,9 +16,22 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: \\\\RAINBOX\\cvsroot/Rainlendar/Plugin/RasterizerFont.cpp,v 1.9 2002/11/25 17:01:29 rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/RasterizerFont.cpp,v 1.13 2004/01/28 18:07:03 rainy Exp $
 
   $Log: RasterizerFont.cpp,v $
+  Revision 1.13  2004/01/28 18:07:03  rainy
+  Multiline text is not clipped.
+
+  Revision 1.12  2003/12/20 22:19:06  rainy
+  Changed BYTEs to DWORDs.
+  Prefix is not included in the rect calculations.
+
+  Revision 1.11  2003/12/05 15:47:11  Rainy
+  No prefix in todos
+
+  Revision 1.10  2003/10/27 17:39:13  Rainy
+  Separated drawing so that it can be used outside this class.
+
   Revision 1.9  2002/11/25 17:01:29  rainy
   The buffers are now CImages instead of HBITMAPs.
 
@@ -55,8 +68,8 @@
 #include "Error.h"
 #include "Config.h"
 
-CImage CRasterizerFont::m_ColorBuffer;
-CImage CRasterizerFont::m_AlphaBuffer;
+CImage CRasterizerFont::c_ColorBuffer;
+CImage CRasterizerFont::c_AlphaBuffer;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -132,14 +145,14 @@ HFONT CRasterizerFont::CreateFont(const std::string& FontName)
 	int nEscapement;
 	int nOrientation; 
 	int nWeight;
-	BYTE bItalic; 
-	BYTE bUnderline;
-	BYTE cStrikeOut; 
-	BYTE nCharSet;
-	BYTE nOutPrecision;
-	BYTE nClipPrecision; 
-	BYTE nQuality;
-	BYTE nPitchAndFamily;
+	DWORD bItalic; 
+	DWORD bUnderline;
+	DWORD cStrikeOut; 
+	DWORD nCharSet;
+	DWORD nOutPrecision;
+	DWORD nClipPrecision; 
+	DWORD nQuality;
+	DWORD nPitchAndFamily;
 
 	sscanf(FontName.c_str(), "%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i/%i", 
 					&nHeight, &nWidth, &nEscapement, &nOrientation, &nWeight,
@@ -178,11 +191,43 @@ HFONT CRasterizerFont::CreateFont(const std::string& FontName)
 */
 void CRasterizerFont::UpdateDimensions(const char* defaultString)
 {
+	RECT rect = {0, 0, 0, 0};
+
+	m_Width = 0;
+	m_Height = 0;
+
+	if (defaultString)
+	{
+		GetTextSize(defaultString, &rect, false);
+	
+		m_Width = rect.right - rect.left;
+		m_Height = rect.bottom - rect.top;
+	}
+	else
+	{
+		// Loop all strings and find the largest
+		for (int i = 0; i < m_StringTable.size(); i++)
+		{
+			GetTextSize(m_StringTable[i].c_str(), &rect, false);
+
+			m_Width = max(rect.right - rect.left, m_Width);
+			m_Height = max(rect.bottom - rect.top, m_Height);
+		}
+	}
+}
+
+/* 
+** GetTextSize
+**
+** Calculates the dimensions of the given text
+**
+*/
+void CRasterizerFont::GetTextSize(const char* text, RECT* rect, bool multiline)
+{
 	HWND Desktop;
 	HDC DDC;
 	HDC tmpDC;
 	HFONT OldFont;
-	RECT Rect = {0, 0, 0, 0};
 
 	Desktop=GetDesktopWindow();
 	if(Desktop==NULL) THROW(ERR_TEXTDIMENSIONS);
@@ -196,27 +241,13 @@ void CRasterizerFont::UpdateDimensions(const char* defaultString)
 
 	OldFont = (HFONT)SelectObject(tmpDC, m_Font);
 
-	m_Width = 0;
-	m_Height = 0;
+	UINT format = DT_CALCRECT | DT_SINGLELINE | DT_NOPREFIX;
+	if (multiline)
+	{
+		format = DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX;
+	}
 
-	if (defaultString)
-	{
-		DrawText(tmpDC, defaultString, strlen(defaultString), &Rect, DT_CALCRECT | DT_SINGLELINE);
-	
-		m_Width = Rect.right - Rect.left;
-		m_Height = Rect.bottom - Rect.top;
-	}
-	else
-	{
-		// Loop all strings and find the largest
-		for (int i = 0; i < m_StringTable.size(); i++)
-		{
-			DrawText(tmpDC, m_StringTable[i].c_str(), m_StringTable[i].size(), &Rect, DT_CALCRECT | DT_SINGLELINE);
-		
-			m_Width = max(Rect.right - Rect.left, m_Width);
-			m_Height = max(Rect.bottom - Rect.top, m_Height);
-		}
-	}
+	DrawText(tmpDC, text, strlen(text), rect, format);
 
 	SelectObject(tmpDC, OldFont);
 	DeleteDC(tmpDC);
@@ -230,11 +261,33 @@ void CRasterizerFont::UpdateDimensions(const char* defaultString)
 */
 void CRasterizerFont::Paint(CImage& background, int X, int Y, int W, int H, int Index)
 {
+	char tmpSz[16];
+	const char* text = NULL;
+	if(m_StringTable.empty()) 
+	{
+		sprintf(tmpSz, "%i", Index);
+		text = tmpSz;
+	} 
+	else 
+	{
+		text = m_StringTable[Index].c_str();
+	}
+
+	WriteText(background, X, Y, W, H, text, false);
+}
+
+/* 
+** DrawText
+**
+** Draws the actual text
+**
+*/
+void CRasterizerFont::WriteText(CImage& background, int X, int Y, int W, int H, const char* text, bool multiline)
+{
 	HFONT oldFont;
 	HBITMAP oldBitmap;
 	UINT format = 0;
 	RECT rect = { X, Y, X + W, Y + H };
-	char tmpSz[16];
 
 	// Set the alignment
 	switch (m_Align & 0x0F)
@@ -267,7 +320,14 @@ void CRasterizerFont::Paint(CImage& background, int X, int Y, int W, int H, int 
 		break;
 	};
 
-	format |= DT_NOCLIP | DT_SINGLELINE;
+	if (multiline)
+	{
+		format |= DT_NOCLIP | DT_WORDBREAK | DT_NOPREFIX;
+	}
+	else
+	{
+		format |= DT_NOCLIP | DT_SINGLELINE | DT_NOPREFIX; 
+	}
 
 	HDC dc = CreateCompatibleDC(NULL);
 	oldBitmap = (HBITMAP)SelectObject(dc, background.GetBitmap());
@@ -283,25 +343,14 @@ void CRasterizerFont::Paint(CImage& background, int X, int Y, int W, int H, int 
 		SetTextColor(dc, m_Color);
 	}
 
-	const char* text = NULL;
-	if(m_StringTable.empty()) 
-	{
-		sprintf(tmpSz, "%i", Index);
-		text = tmpSz;
-	} 
-	else 
-	{
-		text = m_StringTable[Index].c_str();
-	}
-
-	if (CCalendarWindow::Is2k() && CCalendarWindow::c_Config.GetNativeTransparency())
+	if (CCalendarWindow::Is2k() && CConfig::Instance().GetNativeTransparency())
 	{
 		CreateBuffers(background.GetWidth(), background.GetHeight());
 
-		SelectObject(dc, m_ColorBuffer.GetBitmap());
+		SelectObject(dc, c_ColorBuffer.GetBitmap());
 		DrawText(dc, text, strlen(text), &rect, format);
 		
-		SelectObject(dc, m_AlphaBuffer.GetBitmap());
+		SelectObject(dc, c_AlphaBuffer.GetBitmap());
 		SetTextColor(dc, RGB(255, 255, 255));
 		DrawText(dc, text, strlen(text), &rect, format);
 	}
@@ -319,22 +368,22 @@ void CRasterizerFont::Paint(CImage& background, int X, int Y, int W, int H, int 
 void CRasterizerFont::CreateBuffers(int width, int height)
 {
 	// We need to draw the text to another bitmap for the alpha
-	if (m_AlphaBuffer.GetBitmap() == NULL || m_ColorBuffer.GetBitmap() == NULL)
+	if (c_AlphaBuffer.GetBitmap() == NULL || c_ColorBuffer.GetBitmap() == NULL)
 	{
-		m_AlphaBuffer.Create(width, height, 255);
-		m_ColorBuffer.Create(width, height, 255);
+		c_AlphaBuffer.Create(width, height, 255);
+		c_ColorBuffer.Create(width, height, 255);
 
 		HDC dc = CreateCompatibleDC(NULL);
 		RECT r = { 0, 0, width, height };
 		HBRUSH brush;
 
 		brush = CreateSolidBrush(RGB(0, 0, 0));
-		HBITMAP oldBitmap = (HBITMAP)SelectObject(dc, m_AlphaBuffer.GetBitmap());
+		HBITMAP oldBitmap = (HBITMAP)SelectObject(dc, c_AlphaBuffer.GetBitmap());
 		FillRect(dc, &r, brush);
 		DeleteObject(brush);
 
 		brush = CreateSolidBrush(RGB(128, 128, 128));
-		SelectObject(dc, m_ColorBuffer.GetBitmap());
+		SelectObject(dc, c_ColorBuffer.GetBitmap());
 		FillRect(dc, &r, brush);
 		DeleteObject(brush);
 

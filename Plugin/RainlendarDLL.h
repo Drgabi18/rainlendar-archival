@@ -16,9 +16,24 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/RainlendarDLL.h,v 1.13 2003/10/04 14:52:18 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/RainlendarDLL.h,v 1.18 2004/01/28 18:08:14 rainy Exp $
 
   $Log: RainlendarDLL.h,v $
+  Revision 1.18  2004/01/28 18:08:14  rainy
+  New version.
+
+  Revision 1.17  2004/01/25 10:01:47  rainy
+  Added new bangs.
+
+  Revision 1.16  2004/01/10 15:13:21  rainy
+  Changed Toggle, Show and Hide to affect also the Todo window.
+
+  Revision 1.15  2003/10/27 19:51:29  Rainy
+  RefreshWindow is no more.
+
+  Revision 1.14  2003/10/27 17:38:32  Rainy
+  Removed wharf support.
+
   Revision 1.13  2003/10/04 14:52:18  Rainy
   version 0.18
 
@@ -82,7 +97,7 @@
 #define END_MESSAGEPROC } return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 #define APPNAME "Rainlendar"
-#define VERSION "0.18"
+#define VERSION "0.19.3"
 
 #define DLLDECL __declspec( dllexport )
 
@@ -97,9 +112,15 @@ void RainlendarShowNext(HWND caller, const char* arg);
 void RainlendarShowPrev(HWND caller, const char* arg);
 void RainlendarShowCurrent(HWND caller, const char* arg);
 void RainlendarShowMonth(HWND caller, const char* arg);
-void RainlendarLsBoxHook(HWND caller, const char* arg);
+void RainlendarLsBoxHook(HWND, const char* arg);
 void RainlendarMove(HWND caller, const char* arg);
 void RainlendarZPos(HWND caller, const char* arg);
+void RainlendarEditTodo(HWND caller, const char* arg);
+void RainlendarShowTodo(HWND caller, const char* arg);
+void RainlendarHideTodo(HWND caller, const char* arg);
+void RainlendarToggleTodo(HWND caller, const char* arg);
+void RainlendarAddEvent(HWND caller, const char* arg);
+void RainlendarShowEvents(HWND caller, const char* arg);
 
 class CRainlendar
 {
@@ -107,15 +128,14 @@ public:
 	CRainlendar();
 	~CRainlendar();
 
-	int Initialize(HWND Parent, HINSTANCE Instance, bool wd, LPCSTR szPath);
+	int Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath);
 	void Quit(HINSTANCE dllInst);
-	HRGN GetRegion(int xOffset, int yOffset);
 
 	void QuitRainlendar() { m_Calendar.QuitRainlendar(); };
-	void HideWindow() { m_Calendar.HideWindow(); };
-	void ShowWindow(bool activate) { m_Calendar.ShowWindow(activate); };
-	void ToggleWindow() { m_Calendar.ToggleWindow(); };
-	void RefreshWindow(bool lite = false) { m_Calendar.RefreshWindow(lite); };
+	void HideWindow();
+	void ShowWindow(bool activate);
+	void ToggleWindow();
+	void RefreshWindow(bool lite = false) { m_Calendar.Refresh(lite); };
 	void ShowConfig() { m_Calendar.ShowConfig(); };
 	void ShowEditSkin() { m_Calendar.ShowEditSkin(); };
 	void ShowMonth(int Month, int Year) { m_Calendar.ChangeMonth(Month, Year); };
@@ -123,10 +143,14 @@ public:
 	void ShowPrevMonth() { m_Calendar.ShowPrevMonth(); };
 	void ShowCurrentMonth() { m_Calendar.ShowCurrentMonth(); };
 	void MoveWindow(int x, int y) { m_Calendar.MoveWindow(x, y); };
-	void SetWindowZPos(CConfig::WINDOWPOS pos) { m_Calendar.SetWindowZPos(pos); };
+	void SetWindowZPos(CConfig::WINDOWPOS pos);
+	void EditTodo() { m_Calendar.GetTodoWindow().OnCommand(ID_TODO, NULL); };
+	void ShowTodo() { m_Calendar.GetTodoWindow().ShowWindow(FALSE); };
+	void HideTodo() { m_Calendar.GetTodoWindow().HideWindow(); };
+	void ToggleTodo() { m_Calendar.GetTodoWindow().ToggleWindow(); };
+	void AddEvent(int date, const char* message);
+	void ShowEvents();
 
-	bool IsWharf() { return m_Wharf; };
-	void SetWharf() { m_Wharf = true; };
 	CCalendarWindow& GetCalendarWindow() { return m_Calendar; };
 
 	static void SetDummyLitestep(bool Dummy) { c_DummyLitestep = Dummy; };
@@ -135,10 +159,9 @@ public:
 	static LPCSTR GetCommandLine() { return c_CmdLine.c_str(); };
 	static HINSTANCE GetInstance() { return c_Instance; };
 	static void SetInstance(HINSTANCE instance) { c_Instance = instance; };
-
+	
 private:
 	CCalendarWindow m_Calendar;		// The calendar window
-	bool m_Wharf;					// true, if ran in a wharf
 	static bool c_DummyLitestep;	// true, if not a Litestep plugin
 	static std::string c_CmdLine;	// The command line arguments
 	static HINSTANCE c_Instance;	// The DLL's instance

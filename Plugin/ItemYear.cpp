@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemYear.cpp,v 1.9 2003/06/15 09:49:13 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/ItemYear.cpp,v 1.11 2004/01/25 10:00:55 rainy Exp $
 
   $Log: ItemYear.cpp,v $
+  Revision 1.11  2004/01/25 10:00:55  rainy
+  Fixed size calculation.
+
+  Revision 1.10  2003/10/27 17:37:52  Rainy
+  Config is now singleton.
+
   Revision 1.9  2003/06/15 09:49:13  Rainy
   Added support for multiple calendars.
 
@@ -81,14 +87,14 @@ int CItemYear::GetX()
 {
 	if(m_Rasterizer) 
 	{
-		if(m_Rasterizer->GetAlign() & 0x0F == CRasterizer::ALIGN_LEFT)
-			return CCalendarWindow::c_Config.GetYearX();
+		if((m_Rasterizer->GetAlign() & 0x0F) == CRasterizer::ALIGN_LEFT)
+			return CConfig::Instance().GetYearX();
 
-		if(m_Rasterizer->GetAlign() & 0x0F == CRasterizer::ALIGN_HCENTER)
-			return CCalendarWindow::c_Config.GetYearX() - GetW() / 2;
+		if((m_Rasterizer->GetAlign() & 0x0F) == CRasterizer::ALIGN_HCENTER)
+			return CConfig::Instance().GetYearX() - GetW() / 2;
 
-		if(m_Rasterizer->GetAlign() & 0x0F == CRasterizer::ALIGN_RIGHT)
-			return CCalendarWindow::c_Config.GetYearX() - GetW();
+		if((m_Rasterizer->GetAlign() & 0x0F) == CRasterizer::ALIGN_RIGHT)
+			return CConfig::Instance().GetYearX() - GetW();
 	}
 
 	return 0;
@@ -98,14 +104,14 @@ int CItemYear::GetY()
 {
 	if(m_Rasterizer) 
 	{
-		if(m_Rasterizer->GetAlign() & 0x0F0 == CRasterizer::ALIGN_TOP)
-			return CCalendarWindow::c_Config.GetYearY();
+		if((m_Rasterizer->GetAlign() & 0x0F0) == CRasterizer::ALIGN_TOP)
+			return CConfig::Instance().GetYearY();
 
-		if(m_Rasterizer->GetAlign() & 0x0F0 == CRasterizer::ALIGN_VCENTER)
-			return CCalendarWindow::c_Config.GetYearY() - GetH() / 2;
+		if((m_Rasterizer->GetAlign() & 0x0F0) == CRasterizer::ALIGN_VCENTER)
+			return CConfig::Instance().GetYearY() - GetH() / 2;
 
-		if(m_Rasterizer->GetAlign() & 0x0F0 == CRasterizer::ALIGN_BOTTOM)
-			return CCalendarWindow::c_Config.GetYearY() - GetH();
+		if((m_Rasterizer->GetAlign() & 0x0F0) == CRasterizer::ALIGN_BOTTOM)
+			return CConfig::Instance().GetYearY() - GetH();
 	}
 
 	return 0;
@@ -152,21 +158,21 @@ int CItemYear::GetH()
 */
 void CItemYear::Initialize()
 {
-	if( CCalendarWindow::c_Config.GetYearEnable() && 
-		CCalendarWindow::c_Config.GetYearRasterizer()!=CRasterizer::TYPE_NONE)
+	if( CConfig::Instance().GetYearEnable() && 
+		CConfig::Instance().GetYearRasterizer()!=CRasterizer::TYPE_NONE)
 	{
-		switch(CCalendarWindow::c_Config.GetYearRasterizer()) {
+		switch(CConfig::Instance().GetYearRasterizer()) {
 		case CRasterizer::TYPE_BITMAP:
 			CRasterizerBitmap* BMRast;
 
 			BMRast=new CRasterizerBitmap;
 			if(BMRast==NULL) THROW(ERR_OUTOFMEM);
 
-			BMRast->Load(CCalendarWindow::c_Config.GetYearBitmapName());
+			BMRast->Load(CConfig::Instance().GetYearBitmapName());
 			BMRast->SetNumOfComponents(NUMOFCOMPONENTS);
-			BMRast->SetSeparation(CCalendarWindow::c_Config.GetYearSeparation());
+			BMRast->SetSeparation(CConfig::Instance().GetYearSeparation());
 
-			BMRast->SetAlign(CCalendarWindow::c_Config.GetYearAlign());
+			BMRast->SetAlign(CConfig::Instance().GetYearAlign());
 			SetRasterizer(BMRast);
 			break;
 
@@ -176,9 +182,9 @@ void CItemYear::Initialize()
 			FNRast=new CRasterizerFont;
 			if(FNRast==NULL) THROW(ERR_OUTOFMEM);
 
-			FNRast->SetFont(CCalendarWindow::c_Config.GetYearFont());
-			FNRast->SetAlign(CCalendarWindow::c_Config.GetYearAlign());
-			FNRast->SetColor(CCalendarWindow::c_Config.GetYearFontColor());
+			FNRast->SetFont(CConfig::Instance().GetYearFont());
+			FNRast->SetAlign(CConfig::Instance().GetYearAlign());
+			FNRast->SetColor(CConfig::Instance().GetYearFontColor());
 			FNRast->UpdateDimensions("XXXX");
 			SetRasterizer(FNRast);
 			break;
@@ -204,30 +210,30 @@ void CItemYear::Paint(CImage& background, POINT offset)
 		switch (m_Rasterizer->GetAlign() & 0x0F)
 		{
 		case CRasterizer::ALIGN_LEFT:
-			X = CCalendarWindow::c_Config.GetYearX();
+			X = CConfig::Instance().GetYearX();
 			break;
 
 		case CRasterizer::ALIGN_HCENTER:
-			X = CCalendarWindow::c_Config.GetYearX() - W / 2;
+			X = CConfig::Instance().GetYearX() - W / 2;
 			break;
 
 		case CRasterizer::ALIGN_RIGHT:
-			X = CCalendarWindow::c_Config.GetYearX() - W;
+			X = CConfig::Instance().GetYearX() - W;
 			break;
 		};
 
 		switch (m_Rasterizer->GetAlign() & 0x0F0)
 		{
 		case CRasterizer::ALIGN_TOP:
-				Y = CCalendarWindow::c_Config.GetYearY();
+				Y = CConfig::Instance().GetYearY();
 				break;
 
 		case CRasterizer::ALIGN_VCENTER:
-			Y = CCalendarWindow::c_Config.GetYearY() - H / 2;
+			Y = CConfig::Instance().GetYearY() - H / 2;
 			break;
 
 		case CRasterizer::ALIGN_BOTTOM:
-			Y = CCalendarWindow::c_Config.GetYearY() - H;
+			Y = CConfig::Instance().GetYearY() - H;
 			break;
 		};
 

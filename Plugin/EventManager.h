@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/EventManager.h,v 1.3 2003/05/26 18:44:52 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/EventManager.h,v 1.4 2004/04/24 11:19:10 rainy Exp $
 
   $Log: EventManager.h,v $
+  Revision 1.4  2004/04/24 11:19:10  rainy
+  Some methods are now const.
+
   Revision 1.3  2003/05/26 18:44:52  Rainy
   Added GetAllEvents().
 
@@ -50,9 +53,9 @@ public:
 	void ReadEvents();
 	std::vector<CEventMessage*> GetEvents(int day, int month, int year);
 	void AddEvent(CEventMessage& event);
-	void RemoveEvent(CEventMessage& event);
+	void RemoveEvent(const CEventMessage& event);
 	void WriteEvents(int day, int month, int year);
-	void WriteEvent(CEventMessage& event);
+	void WriteEvent(const CEventMessage& event);
 	CEventMessage* GetEvent(int ID);
 	const std::list<CEventMessage>& GetAllEvents() { return m_AllEvents; };
 

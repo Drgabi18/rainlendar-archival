@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Host/Rainlendar.cpp,v 1.8 2003/08/09 16:39:46 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Host/Rainlendar.cpp,v 1.10 2004/01/28 18:06:19 rainy Exp $
 
   $Log: Rainlendar.cpp,v $
+  Revision 1.10  2004/01/28 18:06:19  rainy
+  Command line is now empty if not set.
+
+  Revision 1.9  2004/01/25 09:50:21  rainy
+  Removed check for Rainlendar.ini
+
   Revision 1.8  2003/08/09 16:39:46  Rainy
   Added icons to messageboxes.
 
@@ -67,16 +73,8 @@ __declspec( dllimport ) void Initialize(bool DummyLS, LPCSTR CmdLine);
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	char Path[256];
-	char Filename[256];
-	char Message[2048];
 	int Length, Pos;
 	MSG msg;
-
-	if(lpCmdLine==NULL || lpCmdLine[0]=='\0') 
-	{
-		GetCurrentDirectory(256, Filename);
-		lpCmdLine = Filename;
-	}
 
 	if(!hPrevInstance) 
 	{
@@ -85,7 +83,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	HWND hWnd = InitInstance(hInstance, nCmdShow);
 
-	if (lpCmdLine[0] == '!')
+	if (lpCmdLine != NULL && lpCmdLine[0] == '!')
 	{
 		// It's a !bang
 		Bang(hWnd, lpCmdLine);
@@ -107,19 +105,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	for(int i=0; i<=Length; i++) {
 		if(lpCmdLine[i]!='\"') Path[Pos++]=lpCmdLine[i];
 	}
-
-	// Check that Rainlendar.ini is found
-	strcpy(Filename, Path);
-	if(Filename[strlen(Filename) - 1] != '\\') strcat(Filename, "\\");
-	strcat(Filename, "Rainlendar.ini");
-	Filename[255]='\0';
-	FILE* File=fopen(Filename, "r");
-	if(NULL==File) {
-		sprintf(Message, "Unable to initialize Rainlendar!\nError: Rainlendar.ini-file was not found!\n(%s)", Filename);
-		MessageBox(NULL, Message, "Rainlendar", MB_OK | MB_ICONERROR);
-		return 0;
-	}
-	fclose(File);
 
 	HMODULE module = GetModuleHandle("Rainlendar.dll");
 	if(module == NULL)
@@ -185,8 +170,28 @@ void Bang(HWND hWnd, const char* command)
 		wnd = FindWindow("Rainlendar", NULL);
 	}
 
+	if (wnd == NULL)
+	{
+		// If the window is OnDesktop, FindWindow doesn't find it.
+		HWND ProgmanHwnd = FindWindow("Progman", "Program Manager");
+		if (ProgmanHwnd)
+		{
+			wnd = FindWindowEx(ProgmanHwnd, NULL, "Rainlendar", NULL);
+		}
+	}
+
 	if (wnd != NULL)
 	{
+		// Check for "!RainlendarShow Activate" because it doesn't work
+		// if it's run from the same thread as the window itself.
+		if (stricmp("!RainlendarShow Activate", command) == 0)
+		{
+			BringWindowToTop(wnd);
+			::ShowWindow(wnd, SW_SHOWNORMAL);
+			SetForegroundWindow(wnd);
+			return;
+		}
+
 		COPYDATASTRUCT copyData;
 
 		copyData.dwData = 1;

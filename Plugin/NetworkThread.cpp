@@ -16,9 +16,15 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/NetworkThread.cpp,v 1.9 2003/08/09 16:34:12 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/NetworkThread.cpp,v 1.11 2004/01/28 18:05:48 rainy Exp $
 
   $Log: NetworkThread.cpp,v $
+  Revision 1.11  2004/01/28 18:05:48  rainy
+  no message
+
+  Revision 1.10  2003/10/27 17:40:00  Rainy
+  Config is now singleton.
+
   Revision 1.9  2003/08/09 16:34:12  Rainy
   Fixed a hang if there are no events to send to the server.
 
@@ -123,7 +129,7 @@ unsigned32 Update(NetworkParams& param, ClientConnector& connection)
 
 	// Read Events.ini and send it to the server
 	// Wait for confirmation from server
-	const char* buffer = CCalendarWindow::c_Config.GetEventsPath().c_str();
+	const char* buffer = CConfig::Instance().GetEventsPath().c_str();
 	
 	AddStatusString(CCalendarWindow::c_Language.GetString("NetStatus", 5));
 
@@ -205,7 +211,7 @@ unsigned32 Request(NetworkParams& param, ClientConnector& connection)
 	{
 	case pcSendingEvents:
 		{
-			const char* buffer = CCalendarWindow::c_Config.GetEventsPath().c_str();
+			const char* buffer = CConfig::Instance().GetEventsPath().c_str();
 			CEventCombiner combiner;
 			combiner.ReadEvents(buffer);
 			unsigned32 eventCount;

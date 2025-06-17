@@ -16,9 +16,38 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/CalendarWindow.cpp,v 1.25 2003/10/04 14:47:54 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/CalendarWindow.cpp,v 1.32 2004/04/24 11:17:20 rainy Exp $
 
   $Log: CalendarWindow.cpp,v $
+  Revision 1.32  2004/04/24 11:17:20  rainy
+  Appdata and tray icon fix for Win9x.
+  Fixed few bangs.
+
+  Revision 1.31  2004/01/28 18:04:43  rainy
+  Added tray executes.
+  Fixed bug in path definition.
+
+  Revision 1.30  2004/01/25 09:58:58  rainy
+  Fixed refresh.
+  Added PLAY to execute.
+  Fixed icon drawing.
+
+  Revision 1.29  2004/01/10 15:17:29  rainy
+  Added tray and hotkey for todo.
+  Fixed message window.
+
+  Revision 1.28  2003/12/20 22:26:57  rainy
+  Added more debugging info.
+  Removed unnecessary functions.
+  Added new message box.
+
+  Revision 1.27  2003/10/27 19:50:20  Rainy
+  Derived from CRainWindow.
+
+  Revision 1.26  2003/10/27 17:36:51  Rainy
+  Config is now singleton.
+  Added todo stuff.
+
   Revision 1.25  2003/10/04 14:47:54  Rainy
   Languages path is the same as the DLL's
   Skins are rescanned during refresh.
@@ -123,6 +152,7 @@
 
 */
 
+#include <windows.h>
 #include "RainlendarDLL.h"
 #include "CalendarWindow.h"
 #include "Config.h"
@@ -135,21 +165,22 @@
 #include "RasterizerFont.h"
 #include "Outlook.h"
 #include "AllEventsDialog.h"
+#include "TodoDialog.h"
 #include "../Server/EventCombiner.h"
 #include <crtdbg.h>
+#include <algorithm>
 
 #define ULW_ALPHA               0x00000002
 #define WS_EX_LAYERED           0x00080000
 
 // Timers
-#define DATE_TIMER 1
 #define OUTLOOK_TIMER 2
 
 // Defines
 #define SNAPDISTANCE 10
+#define WM_NOTIFYICON WM_USER + 101
 
 // Class variables
-CConfig CCalendarWindow::c_Config;
 SYSTEMTIME CCalendarWindow::c_TodaysDate;
 SYSTEMTIME CCalendarWindow::c_MonthsFirstDate;
 CLanguage CCalendarWindow::c_Language;
@@ -160,12 +191,12 @@ CLanguage CCalendarWindow::c_Language;
 ** Constructor
 **
 */
-CCalendarWindow::CCalendarWindow() 
+CCalendarWindow::CCalendarWindow() : CRainWindow()
 {
-	m_X=0;
-	m_Y=0;
-	m_Width=0;
-	m_Height=0;
+	m_WindowName = "Rainlendar";
+	m_ClassName = "Rainlendar";
+	m_WndProc = (WNDPROC)CCalendarWindow::WndProc;
+
 	m_FirstExecute=true;
 	m_SelectedDate=0;
 	m_MenuSelectedDate=0;
@@ -177,9 +208,8 @@ CCalendarWindow::CCalendarWindow()
 	m_WeekNumbers = NULL;
 	m_Month = NULL;
 	m_Year = NULL;
+
 	m_ConnectionCounter = 0;
-	m_Hidden = false;
-	m_Refreshing = false;
 	m_WallpaperTime.dwLowDateTime = 0;
 	m_WallpaperTime.dwHighDateTime = 0;
 }
@@ -192,11 +222,11 @@ CCalendarWindow::CCalendarWindow()
 */
 CCalendarWindow::~CCalendarWindow()
 {
-	if(m_Window) c_Config.WriteConfig(CConfig::WRITE_FULL);
+	RemoveTrayIcon();
+
+	if(m_Window) CConfig::Instance().WriteConfig(CConfig::WRITE_FULL);
 
 	CRasterizerFont::ClearBuffers();
-
-	if(m_DC) DeleteDC(m_DC);
 
 	delete m_Days;
 	delete m_Event;
@@ -205,11 +235,6 @@ CCalendarWindow::~CCalendarWindow()
 	delete m_WeekNumbers;
 	delete m_Month;
 	delete m_Year;
-
-	if(m_Window) DestroyWindow(m_Window);
-
-	// Unregister the window class
-	UnregisterClass("Rainlendar", m_Instance);
 
 	LSLog(LOG_DEBUG, "Rainlendar", "The calendar window is destroyed.");
 }
@@ -220,23 +245,19 @@ CCalendarWindow::~CCalendarWindow()
 ** Initializes the window, creates the class and the window.
 **
 */
-int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE Instance)
+bool CCalendarWindow::Initialize(HWND Parent, HINSTANCE Instance)
 {
-	int flags;
-	WNDCLASSEX wc;
 	char tmpName[MAX_LINE_LENGTH];
-	char* windowName = NULL;
 
-	if(Parent==NULL || Instance==NULL) 
-	{
-		THROW(ERR_NULLPARAMETER);
-	}
-
-	m_Instance = Instance;
-	m_Rainlendar = &Rainlendar;
-
-	std::string PixPath, EventsPath, SkinsPath, LanguagesPath;
+	std::string PixPath, EventsPath, SkinsPath, LanguagesPath, TodoPath;
 	std::string skin, skinIni;
+
+	std::string dllPath;
+	// Get the DLL's directory
+	GetModuleFileName(CRainlendar::GetInstance(), tmpName, MAX_LINE_LENGTH);
+	char* Slash = strrchr(tmpName, '\\');
+	*(Slash + 1) = 0;	// Cut the Rainlendar.dll from the name
+	dllPath = tmpName;
 
 	if(!CRainlendar::GetDummyLitestep()) 
 	{
@@ -255,6 +276,7 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 			{
 				EventsPath += "\\";
 			}
+			TodoPath = EventsPath + "Todo.ini";
 			EventsPath += "Events.ini";
 		}
 
@@ -280,14 +302,40 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 	else 
 	{
 		PixPath = CRainlendar::GetCommandLine();
-	}
 
-	std::string dllPath;
-	// Get the DLL's directory
-	GetModuleFileName(CRainlendar::GetInstance(), tmpName, MAX_LINE_LENGTH);
-	char* Slash = strrchr(tmpName, '\\');
-	*(Slash + 1) = 0;	// Cut the Rainlendar.dll from the name
-	dllPath = tmpName;
+		if (PixPath.empty()) 
+		{
+			std::string filename = dllPath + "Rainlendar.ini";
+
+			// Check if Rainlendar.ini is in the current folder
+			FILE* file = fopen(filename.c_str(), "r");
+			if (file) 
+			{
+				fclose(file);
+				PixPath = dllPath;
+				LSLog(LOG_DEBUG, "Rainlendar", "Found Rainlendar.ini in current folder");
+			}
+			else
+			{
+				LSLog(LOG_DEBUG, "Rainlendar", "No Rainlendar.ini in current folder -> Using %APPDATA%.");
+
+				char buffer[MAX_PATH + 1];
+				buffer[0] = 0;
+				ExpandEnvironmentStrings("%APPDATA%", buffer, MAX_PATH);
+				if (strlen(buffer) == 0 || strcmp(buffer, "%APPDATA%") == 0) 
+				{
+					LSLog(LOG_DEBUG, "Rainlendar", "No %APPDATA% found. Falling back to the old system.");
+					PixPath = dllPath;
+				}
+				else
+				{
+					PixPath = buffer;
+					PixPath += "\\Rainlendar";
+					CreateDirectory(PixPath.c_str(), NULL);		// Create the folder for Rainlendar
+				}
+			}
+		}
+	}
 
 	// Remove quotes from the path
 	int pos = PixPath.find("\"");
@@ -308,10 +356,14 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 		EventsPath = PixPath + "Events.ini";
 	}
 
+	if (TodoPath.empty())
+	{
+		TodoPath = PixPath + "Todo.ini";
+	}
+
 	if (SkinsPath.empty())
 	{
-		SkinsPath = dllPath;
-		SkinsPath += "Skins\\";
+		SkinsPath = dllPath + "Skins\\";
 	}
 
 	if (LanguagesPath.empty())
@@ -324,36 +376,19 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 	}
 	c_Language.ScanLanguages(LanguagesPath.c_str());
 
-
 	LSLog(LOG_DEBUG, "Rainlendar", "Rainlendar paths:");
 	LSLog(LOG_DEBUG, "Rainlendar", PixPath.c_str());
 	LSLog(LOG_DEBUG, "Rainlendar", EventsPath.c_str());
 	LSLog(LOG_DEBUG, "Rainlendar", SkinsPath.c_str());
 	LSLog(LOG_DEBUG, "Rainlendar", LanguagesPath.c_str());
+	LSLog(LOG_DEBUG, "Rainlendar", TodoPath.c_str());
 
-	c_Config.SetPath(PixPath);
-	c_Config.SetEventsPath(EventsPath);	
-	c_Config.SetSkinsPath(SkinsPath);
-	c_Config.ReadConfig();
+	CConfig::Instance().SetPath(PixPath);
+	CConfig::Instance().SetEventsPath(EventsPath);	
+	CConfig::Instance().SetSkinsPath(SkinsPath);
+	CConfig::Instance().ReadConfig();
 
-	// Register the windowclass
-	memset(&wc, 0, sizeof(WNDCLASSEX));
-	wc.style = CS_NOCLOSE | CS_DBLCLKS;
-	wc.cbSize = sizeof(WNDCLASSEX);
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wc.lpfnWndProc = WndProc;
-	wc.hInstance = m_Instance;
-	wc.lpszClassName = "Rainlendar";
-	
-	if(!RegisterClassEx(&wc))
-	{
-		if (ERROR_CLASS_ALREADY_EXISTS != GetLastError())
-		{
-			THROW(ERR_WINDOWCLASS);
-		}
-	}
-	
-	if (Rainlendar.GetDummyLitestep())
+	if (CRainlendar::GetDummyLitestep())
 	{
 		LSLog(LOG_DEBUG, "Rainlendar", "Running as stand-alone.");
 	}
@@ -362,41 +397,15 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 		LSLog(LOG_DEBUG, "Rainlendar", "Running as Litestep plugin.");
 	}
 
-	if(Rainlendar.IsWharf())
+	if (!CConfig::Instance().GetUseWindowName())
 	{
-		// If we're in lsBox or in wharf, this is a childwindow
-		flags = WS_CHILD;
-		LSLog(LOG_DEBUG, "Rainlendar", "Running as wharf module.");
-	}
-	else
-	{
-		// ... otherwise this is normal popup window
-		flags = WS_POPUP;
-		Parent = NULL;
+		m_WindowName = NULL;
 	}
 
-	if (c_Config.GetUseWindowName())
-	{
-		windowName = "Rainlendar";
-	}
+	m_X = CConfig::Instance().GetX();
+	m_Y = CConfig::Instance().GetY();
 
-	m_Window = CreateWindowEx(WS_EX_TOOLWINDOW, 
-							"Rainlendar", 
-							windowName, 
-							flags,
-							c_Config.GetX(),
-							c_Config.GetY(),
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							Parent,
-							NULL,
-							m_Instance,
-							this);
-
-	if(m_Window == NULL) 
-	{ 
-		THROW(ERR_WINDOW);
-	}
+	bool res = CRainWindow::Initialize(Parent, Instance);
 
 	INITCOMMONCONTROLSEX cce;
 	cce.dwSize = sizeof(INITCOMMONCONTROLSEX);
@@ -405,15 +414,12 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 
 	CToolTip::Instance().Initialize(m_Window, m_Instance);
 
-	SetWindowLong(m_Window, GWL_USERDATA, magicDWord);
-
-
 	// If the skin was defined explicitely, let's use it
 	if (!skin.empty() && !skinIni.empty())
 	{
-		c_Config.SetCurrentSkin(skin);
-		c_Config.SetCurrentSkinIni(skinIni);
-		c_Config.WriteConfig(CConfig::WRITE_CONFIG);	// Replace the current config with the step.rc values
+		CConfig::Instance().SetCurrentSkin(skin);
+		CConfig::Instance().SetCurrentSkinIni(skinIni);
+		CConfig::Instance().WriteConfig(CConfig::WRITE_CONFIG);	// Replace the current config with the step.rc values
 	}
 
 	// Scan the skin folder for skins
@@ -423,19 +429,29 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 	// Store current date (the month that will be shown)
 	c_MonthsFirstDate = c_TodaysDate;
 
-	if(!c_Config.GetStartHidden()) ShowWindow();
+	m_TodoWindow.GetTodoManager().Initialize(TodoPath.c_str());
+	m_TodoWindow.Initialize(m_Window, m_Instance);
+
+	m_MessageWindow.Initialize(m_Window, m_Instance);
 	
 	ChangeMonth(-1, -1);
-	Refresh();
+	Refresh(false);
 	
-	SetTimer(m_Window, DATE_TIMER, 1000, NULL);	// Date is checked once per second
+	if(!CConfig::Instance().GetStartHidden()) 
+	{
+		ShowWindow(false);
+		if (CConfig::Instance().GetTodoEnable()) 
+		{
+			m_TodoWindow.ShowWindow(false);
+		}
+	}
 
-	if (c_Config.GetServerStartup())
+	if (CConfig::Instance().GetServerStartup())
 	{
 		ConnectServer(REQUEST_GETEVENTS);	// Get the events from server
 	}
 
-	return 0;
+	return res;
 }
 
 /* 
@@ -449,25 +465,29 @@ void CCalendarWindow::FillMenu(HMENU subMenu, int x, int y)
 	char tmpSz[256];
 
 	// Localize the menu
-	ModifyMenu(subMenu, 0, MF_BYPOSITION | MF_STRING, GetMenuItemID(subMenu, 0), c_Language.GetString("Menu", 0));	// About
-	ModifyMenu(subMenu, 2, MF_BYPOSITION | MF_STRING, GetMenuItemID(subMenu, 2), c_Language.GetString("Menu", 25));	// Skins
-	ModifyMenu(subMenu, 3, MF_BYPOSITION | MF_STRING, GetMenuItemID(subMenu, 3), c_Language.GetString("Menu", 22));	// Language
-	ModifyMenu(subMenu, 4, MF_BYPOSITION | MF_STRING, GetMenuItemID(subMenu, 4), c_Language.GetString("Menu", 17));	// Refresh
-	ModifyMenu(subMenu, 5, MF_BYPOSITION | MF_STRING, GetMenuItemID(subMenu, 5), c_Language.GetString("Menu", 28));	// Update Outlook
-	ModifyMenu(subMenu, 6, MF_BYPOSITION | MF_STRING, GetMenuItemID(subMenu, 6), c_Language.GetString("Menu", 20));	// Config
-	ModifyMenu(subMenu, 8, MF_BYPOSITION | MF_STRING, GetMenuItemID(subMenu, 8), c_Language.GetString("Menu", 1));	// Select Month
-	ModifyMenu(subMenu, 9, MF_BYPOSITION | MF_STRING, GetMenuItemID(subMenu, 9), c_Language.GetString("Menu", 18));	// Set event...
-	ModifyMenu(subMenu, 10, MF_BYPOSITION | MF_STRING, GetMenuItemID(subMenu, 10), c_Language.GetString("Menu", 19));	// Show all events...
-	ModifyMenu(subMenu, 12, MF_BYPOSITION | MF_STRING, GetMenuItemID(subMenu, 12), c_Language.GetString("Menu", 21));	// Quit
+	ModifyMenu(subMenu, ID_ABOUT, MF_BYCOMMAND | MF_STRING, ID_ABOUT, c_Language.GetString("Menu", 0));	// About
+	ModifyMenu(subMenu, ID_POPUP_HELP, MF_BYCOMMAND | MF_STRING, ID_POPUP_HELP, c_Language.GetString("Menu", 37));	// Help
+	ModifyMenu(subMenu, ID_REFRESH, MF_BYCOMMAND | MF_STRING, ID_REFRESH, c_Language.GetString("Menu", 17));	// Refresh
+	ModifyMenu(subMenu, ID_POPUP_UPDATEOUTLOOK, MF_BYCOMMAND | MF_STRING, ID_POPUP_UPDATEOUTLOOK, c_Language.GetString("Menu", 28));	// Update Outlook
+	ModifyMenu(subMenu, ID_CONFIG, MF_BYCOMMAND | MF_STRING, ID_CONFIG, c_Language.GetString("Menu", 20));	// Config
+	ModifyMenu(subMenu, ID_SETEVENT, MF_BYCOMMAND | MF_STRING, ID_SETEVENT, c_Language.GetString("Menu", 18));	// Set event...
+	ModifyMenu(subMenu, ID_ALLEVENTS, MF_BYCOMMAND | MF_STRING, ID_ALLEVENTS, c_Language.GetString("Menu", 19));	// Show all events...
+	ModifyMenu(subMenu, ID_TODO, MF_BYCOMMAND | MF_STRING, ID_TODO, c_Language.GetString("Menu", 29));	// Show todo list...
+	ModifyMenu(subMenu, ID_QUIT, MF_BYCOMMAND | MF_STRING, ID_QUIT, c_Language.GetString("Menu", 21));	// Quit
 
-	HMENU monthsMenu = GetSubMenu(subMenu, 8);
+	// Submenus
+	ModifyMenu(subMenu, 3, MF_BYPOSITION | MF_STRING, 0, c_Language.GetString("Menu", 25));	// Skins
+	ModifyMenu(subMenu, 4, MF_BYPOSITION | MF_STRING, 0, c_Language.GetString("Menu", 22));	// Language
+	ModifyMenu(subMenu, 5, MF_BYPOSITION | MF_STRING, 0, c_Language.GetString("Menu", 1));	// Select Month
+
+	HMENU monthsMenu = GetSubMenu(subMenu, 5);
 	if (monthsMenu)
 	{
-		ModifyMenu(monthsMenu, 0, MF_BYPOSITION | MF_STRING, GetMenuItemID(monthsMenu, 0), c_Language.GetString("Menu", 2));	// Next Month
-		ModifyMenu(monthsMenu, 1, MF_BYPOSITION | MF_STRING, GetMenuItemID(monthsMenu, 1), c_Language.GetString("Menu", 3));	// Prev Month
-		ModifyMenu(monthsMenu, 2, MF_BYPOSITION | MF_STRING, GetMenuItemID(monthsMenu, 2), c_Language.GetString("Menu", 26));	// Next Year
-		ModifyMenu(monthsMenu, 3, MF_BYPOSITION | MF_STRING, GetMenuItemID(monthsMenu, 3), c_Language.GetString("Menu", 27));	// Prev Year
-		ModifyMenu(monthsMenu, 4, MF_BYPOSITION | MF_STRING, GetMenuItemID(monthsMenu, 4), c_Language.GetString("Menu", 4));	// Current Month
+		ModifyMenu(monthsMenu, ID_POPUP_SELECTMONTH_NEXTMONTH, MF_BYCOMMAND | MF_STRING, ID_POPUP_SELECTMONTH_NEXTMONTH, c_Language.GetString("Menu", 2));	// Next Month
+		ModifyMenu(monthsMenu, ID_POPUP_SELECTMONTH_PREVMONTH, MF_BYCOMMAND | MF_STRING, ID_POPUP_SELECTMONTH_PREVMONTH, c_Language.GetString("Menu", 3));	// Prev Month
+		ModifyMenu(monthsMenu, ID_POPUP_SELECTMONTH_NEXTYEAR, MF_BYCOMMAND | MF_STRING, ID_POPUP_SELECTMONTH_NEXTYEAR, c_Language.GetString("Menu", 26));	// Next Year
+		ModifyMenu(monthsMenu, ID_POPUP_SELECTMONTH_PREVYEAR, MF_BYCOMMAND | MF_STRING, ID_POPUP_SELECTMONTH_PREVYEAR, c_Language.GetString("Menu", 27));	// Prev Year
+		ModifyMenu(monthsMenu, ID_POPUP_SELECTMONTH_CURRENTMONTH, MF_BYCOMMAND | MF_STRING, ID_POPUP_SELECTMONTH_CURRENTMONTH, c_Language.GetString("Menu", 4));	// Current Month
 
 		// Change the months in the submenu
 		int year = c_TodaysDate.wYear + 1;
@@ -485,8 +505,11 @@ void CCalendarWindow::FillMenu(HMENU subMenu, int x, int y)
 	}
 	
 	// If mouse was pressed on a day, enable set event
-
-	m_MenuSelectedDate = m_Days->HitTest(x, y);
+	m_MenuSelectedDate = 0;
+	if (x <= m_Width && y <= m_Height) 
+	{
+		m_MenuSelectedDate = m_Days->HitTest(x, y);
+	}
 
 	if (m_MenuSelectedDate != 0) 
 	{
@@ -503,7 +526,7 @@ void CCalendarWindow::FillMenu(HMENU subMenu, int x, int y)
 		EnableMenuItem( subMenu, ID_QUIT, MF_GRAYED);
 	}
 
-	if (!c_Config.GetShowOutlookAppointments())
+	if (!CConfig::Instance().GetShowOutlookAppointments())
 	{
 		EnableMenuItem( subMenu, ID_POPUP_UPDATEOUTLOOK, MF_GRAYED);
 	}
@@ -511,7 +534,7 @@ void CCalendarWindow::FillMenu(HMENU subMenu, int x, int y)
 	int index = 0;
 
 	// Fill the menu with all the configs
-	HMENU configMenu = GetSubMenu(subMenu, 2);
+	HMENU configMenu = GetSubMenu(subMenu, 3);
 	if(configMenu)
 	{
 		ModifyMenu(configMenu, 0, MF_BYPOSITION | MF_STRING, GetMenuItemID(configMenu, 0), c_Language.GetString("Menu", 24));	// Edit Current Skin
@@ -528,7 +551,7 @@ void CCalendarWindow::FillMenu(HMENU subMenu, int x, int y)
 					iniName.erase(iniName.end() - 4, iniName.end());
 					InsertMenu(iniMenu, j, MF_BYPOSITION, ID_SKIN + index++, iniName.c_str());
 
-					if(m_ConfigStrings[i].path == c_Config.GetCurrentSkin() && m_ConfigStrings[i].iniFiles[j] == c_Config.GetCurrentSkinIni())
+					if(m_ConfigStrings[i].path == CConfig::Instance().GetCurrentSkin() && m_ConfigStrings[i].iniFiles[j] == CConfig::Instance().GetCurrentSkinIni())
 					{
 						CheckMenuItem(iniMenu, j, MF_BYPOSITION | MF_CHECKED);
 					}
@@ -538,7 +561,7 @@ void CCalendarWindow::FillMenu(HMENU subMenu, int x, int y)
 			{
 				InsertMenu(configMenu, i + 2, MF_BYPOSITION, ID_SKIN + index++, m_ConfigStrings[i].path.c_str());
 
-				if(m_ConfigStrings[i].path == c_Config.GetCurrentSkin())
+				if(m_ConfigStrings[i].path == CConfig::Instance().GetCurrentSkin())
 				{
 					CheckMenuItem(configMenu, i + 2, MF_BYPOSITION | MF_CHECKED);
 				}
@@ -547,7 +570,7 @@ void CCalendarWindow::FillMenu(HMENU subMenu, int x, int y)
 	}
 
 	// Fill the menu with all the configs
-	HMENU languageMenu = GetSubMenu(subMenu, 3);
+	HMENU languageMenu = GetSubMenu(subMenu, 4);
 	if(languageMenu)
 	{
 		bool languageFound = false;
@@ -557,7 +580,7 @@ void CCalendarWindow::FillMenu(HMENU subMenu, int x, int y)
 		{
 			InsertMenu(languageMenu, i + 1, MF_BYPOSITION, ID_LANGUAGE + i + 1, c_Language.GetLanguages()[i].c_str());
 
-			if(c_Language.GetLanguages()[i] == c_Config.GetCurrentLanguage())
+			if(c_Language.GetLanguages()[i] == CConfig::Instance().GetCurrentLanguage())
 			{
 				CheckMenuItem(languageMenu, i + 1, MF_BYPOSITION | MF_CHECKED);
 				languageFound = true;
@@ -578,48 +601,51 @@ void CCalendarWindow::FillMenu(HMENU subMenu, int x, int y)
 ** Calculates the windows correct size.
 **
 */
-void CCalendarWindow::CalcWindowSize()
+SIZE CCalendarWindow::CalcWindowSize()
 {
-	m_Width=0;
-	m_Height=0;
+	SIZE size;
 
-	if(c_Config.GetDaysEnable()) 
+	size.cx = size.cy = 0;
+
+	if(CConfig::Instance().GetDaysEnable()) 
 	{
-		m_Width = max(m_Width, m_Days->GetX() + m_Days->GetW());
-		m_Height = max(m_Height, m_Days->GetY() + m_Days->GetH());
+		size.cx = max(size.cx, m_Days->GetX() + m_Days->GetW());
+		size.cy = max(size.cy, m_Days->GetY() + m_Days->GetH());
 	}
-	if(c_Config.GetWeekdaysEnable()) 
+	if(CConfig::Instance().GetWeekdaysEnable()) 
 	{
-		m_Width = max(m_Width, m_Weekdays->GetX() + m_Weekdays->GetW());
-		m_Height = max(m_Height, m_Weekdays->GetY() + m_Weekdays->GetH());
+		size.cx = max(size.cx, m_Weekdays->GetX() + m_Weekdays->GetW());
+		size.cy = max(size.cy, m_Weekdays->GetY() + m_Weekdays->GetH());
 	}
-	if(c_Config.GetWeekNumbersEnable()) 
+	if(CConfig::Instance().GetWeekNumbersEnable()) 
 	{
-		m_Width = max(m_Width, m_WeekNumbers->GetX() + m_WeekNumbers->GetW());
-		m_Height = max(m_Height, m_WeekNumbers->GetY() + m_WeekNumbers->GetH());
+		size.cx = max(size.cx, m_WeekNumbers->GetX() + m_WeekNumbers->GetW());
+		size.cy = max(size.cy, m_WeekNumbers->GetY() + m_WeekNumbers->GetH());
 	}
-	if(c_Config.GetMonthEnable()) 
+	if(CConfig::Instance().GetMonthEnable()) 
 	{
-		m_Width = max(m_Width, m_Month->GetX() + m_Month->GetW());
-		m_Height = max(m_Height, m_Month->GetY() + m_Month->GetH());
+		size.cx = max(size.cx, m_Month->GetX() + m_Month->GetW());
+		size.cy = max(size.cy, m_Month->GetY() + m_Month->GetH());
 	}
-	if(c_Config.GetYearEnable()) 
+	if(CConfig::Instance().GetYearEnable()) 
 	{
-		m_Width = max(m_Width, m_Year->GetX() + m_Year->GetW());
-		m_Height = max(m_Height, m_Year->GetY() + m_Year->GetH());
+		size.cx = max(size.cx, m_Year->GetX() + m_Year->GetW());
+		size.cy = max(size.cy, m_Year->GetY() + m_Year->GetH());
 	}
-	if(c_Config.GetTodayEnable()) 
+	if(CConfig::Instance().GetTodayEnable()) 
 	{
-		m_Width = max(m_Width, m_Today->GetX() + m_Today->GetW());
-		m_Height = max(m_Height, m_Today->GetY() + m_Today->GetH());
+		size.cx = max(size.cx, m_Today->GetX() + m_Today->GetW());
+		size.cy = max(size.cy, m_Today->GetY() + m_Today->GetH());
 	}
 
-	m_Width *= c_Config.GetHorizontalCount();
-	m_Height *= c_Config.GetVerticalCount();
+	size.cx *= CConfig::Instance().GetHorizontalCount();
+	size.cy *= CConfig::Instance().GetVerticalCount();
 
 	// Background already knows about vert & horz counts.
-	if(m_Background.GetWidth() > m_Width) m_Width = m_Background.GetWidth();
-	if(m_Background.GetHeight() > m_Height) m_Height = m_Background.GetHeight();
+	if(m_Background.GetWidth() > size.cx) size.cx = m_Background.GetWidth();
+	if(m_Background.GetHeight() > size.cy) size.cy = m_Background.GetHeight();
+
+	return size;
 }
 
 /* 
@@ -644,20 +670,18 @@ void CCalendarWindow::Refresh(bool lite)
 
 	try 
 	{
-		m_Refreshing = true;
-
 		if (!lite)
 		{
 			ReadSkins();		// Rescan the skins
-			c_Config.ReadConfig();
+			CConfig::Instance().ReadConfig();
 
 			KillTimer(m_Window, OUTLOOK_TIMER);
-			if (c_Config.GetOutlookUpdate() > 0)
+			if (CConfig::Instance().GetOutlookUpdate() > 0)
 			{
-				SetTimer(m_Window, OUTLOOK_TIMER, c_Config.GetOutlookUpdate() * 1000, NULL);	// Outlook appointments update is in secs
+				SetTimer(m_Window, OUTLOOK_TIMER, CConfig::Instance().GetOutlookUpdate() * 1000, NULL);	// Outlook appointments update is in secs
 			}
 
-			sprintf(buffer, "Skin: %s, Ini: %s", c_Config.GetCurrentSkin().c_str(), c_Config.GetCurrentSkinIni().c_str());
+			sprintf(buffer, "Skin: %s, Ini: %s", CConfig::Instance().GetCurrentSkin().c_str(), CConfig::Instance().GetCurrentSkinIni().c_str());
 			LSLog(LOG_DEBUG, "Rainlendar", buffer);
 
 			// Initialize
@@ -669,9 +693,6 @@ void CCalendarWindow::Refresh(bool lite)
 			delete m_Month;
 			delete m_Year;
 
-			// Reset the region
-			SetWindowRgn(m_Window, NULL, TRUE);
-
 			m_Days = new CItemDays;
 			m_Event = new CItemEvent;
 			m_Today = new CItemToday;
@@ -680,11 +701,7 @@ void CCalendarWindow::Refresh(bool lite)
 			m_Month = new CItemMonth;
 			m_Year = new CItemYear;
 
-			if(m_FirstExecute || (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_WALLPAPER_ALWAYS ||
-								 (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_NORMAL && !(m_Rainlendar->IsWharf()))))
-			{
-    			m_Background.Initialize();
-			}
+    		m_Background.Initialize();
 			m_Days->Initialize();
 			m_Event->Initialize();
 			m_Today->Initialize();
@@ -693,11 +710,12 @@ void CCalendarWindow::Refresh(bool lite)
 			m_Month->Initialize();
 			m_Year->Initialize();
 
-			CToolTip::Instance().SetBackgroundColor(c_Config.GetToolTipBGColor());
-			CToolTip::Instance().SetFont(c_Config.GetToolTipFont());
-			CToolTip::Instance().SetMaxWidth(c_Config.GetToolTipMaxWidth());
 
-			if (CCalendarWindow::c_Config.GetTooltipSeparator())
+			CToolTip::Instance().SetBackgroundColor(CConfig::Instance().GetToolTipBGColor());
+			CToolTip::Instance().SetFont(CConfig::Instance().GetToolTipFont());
+			CToolTip::Instance().SetMaxWidth(CConfig::Instance().GetToolTipMaxWidth());
+
+			if (CConfig::Instance().GetTooltipSeparator())
 			{
 				CToolTip::Instance().SetSeparation(5);
 				CToolTip::Instance().SetSeparator(true);
@@ -710,9 +728,18 @@ void CCalendarWindow::Refresh(bool lite)
 
 			RegisterHotkeys();
 
-			if (m_FirstExecute)
+			if (CConfig::Instance().GetShowOutlookAppointments())
 			{
-				SyncWithOutlook();		// Only sync with first execute
+				InitializeOutlook(m_Window);
+			}
+			else
+			{
+				FinalizeOutlook();
+			}
+
+			if (m_FirstExecute && CConfig::Instance().GetOutlookAppointmentsAtStartup())
+			{
+				SyncWithOutlook(m_Window);		// Only sync with first execute
 			}
 			GetOutlookEvents(GetEventManager());
 
@@ -721,7 +748,7 @@ void CCalendarWindow::Refresh(bool lite)
 			bool languageFound = false;
 			for (int i = 0; i < c_Language.GetLanguages().size(); i++)
 			{
-				if (c_Language.GetLanguages()[i] == c_Config.GetCurrentLanguage())
+				if (c_Language.GetLanguages()[i] == CConfig::Instance().GetCurrentLanguage())
 				{
 					c_Language.ChangeLanguage(i);
 					languageFound = true;
@@ -731,45 +758,64 @@ void CCalendarWindow::Refresh(bool lite)
 			if (!languageFound)
 			{
 				c_Language.SetDefaultLanguage();
-				c_Config.SetCurrentLanguage("");
+				CConfig::Instance().SetCurrentLanguage("");
 			}
-        }
+
+			m_X = CConfig::Instance().GetX();
+			m_Y = CConfig::Instance().GetY();
+		}
+
+		CRainWindow::RefreshBegin(lite);
+
+		if (!lite)
+		{
+			BackgroundCreateStruct bcs;
+			bcs.pos.x = m_X;
+			bcs.pos.y = m_Y;
+			bcs.size.cx = m_Width;
+			bcs.size.cy = m_Height;
+			bcs.filename = CConfig::Instance().GetBackgroundBitmapName();
+			bcs.mode = CConfig::Instance().GetBackgroundMode();
+			bcs.solidBevel = CConfig::Instance().GetBackgroundBevel();
+			bcs.solidColor= CConfig::Instance().GetBackgroundSolidColor();
+
+			m_Background.Create(bcs);
+
+			// The size could be limited by the background, so we need to reset the width and height
+			if (m_Width != m_Background.GetWidth() || m_Height != m_Background.GetHeight())
+			{
+				m_Width = m_Background.GetWidth();
+				m_Height = m_Background.GetHeight();
+				MoveWindow(m_X, m_Y);	// This also resizes the window
+			}
+
+			SetWindowZPos(CConfig::Instance().GetWindowPos());
+		}
+
+		RemoveTrayIcon();
+		if (CConfig::Instance().GetShowTrayIcon()) 
+		{
+			AddTrayIcon();
+		}
 
 		CRasterizerFont::ClearBuffers();
 
+		CRainWindow::RefreshEnd(lite);
+
 		if (!lite)
 		{
-			CalcWindowSize();
+			SYSTEMTIME today;
+			GetLocalTime(&today);
+			std::vector<CEventMessage*> eventList = GetEventManager()->GetEvents(c_TodaysDate.wDay, c_TodaysDate.wMonth, c_TodaysDate.wYear);
 
-			MoveWindow(c_Config.GetX(), c_Config.GetY());
-
-			if(m_FirstExecute || (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_WALLPAPER_ALWAYS ||
-								 (CCalendarWindow::c_Config.GetBGCopyMode() == CConfig::BG_NORMAL && !(m_Rainlendar->IsWharf()))))
+			// Mark all until now as shown
+			int now = today.wHour * 60 + today.wMinute + CConfig::Instance().GetPreshowTime();
+			for (int i = 0; i < eventList.size(); i++)
 			{
-				CalcWindowSize();
-				if (m_Background.Create(m_X, m_Y, m_Width, m_Height))
+				if (eventList[i]->GetStartTime() < now)
 				{
-					CalcWindowSize();	// Must be recalced if BG is bigger than current window
-        			MoveWindow(m_X, m_Y);
+					eventList[i]->SetShown(true);
 				}
-			}
-
-			SetWindowZPos(c_Config.GetWindowPos());
-		}
-
-		// Create the DoubleBuffer
-		m_DoubleBuffer.Create(m_Width, m_Height, 0x0);	// Fully transparent
-
-		DrawCalendar();
-		UpdateTransparency();
-
-		if (!lite)
-		{
-			if(c_Config.GetBackgroundMode() != CBackground::MODE_COPY && !m_Background.HasAlpha())
-			{
-				// Set window region
-				HRGN region = BitmapToRegion(m_DoubleBuffer.GetBitmap(), RGB(255,0,255), 0x101010, 0, 0);
-				SetWindowRgn(m_Window, region, TRUE);
 			}
 
 			// Execute on event if this was first refresh (meaning that Rainlendar was started)
@@ -777,19 +823,20 @@ void CCalendarWindow::Refresh(bool lite)
 			{ 
 				m_FirstExecute=false;
 				
-				ShowEventMessage();
+				m_MessageWindow.ClearEvents();
+				ShowEventMessage(eventList, CConfig::Instance().GetShowAllEvents());
 			}
 			
 			PollWallpaper(true);
 		}
 
-		InvalidateRect(m_Window, NULL, false);
-
-		m_Refreshing = false;
+		// Refresh the other windows
+		m_TodoWindow.Refresh(lite);
+		m_MessageWindow.Refresh(lite);
 	} 
     catch(CError& error) 
     {
-		MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+		MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		OnCommand(WM_QUIT, NULL);	// Gotta quit
 	}
 
@@ -797,18 +844,102 @@ void CCalendarWindow::Refresh(bool lite)
 	LSLog(LOG_DEBUG, "Rainlendar", buffer);
 }
 
+//
+// Tray icon
+//
+BOOL CCalendarWindow::AddTrayIcon() 
+{ 
+    BOOL res = FALSE; 
+    NOTIFYICONDATA tnid; 
+	
+	// Load the tray icon from resources
+	CImage trayImage;
+	CImage trayNumbersImage;
+	if (trayImage.LoadResource(m_Instance, IDB_TRAY))
+	{
+		// Draw the current date into the bitmap
+		if (trayNumbersImage.LoadResource(m_Instance, IDB_TRAY_NUMBERS))
+		{
+			int w = trayNumbersImage.GetWidth();
+			int h = trayNumbersImage.GetHeight() / 10;
+			if (c_TodaysDate.wDay > 9)
+			{
+				// Center the images to 16x16 icon
+				trayImage.Blit(trayNumbersImage, (16 - w * 2) / 2, (16 - h) / 2, 0, (c_TodaysDate.wDay / 10) * h, w, h);
+				trayImage.Blit(trayNumbersImage, (16 - w * 2) / 2 + w, (16 - h) / 2, 0, (c_TodaysDate.wDay % 10) * h, w, h);
+			}
+			else
+			{
+				// Center the image to 16x16 icon
+				trayImage.Blit(trayNumbersImage, (16 - w) / 2, (16 - h) / 2, 0, (c_TodaysDate.wDay % 10) * h, w, h);
+			}
+		}
+
+		OSVERSIONINFO version;
+		version.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+		GetVersionEx(&version);
+
+		HICON trayIcon;
+
+		if (version.dwPlatformId == VER_PLATFORM_WIN32_NT && version.dwMajorVersion > 4)
+		{
+			ICONINFO iconInfo;
+			iconInfo.fIcon = TRUE;
+			iconInfo.hbmColor = trayImage.GetBitmap();
+			iconInfo.hbmMask = trayImage.GetBitmap();
+			trayIcon = CreateIconIndirect(&iconInfo);
+		}
+		else
+		{
+			trayIcon = LoadIcon(m_Instance, MAKEINTRESOURCE(IDI_TRAY));
+		}
+
+		if (trayIcon)
+		{
+			tnid.cbSize = sizeof(NOTIFYICONDATA); 
+			tnid.hWnd = m_Window; 
+			tnid.uID = IDB_TRAY;
+			tnid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP; 
+			tnid.uCallbackMessage = WM_NOTIFYICON; 
+			tnid.hIcon = trayIcon;
+			lstrcpyn(tnid.szTip, "Rainlendar", sizeof(tnid.szTip)); 
+			
+			res = Shell_NotifyIcon(NIM_ADD, &tnid); 
+		}
+	}
+    return res; 
+}
+
+BOOL CCalendarWindow::RemoveTrayIcon() 
+{ 
+    BOOL res; 
+    NOTIFYICONDATA tnid; 
+	
+    tnid.cbSize = sizeof(NOTIFYICONDATA); 
+    tnid.hWnd = m_Window; 
+    tnid.uID = IDB_TRAY; 
+	
+    res = Shell_NotifyIcon(NIM_DELETE, &tnid); 
+    return res; 
+} 
+
+
 /*
 ** ShowEventMessage
 **
 ** Opens a message box and displays the message in it. Also executes the command.
 */
-void CCalendarWindow::ShowEventMessage()
+void CCalendarWindow::ShowEventMessage(std::vector<CEventMessage*>& eventList, bool messageBox)
 {
-	if(c_Config.GetEventEnable()) 
+	if(CConfig::Instance().GetEventEnable()) 
 	{
+		if (messageBox) 
+		{
+			m_MessageWindow.ShowEvents(eventList);
+		}
+
+		// Do the execute on event
 		std::string text;
-		std::vector<CEventMessage*> eventList = GetEventManager()->GetEvents(c_TodaysDate.wDay, c_TodaysDate.wMonth, c_TodaysDate.wYear);
-		
 		if (!eventList.empty())
 		{
 			std::vector<CEventMessage*>::iterator i = eventList.begin();
@@ -820,65 +951,48 @@ void CCalendarWindow::ShowEventMessage()
 					text += "\n";
 				}
 			}
-
+			
 			if(!text.empty())
 			{
 				// Remove the last \n
 				text.erase(text.end() - 1, text.end());
 			}
 		}
-
+		
 		if (!text.empty())
 		{
-			if(c_Config.GetEventMessageBox()) 
-			{
-				MessageBox(m_Window, text.c_str(), "Rainlendar", MB_OK | MB_TOPMOST);
-			}
+			std::string execute = CConfig::Instance().GetEventExecute();
 			
-			std::string execute = c_Config.GetEventExecute();
-
 			if(!execute.empty()) 
 			{
-				// Do not run bangs if litestep is not enabled
-				if(!m_Rainlendar->GetDummyLitestep() || execute[0] != '!')
+				if (strnicmp("PLAY ", execute.c_str(), 5) == 0)
+				{
+					PlaySound(execute.c_str() + 5, NULL, SND_ASYNC | SND_FILENAME | SND_NODEFAULT);
+				}
+				else if(!CRainlendar::GetDummyLitestep() || execute[0] != '!') // Do not run bangs if litestep is not enabled
 				{
 					char buffer[1024];
 					VarExpansion(buffer, execute.c_str());
 					execute = buffer;
-					int pos = execute.find("%m");
+					int pos = execute.find("%m");		// Full text
 					if (pos != -1)
 					{
 						execute.replace(execute.begin() + pos, execute.begin() + pos + 2, text);
+					}
+					pos = execute.find("%n");			// First 255 chars
+					if (pos != -1)
+					{
+						std::string truncatedText(text.begin(), text.begin() + 255);
+						execute.replace(execute.begin() + pos, execute.begin() + pos + 2, truncatedText);
 					}
 					LSExecute(NULL, execute.c_str(), SW_SHOWNORMAL);
 				}
 			}
 		} 
-	} 
-}
-
-/*
-** MoveWindow
-**
-** Moves the window to a new location
-*/
-void CCalendarWindow::MoveWindow(int x, int y)
-{
-	RECT r;
-
-	if (c_Config.GetNegativeCoords())
-	{
-		// Handle negative coordinates
-		GetClientRect(GetDesktopWindow(), &r); 
-		if (x < 0) x += r.right - r.left;
-		if (y < 0) y += r.bottom - r.top;
+		
 	}
-
-	m_X = x;
-	m_Y = y;
-
-	SetWindowPos(m_Window, NULL, m_X, m_Y, m_Width, m_Height, SWP_NOACTIVATE | SWP_NOZORDER);
 }
+
 
 /*
 ** SetWindowZPos
@@ -887,111 +1001,9 @@ void CCalendarWindow::MoveWindow(int x, int y)
 */
 void CCalendarWindow::SetWindowZPos(CConfig::WINDOWPOS pos)
 {
-	if(m_Rainlendar->IsWharf()) return;		// Children shouldn't change z-position
+	CRainWindow::SetWindowZPos(pos);
 
-	HWND parent = NULL;
-	HWND winPos = HWND_NOTOPMOST;
-	LONG oldStyle = GetWindowLong(m_Window, GWL_STYLE);
-	LONG style = (oldStyle & ~WS_CHILD) | WS_POPUP;		// Change from child to popup
-
-	switch (pos)
-	{
-	case CConfig::WINDOWPOS_ONTOP:
-		winPos = HWND_TOPMOST;
-		break;
-
-	case CConfig::WINDOWPOS_ONBOTTOM:
-		winPos = HWND_BOTTOM;
-		break;
-
-	case CConfig::WINDOWPOS_ONDESKTOP:
-		{
-			// Set the window's parent to progman, so it stays always on desktop
-			HWND ProgmanHwnd = FindWindow("Progman", "Program Manager");
-			if (ProgmanHwnd && GetParent(m_Window) != ProgmanHwnd)
-			{
-				parent = ProgmanHwnd;
-				style = (oldStyle & ~WS_POPUP) | WS_CHILD;
-			}
-		}
-	}
-
-	if (!m_Rainlendar->IsWharf())
-	{
-		if (style != oldStyle)
-		{
-			SetWindowLong(m_Window, GWL_STYLE, style);
-			SetParent(m_Window, parent);
-		}
-	}
-
-	SetWindowPos(m_Window, winPos, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOMOVE);
-
-	c_Config.SetWindowPos(pos);	// Set the config to match the chosen value
-}
-
-/*
-** UpdateTransparency
-**
-** Updates the native Windows transparency
-*/
-void CCalendarWindow::UpdateTransparency()
-{
-	if (Is2k())
-	{
-		if (c_Config.GetNativeTransparency())
-		{
-			// Add the window flag
-			LONG style = GetWindowLong(m_Window, GWL_EXSTYLE);
-			SetWindowLong(m_Window, GWL_EXSTYLE, style | WS_EX_LAYERED);
-
-			RECT r;
-			GetWindowRect(m_Window, &r);
-
-			typedef BOOL (WINAPI * FPUPDATELAYEREDWINDOW)(HWND hWnd, HDC hdcDst, POINT *pptDst, SIZE *psize, HDC hdcSrc, POINT *pptSrc, COLORREF crKey, BLENDFUNCTION *pblend, DWORD dwFlags);
-			HINSTANCE h = LoadLibrary("user32.dll");
-			FPUPDATELAYEREDWINDOW UpdateLayeredWindow = (FPUPDATELAYEREDWINDOW)GetProcAddress(h, "UpdateLayeredWindow");
-
-			BLENDFUNCTION blendPixelFunction= {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
-			POINT ptWindowScreenPosition = {r.left, r.top};
-			POINT ptSrc = {0, 0};
-			SIZE szWindow = {m_Width, m_Height};
-			
-			HDC dcScreen = GetDC(GetDesktopWindow());
-			HDC dcMemory = CreateCompatibleDC(dcScreen);
-			HBITMAP oldBitmap = (HBITMAP)SelectObject(dcMemory, m_DoubleBuffer.GetBitmap());
-			UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
-			ReleaseDC(GetDesktopWindow(), dcScreen);
-			SelectObject(dcMemory, oldBitmap);
-			DeleteDC(dcMemory);
-			FreeLibrary(h);
-		}
-		else
-		{
-			// Remove the window flag
-			LONG style = GetWindowLong(m_Window, GWL_EXSTYLE);
-			SetWindowLong(m_Window, GWL_EXSTYLE, style & ~WS_EX_LAYERED);
-		}
-	}
-}
-
-/*
-** Is2k
-**
-** Returns true if ew're running modern OS.
-**
-*/
-bool CCalendarWindow::Is2k()
-{
-	OSVERSIONINFO version;
-	version.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	GetVersionEx(&version);
-
-	if (version.dwPlatformId == VER_PLATFORM_WIN32_NT && version.dwMajorVersion > 4)
-	{
-		return true;
-	}
-	return false;
+	CConfig::Instance().SetWindowPos(pos);	// Set the config to match the chosen value
 }
 
 /*
@@ -1000,6 +1012,11 @@ bool CCalendarWindow::Is2k()
 ** Scans all the subfolders and locates the ini-files.
 **
 */
+bool CompareConfigs(const CCalendarWindow::CONFIG& a, const CCalendarWindow::CONFIG& b) 
+{
+	return a.path < b.path;
+}
+
 void CCalendarWindow::ReadSkins()
 {
     WIN32_FIND_DATA fileData;      // Data structure describes the file found
@@ -1010,7 +1027,7 @@ void CCalendarWindow::ReadSkins()
 	m_ConfigStrings.clear();
 
     // Start searching for .ini files in the given directory.
-	std::string files = c_Config.GetSkinsPath() + "*";
+	std::string files = CConfig::Instance().GetSkinsPath() + "*";
     hSearch = FindFirstFile(files.c_str(), &fileData);
 	do
 	{
@@ -1024,7 +1041,7 @@ void CCalendarWindow::ReadSkins()
 			config.path = fileData.cFileName;
 
 			// Scan all .ini files from the subfolder
-			std::string inis = c_Config.GetSkinsPath();
+			std::string inis = CConfig::Instance().GetSkinsPath();
 			inis += fileData.cFileName;
 			inis += "\\*.ini";
 			hSearchIni = FindFirstFile(inis.c_str(), &fileDataIni);
@@ -1051,12 +1068,12 @@ void CCalendarWindow::ReadSkins()
 	std::vector<CONFIG>::iterator i = m_ConfigStrings.begin();
 	for( ; i != m_ConfigStrings.end() && !found; i++)
 	{
-		if ( (*i).path == c_Config.GetCurrentSkin())
+		if ( (*i).path == CConfig::Instance().GetCurrentSkin())
 		{
 			std::vector<std::string>::iterator j = (*i).iniFiles.begin();
 			for( ; j != (*i).iniFiles.end(); j++)
 			{
-				if ( (*j) == c_Config.GetCurrentSkinIni())
+				if ( (*j) == CConfig::Instance().GetCurrentSkinIni())
 				{
 					found = true;
 					break;
@@ -1069,22 +1086,25 @@ void CCalendarWindow::ReadSkins()
 	{
 		if (m_ConfigStrings.empty())
 		{
-			c_Config.SetCurrentSkin("");
-			c_Config.SetCurrentSkinIni("");
+			CConfig::Instance().SetCurrentSkin("");
+			CConfig::Instance().SetCurrentSkinIni("");
 		}
 		else
 		{
 			// Just use the first available
 			char buffer[MAX_LINE_LENGTH];
 			//	"Unable to find the skin: %s\\%s\nRainlendar will default to the first available skin.",
-			sprintf(buffer, CCalendarWindow::c_Language.GetString("Message", 7), c_Config.GetCurrentSkin().c_str(), c_Config.GetCurrentSkinIni().c_str());
+			sprintf(buffer, CCalendarWindow::c_Language.GetString("Message", 7), CConfig::Instance().GetCurrentSkin().c_str(), CConfig::Instance().GetCurrentSkinIni().c_str());
 			MessageBox(m_Window, buffer, "Rainlendar", MB_OK | MB_ICONWARNING);
 
-			c_Config.SetCurrentSkin(m_ConfigStrings[0].path);
-			c_Config.SetCurrentSkinIni(m_ConfigStrings[0].iniFiles[0]);
-			c_Config.WriteConfig(CConfig::WRITE_CONFIG);
+			CConfig::Instance().SetCurrentSkin(m_ConfigStrings[0].path);
+			CConfig::Instance().SetCurrentSkinIni(m_ConfigStrings[0].iniFiles[0]);
+			CConfig::Instance().WriteConfig(CConfig::WRITE_CONFIG);
 		}
 	}
+
+	// Sort
+	std::sort(m_ConfigStrings.begin(), m_ConfigStrings.end(), CompareConfigs);
 }
 
 /* 
@@ -1095,7 +1115,7 @@ void CCalendarWindow::ReadSkins()
 */
 void CCalendarWindow::PollWallpaper(bool set)
 {
-	if (c_Config.GetPollWallpaper())
+	if (CConfig::Instance().GetPollWallpaper())
 	{
 		// Check if the wallpaper is different that what it was when we refresed last time
 		DWORD size = 256;
@@ -1150,24 +1170,6 @@ void CCalendarWindow::PollWallpaper(bool set)
 }
 
 /* 
-** ToggleWindow
-**
-** Toggles window visibility 
-**
-*/
-void CCalendarWindow::ToggleWindow()
-{
-	if(!m_Hidden) 
-	{
-		HideWindow();
-	} 
-	else 
-	{
-		ShowWindow();
-	}
-}
-
-/* 
 ** ChangeMonth
 **
 ** Show the given month in the window
@@ -1207,17 +1209,18 @@ void CCalendarWindow::ChangeMonth(int Month, int Year)
 }
 
 /* 
-** DrawCalendar
+** DrawWindow
 **
 ** Draws the calendar to DoubleBuffer
 **
 */
-void CCalendarWindow::DrawCalendar()
+void CCalendarWindow::DrawWindow()
 {
+	int i, j;
 	int thisMonth = c_MonthsFirstDate.wMonth;
 	int thisYear = c_MonthsFirstDate.wYear;
 
-	int startMonth = thisMonth - c_Config.GetPreviousMonths();
+	int startMonth = thisMonth - CConfig::Instance().GetPreviousMonths();
 	int startYear = thisYear;
 
 	while (startMonth <= 0)
@@ -1234,13 +1237,13 @@ void CCalendarWindow::DrawCalendar()
 
 		POINT offset; 
 
-		for (int j = 0; j < c_Config.GetVerticalCount(); j++)
+		for (j = 0; j < CConfig::Instance().GetVerticalCount(); j++)
 		{
-			offset.y = j * m_Height / c_Config.GetVerticalCount();
+			offset.y = j * m_Height / CConfig::Instance().GetVerticalCount();
 
-			for (int i = 0; i < c_Config.GetHorizontalCount(); i++)
+			for (i = 0; i < CConfig::Instance().GetHorizontalCount(); i++)
 			{
-				offset.x = i * m_Width / c_Config.GetHorizontalCount();
+				offset.x = i * m_Width / CConfig::Instance().GetHorizontalCount();
 
 				ChangeMonth(startMonth, startYear);
 				startMonth++;
@@ -1253,16 +1256,16 @@ void CCalendarWindow::DrawCalendar()
 				// Reset the tooltips for the new month(s) (this also removes the old tips)
 				m_Event->AddToolTips(this, offset);
 
-				if(c_Config.GetYearEnable()) m_Year->Paint(m_DoubleBuffer, offset);
-				if(c_Config.GetMonthEnable()) m_Month->Paint(m_DoubleBuffer, offset);
+				if(CConfig::Instance().GetYearEnable()) m_Year->Paint(m_DoubleBuffer, offset);
+				if(CConfig::Instance().GetMonthEnable()) m_Month->Paint(m_DoubleBuffer, offset);
 
-				if(c_Config.GetDaysEnable()) 
+				if(CConfig::Instance().GetDaysEnable()) 
 				{
 					m_Days->Paint(m_DoubleBuffer, offset);
-					if(c_Config.GetEventEnable()) m_Event->Paint(m_DoubleBuffer, offset);
-					if(c_Config.GetWeekdaysEnable()) m_Weekdays->Paint(m_DoubleBuffer, offset);
-					if(c_Config.GetWeekNumbersEnable()) m_WeekNumbers->Paint(m_DoubleBuffer, offset);
-					if(c_Config.GetTodayEnable()) m_Today->Paint(m_DoubleBuffer, offset);
+					if(CConfig::Instance().GetEventEnable()) m_Event->Paint(m_DoubleBuffer, offset);
+					if(CConfig::Instance().GetWeekdaysEnable()) m_Weekdays->Paint(m_DoubleBuffer, offset);
+					if(CConfig::Instance().GetWeekNumbersEnable()) m_WeekNumbers->Paint(m_DoubleBuffer, offset);
+					if(CConfig::Instance().GetTodayEnable()) m_Today->Paint(m_DoubleBuffer, offset);
 				}
 			}
 		}
@@ -1273,33 +1276,151 @@ void CCalendarWindow::DrawCalendar()
 			textImage.Create(CRasterizerFont::GetColorBuffer().GetBitmap(), CRasterizerFont::GetAlphaBuffer().GetBitmap(), 0);
 			m_DoubleBuffer.Blit(textImage, 0, 0, 0, 0, textImage.GetWidth(), textImage.GetHeight());
 		}
+
+		// Draw the icons last so the they will be on top of everything
+		startMonth = thisMonth - CConfig::Instance().GetPreviousMonths();
+		startYear = thisYear;
+		
+		while (startMonth <= 0)
+		{
+			startYear--;
+			startMonth += 12;
+		}
+
+		for (j = 0; j < CConfig::Instance().GetVerticalCount(); j++)
+		{
+			offset.y = j * m_Height / CConfig::Instance().GetVerticalCount();
+			
+			for (i = 0; i < CConfig::Instance().GetHorizontalCount(); i++)
+			{
+				offset.x = i * m_Width / CConfig::Instance().GetHorizontalCount();
+				
+				ChangeMonth(startMonth, startYear);
+				startMonth++;
+				if (startMonth == 13)
+				{
+					startYear++;
+					startMonth = 1;
+				}
+				if(CConfig::Instance().GetEventEnable()) m_Event->PaintIcons(m_DoubleBuffer, offset);
+			}
+		}
 	}
 
 	// Reset the values
 	ChangeMonth(thisMonth, thisYear);
 }
 
+void CCalendarWindow::ConnectServer(int type)
+{
+	static NetworkParams param;
+
+	if (CConfig::Instance().GetServerEnable() && !CConfig::Instance().GetServerAddress().empty())
+	{
+		// Here is a slight possibility of unsafe thread access
+		// If the OnServerSync() is started multiple times before the
+		// thread has a chance to copy the information, the data might
+		// corrupt. Hopefully this doesn't occur too often :-)
+		param.serverPort = CConfig::Instance().GetServerPort();
+		param.serverAddress = CConfig::Instance().GetServerAddress();
+		param.userID = CConfig::Instance().GetServerID();
+		param.requestType = type;
+		param.window = m_Window;
+
+		// Launch the network communication thread
+		DWORD id;
+		HANDLE thread = CreateThread(NULL, 0, NetworkThreadProc, &param, 0, &id);
+		CloseHandle(thread);
+	}
+}
+
+void CCalendarWindow::RegisterHotkeys()
+{
+	DWORD hotkey;
+	DWORD modifiers;
+	DWORD vk;
+
+	for (int i = 0; i < CConfig::HOTKEY_LAST; i++)
+	{
+		switch(i)
+		{
+		case CConfig::HOTKEY_HIDE:
+			hotkey = CConfig::Instance().GetHideHotkey();
+			break;
+
+		case CConfig::HOTKEY_SHOW:
+			hotkey = CConfig::Instance().GetShowHotkey();
+			break;
+
+		case CConfig::HOTKEY_TOGGLE:
+			hotkey = CConfig::Instance().GetToggleHotkey();
+			break;
+
+		case CConfig::HOTKEY_ACTIVATE:
+			hotkey = CConfig::Instance().GetActivateHotkey();
+			break;
+
+		case CConfig::HOTKEY_REFRESH:
+			hotkey = CConfig::Instance().GetRefreshHotkey();
+			break;
+
+		case CConfig::HOTKEY_CONFIG:
+			hotkey = CConfig::Instance().GetConfigHotkey();
+			break;
+
+		case CConfig::HOTKEY_SKIN:
+			hotkey = CConfig::Instance().GetSkinHotkey();
+			break;
+
+		case CConfig::HOTKEY_NEXT:
+			hotkey = CConfig::Instance().GetNextHotkey();
+			break;
+
+		case CConfig::HOTKEY_PREVIOUS:
+			hotkey = CConfig::Instance().GetPreviousHotkey();
+			break;
+
+		case CConfig::HOTKEY_NEXT_YEAR:
+			hotkey = CConfig::Instance().GetNextYearHotkey();
+			break;
+
+		case CConfig::HOTKEY_PREVIOUS_YEAR:
+			hotkey = CConfig::Instance().GetPreviousYearHotkey();
+			break;
+
+		case CConfig::HOTKEY_CURRENT:
+			hotkey = CConfig::Instance().GetCurrentHotkey();
+			break;
+
+		case CConfig::HOTKEY_ALL:
+			hotkey = CConfig::Instance().GetAllHotkey();
+			break;
+
+		case CConfig::HOTKEY_OUTLOOK:
+			hotkey = CConfig::Instance().GetOutlookHotkey();
+			break;
+
+		case CConfig::HOTKEY_TODO:
+			hotkey = CConfig::Instance().GetTodoHotkey();
+			break;
+		}
+		
+		vk = hotkey & 0xFF;
+		modifiers = (hotkey >> 8) & 0xFF;
+
+		if (hotkey)
+		{
+			RegisterHotKey(m_Window, i, modifiers, vk);
+		}
+		else
+		{
+			UnregisterHotKey(m_Window, i);
+		}
+	}
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CCalendarWindow message handlers
-
-LRESULT CCalendarWindow::OnPaint(WPARAM wParam, LPARAM lParam) 
-{
-	if(m_DoubleBuffer.GetBitmap()) 
-	{
-		PAINTSTRUCT ps;
-		HDC winDC = BeginPaint(m_Window, &ps);
-		HDC tmpDC = CreateCompatibleDC(NULL);
-		HBITMAP oldBitmap = (HBITMAP)SelectObject(tmpDC, m_DoubleBuffer.GetBitmap());
-
-		BitBlt(winDC, 0, 0, m_Width, m_Height, tmpDC, 0, 0, SRCCOPY);
-
-		SelectObject(tmpDC, oldBitmap);
-		DeleteDC(tmpDC);
-
-		EndPaint(m_Window, &ps);
-	}
-	return 0;
-}
 
 LRESULT CCalendarWindow::OnContextMenu(WPARAM wParam, LPARAM lParam) 
 {
@@ -1350,14 +1471,14 @@ LRESULT CCalendarWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (wParam == ID_LANGUAGE)
 			{
 				c_Language.SetDefaultLanguage();
-				c_Config.SetCurrentLanguage("");
+				CConfig::Instance().SetCurrentLanguage("");
 			}
 			else
 			{
 				c_Language.ChangeLanguage(wParam - ID_LANGUAGE - 1);
-				c_Config.SetCurrentLanguage(c_Language.GetLanguages()[wParam - ID_LANGUAGE - 1]);
+				CConfig::Instance().SetCurrentLanguage(c_Language.GetLanguages()[wParam - ID_LANGUAGE - 1]);
 			}
-			c_Config.WriteConfig(CConfig::WRITE_CONFIG);
+			CConfig::Instance().WriteConfig(CConfig::WRITE_CONFIG);
 			Refresh();
 			return 0;
 		}
@@ -1373,9 +1494,9 @@ LRESULT CCalendarWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 				{
 					if (index == wParam - ID_SKIN)
 					{
-						c_Config.SetCurrentSkin(m_ConfigStrings[i].path);
-						c_Config.SetCurrentSkinIni(m_ConfigStrings[i].iniFiles[j]);
-						c_Config.WriteConfig(CConfig::WRITE_CONFIG);	// Write old config (happens only if Rainlendar.ini's not modified from outside)
+						CConfig::Instance().SetCurrentSkin(m_ConfigStrings[i].path);
+						CConfig::Instance().SetCurrentSkinIni(m_ConfigStrings[i].iniFiles[j]);
+						CConfig::Instance().WriteConfig(CConfig::WRITE_CONFIG);	// Write old config (happens only if Rainlendar.ini's not modified from outside)
 						Refresh();
 						return 0;
 					}
@@ -1395,12 +1516,16 @@ LRESULT CCalendarWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 			}
 			break;
 
+		case ID_POPUP_HELP:
+			ShellExecute(m_Window, "open", "Manual.html", NULL, NULL, SW_SHOWNORMAL);	
+			break;
+
 		case ID_REFRESH:
 			Refresh();
 			break;
 
 		case ID_POPUP_UPDATEOUTLOOK:
-			SyncWithOutlook();
+			SyncWithOutlook(m_Window);
 			Refresh();
 			break;
 
@@ -1433,7 +1558,14 @@ LRESULT CCalendarWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 			LSLog(LOG_DEBUG, "Rainlendar", "All Events dialog closed.");
 			break;
 
+		case ID_TODO:
+			LSLog(LOG_DEBUG, "Rainlendar", "Opening Todo dialog.");
+			OpenTodoDialog(m_Window, CRainlendar::GetInstance(), -1);
+			LSLog(LOG_DEBUG, "Rainlendar", "Todo dialog closed.");
+			break;
+
 		case ID_QUIT:
+			FinalizeOutlook();
 			CToolTip::Instance().Finalize();
 			if(CRainlendar::GetDummyLitestep()) PostQuitMessage(0);
 			DestroyWindow(m_Window);
@@ -1567,37 +1699,19 @@ LRESULT CCalendarWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-void CCalendarWindow::ConnectServer(int type)
-{
-	static NetworkParams param;
-
-	if (c_Config.GetServerEnable() && !c_Config.GetServerAddress().empty())
-	{
-		// Here is a slight possibility of unsafe thread access
-		// If the OnServerSync() is started multiple times before the
-		// thread has a chance to copy the information, the data might
-		// corrupt. Hopefully this doesn't occur too often :-)
-		param.serverPort = c_Config.GetServerPort();
-		param.serverAddress = c_Config.GetServerAddress();
-		param.userID = c_Config.GetServerID();
-		param.requestType = type;
-		param.window = m_Window;
-
-		// Launch the network communication thread
-		DWORD id;
-		HANDLE thread = CreateThread(NULL, 0, NetworkThreadProc, &param, 0, &id);
-		CloseHandle(thread);
-	}
-}
 
 LRESULT CCalendarWindow::OnTimer(WPARAM wParam, LPARAM lParam) 
 {
-	if(wParam == DATE_TIMER) 
+	if (GetEventManager() == NULL) 
 	{
-		ShowWindowIfAppropriate();
+		return CRainWindow::OnTimer(wParam, lParam);
+	}
 
+	if(wParam == WINDOW_TIMER) 
+	{
 		SYSTEMTIME today;
 		GetLocalTime(&today);
+		int now = today.wHour * 60 + today.wMinute + CConfig::Instance().GetPreshowTime();
 
 		if( c_TodaysDate.wYear  != today.wYear ||
 			c_TodaysDate.wMonth != today.wMonth ||
@@ -1610,13 +1724,44 @@ LRESULT CCalendarWindow::OnTimer(WPARAM wParam, LPARAM lParam)
 
 			ChangeMonth(-1, -1);
 			Refresh(true);
-			ShowEventMessage();
+
+			std::vector<CEventMessage*> eventList = GetEventManager()->GetEvents(c_TodaysDate.wDay, c_TodaysDate.wMonth, c_TodaysDate.wYear);
+
+			// Mark all until now as shown
+			for (int i = 0; i < eventList.size(); i++)
+			{
+				if (eventList[i]->GetStartTime() < now)
+				{
+					eventList[i]->SetShown(true);
+				}
+			}
+
+			m_MessageWindow.ClearEvents();
+			ShowEventMessage(eventList, CConfig::Instance().GetShowAllEvents());
 		}
 
-		if (c_Config.GetServerFrequency() > 0)
+		// Check for alarms
+		if (CConfig::Instance().GetShowSingleEvent()) 
+		{
+			std::vector<CEventMessage*> newEventList;
+			std::vector<CEventMessage*> eventList = GetEventManager()->GetEvents(c_TodaysDate.wDay, c_TodaysDate.wMonth, c_TodaysDate.wYear);
+
+			for (int i = 0; i < eventList.size(); i++)
+			{
+				if (eventList[i]->GetStartTime() <= now && !eventList[i]->IsShown())
+				{
+					newEventList.push_back(eventList[i]);
+					eventList[i]->SetShown(true);
+				}
+			}
+			
+			ShowEventMessage(newEventList, true);
+		}
+
+		if (CConfig::Instance().GetServerFrequency() > 0)
 		{
 			m_ConnectionCounter++;
-			if (m_ConnectionCounter >= c_Config.GetServerFrequency() * 60)
+			if (m_ConnectionCounter >= CConfig::Instance().GetServerFrequency() * 60)
 			{
 				m_ConnectionCounter = 0;
 				ConnectServer(REQUEST_GETEVENTS);	// Get the events from server
@@ -1625,18 +1770,16 @@ LRESULT CCalendarWindow::OnTimer(WPARAM wParam, LPARAM lParam)
 
 		PollWallpaper(false);
 		m_Background.FlushWallpaper();		// Get rid of the wallpaper
-
-		return 0;
 	}
 	else if(wParam == OUTLOOK_TIMER) 
 	{
-        if (SyncWithOutlook())
+        if (SyncWithOutlook(m_Window))
         {
             Refresh(true);
         }
     }
 
-	return DefWindowProc(m_Window, WM_TIMER, wParam, lParam);
+	return CRainWindow::OnTimer(wParam, lParam);
 }
 
 /*
@@ -1671,97 +1814,33 @@ LRESULT CCalendarWindow::OnGetRevID(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** OnWindowPosChanging
-**
-** Called when windows position is about to change
-**
-*/
-LRESULT CCalendarWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam) 
-{
-	LPWINDOWPOS wp=(LPWINDOWPOS)lParam;
-
-	if(c_Config.GetWindowPos() == CConfig::WINDOWPOS_ONBOTTOM && !m_Refreshing)
-	{
-		// do not change the z-order. This keeps the window on bottom.
-		wp->flags|=SWP_NOZORDER;
-	}
-
-	if (c_Config.GetSnapEdges() && !(GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000))
-	{
-		RECT workArea;
-		GetClientRect(GetDesktopWindow(), &workArea);
-
-		// only process movement (ignore anything without winpos values)
-		if(wp->cx != 0 && wp->cy != 0)
-		{
-			typedef HMONITOR (WINAPI * FPMONITORFROMWINDOW)(HWND wnd, DWORD dwFlags);
-			typedef BOOL (WINAPI * FPGETMONITORINFO)(HMONITOR hMonitor, LPMONITORINFO lpmi);
-			FPMONITORFROMWINDOW fpMonitorFromWindow;
-			FPGETMONITORINFO fpGetMonitorInfo;
-
-			HINSTANCE lib = LoadLibrary("user32.dll");
-			
-			fpMonitorFromWindow = (FPMONITORFROMWINDOW)GetProcAddress(lib, "MonitorFromWindow");
-			fpGetMonitorInfo = (FPGETMONITORINFO)GetProcAddress(lib, "GetMonitorInfoA");
-
-			if (fpMonitorFromWindow && fpGetMonitorInfo)
-			{
-				HMONITOR hMonitor;
-				MONITORINFO mi;
-
-				hMonitor = fpMonitorFromWindow(m_Window, MONITOR_DEFAULTTONULL);
-
-				if(hMonitor != NULL)
-				{
-					mi.cbSize = sizeof(mi);
-					fpGetMonitorInfo(hMonitor, &mi);
-					workArea = mi.rcWork;
-				}
-			}
-
-			FreeLibrary(lib);
-
-			int w = workArea.right - m_Width;
-			int h = workArea.bottom - m_Height;
-
-			if((wp->x < SNAPDISTANCE + workArea.left) && (wp->x > workArea.left - SNAPDISTANCE)) wp->x = workArea.left;
-			if((wp->y < SNAPDISTANCE + workArea.top) && (wp->y > workArea.top - SNAPDISTANCE)) wp->y = workArea.top;
-			if ((wp->x < SNAPDISTANCE + w) && (wp->x > -SNAPDISTANCE + w)) wp->x = w;
-			if ((wp->y < SNAPDISTANCE + h) && (wp->y > -SNAPDISTANCE + h)) wp->y = h;
-		}
-	}
-
-	return DefWindowProc(m_Window, m_Message, wParam, lParam);
-}
-
 LRESULT CCalendarWindow::OnMove(WPARAM wParam, LPARAM lParam) 
 {
 	short int x = LOWORD(lParam);
 	short int y = HIWORD(lParam);
 
-	if(c_Config.GetMovable())
+	if(CConfig::Instance().GetMovable())
 	{
-		if (c_Config.GetNegativeCoords()) 
+		if (CConfig::Instance().GetNegativeCoords()) 
 		{
 			if (x < 0) x = 0;
 			if (y < 0) y = 0;
 		}
 
-		c_Config.SetX(x);
-		c_Config.SetY(y);
-		c_Config.WriteConfig(CConfig::WRITE_POS);	// Store the new position to the ini file
-	}
-
-	if (!m_FirstExecute && (c_Config.GetBackgroundMode() == CBackground::MODE_COPY || m_Background.HasAlpha()))
-	{
-		m_Background.UpdateWallpaper(x, y);
-		DrawCalendar();
-		InvalidateRect(m_Window, NULL, false);
+		CConfig::Instance().SetX(x);
+		CConfig::Instance().SetY(y);
+		CConfig::Instance().WriteConfig(CConfig::WRITE_POS);	// Store the new position to the ini file
 	}
 
 	m_X = x;
 	m_Y = y;
+
+	if (!m_FirstExecute && (CConfig::Instance().GetBackgroundMode() == MODE_COPY || m_Background.HasAlpha()))
+	{
+		m_Background.UpdateWallpaper(x, y);
+		DrawWindow();
+		InvalidateRect(m_Window, NULL, false);
+	}
 
 	return 0;
 }
@@ -1776,16 +1855,6 @@ LRESULT CCalendarWindow::OnSettingsChange(WPARAM wParam, LPARAM lParam)
 	}	
 
 	return 0;
-}
-
-LRESULT CCalendarWindow::OnDisplayChange(WPARAM wParam, LPARAM lParam) 
-{
-	// Refresh when the resolution changes
-	if (c_Config.GetRefreshOnResolutionChange())
-	{
-		Refresh(true);
-	}
-	return DefWindowProc(m_Window, m_Message, wParam, lParam);
 }
 
 LRESULT CCalendarWindow::OnLButtonDblClk(WPARAM wParam, LPARAM lParam) 
@@ -1815,13 +1884,12 @@ LRESULT CCalendarWindow::OnLButtonDblClk(WPARAM wParam, LPARAM lParam)
 
 		m_SelectedDate = 0;
 	}
-
 	return 0;
 }
 
 LRESULT CCalendarWindow::OnKeyUp(WPARAM wParam, LPARAM lParam) 
 {
-	if(!c_Config.GetDisableHotkeys()) 
+	if(!CConfig::Instance().GetDisableHotkeys()) 
 	{
 		if( (GetAsyncKeyState(VK_SHIFT)) == 0 &&
 			(GetAsyncKeyState(VK_CONTROL)) == 0 &&
@@ -1889,16 +1957,10 @@ LRESULT CCalendarWindow::OnKeyUp(WPARAM wParam, LPARAM lParam)
 }
 
 
-LRESULT CCalendarWindow::OnEraseBkgnd(WPARAM wParam, LPARAM lParam) 
-{
-	return 0;
-}
-
-
 // F10 Generates a syskey-message   ... wierd.
 LRESULT CCalendarWindow::OnSysKeyUp(WPARAM wParam, LPARAM lParam) 
 {
-	if(!c_Config.GetDisableHotkeys()) 
+	if(!CConfig::Instance().GetDisableHotkeys()) 
 	{
 		if( (GetAsyncKeyState(VK_SHIFT)) == 0 &&
 			(GetAsyncKeyState(VK_CONTROL)) == 0 &&
@@ -1918,156 +1980,69 @@ LRESULT CCalendarWindow::OnSysKeyUp(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-LRESULT CCalendarWindow::OnPowerBroadcast(WPARAM wParam, LPARAM lParam) 
-{
-	// Refresh when the resolution changes
-	if (wParam == PBT_APMRESUMESUSPEND)
-	{
-		Refresh(true);
-	}
-	return DefWindowProc(m_Window, m_Message, wParam, lParam);
-}
-
-void CCalendarWindow::RegisterHotkeys()
-{
-	DWORD hotkey;
-	DWORD modifiers;
-	DWORD vk;
-
-	for (int i = 0; i < CConfig::HOTKEY_LAST; i++)
-	{
-		switch(i)
-		{
-		case CConfig::HOTKEY_HIDE:
-			hotkey = c_Config.GetHideHotkey();
-			break;
-
-		case CConfig::HOTKEY_SHOW:
-			hotkey = c_Config.GetShowHotkey();
-			break;
-
-		case CConfig::HOTKEY_TOGGLE:
-			hotkey = c_Config.GetToggleHotkey();
-			break;
-
-		case CConfig::HOTKEY_ACTIVATE:
-			hotkey = c_Config.GetActivateHotkey();
-			break;
-
-		case CConfig::HOTKEY_REFRESH:
-			hotkey = c_Config.GetRefreshHotkey();
-			break;
-
-		case CConfig::HOTKEY_CONFIG:
-			hotkey = c_Config.GetConfigHotkey();
-			break;
-
-		case CConfig::HOTKEY_SKIN:
-			hotkey = c_Config.GetSkinHotkey();
-			break;
-
-		case CConfig::HOTKEY_NEXT:
-			hotkey = c_Config.GetNextHotkey();
-			break;
-
-		case CConfig::HOTKEY_PREVIOUS:
-			hotkey = c_Config.GetPreviousHotkey();
-			break;
-
-		case CConfig::HOTKEY_NEXT_YEAR:
-			hotkey = c_Config.GetNextYearHotkey();
-			break;
-
-		case CConfig::HOTKEY_PREVIOUS_YEAR:
-			hotkey = c_Config.GetPreviousYearHotkey();
-			break;
-
-		case CConfig::HOTKEY_CURRENT:
-			hotkey = c_Config.GetCurrentHotkey();
-			break;
-
-		case CConfig::HOTKEY_ALL:
-			hotkey = c_Config.GetAllHotkey();
-			break;
-
-		case CConfig::HOTKEY_OUTLOOK:
-			hotkey = c_Config.GetOutlookHotkey();
-			break;
-		}
-		
-		vk = hotkey & 0xFF;
-		modifiers = (hotkey >> 8) & 0xFF;
-
-		if (hotkey)
-		{
-			RegisterHotKey(m_Window, i, modifiers, vk);
-		}
-		else
-		{
-			UnregisterHotKey(m_Window, i);
-		}
-	}
-}
-
 LRESULT CCalendarWindow::OnHotkey(WPARAM wParam, LPARAM lParam)
 {
 	DWORD hotkey = HIWORD(lParam) + (LOWORD(lParam) << 8);
 
-	if (hotkey == c_Config.GetHideHotkey())
+	if (hotkey == CConfig::Instance().GetHideHotkey())
 	{
 		RainlendarHide(m_Window, NULL);
 	}
-	else if (hotkey == c_Config.GetShowHotkey())
+	else if (hotkey == CConfig::Instance().GetShowHotkey())
 	{
     	RainlendarShow(m_Window, NULL);
 	}
-	else if (hotkey == c_Config.GetToggleHotkey())
+	else if (hotkey == CConfig::Instance().GetToggleHotkey())
 	{
 		RainlendarToggle(m_Window, NULL);
 	}
-	else if (hotkey == c_Config.GetActivateHotkey())
+	else if (hotkey == CConfig::Instance().GetActivateHotkey())
 	{
     	RainlendarShow(m_Window, "Activate");
 	}
-	else if (hotkey == c_Config.GetRefreshHotkey())
+	else if (hotkey == CConfig::Instance().GetRefreshHotkey())
 	{
 		RainlendarRefresh(m_Window, NULL);
 	}
-	else if (hotkey == c_Config.GetConfigHotkey())
+	else if (hotkey == CConfig::Instance().GetConfigHotkey())
 	{
 		RainlendarConfig(m_Window, NULL);
 	}
-	else if (hotkey == c_Config.GetSkinHotkey())
+	else if (hotkey == CConfig::Instance().GetSkinHotkey())
 	{
 		ShowEditSkin();
 	}
-	else if (hotkey == c_Config.GetNextHotkey())
+	else if (hotkey == CConfig::Instance().GetNextHotkey())
 	{
 		OnCommand(ID_POPUP_SELECTMONTH_NEXTMONTH, NULL);
 	}
-	else if (hotkey == c_Config.GetPreviousHotkey())
+	else if (hotkey == CConfig::Instance().GetPreviousHotkey())
 	{
 		OnCommand(ID_POPUP_SELECTMONTH_PREVMONTH, NULL);
 	}
-	else if (hotkey == c_Config.GetNextYearHotkey())
+	else if (hotkey == CConfig::Instance().GetNextYearHotkey())
 	{
 		OnCommand(ID_POPUP_SELECTMONTH_NEXTYEAR, NULL);
 	}
-	else if (hotkey == c_Config.GetPreviousYearHotkey())
+	else if (hotkey == CConfig::Instance().GetPreviousYearHotkey())
 	{
 		OnCommand(ID_POPUP_SELECTMONTH_PREVYEAR, NULL);
 	}
-	else if (hotkey == c_Config.GetCurrentHotkey())
+	else if (hotkey == CConfig::Instance().GetCurrentHotkey())
 	{
 		OnCommand(ID_POPUP_SELECTMONTH_CURRENTMONTH, NULL);
 	}
-	else if (hotkey == c_Config.GetAllHotkey())
+	else if (hotkey == CConfig::Instance().GetAllHotkey())
 	{
 		OnCommand(ID_ALLEVENTS, NULL); 
 	}
-	else if (hotkey == c_Config.GetOutlookHotkey())
+	else if (hotkey == CConfig::Instance().GetOutlookHotkey())
 	{
 		OnCommand(ID_POPUP_UPDATEOUTLOOK, NULL); 
+	}
+	else if (hotkey == CConfig::Instance().GetTodoHotkey())
+	{
+		OnCommand(ID_TODO, NULL); 
 	}
 	return TRUE;
 }
@@ -2078,86 +2053,150 @@ LRESULT CCalendarWindow::OnCopyData(WPARAM wParam, LPARAM lParam)
 
 	if (pCopyDataStruct && (pCopyDataStruct->dwData == 1) && (pCopyDataStruct->cbData > 0))
 	{
-		if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarToggle") == 0)
+		std::string str = (const char*)pCopyDataStruct->lpData;
+		std::string bang;
+		std::string arg;
+
+		// Find the first space
+		std::string::size_type pos = str.find(' ');
+		if (pos != -1)
+		{
+			bang = str.substr(0, pos);
+			str.erase(0, pos + 1);
+			arg = str;
+		}
+		else
+		{
+			bang = str;
+		}
+
+		if (stricmp(bang.c_str(), "!RainlendarToggle") == 0)
 		{
 			RainlendarToggle(m_Window, NULL);
 		}
-		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarHide") == 0)
+		else if (stricmp(bang.c_str(), "!RainlendarHide") == 0)
 		{
 			RainlendarHide(m_Window, NULL);
 		}
-		else if (strnicmp((const char*)pCopyDataStruct->lpData, "!RainlendarShow", 15) == 0)
+		else if (stricmp(bang.c_str(), "!RainlendarShowEvents") == 0)
 		{
-			// This one takes arguments
-			if (strlen((const char*)pCopyDataStruct->lpData) > 16)
-			{
-    			RainlendarShow(m_Window, (const char*)pCopyDataStruct->lpData + 16);
-			}
-            else
-            {
-    			RainlendarShow(m_Window, NULL);
-            }
+			RainlendarShowEvents(m_Window, NULL);
 		}
-		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarRefresh") == 0)
+		else if (stricmp(bang.c_str(), "!RainlendarRefresh") == 0)
 		{
 			RainlendarRefresh(m_Window, NULL);
 		}
-		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarConfig") == 0)
+		else if (stricmp(bang.c_str(), "!RainlendarConfig") == 0)
 		{
 			RainlendarConfig(m_Window, NULL);
 		}
-		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarQuit") == 0)
+		else if (stricmp(bang.c_str(), "!RainlendarQuit") == 0)
 		{
 			RainlendarQuit(m_Window, NULL);
 		}
-		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarShowNext") == 0)
+		else if (stricmp(bang.c_str(), "!RainlendarShowNext") == 0)
 		{
 			RainlendarShowNext(m_Window, NULL);
 		}
-		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarShowPrev") == 0)
+		else if (stricmp(bang.c_str(), "!RainlendarShowPrev") == 0)
 		{
 			RainlendarShowPrev(m_Window, NULL);
 		}
-		else if (strnicmp((const char*)pCopyDataStruct->lpData, "!RainlendarShowMonth", 20) == 0)
+		else if (stricmp(bang.c_str(), "!RainlendarShowMonth") == 0)
 		{
 			// This one takes arguments
-			if (strlen((const char*)pCopyDataStruct->lpData) > 21)
+			if (!arg.empty())
 			{
-				RainlendarShowMonth(m_Window, (const char*)pCopyDataStruct->lpData + 21);
+				RainlendarShowMonth(m_Window, arg.c_str());
 			}
             else
             {
 				RainlendarShowMonth(m_Window, NULL);
     		}
 		}
-		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarShowCurrent") == 0)
+		else if (stricmp(bang.c_str(), "!RainlendarShowCurrent") == 0)
 		{
 			RainlendarShowCurrent(m_Window, NULL);
 		}
-		else if (stricmp((const char*)pCopyDataStruct->lpData, "!RainlendarLsBoxHook") == 0)
+		else if (stricmp(bang.c_str(), "!RainlendarMove") == 0)
 		{
-			// Do nothing
+			RainlendarMove(m_Window, arg.c_str());
 		}
-		else if (strnicmp((const char*)pCopyDataStruct->lpData, "!RainlendarMove", 15) == 0)
+		else if (stricmp(bang.c_str(), "!RainlendarZPos") == 0)
 		{
-			// This one takes arguments
-			if (strlen((const char*)pCopyDataStruct->lpData) > 16)
+			RainlendarZPos(m_Window, arg.c_str());
+		}
+		else if (stricmp(bang.c_str(), "!RainlendarEditTodo") == 0)
+		{
+			RainlendarEditTodo(m_Window, NULL);
+		}
+		else if (stricmp(bang.c_str(), "!RainlendarShowTodo") == 0)
+		{
+			RainlendarShowTodo(m_Window, NULL);
+		}
+		else if (stricmp(bang.c_str(), "!RainlendarHideTodo") == 0)
+		{
+			RainlendarHideTodo(m_Window, NULL);
+		}
+		else if (stricmp(bang.c_str(), "!RainlendarToggleTodo") == 0)
+		{
+			RainlendarToggleTodo(m_Window, NULL);
+		}
+		else if (stricmp(bang.c_str(), "!RainlendarAddEvent") == 0)
+		{
+			if (!arg.empty())
 			{
-				RainlendarMove(m_Window, (const char*)pCopyDataStruct->lpData + 16);
+				RainlendarAddEvent(m_Window, arg.c_str());
+			}
+			else
+			{
+				RainlendarAddEvent(m_Window, NULL);
 			}
 		}
-		else if (strnicmp((const char*)pCopyDataStruct->lpData, "!RainlendarZPos", 15) == 0)
+		else if (stricmp(bang.c_str(), "!RainlendarShow") == 0)
 		{
-			// This one takes arguments
-			if (strlen((const char*)pCopyDataStruct->lpData) > 16)
+			if (!arg.empty())
 			{
-				RainlendarZPos(m_Window, (const char*)pCopyDataStruct->lpData + 16);
+	    		RainlendarShow(m_Window, arg.c_str());
+			}
+            else
+            {
+    			RainlendarShow(m_Window, NULL);
+            }
+		}
+		else if (stricmp(bang.c_str(), "!Execute") == 0)
+		{
+			// Special case for multibang execution
+			std::string allCommands = arg;
+			
+			while (true)
+			{
+				std::string::size_type start = allCommands.find('[');
+				std::string::size_type end = allCommands.find(']');
+				if (start != -1 && end != -1)
+				{
+					std::string command = allCommands.substr(start + 1, end - (start + 1));
+					// trim leading whitespace
+					std::string::size_type notwhite = command.find_first_not_of(" \t\n");
+					command.erase(0, notwhite);
+
+					COPYDATASTRUCT copyData;
+					copyData.dwData = 1;
+					copyData.cbData = strlen(command.c_str()) + 1;
+					copyData.lpData = (void*)command.c_str();
+					OnCopyData(NULL, (LPARAM)&copyData);
+				}
+				else
+				{
+					break;	// No more commands
+				}
+				allCommands = allCommands.substr(end + 1);
 			}
 		}
 		else
 		{
 			char buffer[MAX_LINE_LENGTH];
-			sprintf(buffer, CCalendarWindow::c_Language.GetString("Message", 8), (const char*)pCopyDataStruct->lpData);
+			sprintf(buffer, CCalendarWindow::c_Language.GetString("Message", 8), bang.c_str());
 			MessageBox(m_Window, buffer, "Rainlendar", MB_OK | MB_ICONWARNING);			//	"Unknown !bang: %s",
 			return FALSE;
 		}
@@ -2170,33 +2209,6 @@ LRESULT CCalendarWindow::OnCopyData(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
-LRESULT CCalendarWindow::OnNcHitTest(WPARAM wParam, LPARAM lParam)
-{
-	if(c_Config.GetMovable())
-	{
-		return HTCAPTION;
-	}
-
-	return DefWindowProc(m_Window, WM_NCHITTEST, wParam, lParam);
-}
-
-
-LRESULT CCalendarWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
-{
-	if(c_Config.GetMouseHide())
-	{
-		if(GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000 || GetKeyState(VK_MENU) & 0x8000)
-		{
-			// If Alt, shift or control is down, do not hide the window
-			return 0;
-		}
-
-		// Hide window if it is visible
-		if(IsWindowVisible(m_Window)) HideWindow();
-	}	
-
-	return 0;
-}
 
 LRESULT CCalendarWindow::OnServerSyncFinished(WPARAM wParam, LPARAM lParam)
 {
@@ -2213,52 +2225,70 @@ LRESULT CCalendarWindow::OnServerSyncFinished(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-void CCalendarWindow::ShowWindow(bool activate)
+LRESULT CCalendarWindow::OnNotifyIcon(WPARAM wParam, LPARAM lParam)
 {
-	if (activate)
+	UINT uID; 
+	UINT uMouseMsg; 
+	
+	uID = (UINT)wParam; 
+	uMouseMsg = (UINT)lParam; 
+
+	std::string bang;
+
+	switch(uMouseMsg) 
 	{
-		BringWindowToTop (m_Window);
-		::ShowWindow (m_Window, SW_SHOWNORMAL);
-		SetForegroundWindow (m_Window);
+	case WM_LBUTTONDOWN:
+		bang = CConfig::Instance().GetTrayExecuteL();
+		break;
+
+	case WM_MBUTTONDOWN:
+		bang = CConfig::Instance().GetTrayExecuteM();
+		break;
+
+	case WM_RBUTTONDOWN:
+		bang = CConfig::Instance().GetTrayExecuteR();
+		break;
+
+	case WM_LBUTTONDBLCLK:
+		bang = CConfig::Instance().GetTrayExecuteDL();
+		break;
+
+	case WM_MBUTTONDBLCLK:
+		bang = CConfig::Instance().GetTrayExecuteDM();
+		break;
+
+	case WM_RBUTTONDBLCLK:
+		bang = CConfig::Instance().GetTrayExecuteDR();
+		break;
 	}
-	else
+
+	if (!bang.empty())
 	{
-		::ShowWindow(m_Window, SW_SHOWNOACTIVATE); 
+		COPYDATASTRUCT copyData;
+		
+		copyData.dwData = 1;
+		copyData.cbData = strlen(bang.c_str()) + 1;
+		copyData.lpData = (void*)bang.c_str();
+	
+		OnCopyData(NULL, (LPARAM)&copyData);
 	}
-	m_Hidden = false;
-}
-
-void CCalendarWindow::ShowWindowIfAppropriate()
-{
-	if(c_Config.GetMouseHide())
+	else if	(uMouseMsg == WM_RBUTTONDOWN)
 	{
-		if(GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000 || GetKeyState(VK_MENU) & 0x8000)
-		{
-			// If Alt, shift or control is down, do not show the window
-			return;
-		}
+		POINT point;
+		GetCursorPos(&point);
 
-		bool inside = false;
-		POINT pos;
-		RECT rect;
-
-		GetCursorPos(&pos);
-		GetWindowRect(m_Window, &rect);
-
-		if(rect.left <= pos.x && rect.right >= pos.x &&
-		   rect.top <= pos.y && rect.bottom >= pos.y) inside = true;
-
-		if(m_Hidden && !inside)
-		{
-			ShowWindow();
-		}
+		SetForegroundWindow(m_Window);
+		OnContextMenu(0, MAKELPARAM(point.x, point.y));
+		SetForegroundWindow(m_Window);
 	}
+
+	return TRUE;
 }
 
 /* 
 ** WndProc
 **
-** The window procedure for the calendar
+** The window procedure
 **
 */
 LRESULT CALLBACK CCalendarWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -2267,7 +2297,7 @@ LRESULT CALLBACK CCalendarWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
 
 	if (Window) Window->m_Message = uMsg;
 
-	if(uMsg == WM_CREATE) 
+	if (uMsg == WM_CREATE) 
 	{
 		// Fetch this window-object from the CreateStruct
 		Window=(CCalendarWindow*)((LPCREATESTRUCT)lParam)->lpCreateParams;
@@ -2276,35 +2306,84 @@ LRESULT CALLBACK CCalendarWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
 	// Run the tooltip's mouse proc
 	CToolTip::MouseProc(hWnd, uMsg, wParam, lParam);
 
-	BEGIN_MESSAGEPROC
-	MESSAGE(OnPaint, WM_PAINT)
-	MESSAGE(OnContextMenu, WM_CONTEXTMENU)
-	MESSAGE(OnContextMenu, WM_NCRBUTTONUP)
-	MESSAGE(OnGetRevID, LM_GETREVID)
-	MESSAGE(OnTimer, WM_TIMER)
-	MESSAGE(OnWindowPosChanging, WM_WINDOWPOSCHANGING)
-	MESSAGE(OnSettingsChange, WM_SETTINGCHANGE)
-	MESSAGE(OnLButtonDblClk, WM_LBUTTONDBLCLK)
-	MESSAGE(OnLButtonDblClk, WM_NCLBUTTONDBLCLK)
-	MESSAGE(OnEraseBkgnd, WM_ERASEBKGND)
-	MESSAGE(OnKeyUp, WM_KEYUP)
-	MESSAGE(OnSysKeyUp, WM_SYSKEYUP)
-	MESSAGE(OnCommand, WM_COMMAND)
-	MESSAGE(OnNcHitTest, WM_NCHITTEST)
-	MESSAGE(OnMove, WM_MOVE)
-	MESSAGE(OnMouseMove, WM_MOUSEMOVE)
-	MESSAGE(OnMouseMove, WM_NCMOUSEMOVE)
-	MESSAGE(OnDisplayChange, WM_DISPLAYCHANGE)
-	MESSAGE(OnCopyData, WM_COPYDATA)
-	MESSAGE(OnServerSyncFinished, WM_SERVER_SYNC_FINISHED)
-	MESSAGE(OnHotkey, WM_HOTKEY)
-	MESSAGE(OnPowerBroadcast, WM_POWERBROADCAST)
+	if (Window)
+	{
+		switch(uMsg) 
+		{
+			case WM_CONTEXTMENU:
+			case WM_NCRBUTTONUP:
+				DebugLog("WM_CONTEXTMENU: wParam=0x%08x, lParam=0x%08x", wParam, lParam);
+				return Window->OnContextMenu(wParam, lParam);
 
-//	case WM_ACTIVATE: 
-//	{
-//		LSLog(LOG_DEBUG, "Rainlendar", "\n----------------------WM_ACTIVATE ----------------------\n");
-//		return DefWindowProc(hWnd, uMsg, wParam, lParam);
-//	}
+			case WM_COMMAND:
+				DebugLog("WM_COMMAND: wParam=0x%08x, lParam=0x%08x", wParam, lParam);
+				return Window->OnCommand(wParam, lParam);
 
-	END_MESSAGEPROC
+			case WM_LBUTTONDBLCLK:
+			case WM_NCLBUTTONDBLCLK:
+				DebugLog("WM_COMMAND: wParam=0x%08x, lParam=0x%08x", wParam, lParam);
+				return Window->OnLButtonDblClk(wParam, lParam);
+
+			case WM_MOVE: 
+				return Window->OnMove(wParam, lParam);
+
+			case LM_GETREVID: 
+				return Window->OnGetRevID(wParam, lParam);
+
+			case WM_KEYUP:
+				DebugLog("WM_KEYUP: wParam=0x%08x, lParam=0x%08x", wParam, lParam);
+				return Window->OnKeyUp(wParam, lParam);
+
+			case WM_SYSKEYUP:
+				DebugLog("WM_SYSKEYUP: wParam=0x%08x, lParam=0x%08x", wParam, lParam);
+				return Window->OnSysKeyUp(wParam, lParam);
+
+			case WM_COPYDATA: 
+				return Window->OnCopyData(wParam, lParam);
+				
+			case WM_SERVER_SYNC_FINISHED: 
+				DebugLog("WM_SERVER_SYNC_FINISHED: wParam=0x%08x, lParam=0x%08x", wParam, lParam);
+				return Window->OnServerSyncFinished(wParam, lParam);
+
+			case WM_HOTKEY: 
+				DebugLog("WM_COMMAND: wParam=0x%08x, lParam=0x%08x", wParam, lParam);
+				return Window->OnHotkey(wParam, lParam);
+
+			case WM_PAINT: 
+				return Window->OnPaint(wParam, lParam);
+
+			case WM_TIMER: 
+				return Window->OnTimer(wParam, lParam);
+
+			case WM_WINDOWPOSCHANGING: 
+				return Window->OnWindowPosChanging(wParam, lParam);
+
+			case WM_SETTINGCHANGE: 
+				DebugLog("WM_SETTINGCHANGE: wParam=0x%08x, lParam=0x%08x", wParam, lParam);
+				return Window->OnSettingsChange(wParam, lParam);
+
+			case WM_ERASEBKGND: 
+				return Window->OnEraseBkgnd(wParam, lParam);
+
+			case WM_MOUSEMOVE: 
+			case WM_NCMOUSEMOVE: 
+				return Window->OnMouseMove(wParam, lParam);
+
+			case WM_POWERBROADCAST: 
+				DebugLog("WM_POWERBROADCAST: wParam=0x%08x, lParam=0x%08x", wParam, lParam);
+				return Window->OnPowerBroadcast(wParam, lParam);
+
+			case WM_DISPLAYCHANGE: 
+				DebugLog("WM_DISPLAYCHANGE: wParam=0x%08x, lParam=0x%08x", wParam, lParam);
+				return Window->OnDisplayChange(wParam, lParam);
+
+			case WM_NCHITTEST: 
+				return Window->OnNcHitTest(wParam, lParam);
+
+			case WM_NOTIFYICON: 
+				return Window->OnNotifyIcon(wParam, lParam);
+		}
+	}
+
+	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }

@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O1 /I "..\..\..\3rdparty\ssobjects\\" /I "..\..\..\3rdparty\lpng125\\" /I "..\..\..\3rdparty\zlib\\" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_EXPORTS" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O1 /I "..\..\..\3rdparty\ssobjects\\" /I "..\..\..\3rdparty\lpng125\\" /I "..\..\..\3rdparty\zlib\\" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PLUGIN_EXPORTS" /FA /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x40b /d "NDEBUG"
@@ -53,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 libpng.lib Msimg32.lib kernel32.lib user32.lib gdi32.lib Advapi32.lib Ws2_32.lib ssobjects.lib comdlg32.lib comctl32.lib shell32.lib /nologo /dll /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Release/Rainlendar.dll" /libpath:"..\..\..\3rdparty\ssobjects" /libpath:"..\..\..\3rdparty\lpng125\projects\msvc\win32\libpng\lib"
+# ADD LINK32 shlwapi.lib libpng.lib Msimg32.lib kernel32.lib user32.lib gdi32.lib Advapi32.lib Ws2_32.lib ssobjects.lib comdlg32.lib comctl32.lib shell32.lib Winmm.lib mapi32.lib /nologo /dll /map /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Release/Rainlendar.dll" /libpath:"..\..\..\3rdparty\ssobjects" /libpath:"..\..\..\3rdparty\lpng125\projects\msvc\win32\libpng\lib"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
 PostBuild_Cmds=Copy                                Release\Rainlendar.dll                                ..\TestBench\Rainlendar.dll
@@ -83,7 +83,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 libpng.lib Msimg32.lib kernel32.lib user32.lib gdi32.lib Advapi32.lib Ws2_32.lib ssobjects.lib comdlg32.lib shell32.lib comctl32.lib /nologo /dll /debug /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Debug/Rainlendar.dll" /pdbtype:sept /libpath:"..\..\..\3rdparty\ssobjects" /libpath:"..\..\..\3rdparty\lpng125\projects\msvc\win32\libpng\lib"
+# ADD LINK32 shlwapi.lib libpng.lib Msimg32.lib kernel32.lib user32.lib gdi32.lib Advapi32.lib Ws2_32.lib ssobjects.lib comdlg32.lib shell32.lib comctl32.lib Winmm.lib mapi32.lib /nologo /dll /debug /machine:I386 /nodefaultlib:"LIBCMT.lib" /out:"Debug/Rainlendar.dll" /pdbtype:sept /libpath:"..\..\..\3rdparty\ssobjects" /libpath:"..\..\..\3rdparty\lpng125\projects\msvc\win32\libpng\lib"
 # Begin Special Build Tool
 SOURCE="$(InputPath)"
 PostBuild_Cmds=Copy                        Debug\Rainlendar.dll                        ..\TestBench\Rainlendar.dll
@@ -184,6 +184,10 @@ SOURCE=.\Litestep.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\MessageWindow.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\NetworkThread.cpp
 # End Source File
 # Begin Source File
@@ -193,6 +197,10 @@ SOURCE=.\Outlook.cpp
 # Begin Source File
 
 SOURCE=.\RainlendarDLL.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\RainWindow.cpp
 # End Source File
 # Begin Source File
 
@@ -209,6 +217,18 @@ SOURCE=.\RasterizerFont.cpp
 # Begin Source File
 
 SOURCE=.\SkinDialog.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\TodoDialog.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\TodoManager.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\TodoWindow.cpp
 # End Source File
 # Begin Source File
 
@@ -300,6 +320,10 @@ SOURCE=.\Litestep.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\MessageWindow.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\NetworkThread.h
 # End Source File
 # Begin Source File
@@ -309,6 +333,10 @@ SOURCE=.\Outlook.h
 # Begin Source File
 
 SOURCE=.\RainlendarDLL.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\RainWindow.h
 # End Source File
 # Begin Source File
 
@@ -332,6 +360,18 @@ SOURCE=.\SkinDialog.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\TodoDialog.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\TodoManager.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\TodoWindow.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Tooltip.h
 # End Source File
 # End Group
@@ -344,7 +384,19 @@ SOURCE=.\default1.bin
 # End Source File
 # Begin Source File
 
+SOURCE=.\res\icon1.ico
+# End Source File
+# Begin Source File
+
 SOURCE=.\RainlendarDLL.rc
+# End Source File
+# Begin Source File
+
+SOURCE=".\res\Tray-numbers.bmp"
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\Tray.bmp
 # End Source File
 # End Group
 # Begin Source File
@@ -354,10 +406,6 @@ SOURCE=..\license.txt
 # Begin Source File
 
 SOURCE=..\Manual.html
-# End Source File
-# Begin Source File
-
-SOURCE="..\Rainlendar Install Script.nsi"
 # End Source File
 # Begin Source File
 

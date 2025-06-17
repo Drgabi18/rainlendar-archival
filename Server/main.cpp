@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Server/main.cpp,v 1.7 2003/08/23 09:16:06 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Server/main.cpp,v 1.8 2004/04/24 11:45:29 rainy Exp $
 
   $Log: main.cpp,v $
+  Revision 1.8  2004/04/24 11:45:29  rainy
+  Added -m flag.
+
   Revision 1.7  2003/08/23 09:16:06  Rainy
   0.4.1
 
@@ -56,7 +59,7 @@
 
 using namespace ssobjects;
 
-#define VERSION "0.4.1"
+#define VERSION "0.5"
 
 void initDaemon();
 
@@ -64,30 +67,11 @@ int main(int argc, char* argv[])
 {
 	int port = 9999;
 	bool daemonize = false;
+	bool single = true;
 	CStr logFile;
 	CIPFilter* filter = NULL;
 
 	printf("Rainlendar Server version %s\n", VERSION);
-
-#ifdef _WIN32
-	// Check if RainlendarServer is already running
-	HANDLE h = CreateMutex(NULL, TRUE, "RAINLENDARSERVER_IS_RUNNING_MUTEX" );
-	if (!h)
-	{
-		printf("Unable to create mutex.\n");
-		// We'll continue anyway
-    }
-    else
-    {
-	    if ( GetLastError() == ERROR_ALREADY_EXISTS )
-		{
-			// already an instance running.
-            CloseHandle(h);
-			printf("RainlendarServer is already running. Exiting.\n");
-            return 0;
-        }
-	}
-#endif
 
 	// Parse command line
 	for(int i = 1; i < argc; i++)
@@ -102,6 +86,7 @@ int main(int argc, char* argv[])
 			puts  (" -d,--daemonize           = daemonize server (not available in win32)");
 			puts  (" -l,--log <folder>        = write log to a file instead to console");
 			puts  (" -f,--filter <filterfile> = use the given file as the ip-filter");
+			puts  (" -m,--multi               = allow multiple instances");
 
 			return 0;
 		}
@@ -117,6 +102,10 @@ int main(int argc, char* argv[])
 		else if(!strcmp(a, "-d") || !strcmp(a, "--daemonize"))
 		{
 			daemonize = true;
+		}
+		else if(!strcmp(a, "-m") || !strcmp(a, "--multi"))
+		{
+			single = false;
 		}
 		else if(!strcmp(a, "-l") || !strcmp(a, "--log"))
 		{
@@ -149,6 +138,31 @@ int main(int argc, char* argv[])
 		}
 	}
 	
+#ifdef _WIN32
+	HANDLE h = NULL;
+
+	if (single)
+	{
+		// Check if RainlendarServer is already running
+		h = CreateMutex(NULL, TRUE, "RAINLENDARSERVER_IS_RUNNING_MUTEX" );
+		if (!h)
+		{
+			printf("Unable to create mutex.\n");
+			// We'll continue anyway
+		}
+		else
+		{
+			if ( GetLastError() == ERROR_ALREADY_EXISTS )
+			{
+				// already an instance running.
+				CloseHandle(h);
+				printf("RainlendarServer is already running. Exiting.\n");
+				return 0;
+			}
+		}
+	}
+#endif
+
 	// Note that this SockAddr is okay here, as we are not specifying an ip address.
 	// You should first construct the server before using SockAddr 
 	// like "SockAddr("www.something.com",80)".

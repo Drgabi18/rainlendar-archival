@@ -16,9 +16,18 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/EventManager.cpp,v 1.6 2003/08/09 16:36:42 Rainy Exp $
+  $Header: /home/cvsroot/Rainlendar/Plugin/EventManager.cpp,v 1.9 2004/04/24 11:19:10 rainy Exp $
 
   $Log: EventManager.cpp,v $
+  Revision 1.9  2004/04/24 11:19:10  rainy
+  Some methods are now const.
+
+  Revision 1.8  2004/01/10 15:19:31  rainy
+  Fixed sorting.
+
+  Revision 1.7  2003/10/27 17:37:13  Rainy
+  Config is now singleton.
+
   Revision 1.6  2003/08/09 16:36:42  Rainy
   Removed event's timestamp is updated.
 
@@ -58,7 +67,7 @@ CEventManager::~CEventManager()
 void CEventManager::ReadEvents()
 {
 	char tmpSz[MAX_LINE_LENGTH];
-	const char* IniPath = CCalendarWindow::c_Config.GetEventsPath().c_str();
+	const char* IniPath = CConfig::Instance().GetEventsPath().c_str();
 	SYSTEMTIME& Current = CCalendarWindow::c_MonthsFirstDate;
 	std::string Date;
 	char* events = new char[MAX_LINE_LENGTH];
@@ -158,7 +167,11 @@ void CEventManager::ReadEvents()
 
 bool CompareEvents(const CEventMessage* arg1, const CEventMessage* arg2)
 {
-   return arg1->GetCount() < arg2->GetCount(); 
+	if (arg1->GetStartTime() == -1 && arg2->GetStartTime() == -1)
+	{
+		return arg1->GetCount() < arg2->GetCount(); 
+	}
+	return arg1->GetStartTime() < arg2->GetStartTime(); 
 }
 
 /*
@@ -253,7 +266,7 @@ CEventMessage* CEventManager::GetEvent(int ID)
 	return NULL;
 }
 
-void CEventManager::RemoveEvent(CEventMessage& event)
+void CEventManager::RemoveEvent(const CEventMessage& event)
 {
 	CEventMessage* oldEvent = GetEvent(event.GetID());
 
@@ -316,12 +329,12 @@ void CEventManager::WriteEvents(int day, int month, int year)
 	}
 }
 
-void CEventManager::WriteEvent(CEventMessage& event)
+void CEventManager::WriteEvent(const CEventMessage& event)
 {
 	char tmpSz[MAX_LINE_LENGTH];
 	char Date[MAX_LINE_LENGTH];
 	std::string message = event.GetMessage();
-	const char* IniPath = CCalendarWindow::c_Config.GetEventsPath().c_str();
+	const char* IniPath = CConfig::Instance().GetEventsPath().c_str();
 	int day, month, year;
 
    	if (!event.IsPermanent()) return; // No need to write read only events

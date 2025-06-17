@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemToday.cpp,v 1.8 2003/06/15 09:49:12 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemToday.cpp,v 1.9 2003/10/27 17:37:51 Rainy Exp $
 
   $Log: ItemToday.cpp,v $
+  Revision 1.9  2003/10/27 17:37:51  Rainy
+  Config is now singleton.
+
   Revision 1.8  2003/06/15 09:49:12  Rainy
   Added support for multiple calendars.
 
@@ -74,20 +77,20 @@ CItemToday::~CItemToday()
 */
 void CItemToday::Initialize()
 {
-	if( CCalendarWindow::c_Config.GetTodayEnable() && 
-		CCalendarWindow::c_Config.GetTodayRasterizer()!=CRasterizer::TYPE_NONE)
+	if( CConfig::Instance().GetTodayEnable() && 
+		CConfig::Instance().GetTodayRasterizer()!=CRasterizer::TYPE_NONE)
 	{
-		switch(CCalendarWindow::c_Config.GetTodayRasterizer()) {
+		switch(CConfig::Instance().GetTodayRasterizer()) {
 		case CRasterizer::TYPE_BITMAP:
 			CRasterizerBitmap* BMRast;
 
 			BMRast=new CRasterizerBitmap;
 			if(BMRast==NULL) THROW(ERR_OUTOFMEM);
 
-			BMRast->Load(CCalendarWindow::c_Config.GetTodayBitmapName());
-			BMRast->SetNumOfComponents(CCalendarWindow::c_Config.GetTodayNumOfComponents());
-			BMRast->SetSeparation(CCalendarWindow::c_Config.GetTodaySeparation());
-			BMRast->SetAlign(CCalendarWindow::c_Config.GetTodayAlign());
+			BMRast->Load(CConfig::Instance().GetTodayBitmapName());
+			BMRast->SetNumOfComponents(CConfig::Instance().GetTodayNumOfComponents());
+			BMRast->SetSeparation(CConfig::Instance().GetTodaySeparation());
+			BMRast->SetAlign(CConfig::Instance().GetTodayAlign());
 			SetRasterizer(BMRast);
 			break;
 
@@ -97,9 +100,9 @@ void CItemToday::Initialize()
 			FNRast=new CRasterizerFont;
 			if(FNRast==NULL) THROW(ERR_OUTOFMEM);
 
-			FNRast->SetFont(CCalendarWindow::c_Config.GetTodayFont());
-			FNRast->SetAlign(CCalendarWindow::c_Config.GetTodayAlign());
-			FNRast->SetColor(CCalendarWindow::c_Config.GetTodayFontColor());
+			FNRast->SetFont(CConfig::Instance().GetTodayFont());
+			FNRast->SetAlign(CConfig::Instance().GetTodayAlign());
+			FNRast->SetColor(CConfig::Instance().GetTodayFontColor());
 			FNRast->UpdateDimensions("XX");
 			SetRasterizer(FNRast);
 			break;
@@ -124,20 +127,20 @@ void CItemToday::Paint(CImage& background, POINT offset)
 	{
 		FirstWeekday = CCalendarWindow::c_MonthsFirstDate.wDayOfWeek;
 
-		if(CCalendarWindow::c_Config.GetStartFromMonday()) 
+		if(CConfig::Instance().GetStartFromMonday()) 
 		{
 			FirstWeekday = (FirstWeekday - 1);
 			if(FirstWeekday == -1) FirstWeekday = 6;
 		} 
 
-		W = CCalendarWindow::c_Config.GetDaysW() / 7;	// 7 Columns
-		H = CCalendarWindow::c_Config.GetDaysH() / 6;	// 6 Rows
+		W = CConfig::Instance().GetDaysW() / 7;	// 7 Columns
+		H = CConfig::Instance().GetDaysH() / 6;	// 6 Rows
 
 		if(m_Rasterizer != NULL) 
 		{
 			Index = CCalendarWindow::c_TodaysDate.wDay + FirstWeekday - 1;
-			X = CCalendarWindow::c_Config.GetDaysX() + (Index % 7) * W;
-			Y = CCalendarWindow::c_Config.GetDaysY() + (Index / 7) * H;
+			X = CConfig::Instance().GetDaysX() + (Index % 7) * W;
+			Y = CConfig::Instance().GetDaysY() + (Index / 7) * H;
 		
 			X += offset.x;
 			Y += offset.y;
@@ -152,23 +155,23 @@ void CItemToday::Paint(CImage& background, POINT offset)
 
 int CItemToday::GetX()
 {
-	int W = CCalendarWindow::c_Config.GetDaysW() / 7;	// 7 Columns
-	int X = CCalendarWindow::c_Config.GetDaysX();
+	int W = CConfig::Instance().GetDaysW() / 7;	// 7 Columns
+	int X = CConfig::Instance().GetDaysX();
 
 	return W * 6 + X;
 }
 
 int CItemToday::GetY()
 {
-	int H = CCalendarWindow::c_Config.GetDaysH() / 6;	// 6 Rows
-	int Y = CCalendarWindow::c_Config.GetDaysY();
+	int H = CConfig::Instance().GetDaysH() / 6;	// 6 Rows
+	int Y = CConfig::Instance().GetDaysY();
 
 	return H * 5 + Y;
 }
 
 int CItemToday::GetW()
 {
-	int numOfComponents = CCalendarWindow::c_Config.GetTodayNumOfComponents();
+	int numOfComponents = CConfig::Instance().GetTodayNumOfComponents();
 
 	if (m_Rasterizer->GetWidth() > m_Rasterizer->GetHeight())
 	{
@@ -180,7 +183,7 @@ int CItemToday::GetW()
 
 int CItemToday::GetH()
 {
-	int numOfComponents = CCalendarWindow::c_Config.GetTodayNumOfComponents();
+	int numOfComponents = CConfig::Instance().GetTodayNumOfComponents();
 
 	if (m_Rasterizer->GetHeight() > m_Rasterizer->GetWidth())
 	{
