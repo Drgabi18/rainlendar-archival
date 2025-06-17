@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Config.h,v 1.14 2003/08/09 16:38:43 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Config.h,v 1.15 2003/10/04 14:48:26 Rainy Exp $
 
   $Log: Config.h,v $
+  Revision 1.15  2003/10/04 14:48:26  Rainy
+  Added TooltipMaxWidth and priority for the profiles.
+
   Revision 1.14  2003/08/09 16:38:43  Rainy
   Added hotkeys and few other settings.
 
@@ -85,6 +88,8 @@ struct Profile
 	std::string iconName;
 	CRasterizer::ALIGN iconAlign;
 	CImage icon;
+	bool drawAlways;
+	int priority;
 };
 
 class CConfig  
@@ -206,6 +211,7 @@ public:
 	bool GetNegativeCoords() { return m_NegativeCoords; };
 	bool GetRememberDialogPositions() { return m_RememberDialogPositions; };
 	BG_COPY_MODE GetBGCopyMode() { return m_BGCopyMode; };
+	int GetToolTipMaxWidth() { return m_ToolTipMaxWidth; };
 
 	void SetStartFromMonday(bool StartFromMonday ) { m_StartFromMonday=StartFromMonday; };
 	void SetWeekdayNames(const std::string& WeekdayNames ) { m_WeekdayNames=WeekdayNames; };
@@ -224,6 +230,7 @@ public:
 	void SetRememberDialogPositions(bool RememberDialogPositions) { m_RememberDialogPositions=RememberDialogPositions; };
 	void SetNegativeCoords(bool NegativeCoords) { m_NegativeCoords=NegativeCoords; };
 	void SetBGCopyMode(BG_COPY_MODE bgMode) { m_BGCopyMode=bgMode; };
+	void SetToolTipMaxWidth(UINT toolTipMaxWidth) { m_ToolTipMaxWidth=toolTipMaxWidth; };
 
 	CBackground::MODE GetBackgroundMode() { return m_BackgroundMode; };
     const std::string& GetBackgroundBitmapName() { return m_BackgroundBitmapName; };
@@ -513,6 +520,8 @@ private:
 	bool m_EventMessageBox;
 	BG_COPY_MODE m_BGCopyMode;
 	std::string m_CurrentProfile;
+
+	UINT m_ToolTipMaxWidth;		// TODO: Add GUI for this
 
 	// Hotkey settings
 	DWORD m_HideHotkey;

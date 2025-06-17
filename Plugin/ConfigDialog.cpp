@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ConfigDialog.cpp,v 1.11 2003/08/23 09:14:36 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ConfigDialog.cpp,v 1.12 2003/10/04 14:49:07 Rainy Exp $
 
   $Log: ConfigDialog.cpp,v $
+  Revision 1.12  2003/10/04 14:49:07  Rainy
+  StartFromJanuary sets the Previous Months field to zero..
+
   Revision 1.11  2003/08/23 09:14:36  Rainy
   Added translations to settings group and outlook. hotkey
 
@@ -464,8 +467,15 @@ BOOL OnInitLayoutDialog(HWND window)
 	SetWindowText(widget, tmpSz);
 
 	widget = GetDlgItem(window, IDC_PREVIOUS_MONTHS);
-	itoa(CCalendarWindow::c_Config.GetPreviousMonths(), tmpSz, 10);
-	SetWindowText(widget, tmpSz);
+	if (CCalendarWindow::c_Config.GetStartFromJanuary())
+	{
+		SetWindowText(widget, "0");
+	}
+	else
+	{
+		itoa(CCalendarWindow::c_Config.GetPreviousMonths(), tmpSz, 10);
+		SetWindowText(widget, tmpSz);
+	}
 
 	state = CCalendarWindow::c_Config.GetStartFromJanuary() ? BST_CHECKED : BST_UNCHECKED;
 	CheckDlgButton(window, IDC_LAYOUT_JANUARY, state);

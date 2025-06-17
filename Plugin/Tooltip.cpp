@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Tooltip.cpp,v 1.5 2003/05/25 18:08:44 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Tooltip.cpp,v 1.6 2003/10/04 14:52:36 Rainy Exp $
 
   $Log: Tooltip.cpp,v $
+  Revision 1.6  2003/10/04 14:52:36  Rainy
+  Added word wrapping.
+
   Revision 1.5  2003/05/25 18:08:44  Rainy
   Added tooltip separator.
 
@@ -79,6 +82,7 @@ CToolTip::CToolTip()
 	m_ArrowCorner = CORNER_BL;
 	m_Separation = 0;
 	m_Separator = false;
+	m_MaxWidth = 0;
 }
 
 /* 
@@ -277,6 +281,14 @@ bool CToolTip::ResizeTipWindow(const POINT& pos)
 			if (!((*i).text.empty()))
 			{
 				DrawText(dc, (*i).text.c_str(), (*i).text.size(), &rect, DT_NOPREFIX | DT_CALCRECT);
+
+				if (m_MaxWidth > 0 && rect.right - rect.left > m_MaxWidth)
+				{
+					rect.right = m_MaxWidth;
+					rect.left = 0;
+					DrawText(dc, (*i).text.c_str(), (*i).text.size(), &rect, DT_WORDBREAK | DT_NOPREFIX | DT_CALCRECT);
+				}
+				
 				height += rect.bottom - rect.top;
 				if (i != m_CurrentTip->datas.begin())
 				{
@@ -506,7 +518,7 @@ LRESULT CToolTip::OnPaint(WPARAM wParam, LPARAM lParam)
 			}
 
 			SetTextColor(winDC, (*i).color);
-			DrawText(winDC, (*i).text.c_str(), (*i).text.size(), &rect, DT_NOPREFIX);
+			DrawText(winDC, (*i).text.c_str(), (*i).text.size(), &rect, DT_NOPREFIX | DT_WORDBREAK);
 			rect.top += (*i).height + m_Separation;
 		}
 

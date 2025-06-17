@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Config.cpp,v 1.17 2003/08/09 16:38:43 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Config.cpp,v 1.18 2003/10/04 14:48:25 Rainy Exp $
 
   $Log: Config.cpp,v $
+  Revision 1.18  2003/10/04 14:48:25  Rainy
+  Added TooltipMaxWidth and priority for the profiles.
+
   Revision 1.17  2003/08/09 16:38:43  Rainy
   Added hotkeys and few other settings.
 
@@ -208,6 +211,8 @@ CConfig::CConfig()
 	m_AllHotkey = 0;
 	m_OutlookHotkey = 0;
 
+	m_ToolTipMaxWidth = 0;
+
 	for (int i = 0; i < DIALOG_LAST; i++)
 	{
 		m_DialogPos[i].x = 0;
@@ -389,6 +394,7 @@ void CConfig::ReadGeneralConfig(const char* iniFile)
 	{
 		m_CurrentLanguage=tmpSz;
 	}
+	m_ToolTipMaxWidth=GetPrivateProfileInt( "Rainlendar", "ToolTipMaxWidth", m_ToolTipMaxWidth, iniFile);
 
 	// Read dialog positions
 	for (int i = 0; i < DIALOG_LAST; i++)
@@ -716,6 +722,10 @@ void CConfig::ReadProfiles(const char* iniFile)
 				profile->iconName = tmpSz;
 			}
 			profile->iconAlign = (CRasterizer::ALIGN)GetPrivateProfileInt(pos, "EventIconAlign", m_DaysAlign, iniFile);
+
+			profile->drawAlways = GetPrivateProfileInt(pos, "EventDrawAlways", 0, iniFile) ? true : false;
+
+			profile->priority = GetPrivateProfileInt(pos, "Priority", 0, iniFile);
 
 			// Load the images (if they are defined)
 			if (!profile->bitmapName.empty())

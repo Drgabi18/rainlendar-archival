@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Item.cpp,v 1.3 2003/06/15 09:49:11 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Item.cpp,v 1.4 2003/10/04 14:50:18 Rainy Exp $
 
   $Log: Item.cpp,v $
+  Revision 1.4  2003/10/04 14:50:18  Rainy
+  Always drawn events don't count as events.
+
   Revision 1.3  2003/06/15 09:49:11  Rainy
   Added support for multiple calendars.
 
@@ -59,10 +62,16 @@ int CItem::GetDayType(int day, int month, int year)
 	std::vector<CEventMessage*>::iterator iter = eventList.begin();
 	for( ;  iter != eventList.end(); iter++)
 	{
+		// Ignore always drawn events
+		const Profile* profile = CCalendarWindow::c_Config.GetProfile((*iter)->GetProfile().c_str());
+
 		if (!((*iter)->IsDeleted()))
 		{
-			type = EVENT;
-			break;
+			if (!(profile && profile->drawAlways))
+			{
+				type = EVENT;
+				break;
+			}
 		}
 	}
 

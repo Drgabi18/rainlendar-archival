@@ -1,14 +1,14 @@
 ###############################################################################
 #
 #                 Rainlendar installer script for NSIS
-#                           version 0.5
+#                           version 0.6
 #
 ###############################################################################
 
 #
 # Variables
 #
-Name "Rainlendar 0.17.1"
+Name "Rainlendar 0.18"
 OutFile "RainlendarInstaller.exe"
 InstallDir "$PROGRAMFILES\Rainlendar"
 InstallDirRegKey HKLM SOFTWARE\Rainlendar "Install_Dir"
@@ -27,6 +27,13 @@ ComponentText "Select the installing options"
 Section "Rainlendar main program" ; (default section)
   SetOutPath "$INSTDIR"
   SectionIn 1 RO
+
+  FindWindow $0 "Rainlendar"
+  IsWindow $0 0 RainlendarDoesntExistLabel2
+  MessageBox MB_OK "Rainlendar is running. Please close it before trying to install the application."
+  Quit
+
+RainlendarDoesntExistLabel2:
 
   IfFileExists $INSTDIR\Rainlendar.ini FileExistsLabel
   Goto OverWriteAllLabel

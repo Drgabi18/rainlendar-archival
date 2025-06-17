@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemEvent.cpp,v 1.15 2003/08/09 16:36:05 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/ItemEvent.cpp,v 1.16 2003/10/04 14:50:41 Rainy Exp $
 
   $Log: ItemEvent.cpp,v $
+  Revision 1.16  2003/10/04 14:50:41  Rainy
+  Added always drawn profiles and priority system.
+
   Revision 1.15  2003/08/09 16:36:05  Rainy
   Removed GetEventText()
 
@@ -75,6 +78,7 @@
 #include "RasterizerFont.h"
 #include "CalendarWindow.h"
 #include "Tooltip.h"
+#include <set>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -170,21 +174,49 @@ void CItemEvent::Paint(CImage& background, POINT offset)
 			Index = i + FirstWeekday;
 			DayType = GetDayType(i + 1, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 
-			// Only show event days
-			if((DayType & EVENT) && (!CCalendarWindow::c_Config.GetDaysIgnoreToday() ||
-				!CCalendarWindow::c_Config.GetDaysIgnoreEvent() || !(DayType & TODAY))) 
-			{	
-				X = CCalendarWindow::c_Config.GetDaysX() + (Index % 7) * W;
-				Y = CCalendarWindow::c_Config.GetDaysY() + (Index / 7) * H;
+			X = CCalendarWindow::c_Config.GetDaysX() + (Index % 7) * W;
+			Y = CCalendarWindow::c_Config.GetDaysY() + (Index / 7) * H;
 
-				X += offset.x;
-				Y += offset.y;
+			X += offset.x;
+			Y += offset.y;
 
-				// Set the correct profile
-				m_Rasterizer->SetProfile(GetEventProfile(i + 1));
+			// Set the correct profile
+			const Profile* profile = GetEventProfile(i + 1);
 
-				m_Rasterizer->Paint(background, X, Y, W, H, i + 1);
+			if (DayType & EVENT)
+			{
+				if (!((DayType & TODAY) && CCalendarWindow::c_Config.GetDaysIgnoreToday()))
+				{
+					m_Rasterizer->SetProfile(profile);
+					m_Rasterizer->Paint(background, X, Y, W, H, i + 1);
+				}
+			}
 
+			std::set<const Profile*> drawnProfiles;
+			drawnProfiles.insert(profile);
+
+			// Loop the events and check if there is an DrawAlways events and draw them
+			std::vector<CEventMessage*>::iterator eventIter;
+			std::vector<CEventMessage*> eventList = m_EventManager.GetEvents(i + 1, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
+			for(eventIter = eventList.begin();  eventIter != eventList.end(); eventIter++)
+			{
+				if (!((*eventIter)->GetProfile().empty()) && !((*eventIter)->IsDeleted()))
+				{
+					const Profile* newProfile = CCalendarWindow::c_Config.GetProfile((*eventIter)->GetProfile().c_str());
+
+					// Draw only once per profile
+					if (newProfile && newProfile->drawAlways && drawnProfiles.find(newProfile) == drawnProfiles.end())
+					{
+						m_Rasterizer->SetProfile(newProfile);
+						m_Rasterizer->Paint(background, X, Y, W, H, i + 1);
+						drawnProfiles.insert(newProfile);
+					}
+				}
+			}
+
+			if (DayType & EVENT)
+			{
+				// Draw the icon if there is one
 				DrawIcon(background, i + 1, X, Y, W, H);
 
 				// Draw the event texts
@@ -367,10 +399,10 @@ void CItemEvent::AddToolTips(CCalendarWindow* CalendarWnd, POINT offset)
 			{
 				if(CCalendarWindow::c_Config.GetEventEnable() && CCalendarWindow::c_Config.GetEventToolTips()) 
 				{
-					if(GetDayType(Day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear) & EVENT) 
-					{
-						std::vector<CEventMessage*> eventList = m_EventManager.GetEvents(Day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
+					std::vector<CEventMessage*> eventList = m_EventManager.GetEvents(Day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 
+					if (!eventList.empty())
+					{
 						int ID = CToolTip::Instance().CreateToolTip(Rect);
 
 						std::vector<CEventMessage*>::iterator eventIter = eventList.begin();
@@ -409,13 +441,24 @@ void CItemEvent::AddToolTips(CCalendarWindow* CalendarWnd, POINT offset)
 /* 
 ** GetEventProfile
 **
-** Returns the event profile for the given day in current month
+** Returns the event profile for the given day in current month.
+** If there are several events on the same day the priority is used
+** to determine which one is shown.
 **
 */
 const Profile* CItemEvent::GetEventProfile(int day)
 {
 	const char* currentProfile = NULL;
-	int currentType = 0;
+	int newPriority = 0;
+	int profilePriority = 0;
+	int currentPriority = 0;
+
+	// Events that occur more rarely override frequent events
+	const int dailyPriority    = 10;
+	const int weeklyPriority   = 20;
+	const int monthlyPriority  = 30;
+	const int annuallyPriority = 40;
+	const int singlePriority   = 50;
 
 	std::vector<CEventMessage*> eventList = m_EventManager.GetEvents(day, CCalendarWindow::c_MonthsFirstDate.wMonth, CCalendarWindow::c_MonthsFirstDate.wYear);
 	
@@ -424,48 +467,50 @@ const Profile* CItemEvent::GetEventProfile(int day)
 		std::vector<CEventMessage*>::iterator i = eventList.begin();
 		for( ;  i != eventList.end(); i++)
 		{
-			// Events that occur more rarely override frequent events
-
 			if (!((*i)->GetProfile().empty()) && !((*i)->IsDeleted()))
 			{
+				const Profile* profile = CCalendarWindow::c_Config.GetProfile((*i)->GetProfile().c_str());
+
+				if (profile)
+				{
+					if (profile->drawAlways)	// Ignore always drawn profiles
+					{
+						continue;
+					}
+					profilePriority = profile->priority;
+				}
+				else
+				{
+					profilePriority = 0;
+				}
+
 				switch((*i)->GetType())
 				{
 				case EVENT_SINGLE:
-					currentProfile = (*i)->GetProfile().c_str();
-					currentType = 5;
+					newPriority = singlePriority + profilePriority;
 					break;
 
 				case EVENT_DAILY:
-					if (currentType <= 1)
-					{
-						currentProfile = (*i)->GetProfile().c_str();
-						currentType = 1;
-					}
+					newPriority = dailyPriority + profilePriority;
 					break;
 
 				case EVENT_WEEKLY:
-					if (currentType <= 2)
-					{
-						currentProfile = (*i)->GetProfile().c_str();
-						currentType = 2;
-					}
+					newPriority = weeklyPriority + profilePriority;
 					break;
 
 				case EVENT_MONTHLY:
-					if (currentType <= 3)
-					{
-						currentProfile = (*i)->GetProfile().c_str();
-						currentType = 3;
-					}
+					newPriority = monthlyPriority + profilePriority;
 					break;
 
 				case EVENT_ANNUALLY:
-					if (currentType <= 4)
-					{
-						currentProfile = (*i)->GetProfile().c_str();
-						currentType = 4;
-					}
+					newPriority = annuallyPriority + profilePriority;
 					break;
+				}
+
+				if (newPriority >= currentPriority)
+				{
+					currentProfile = (*i)->GetProfile().c_str();
+					currentPriority = newPriority;
 				}
 			}
 		}

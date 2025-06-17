@@ -16,9 +16,17 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Outlook.cpp,v 1.5 2003/08/09 15:27:07 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Outlook.cpp,v 1.7 2003/10/04 14:55:25 Rainy Exp $
 
   $Log: Outlook.cpp,v $
+  Revision 1.7  2003/10/04 14:55:25  Rainy
+  Added more room for strings.
+
+  Revision 1.6  2003/10/04 14:52:03  Rainy
+  Bug fix in error situations.
+  Events are identified by their ID.
+  Clock can be now in 12-hour format too.
+
   Revision 1.5  2003/08/09 15:27:07  Rainy
   Events are now returned with GetOutlookEvents.
 
@@ -41,7 +49,7 @@
 #import "D:\Program Files\Common Files\Microsoft Shared\Office10\mso.dll" named_guids
 #import "D:\Program Files\Microsoft Office\Office10\MSOUTL.OLB" no_namespace exclude("_IRecipientControl", "_DRecipientControl")
 
-std::map<DATE, int> g_OutlookEventIDs;
+std::map<std::string, int> g_OutlookEventIDs;
 std::list<CEventMessage> g_OutlookEvents;
 
 bool GetOutlookEvents(CEventManager* eventManager)
@@ -117,17 +125,33 @@ bool SyncWithOutlook()
 
             CEventMessage newEvent(false);      // Non-permanent event
 
+			std::string eventID;
+
             // Check if the event was modified
-            DATE creationDate = pContact->GetCreationTime();
-            std::map<DATE, int>::iterator iter = g_OutlookEventIDs.find(creationDate);
-            if (iter != g_OutlookEventIDs.end())
+			BSTR strEntryID = pContact->GetEntryID();
+            if (strEntryID)
             {
-                newEvent.SetID((*iter).second);
+                int size = lstrlenW(strEntryID) * 4;	// Multibyte chars can be 4 times as large as normal byte
+                char* buffer = new char[size + 1];
+                WideCharToMultiByte(CP_ACP, 0, strEntryID, -1, buffer, size + 1, NULL, NULL);
+				eventID = buffer;
+				SysFreeString(strEntryID);
+                delete [] buffer;
+
+				std::map<std::string, int>::iterator iter = g_OutlookEventIDs.find(eventID);
+				if (iter != g_OutlookEventIDs.end())
+				{
+					newEvent.SetID((*iter).second);
+				}
+				else
+				{
+					ret = true;     // New event, must refresh
+				}
             }
-            else
-            {
-                ret = true;     // New event, must refresh
-            }
+			else
+			{
+				continue;	// The ID must be available or we cannot itentify the events
+			}
 
             int sDay, sMonth, sYear;
             int sHour, sMinute, sSecond;
@@ -153,13 +177,53 @@ bool SyncWithOutlook()
                 // Add the start and end time if they are different
                 if (sHour != eHour || sMinute != eMinute)
                 {
-                    buffer = new char[256];
-                    sprintf(buffer, "%i:%02i - %i:%02i ", sHour, sMinute, eHour, eMinute);
-                    message += buffer;
-                    delete [] buffer;
-                }
+					TCHAR buffer[256];
+					GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ITIME, buffer, 256);
+					if (buffer[0] == '0')
+					{
+						// AM / PM 12-hour format.
+						const char* sAMPM = sHour >= 12 ? "PM" : "AM";
+						const char* eAMPM = eHour >= 12 ? "PM" : "AM";
 
-                size = lstrlenW(strSubject);
+						sHour = sHour % 12;
+						if (sHour == 0) sHour = 12;
+						eHour = eHour % 12;
+						if (eHour == 0) eHour = 12;
+
+						sprintf(buffer, "%i:%02i %s - %i:%02i %s ", sHour, sMinute, sAMPM, eHour, eMinute, eAMPM);
+					}
+					else
+					{
+						// 24-hour format
+	                    sprintf(buffer, "%i:%02i - %i:%02i ", sHour, sMinute, eHour, eMinute);
+					}
+						
+                    message += buffer;
+                } 
+				else if (!pContact->AllDayEvent)
+				{
+					TCHAR buffer[256];
+					GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ITIME, buffer, 256);
+					if (buffer[0] == '0')
+					{
+						// AM / PM 12-hour format.
+						const char* sAMPM = sHour >= 12 ? "PM" : "AM";
+
+						sHour = sHour % 12;
+						if (sHour == 0) sHour = 12;
+
+						sprintf(buffer, "%i:%02i %s ", sHour, sMinute, sAMPM);
+					}
+					else
+					{
+						// 24-hour format
+	                    sprintf(buffer, "%i:%02i ", sHour, sMinute);
+					}
+						
+                    message += buffer;
+				}
+
+                size = lstrlenW(strSubject) * 4;	// Multibyte chars can be 4 times as large as normal byte
                 buffer = new char[size + 1];
                 WideCharToMultiByte(CP_ACP, 0, strSubject, -1, buffer, size + 1, NULL, NULL);
                 message += buffer;
@@ -171,27 +235,27 @@ bool SyncWithOutlook()
                 {
                     message += " (";
 
-                    size = lstrlenW(strLocation);
+                    size = lstrlenW(strLocation) * 4;	// Multibyte chars can be 4 times as large as normal byte
                     buffer = new char[size + 1];
                     WideCharToMultiByte(CP_ACP, 0, strLocation, -1, buffer, size + 1, NULL, NULL);
                     message += buffer;
                     delete [] buffer;
 
                     message += ")";
+					SysFreeString(strLocation);
                 }
-				SysFreeString(strLocation);
 
                 BSTR strBody = pContact->GetBody();
                 if (strBody)
                 {
                     message += "\n";
-                    size = lstrlenW(strBody);
+                    size = lstrlenW(strBody) * 4;	// Multibyte chars can be 4 times as large as normal byte
                     buffer = new char[size + 1];
                     WideCharToMultiByte(CP_ACP, 0, strBody, -1, buffer, size + 1, NULL, NULL);
                     message += buffer;
                     delete [] buffer;
+					SysFreeString(strBody);
                 }
-				SysFreeString(strBody);
                 newEvent.SetMessage(message);
 
                 OlRecurrenceState state = pContact->GetRecurrenceState();
@@ -249,7 +313,7 @@ bool SyncWithOutlook()
                 }
 
 				g_OutlookEvents.push_back(newEvent);
-                g_OutlookEventIDs[creationDate] = newEvent.GetID();
+                g_OutlookEventIDs[eventID] = newEvent.GetID();
             }
 
 			pContact=pItems->GetNext();
@@ -257,7 +321,16 @@ bool SyncWithOutlook()
 	}
 	catch(_com_error &e)
 	{
-        LSLog(LOG_DEBUG, "Rainlendar", (char*)e.Description());
+		BSTR desc = e.Description();
+		if (desc)
+		{
+			int size = lstrlenW(desc) * 4;	// Multibyte chars can be 4 times as large as normal byte
+			char* buffer = new char[size + 1];
+			WideCharToMultiByte(CP_ACP, 0, desc, -1, buffer, size + 1, NULL, NULL);
+			LSLog(LOG_DEBUG, "Rainlendar", buffer);
+			delete [] buffer;
+			SysFreeString(desc);
+		}
 	}
 
     CoUninitialize();

@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/EditEvent.cpp,v 1.15 2003/08/10 08:44:38 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/EditEvent.cpp,v 1.16 2003/10/04 14:49:52 Rainy Exp $
 
   $Log: EditEvent.cpp,v $
+  Revision 1.16  2003/10/04 14:49:52  Rainy
+  Date for the new events is taken from global date instead of previous events.
+
   Revision 1.15  2003/08/10 08:44:38  Rainy
   Changed the way message text is get from the edit control (the old way didn't work in 98)
 
@@ -80,6 +83,7 @@
 // These need to be global (even though globals are evil)
 static std::vector<CEventMessage*> g_DeletedEvents;
 time_t g_TimeStamp = 0;
+UINT g_Date = 0;
 HINSTANCE g_Instance;
 
 // Prototypes
@@ -106,6 +110,7 @@ VOID OpenEditEventDialog(HWND hwndOwner, HINSTANCE instance, UINT date, UINT id)
 		DialogBox(instance, MAKEINTRESOURCE(IDD_SYNC_DIALOG), hwndOwner, (DLGPROC)SyncProc); 
     }
 
+	g_Date = date;
 	CEventMessage::ValueToDate(date, &day, &month, &year);
 	const std::string monthStr = CCalendarWindow::c_Language.GetString("Menu", 5 + month - 1);
 	sprintf(caption, "%i-%s-%i", day, monthStr.c_str(), year);
@@ -239,12 +244,9 @@ INT_PTR CALLBACK PropSheetDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
 		if (wParam == IDC_EDITEVENT_NEW)
 		{
 			CEventMessage* newEvent = new CEventMessage;
-			int day, month, year;
 			HWND curPage = (HWND)SendMessage(hwndDlg, PSM_GETCURRENTPAGEHWND, 0, 0);
 			CEventMessage* event = (CEventMessage*)GetWindowLong(curPage, GWL_USERDATA);
-			int date = event->GetDate();
-			CEventMessage::ValueToDate(date, &day, &month, &year);
-			newEvent->SetDate(CEventMessage::DateToValue(day, month, year));
+			newEvent->SetDate(g_Date);
 			newEvent->SetProfile(CCalendarWindow::c_Config.GetCurrentProfile());
 			const char* profile = CCalendarWindow::c_Language.GetTranslatedProfile(newEvent->GetProfile().c_str());
 
@@ -364,7 +366,7 @@ BOOL OnInitDialog(HWND window, PROPSHEETPAGE* psp)
     HWND widget;
 	CEventMessage* event = (CEventMessage*)psp->lParam;
 
-	SetWindowLong(window, GWL_USERDATA, (LONG)event);	// Store the index to the g_Events-vector
+	SetWindowLong(window, GWL_USERDATA, (LONG)event);
 
 	// Set localized strings
 	widget = GetDlgItem(window, IDC_EDITEVENT_SINGLE);
@@ -678,7 +680,7 @@ BOOL CALLBACK SyncProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				param.userID = CCalendarWindow::c_Config.GetServerID();
 				param.requestType = REQUEST_GETEVENTS;
 				param.window = hwndDlg;
-
+				
 				// Launch the network communication thread
 				DWORD id;
 				HANDLE thread = CreateThread(NULL, 0, NetworkThreadProc, &param, 0, &id);

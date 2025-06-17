@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/RainlendarDLL.h,v 1.12 2003/08/23 09:15:02 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/RainlendarDLL.h,v 1.13 2003/10/04 14:52:18 Rainy Exp $
 
   $Log: RainlendarDLL.h,v $
+  Revision 1.13  2003/10/04 14:52:18  Rainy
+  version 0.18
+
   Revision 1.12  2003/08/23 09:15:02  Rainy
   0.17.1
 
@@ -79,7 +82,7 @@
 #define END_MESSAGEPROC } return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 #define APPNAME "Rainlendar"
-#define VERSION "0.17.1"
+#define VERSION "0.18"
 
 #define DLLDECL __declspec( dllexport )
 

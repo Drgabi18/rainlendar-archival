@@ -16,9 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Tooltip.h,v 1.4 2003/05/25 18:08:44 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/Tooltip.h,v 1.5 2003/10/04 14:52:36 Rainy Exp $
 
   $Log: Tooltip.h,v $
+  Revision 1.5  2003/10/04 14:52:36  Rainy
+  Added word wrapping.
+
   Revision 1.4  2003/05/25 18:08:44  Rainy
   Added tooltip separator.
 
@@ -77,6 +80,9 @@ public:
 	void SetSeparator(bool separator) { m_Separator = separator; };
 	bool IsSeparator() { return m_Separator; };
 
+	void SetMaxWidth(UINT maxWidth) { m_MaxWidth = maxWidth; };
+	UINT GetMaxWidth() { return m_MaxWidth; };
+
 	static CToolTip& Instance() { return c_ToolTip; };
 
 	static LRESULT CALLBACK MouseProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -122,6 +128,7 @@ private:
 	POINT m_Offset;
 	RECT m_InsideRect;
 	CORNER m_ArrowCorner;
+	UINT m_MaxWidth;
 
 	static CToolTip c_ToolTip;
 	static int c_CurrentID;

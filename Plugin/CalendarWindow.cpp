@@ -16,9 +16,14 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 /*
-  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/CalendarWindow.cpp,v 1.24 2003/08/23 09:14:12 Rainy Exp $
+  $Header: //RAINBOX/cvsroot/Rainlendar/Plugin/CalendarWindow.cpp,v 1.25 2003/10/04 14:47:54 Rainy Exp $
 
   $Log: CalendarWindow.cpp,v $
+  Revision 1.25  2003/10/04 14:47:54  Rainy
+  Languages path is the same as the DLL's
+  Skins are rescanned during refresh.
+  Added powerbroadcast again since the timer didn't work for some reason.
+
   Revision 1.24  2003/08/23 09:14:12  Rainy
   Fixed a crash on exit if the calendar isn't initialized.
   Wrong submenu was translated.
@@ -277,6 +282,13 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 		PixPath = CRainlendar::GetCommandLine();
 	}
 
+	std::string dllPath;
+	// Get the DLL's directory
+	GetModuleFileName(CRainlendar::GetInstance(), tmpName, MAX_LINE_LENGTH);
+	char* Slash = strrchr(tmpName, '\\');
+	*(Slash + 1) = 0;	// Cut the Rainlendar.dll from the name
+	dllPath = tmpName;
+
 	// Remove quotes from the path
 	int pos = PixPath.find("\"");
 	while (pos != -1)
@@ -291,16 +303,6 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 		PixPath += "\\";
 	}
 
-	if (LanguagesPath.empty())
-	{
-		LanguagesPath = PixPath + "Languages\\";
-	}
-	else if (*(LanguagesPath.end() - 1) != '\\')
-	{
-		LanguagesPath += "\\";
-	}
-	c_Language.ScanLanguages(LanguagesPath.c_str());
-
 	if (EventsPath.empty())
 	{
 		EventsPath = PixPath + "Events.ini";
@@ -308,13 +310,20 @@ int CCalendarWindow::Initialize(CRainlendar& Rainlendar, HWND Parent, HINSTANCE 
 
 	if (SkinsPath.empty())
 	{
-		// Get the DLL's directory
-		GetModuleFileName(CRainlendar::GetInstance(), tmpName, MAX_LINE_LENGTH);
-		char* Slash = strrchr(tmpName, '\\');
-		*(Slash + 1) = 0;	// Cut the Rainlendar.dll from the name
-		SkinsPath = tmpName;
+		SkinsPath = dllPath;
 		SkinsPath += "Skins\\";
 	}
+
+	if (LanguagesPath.empty())
+	{
+		LanguagesPath = dllPath + "Languages\\";
+	}
+	else if (*(LanguagesPath.end() - 1) != '\\')
+	{
+		LanguagesPath += "\\";
+	}
+	c_Language.ScanLanguages(LanguagesPath.c_str());
+
 
 	LSLog(LOG_DEBUG, "Rainlendar", "Rainlendar paths:");
 	LSLog(LOG_DEBUG, "Rainlendar", PixPath.c_str());
@@ -639,6 +648,7 @@ void CCalendarWindow::Refresh(bool lite)
 
 		if (!lite)
 		{
+			ReadSkins();		// Rescan the skins
 			c_Config.ReadConfig();
 
 			KillTimer(m_Window, OUTLOOK_TIMER);
@@ -646,7 +656,6 @@ void CCalendarWindow::Refresh(bool lite)
 			{
 				SetTimer(m_Window, OUTLOOK_TIMER, c_Config.GetOutlookUpdate() * 1000, NULL);	// Outlook appointments update is in secs
 			}
-
 
 			sprintf(buffer, "Skin: %s, Ini: %s", c_Config.GetCurrentSkin().c_str(), c_Config.GetCurrentSkinIni().c_str());
 			LSLog(LOG_DEBUG, "Rainlendar", buffer);
@@ -686,6 +695,7 @@ void CCalendarWindow::Refresh(bool lite)
 
 			CToolTip::Instance().SetBackgroundColor(c_Config.GetToolTipBGColor());
 			CToolTip::Instance().SetFont(c_Config.GetToolTipFont());
+			CToolTip::Instance().SetMaxWidth(c_Config.GetToolTipMaxWidth());
 
 			if (CCalendarWindow::c_Config.GetTooltipSeparator())
 			{
@@ -1908,6 +1918,16 @@ LRESULT CCalendarWindow::OnSysKeyUp(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+LRESULT CCalendarWindow::OnPowerBroadcast(WPARAM wParam, LPARAM lParam) 
+{
+	// Refresh when the resolution changes
+	if (wParam == PBT_APMRESUMESUSPEND)
+	{
+		Refresh(true);
+	}
+	return DefWindowProc(m_Window, m_Message, wParam, lParam);
+}
+
 void CCalendarWindow::RegisterHotkeys()
 {
 	DWORD hotkey;
@@ -2278,6 +2298,7 @@ LRESULT CALLBACK CCalendarWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
 	MESSAGE(OnCopyData, WM_COPYDATA)
 	MESSAGE(OnServerSyncFinished, WM_SERVER_SYNC_FINISHED)
 	MESSAGE(OnHotkey, WM_HOTKEY)
+	MESSAGE(OnPowerBroadcast, WM_POWERBROADCAST)
 
 //	case WM_ACTIVATE: 
 //	{
