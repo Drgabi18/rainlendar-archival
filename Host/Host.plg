@@ -1,0 +1,140 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: Plugin - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "D:\DOCUME~1\rainy\LOCALS~1\Temp\RSPB9.tmp" with contents
+[
+/nologo /MD /W3 /GX /O2 /I "..\..\..\3rdparty\ls-b24" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /Fo"Release/" /Fd"Release/" /FD /c 
+"E:\Projects\MyProjects\Rainlendar\Plugin\Background.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\CalendarWindow.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\Config.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\DialogDays.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\DialogEvent.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\DialogGeneral.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\DialogMonth.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\DialogToday.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\DialogWeekdays.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\DialogYear.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\EditEvent.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\Event.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\Item.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\ItemDays.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\ItemEvent.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\ItemMonth.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\ItemToday.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\ItemWeekdays.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\ItemYear.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\RainlendarDLL.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\Rasterizer.cpp"
+"E:\Projects\MyProjects\Rainlendar\Plugin\RasterizerBitmap.cpp"
+]
+Creating command line "cl.exe @D:\DOCUME~1\rainy\LOCALS~1\Temp\RSPB9.tmp" 
+Creating temporary file "D:\DOCUME~1\rainy\LOCALS~1\Temp\RSPBA.tmp" with contents
+[
+lsapi.lib /nologo /subsystem:windows /dll /incremental:no /pdb:"Release/Rainlendar.pdb" /machine:I386 /out:"Release/Rainlendar.dll" /implib:"Release/Rainlendar.lib" /libpath:"..\..\..\3rdparty\ls-b24\lsapi\Release" 
+.\Release\Background.obj
+.\Release\CalendarWindow.obj
+.\Release\Config.obj
+.\Release\DialogDays.obj
+.\Release\DialogEvent.obj
+.\Release\DialogGeneral.obj
+.\Release\DialogMonth.obj
+.\Release\DialogToday.obj
+.\Release\DialogWeekdays.obj
+.\Release\DialogYear.obj
+.\Release\EditEvent.obj
+.\Release\Event.obj
+.\Release\Item.obj
+.\Release\ItemDays.obj
+.\Release\ItemEvent.obj
+.\Release\ItemMonth.obj
+.\Release\ItemToday.obj
+.\Release\ItemWeekdays.obj
+.\Release\ItemYear.obj
+.\Release\RainlendarDLL.obj
+.\Release\Rasterizer.obj
+.\Release\RasterizerBitmap.obj
+.\Release\RasterizerFont.obj
+.\Release\StdAfx.obj
+.\Release\RainlendarDLL.res
+]
+Creating command line "link.exe @D:\DOCUME~1\rainy\LOCALS~1\Temp\RSPBA.tmp"
+<h3>Output Window</h3>
+Compiling...
+Background.cpp
+CalendarWindow.cpp
+Config.cpp
+DialogDays.cpp
+DialogEvent.cpp
+DialogGeneral.cpp
+DialogMonth.cpp
+DialogToday.cpp
+DialogWeekdays.cpp
+DialogYear.cpp
+EditEvent.cpp
+Event.cpp
+Item.cpp
+ItemDays.cpp
+ItemEvent.cpp
+ItemMonth.cpp
+ItemToday.cpp
+ItemWeekdays.cpp
+ItemYear.cpp
+RainlendarDLL.cpp
+Generating Code...
+Compiling...
+Rasterizer.cpp
+RasterizerBitmap.cpp
+Generating Code...
+Linking...
+   Creating library Release/Rainlendar.lib and object Release/Rainlendar.exp
+Creating temporary file "D:\DOCUME~1\rainy\LOCALS~1\Temp\RSPBE.bat" with contents
+[
+@echo off
+Copy    Release\Rainlendar.dll    ..\TestBench\
+]
+Creating command line "D:\DOCUME~1\rainy\LOCALS~1\Temp\RSPBE.bat"
+
+        1 file(s) copied.
+<h3>
+--------------------Configuration: Host - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "D:\DOCUME~1\rainy\LOCALS~1\Temp\RSPBF.tmp" with contents
+[
+/nologo /ML /W3 /GX /O2 /I "..\..\..\3rdparty\ls-b24" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /Fo"Release/" /Fd"Release/" /FD /c 
+"E:\Projects\MyProjects\Rainlendar\Host\Rainlendar.cpp"
+]
+Creating command line "cl.exe @D:\DOCUME~1\rainy\LOCALS~1\Temp\RSPBF.tmp" 
+Creating temporary file "D:\DOCUME~1\rainy\LOCALS~1\Temp\RSPC0.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib lsapi.lib Rainlendar.lib /nologo /subsystem:windows /incremental:no /pdb:"Release/Rainlendar.pdb" /machine:I386 /out:"Release/Rainlendar.exe" /libpath:"..\..\..\3rdparty\ls-b24\lsapi\Release" /libpath:"..\Plugin\Release\\" 
+.\Release\Rainlendar.obj
+.\Release\Rainlendar.res
+\Projects\MyProjects\Rainlendar\Plugin\Release\Rainlendar.lib
+]
+Creating command line "link.exe @D:\DOCUME~1\rainy\LOCALS~1\Temp\RSPC0.tmp"
+<h3>Output Window</h3>
+Compiling...
+Rainlendar.cpp
+Linking...
+Creating temporary file "D:\DOCUME~1\rainy\LOCALS~1\Temp\RSPC2.bat" with contents
+[
+@echo off
+Copy   Release\Rainlendar.exe   ..\TestBench\
+]
+Creating command line "D:\DOCUME~1\rainy\LOCALS~1\Temp\RSPC2.bat"
+
+        1 file(s) copied.
+
+
+
+<h3>Results</h3>
+Rainlendar.exe - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>
